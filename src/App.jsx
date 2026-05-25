@@ -7,7 +7,6 @@ function App() {
       style={{
         backgroundColor: "#020617",
         minHeight: "100vh",
-        color: "white",
       }}
     >
       <Navbar />
