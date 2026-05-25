@@ -1,42 +1,75 @@
-export default function Navbar() {
+function Navbar() {
   return (
     <div
       style={{
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "16px 20px",
-        background: "#071028",
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
+        padding: "20px 30px",
       }}
     >
-      <h2 style={{ color: "#38bdf8", margin: 0 }}>
-        Inclura
-      </h2>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+        }}
+      >
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Cloudflare_Logo.png/320px-Cloudflare_Logo.png"
+          alt="Inclura Logo"
+          style={{
+            width: "45px",
+            height: "45px",
+            borderRadius: "50%",
+          }}
+        />
 
-      <div style={{ display: "flex", gap: "12px" }}>
-        <button style={btnStyle}>Login</button>
-        <button style={primaryBtn}>Sign Up</button>
+        <h1
+          style={{
+            color: "#38bdf8",
+            fontSize: "42px",
+            margin: 0,
+          }}
+        >
+          Inclura
+        </h1>
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "15px",
+        }}
+      >
+        <button
+          style={{
+            padding: "12px 24px",
+            borderRadius: "10px",
+            border: "none",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          Login
+        </button>
+
+        <button
+          style={{
+            padding: "12px 24px",
+            borderRadius: "10px",
+            border: "none",
+            backgroundColor: "#38bdf8",
+            color: "white",
+            cursor: "pointer",
+            fontSize: "16px",
+          }}
+        >
+          Sign Up
+        </button>
       </div>
     </div>
   );
 }
 
-const btnStyle = {
-  padding: "10px 18px",
-  borderRadius: "12px",
-  border: "none",
-  background: "white",
-  cursor: "pointer",
-};
-
-const primaryBtn = {
-  padding: "10px 18px",
-  borderRadius: "12px",
-  border: "none",
-  background: "#38bdf8",
-  color: "white",
-  cursor: "pointer",
-};
+export default Navbar;
