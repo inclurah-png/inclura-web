@@ -8,7 +8,6 @@ function App() {
         backgroundColor: "#020617",
         minHeight: "100vh",
         color: "white",
-        fontFamily: "Arial, sans-serif",
       }}
     >
       <Navbar />
