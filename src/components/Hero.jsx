@@ -2,32 +2,22 @@ function Hero() {
   return (
     <section
       style={{
-        minHeight: "85vh",
+        minHeight: "80vh",
         background: "#020617",
         color: "white",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 20px",
         textAlign: "center",
+        padding: "40px 20px",
       }}
     >
       <div style={{ maxWidth: "900px" }}>
-        <img
-          src="/logo.png"
-          alt="Inclura Logo"
-          style={{
-            width: "120px",
-            marginBottom: "25px",
-          }}
-        />
-
         <h1
           style={{
             fontSize: "64px",
             fontWeight: "700",
             marginBottom: "20px",
-            lineHeight: "1.1",
           }}
         >
           Welcome to Inclura
@@ -66,4 +56,3 @@ function Hero() {
 }
 
 export default Hero;
-
