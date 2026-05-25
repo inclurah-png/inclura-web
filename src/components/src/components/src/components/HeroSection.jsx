@@ -1,50 +1,54 @@
-export default function HeroSection() {
+function Hero() {
   return (
-    <div
+    <section
       style={{
-        padding: "60px 24px",
         textAlign: "center",
+        padding: "120px 20px",
         background: "#020617",
         color: "white",
       }}
     >
       <h1
         style={{
-          fontSize: "54px",
+          fontSize: "64px",
           marginBottom: "20px",
+          fontWeight: "bold",
         }}
       >
-        Explore the Inclura Ecosystem
+        Welcome to Inclura
       </h1>
 
       <p
         style={{
-          maxWidth: "700px",
+          maxWidth: "800px",
           margin: "0 auto",
-          fontSize: "20px",
-          lineHeight: "1.8",
+          fontSize: "24px",
+          lineHeight: "1.7",
           color: "#cbd5e1",
         }}
       >
-        Accessibility, creators, mentorship, careers,
-        AI discovery, livestreams, marketplaces and
-        global opportunities in one ecosystem.
+        The inclusive social ecosystem for accessibility, creators,
+        mentorship, careers, emergency support, marketplaces,
+        and global connection.
       </p>
 
       <button
         style={{
-          marginTop: "30px",
-          padding: "16px 34px",
-          background: "#38bdf8",
-          color: "white",
-          border: "none",
+          marginTop: "40px",
+          padding: "18px 40px",
+          fontSize: "20px",
           borderRadius: "14px",
-          fontSize: "18px",
+          border: "none",
+          backgroundColor: "#38bdf8",
+          color: "white",
           cursor: "pointer",
+          fontWeight: "bold",
         }}
       >
         Get Started
       </button>
-    </div>
+    </section>
   );
 }
+
+export default Hero;
