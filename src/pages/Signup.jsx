@@ -1,37 +1,56 @@
+```jsx
 import { Link } from "react-router-dom";
 
 function Signup() {
+  const disabilities = [
+    { icon: "👂", label: "Deaf" },
+    { icon: "👁️", label: "Blind" },
+    { icon: "🗣️", label: "Mute" },
+    { icon: "🦽", label: "Motor" },
+    { icon: "🧩", label: "Cognitive" },
+    { icon: "🙂", label: "None" },
+  ];
+
   return (
     <div
       style={{
         minHeight: "100vh",
         background: "#f8fafc",
-        padding: "30px 20px",
+        padding: "24px",
         fontFamily: "Arial, sans-serif",
       }}
     >
-      {/* Accessibility Options */}
+      {/* Accessibility Top Buttons */}
       <div
         style={{
           display: "flex",
-          gap: "12px",
+          gap: "10px",
           overflowX: "auto",
-          marginBottom: "30px",
+          marginBottom: "28px",
         }}
       >
-        {["Audio", "Sign", "Large", "Contrast"].map((item) => (
+        {[
+          { icon: "🔊", text: "Audio" },
+          { icon: "🤟", text: "Sign" },
+          { icon: "🔠", text: "Large" },
+          { icon: "🌗", text: "Contrast" },
+        ].map((item) => (
           <button
-            key={item}
+            key={item.text}
             style={{
-              border: "2px solid #c7d2fe",
+              border: "1px solid #dbeafe",
               background: "white",
               borderRadius: "40px",
-              padding: "14px 24px",
-              fontSize: "20px",
-              color: "#64748b",
+              padding: "10px 18px",
+              fontSize: "15px",
+              color: "#334155",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
             }}
           >
-            {item}
+            <span>{item.icon}</span>
+            {item.text}
           </button>
         ))}
       </div>
@@ -39,7 +58,7 @@ function Signup() {
       {/* Heading */}
       <h1
         style={{
-          fontSize: "54px",
+          fontSize: "42px",
           fontWeight: "800",
           color: "#0f172a",
           marginBottom: "10px",
@@ -50,32 +69,65 @@ function Signup() {
 
       <p
         style={{
-          fontSize: "28px",
           color: "#64748b",
-          marginBottom: "40px",
+          fontSize: "18px",
+          marginBottom: "32px",
         }}
       >
         Already have an account?{" "}
-        <Link to="/login" style={{ color: "#2563eb" }}>
+        <Link
+          to="/login"
+          style={{
+            color: "#2563eb",
+            textDecoration: "none",
+            fontWeight: "600",
+          }}
+        >
           Sign in →
         </Link>
       </p>
 
       {/* Social Buttons */}
-      {["Google", "Facebook", "Apple"].map((item) => (
+      {[
+        {
+          icon: "🔵",
+          text: "Continue with Google",
+          bg: "#ffffff",
+        },
+        {
+          icon: "📘",
+          text: "Continue with Facebook",
+          bg: "#1877f2",
+          color: "white",
+        },
+        {
+          icon: "🍎",
+          text: "Continue with Apple",
+          bg: "#111827",
+          color: "white",
+        },
+      ].map((item) => (
         <button
-          key={item}
+          key={item.text}
           style={{
             width: "100%",
-            padding: "28px",
-            borderRadius: "24px",
-            border: "2px solid #c7d2fe",
-            background: "white",
-            fontSize: "32px",
-            marginBottom: "24px",
+            padding: "18px",
+            borderRadius: "18px",
+            border: "1px solid #dbeafe",
+            background: item.bg,
+            color: item.color || "#111827",
+            fontSize: "18px",
+            fontWeight: "600",
+            marginBottom: "16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: "12px",
+            boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
           }}
         >
-          {item}
+          <span>{item.icon}</span>
+          {item.text}
         </button>
       ))}
 
@@ -83,28 +135,28 @@ function Signup() {
       <div
         style={{
           textAlign: "center",
-          margin: "40px 0",
           color: "#94a3b8",
-          fontSize: "24px",
+          margin: "30px 0",
+          fontSize: "16px",
         }}
       >
         or sign up with email
       </div>
 
-      {/* Form */}
+      {/* Inputs */}
       {[
         "Full Name",
         "Email",
         "Username",
         "Password",
       ].map((label) => (
-        <div key={label} style={{ marginBottom: "28px" }}>
+        <div key={label} style={{ marginBottom: "22px" }}>
           <label
             style={{
               display: "block",
-              marginBottom: "10px",
-              fontSize: "26px",
+              marginBottom: "8px",
               color: "#334155",
+              fontSize: "16px",
               fontWeight: "600",
             }}
           >
@@ -116,12 +168,13 @@ function Signup() {
             placeholder={`Enter ${label}`}
             style={{
               width: "100%",
-              padding: "28px",
-              fontSize: "26px",
-              borderRadius: "22px",
-              border: "2px solid #c7d2fe",
+              padding: "18px",
+              borderRadius: "16px",
+              border: "1px solid #cbd5e1",
+              fontSize: "16px",
               outline: "none",
               boxSizing: "border-box",
+              background: "white",
             }}
           />
         </div>
@@ -131,17 +184,17 @@ function Signup() {
       <div
         style={{
           background: "white",
-          border: "2px solid #c7d2fe",
-          borderRadius: "28px",
-          padding: "25px",
-          marginTop: "40px",
+          borderRadius: "22px",
+          padding: "20px",
+          marginTop: "28px",
+          border: "1px solid #dbeafe",
         }}
       >
         <h3
           style={{
-            fontSize: "30px",
-            marginBottom: "24px",
+            fontSize: "18px",
             color: "#334155",
+            marginBottom: "18px",
           }}
         >
           Accessibility Needs (Optional)
@@ -151,28 +204,26 @@ function Signup() {
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: "14px",
+            gap: "12px",
           }}
         >
-          {[
-            "Deaf",
-            "Blind",
-            "Mute",
-            "Motor",
-            "Cognitive",
-            "None",
-          ].map((item) => (
+          {disabilities.map((item) => (
             <button
-              key={item}
+              key={item.label}
               style={{
-                padding: "16px 24px",
+                border: "1px solid #bfdbfe",
+                background: "#eff6ff",
                 borderRadius: "40px",
-                border: "2px solid #c7d2fe",
-                background: "#f8fafc",
-                fontSize: "24px",
+                padding: "12px 18px",
+                fontSize: "15px",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                color: "#1e3a8a",
               }}
             >
-              {item}
+              <span>{item.icon}</span>
+              {item.label}
             </button>
           ))}
         </div>
@@ -181,22 +232,22 @@ function Signup() {
       {/* Terms */}
       <div
         style={{
-          marginTop: "40px",
           display: "flex",
-          gap: "16px",
+          gap: "12px",
+          marginTop: "28px",
           alignItems: "flex-start",
         }}
       >
-        <input type="checkbox" style={{ width: "28px", height: "28px" }} />
+        <input type="checkbox" />
 
         <p
           style={{
-            fontSize: "22px",
             color: "#64748b",
+            fontSize: "14px",
             lineHeight: "1.6",
           }}
         >
-          I agree to Inclura’s Terms of Service and Privacy Policy.
+          I agree to Inclura's Terms of Service and Privacy Policy.
         </p>
       </div>
 
@@ -204,14 +255,15 @@ function Signup() {
       <button
         style={{
           width: "100%",
-          marginTop: "40px",
-          padding: "28px",
-          borderRadius: "24px",
+          marginTop: "30px",
+          padding: "18px",
+          borderRadius: "18px",
           border: "none",
           background: "#2563eb",
           color: "white",
-          fontSize: "34px",
+          fontSize: "20px",
           fontWeight: "700",
+          boxShadow: "0 6px 18px rgba(37,99,235,0.25)",
         }}
       >
         Create Account →
@@ -221,3 +273,5 @@ function Signup() {
 }
 
 export default Signup;
+```
+        
