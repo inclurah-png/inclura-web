@@ -1,43 +1,85 @@
+import Navbar from "./components/Navbar";
+import Hero from "./components/Hero";
+
 function App() {
   return (
     <div
       style={{
         backgroundColor: "#020617",
         minHeight: "100vh",
-        color: "white",
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <div
+      <Navbar />
+
+      <Hero />
+
+      <section
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "20px",
+          padding: "60px 20px",
+          color: "white",
         }}
       >
-        <h1 style={{ color: "#38bdf8" }}>
-          Inclura
-        </h1>
+        <h2
+          style={{
+            textAlign: "center",
+            fontSize: "42px",
+            marginBottom: "50px",
+          }}
+        >
+          Explore Inclura
+        </h2>
 
-        <div style={{ display: "flex", gap: "10px" }}>
-          <button>Login</button>
-          <button>Sign Up</button>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit, minmax(250px, 1fr))",
+            gap: "24px",
+            maxWidth: "1200px",
+            margin: "0 auto",
+          }}
+        >
+          {[
+            "Livestreams",
+            "Marketplace",
+            "Mentorship",
+            "Reels",
+            "Accessibility",
+            "Emergency Support",
+          ].map((item) => (
+            <div
+              key={item}
+              style={{
+                background: "#0f172a",
+                borderRadius: "20px",
+                padding: "30px",
+                border:
+                  "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <h3
+                style={{
+                  fontSize: "24px",
+                  marginBottom: "16px",
+                }}
+              >
+                {item}
+              </h3>
+
+              <p
+                style={{
+                  color: "#cbd5e1",
+                  lineHeight: "1.6",
+                }}
+              >
+                Discover the future of inclusive
+                digital experiences with Inclura.
+              </p>
+            </div>
+          ))}
         </div>
-      </div>
-
-      <div
-        style={{
-          textAlign: "center",
-          marginTop: "100px",
-        }}
-      >
-        <h2>Welcome to Inclura</h2>
-
-        <p>
-          The inclusive social ecosystem.
-        </p>
-      </div>
+      </section>
     </div>
   );
 }
