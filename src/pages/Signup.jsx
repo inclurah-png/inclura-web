@@ -1,78 +1,223 @@
+import { Link } from "react-router-dom";
+
 function Signup() {
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#020617",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "20px",
+        background: "#f8fafc",
+        padding: "30px 20px",
+        fontFamily: "Arial, sans-serif",
       }}
     >
+      {/* Accessibility Options */}
       <div
         style={{
-          width: "100%",
-          maxWidth: "450px",
-          background: "#0f172a",
-          padding: "40px",
-          borderRadius: "20px",
+          display: "flex",
+          gap: "12px",
+          overflowX: "auto",
+          marginBottom: "30px",
         }}
       >
-        <h1
+        {["Audio", "Sign", "Large", "Contrast"].map((item) => (
+          <button
+            key={item}
+            style={{
+              border: "2px solid #c7d2fe",
+              background: "white",
+              borderRadius: "40px",
+              padding: "14px 24px",
+              fontSize: "20px",
+              color: "#64748b",
+            }}
+          >
+            {item}
+          </button>
+        ))}
+      </div>
+
+      {/* Heading */}
+      <h1
+        style={{
+          fontSize: "54px",
+          fontWeight: "800",
+          color: "#0f172a",
+          marginBottom: "10px",
+        }}
+      >
+        Create your account
+      </h1>
+
+      <p
+        style={{
+          fontSize: "28px",
+          color: "#64748b",
+          marginBottom: "40px",
+        }}
+      >
+        Already have an account?{" "}
+        <Link to="/login" style={{ color: "#2563eb" }}>
+          Sign in →
+        </Link>
+      </p>
+
+      {/* Social Buttons */}
+      {["Google", "Facebook", "Apple"].map((item) => (
+        <button
+          key={item}
           style={{
-            color: "white",
-            marginBottom: "30px",
-            textAlign: "center",
+            width: "100%",
+            padding: "28px",
+            borderRadius: "24px",
+            border: "2px solid #c7d2fe",
+            background: "white",
+            fontSize: "32px",
+            marginBottom: "24px",
           }}
         >
-          Create Inclura Account
-        </h1>
-
-        <input
-          type="text"
-          placeholder="Full Name"
-          style={inputStyle}
-        />
-
-        <input
-          type="email"
-          placeholder="Email"
-          style={inputStyle}
-        />
-
-        <input
-          type="password"
-          placeholder="Password"
-          style={inputStyle}
-        />
-
-        <button style={buttonStyle}>
-          Sign Up
+          {item}
         </button>
+      ))}
+
+      {/* Divider */}
+      <div
+        style={{
+          textAlign: "center",
+          margin: "40px 0",
+          color: "#94a3b8",
+          fontSize: "24px",
+        }}
+      >
+        or sign up with email
       </div>
+
+      {/* Form */}
+      {[
+        "Full Name",
+        "Email",
+        "Username",
+        "Password",
+      ].map((label) => (
+        <div key={label} style={{ marginBottom: "28px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "10px",
+              fontSize: "26px",
+              color: "#334155",
+              fontWeight: "600",
+            }}
+          >
+            {label}
+          </label>
+
+          <input
+            type={label === "Password" ? "password" : "text"}
+            placeholder={`Enter ${label}`}
+            style={{
+              width: "100%",
+              padding: "28px",
+              fontSize: "26px",
+              borderRadius: "22px",
+              border: "2px solid #c7d2fe",
+              outline: "none",
+              boxSizing: "border-box",
+            }}
+          />
+        </div>
+      ))}
+
+      {/* Accessibility Needs */}
+      <div
+        style={{
+          background: "white",
+          border: "2px solid #c7d2fe",
+          borderRadius: "28px",
+          padding: "25px",
+          marginTop: "40px",
+        }}
+      >
+        <h3
+          style={{
+            fontSize: "30px",
+            marginBottom: "24px",
+            color: "#334155",
+          }}
+        >
+          Accessibility Needs (Optional)
+        </h3>
+
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            gap: "14px",
+          }}
+        >
+          {[
+            "Deaf",
+            "Blind",
+            "Mute",
+            "Motor",
+            "Cognitive",
+            "None",
+          ].map((item) => (
+            <button
+              key={item}
+              style={{
+                padding: "16px 24px",
+                borderRadius: "40px",
+                border: "2px solid #c7d2fe",
+                background: "#f8fafc",
+                fontSize: "24px",
+              }}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Terms */}
+      <div
+        style={{
+          marginTop: "40px",
+          display: "flex",
+          gap: "16px",
+          alignItems: "flex-start",
+        }}
+      >
+        <input type="checkbox" style={{ width: "28px", height: "28px" }} />
+
+        <p
+          style={{
+            fontSize: "22px",
+            color: "#64748b",
+            lineHeight: "1.6",
+          }}
+        >
+          I agree to Inclura’s Terms of Service and Privacy Policy.
+        </p>
+      </div>
+
+      {/* Create Account */}
+      <button
+        style={{
+          width: "100%",
+          marginTop: "40px",
+          padding: "28px",
+          borderRadius: "24px",
+          border: "none",
+          background: "#2563eb",
+          color: "white",
+          fontSize: "34px",
+          fontWeight: "700",
+        }}
+      >
+        Create Account →
+      </button>
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "16px",
-  marginBottom: "20px",
-  borderRadius: "12px",
-  border: "none",
-  fontSize: "16px",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: "12px",
-  border: "none",
-  background: "#38bdf8",
-  color: "white",
-  fontSize: "18px",
-  cursor: "pointer",
-};
 
 export default Signup;
