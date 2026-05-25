@@ -1,72 +1,127 @@
+import { Link } from "react-router-dom";
+
 function Login() {
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#020617",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "20px",
+        background: "#f8fafc",
+        padding: "40px 20px",
+        fontFamily: "Arial, sans-serif",
       }}
     >
-      <div
+      <h1
         style={{
-          width: "100%",
-          maxWidth: "420px",
-          background: "#0f172a",
-          padding: "40px",
-          borderRadius: "20px",
+          fontSize: "56px",
+          color: "#0f172a",
+          marginBottom: "14px",
         }}
       >
-        <h1
+        Welcome Back
+      </h1>
+
+      <p
+        style={{
+          fontSize: "26px",
+          color: "#64748b",
+          marginBottom: "40px",
+        }}
+      >
+        Don’t have an account?{" "}
+        <Link to="/signup" style={{ color: "#2563eb" }}>
+          Sign up →
+        </Link>
+      </p>
+
+      {/* Email */}
+      <div style={{ marginBottom: "28px" }}>
+        <label
           style={{
-            color: "white",
-            marginBottom: "30px",
-            textAlign: "center",
+            display: "block",
+            marginBottom: "10px",
+            fontSize: "24px",
+            color: "#334155",
           }}
         >
-          Login to Inclura
-        </h1>
+          Email
+        </label>
 
         <input
           type="email"
-          placeholder="Email"
-          style={inputStyle}
+          placeholder="Enter your email"
+          style={{
+            width: "100%",
+            padding: "26px",
+            borderRadius: "22px",
+            border: "2px solid #c7d2fe",
+            fontSize: "24px",
+            boxSizing: "border-box",
+          }}
         />
+      </div>
+
+      {/* Password */}
+      <div style={{ marginBottom: "20px" }}>
+        <label
+          style={{
+            display: "block",
+            marginBottom: "10px",
+            fontSize: "24px",
+            color: "#334155",
+          }}
+        >
+          Password
+        </label>
 
         <input
           type="password"
-          placeholder="Password"
-          style={inputStyle}
+          placeholder="Enter your password"
+          style={{
+            width: "100%",
+            padding: "26px",
+            borderRadius: "22px",
+            border: "2px solid #c7d2fe",
+            fontSize: "24px",
+            boxSizing: "border-box",
+          }}
         />
-
-        <button style={buttonStyle}>
-          Login
-        </button>
       </div>
+
+      <div
+        style={{
+          textAlign: "right",
+          marginBottom: "40px",
+        }}
+      >
+        <a
+          href="#"
+          style={{
+            color: "#2563eb",
+            fontSize: "22px",
+            textDecoration: "none",
+          }}
+        >
+          Forgot Password?
+        </a>
+      </div>
+
+      {/* Login Button */}
+      <button
+        style={{
+          width: "100%",
+          padding: "28px",
+          borderRadius: "24px",
+          border: "none",
+          background: "#2563eb",
+          color: "white",
+          fontSize: "32px",
+          fontWeight: "700",
+        }}
+      >
+        Login →
+      </button>
     </div>
   );
 }
-
-const inputStyle = {
-  width: "100%",
-  padding: "16px",
-  marginBottom: "20px",
-  borderRadius: "12px",
-  border: "none",
-  fontSize: "16px",
-};
-
-const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: "12px",
-  border: "none",
-  background: "#38bdf8",
-  color: "white",
-  fontSize: "18px",
-  cursor: "pointer",
-};
 
 export default Login;
