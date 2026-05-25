@@ -1,3 +1,5 @@
+import Logo from "./Logo";
+
 function Navbar() {
   return (
     <nav
@@ -5,21 +7,31 @@ function Navbar() {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "20px 40px",
-        background: "#020617",
+        padding: "24px 40px",
+        position: "sticky",
+        top: 0,
+        zIndex: 1000,
+        backgroundColor: "#020617",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}
     >
-      <h1 style={{ color: "#38bdf8", fontSize: "40px" }}>
-        Inclura
-      </h1>
+      <Logo />
 
-      <div style={{ display: "flex", gap: "20px" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: "14px",
+        }}
+      >
         <button
           style={{
-            padding: "14px 28px",
+            padding: "12px 22px",
             borderRadius: "12px",
-            border: "none",
+            border: "1px solid #334155",
+            background: "transparent",
+            color: "white",
             cursor: "pointer",
+            fontSize: "15px",
           }}
         >
           Login
@@ -27,12 +39,14 @@ function Navbar() {
 
         <button
           style={{
-            padding: "14px 28px",
+            padding: "12px 22px",
             borderRadius: "12px",
             border: "none",
             background: "#38bdf8",
             color: "white",
             cursor: "pointer",
+            fontSize: "15px",
+            fontWeight: "600",
           }}
         >
           Sign Up
