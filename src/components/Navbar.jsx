@@ -7,31 +7,20 @@ function Navbar() {
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
-        padding: "24px 40px",
-        position: "sticky",
-        top: 0,
-        zIndex: 1000,
-        backgroundColor: "#020617",
-        borderBottom: "1px solid rgba(255,255,255,0.06)",
+        padding: "20px 40px",
+        background: "#020617",
       }}
     >
       <Logo />
 
-      <div
-        style={{
-          display: "flex",
-          gap: "14px",
-        }}
-      >
+      <div style={{ display: "flex", gap: "15px" }}>
         <button
           style={{
-            padding: "12px 22px",
-            borderRadius: "12px",
-            border: "1px solid #334155",
-            background: "transparent",
-            color: "white",
+            padding: "12px 24px",
+            borderRadius: "10px",
+            border: "none",
             cursor: "pointer",
-            fontSize: "15px",
+            fontSize: "16px",
           }}
         >
           Login
@@ -39,14 +28,13 @@ function Navbar() {
 
         <button
           style={{
-            padding: "12px 22px",
-            borderRadius: "12px",
+            padding: "12px 24px",
+            borderRadius: "10px",
             border: "none",
             background: "#38bdf8",
             color: "white",
             cursor: "pointer",
-            fontSize: "15px",
-            fontWeight: "600",
+            fontSize: "16px",
           }}
         >
           Sign Up
