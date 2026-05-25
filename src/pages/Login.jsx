@@ -1,3 +1,4 @@
+
 import { Link } from "react-router-dom";
 
 function Login() {
@@ -10,7 +11,7 @@ function Login() {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      {/* Accessibility Buttons */}
+      {/* Top Accessibility Buttons */}
       <div
         style={{
           display: "flex",
@@ -77,71 +78,73 @@ function Login() {
         </Link>
       </p>
 
-      {/* Social Login Buttons */}
-      {[
-        {
-          icon: "🔵",
-          text: "Continue with Google",
-          bg: "#ffffff",
-        },
-        {
-          icon: "📘",
-          text: "Continue with Facebook",
-          bg: "#1877f2",
+      {/* Social Buttons */}
+      <button
+        style={{
+          width: "100%",
+          padding: "18px",
+          borderRadius: "18px",
+          border: "1px solid #dbeafe",
+          background: "white",
+          fontSize: "18px",
+          fontWeight: "600",
+          marginBottom: "16px",
+        }}
+      >
+        🔵 Continue with Google
+      </button>
+
+      <button
+        style={{
+          width: "100%",
+          padding: "18px",
+          borderRadius: "18px",
+          border: "none",
+          background: "#1877f2",
           color: "white",
-        },
-        {
-          icon: "🍎",
-          text: "Continue with Apple",
-          bg: "#111827",
+          fontSize: "18px",
+          fontWeight: "600",
+          marginBottom: "16px",
+        }}
+      >
+        📘 Continue with Facebook
+      </button>
+
+      <button
+        style={{
+          width: "100%",
+          padding: "18px",
+          borderRadius: "18px",
+          border: "none",
+          background: "#111827",
           color: "white",
-        },
-      ].map((item) => (
-        <button
-          key={item.text}
-          style={{
-            width: "100%",
-            padding: "18px",
-            borderRadius: "18px",
-            border: "1px solid #dbeafe",
-            background: item.bg,
-            color: item.color || "#111827",
-            fontSize: "18px",
-            fontWeight: "600",
-            marginBottom: "16px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "12px",
-            boxShadow: "0 2px 10px rgba(0,0,0,0.04)",
-          }}
-        >
-          <span>{item.icon}</span>
-          {item.text}
-        </button>
-      ))}
+          fontSize: "18px",
+          fontWeight: "600",
+          marginBottom: "26px",
+        }}
+      >
+        🍎 Continue with Apple
+      </button>
 
       {/* Divider */}
       <div
         style={{
           textAlign: "center",
           color: "#94a3b8",
-          margin: "30px 0",
-          fontSize: "16px",
+          marginBottom: "28px",
         }}
       >
         or continue with email
       </div>
 
-      {/* Email Input */}
-      <div style={{ marginBottom: "22px" }}>
+      {/* Email */}
+      <div style={{ marginBottom: "20px" }}>
         <label
           style={{
             display: "block",
             marginBottom: "8px",
-            color: "#334155",
-            fontSize: "16px",
             fontWeight: "600",
+            color: "#334155",
           }}
         >
           Email or Username
@@ -156,22 +159,19 @@ function Login() {
             borderRadius: "16px",
             border: "1px solid #cbd5e1",
             fontSize: "16px",
-            outline: "none",
             boxSizing: "border-box",
-            background: "white",
           }}
         />
       </div>
 
-      {/* Password Input */}
+      {/* Password */}
       <div style={{ marginBottom: "16px" }}>
         <label
           style={{
             display: "block",
             marginBottom: "8px",
-            color: "#334155",
-            fontSize: "16px",
             fontWeight: "600",
+            color: "#334155",
           }}
         >
           Password
@@ -186,46 +186,28 @@ function Login() {
             borderRadius: "16px",
             border: "1px solid #cbd5e1",
             fontSize: "16px",
-            outline: "none",
             boxSizing: "border-box",
-            background: "white",
           }}
         />
       </div>
 
-      {/* Remember + Forgot */}
+      {/* Remember Me */}
       <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          alignItems: "center",
           marginBottom: "28px",
+          color: "#64748b",
+          fontSize: "15px",
         }}
       >
-        <label
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            color: "#64748b",
-            fontSize: "15px",
-          }}
-        >
-          <input type="checkbox" />
-          Remember me
+        <label>
+          <input type="checkbox" /> Remember me
         </label>
 
-        <button
-          style={{
-            border: "none",
-            background: "transparent",
-            color: "#2563eb",
-            fontWeight: "600",
-            fontSize: "15px",
-          }}
-        >
+        <span style={{ color: "#2563eb", fontWeight: "600" }}>
           Forgot password?
-        </button>
+        </span>
       </div>
 
       {/* Login Button */}
@@ -239,7 +221,6 @@ function Login() {
           color: "white",
           fontSize: "20px",
           fontWeight: "700",
-          boxShadow: "0 6px 18px rgba(37,99,235,0.25)",
         }}
       >
         Sign In →
@@ -252,7 +233,6 @@ function Login() {
           marginTop: "28px",
           color: "#94a3b8",
           fontSize: "14px",
-          lineHeight: "1.7",
         }}
       >
         Inclusive access for everyone.
