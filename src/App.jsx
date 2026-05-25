@@ -1,3 +1,4 @@
+
 import { Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -5,6 +6,7 @@ import Hero from "./components/Hero";
 
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import Onboarding from "./pages/Onboarding";
 
 function Home() {
   return (
@@ -19,7 +21,6 @@ function App() {
   return (
     <div
       style={{
-        backgroundColor: "#020617",
         minHeight: "100vh",
       }}
     >
@@ -29,6 +30,11 @@ function App() {
         <Route path="/login" element={<Login />} />
 
         <Route path="/signup" element={<Signup />} />
+
+        <Route
+          path="/onboarding"
+          element={<Onboarding />}
+        />
       </Routes>
     </div>
   );
