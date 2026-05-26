@@ -1,4 +1,5 @@
 import ProfileCard from "./ProfileCard";
+
 function Rightbar() {
   return (
     <div
@@ -9,6 +10,9 @@ function Rightbar() {
         background: "#020617",
       }}
     >
+      <ProfileCard />
+
+      {/* Trending */}
       <div
         style={{
           background: "#0f172a",
@@ -31,6 +35,7 @@ function Rightbar() {
         <p>#Creators</p>
       </div>
 
+      {/* Suggested Connections */}
       <div
         style={{
           background: "#0f172a",
