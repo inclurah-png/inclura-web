@@ -6,6 +6,11 @@ function Sidebar() {
     "🔔 Notifications",
     "🎥 Reels",
     "🧑‍🦽 Accessibility",
+    "📄 Resume",
+    "💼 Care Gigs",
+    "♿ Accessibility ID",
+    "🏅 Badges",
+    "💳 Wallet",
     "⚙️ Settings",
   ];
 
