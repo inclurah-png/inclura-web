@@ -75,18 +75,25 @@
       </div>
 
       <button
-        style={{
-          width: "100%",
-          padding: "18px",
-          borderRadius: "18px",
-          border: "none",
-          background: "#38bdf8",
-          color: "white",
-          fontSize: "18px",
-          fontWeight: "700",
-        }}
-      >
-        Continue →
+onClick={() => {
+window.location.href = "/dashboard";
+}}
+style={{
+width: "100%",
+padding: "18px",
+borderRadius: "18px",
+border: "none",
+background: "#38bdf8",
+color: "white",
+fontSize: "18px",
+fontWeight: "700",
+cursor: "pointer",
+}}
+
+>
+
+Continue → 
+
       </button>
     </div>
   );
