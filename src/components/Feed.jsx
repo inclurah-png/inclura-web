@@ -1,3 +1,4 @@
+import Stories from "./Stories";
 import PostCard from "./PostCard";
 
 function Feed() {
@@ -8,6 +9,7 @@ function Feed() {
         padding: "24px",
       }}
     >
+     <Stories />
       {/* Create Post */}
       <div
         style={{
