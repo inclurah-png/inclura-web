@@ -1,3 +1,4 @@
+import MobileNav from "../components/MobileNav";
 import Topbar from "../components/Topbar";
 import Sidebar from "../components/Sidebar";
 import Feed from "../components/Feed";
@@ -24,6 +25,7 @@ return (
       <Feed />
       <Rightbar />
     </div>
+    <MobileNav />
   </div>
 );
 
