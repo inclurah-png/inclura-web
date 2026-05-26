@@ -4,20 +4,29 @@ import Feed from "../components/Feed";
 import Rightbar from "../components/Rightbar";
 
 function Dashboard() {
-  return (
+  
+return (
+  <div
+    style={{
+      background: "#020617",
+      minHeight: "100vh",
+      color: "white",
+    }}
+  >
+    <Topbar />
+
     <div
       style={{
         display: "flex",
-        background: "#020617",
-        minHeight: "100vh",
-        color: "white",
       }}
     >
       <Sidebar />
       <Feed />
       <Rightbar />
     </div>
-  );
+  </div>
+);
+
 }
 
 export default Dashboard;
