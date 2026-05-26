@@ -1,3 +1,4 @@
+import ProfileCard from "./ProfileCard";
 function Rightbar() {
   return (
     <div
