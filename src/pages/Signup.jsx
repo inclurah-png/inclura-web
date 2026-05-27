@@ -1,6 +1,21 @@
 import { useState } from "react";
 
+import {
+createUserWithEmailAndPassword,
+signInWithPopup,
+} from "firebase/auth";
+
+import {
+auth,
+googleProvider,
+} from "../firebase";
+
+import { useNavigate } from "react-router-dom";
+
+
 function Signup() {
+const navigate = useNavigate();
+
 const [fullName, setFullName] =
 useState("");
 
@@ -9,6 +24,40 @@ useState("");
 
 const [password, setPassword] =
 useState("");
+async function handleSignup() {
+try {
+await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+
+alert("Account created successfully");
+
+navigate("/onboarding");
+
+
+} catch (error) {
+alert(error.message);
+}
+}
+
+async function handleGoogleSignup() {
+try {
+await signInWithPopup(
+auth,
+googleProvider
+);
+
+
+navigate("/onboarding");
+
+
+} catch (error) {
+alert(error.message);
+}
+}
 
 return (
 <div
@@ -175,7 +224,12 @@ Join Inclura 👋 </h1>
         style={inputStyle}
       />
 
-      <button style={buttonStyle}>
+      <button
+onClick={handleSignup}
+style={buttonStyle}
+
+>
+
         Create Account
       </button>
 
@@ -189,7 +243,12 @@ Join Inclura 👋 </h1>
         or continue with
       </div>
 
-      <button style={googleButton}>
+      <button
+onClick={handleGoogleSignup}
+style={googleButton}
+
+>
+
         🔵 Continue with Google
       </button>
     </div>
