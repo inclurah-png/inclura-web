@@ -37,7 +37,6 @@ fontSize: "34px",
 >
 Create Account </h1>
 
-```
     <p
       style={{
         color: "#94a3b8",
@@ -93,7 +92,6 @@ Create Account </h1>
     </button>
   </div>
 </div>
-```
 
 );
 }
