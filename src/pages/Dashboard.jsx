@@ -4,7 +4,9 @@ import Sidebar from "../components/Sidebar";
 
 import Feed from "../components/Feed";
 
-import Rightbar from "../components/Rightbar";
+import Rightbar from "../components/Rightbar"; 
+
+import MobileNav from "../components/MobileNav";
 
 function Dashboard() {
 
@@ -64,7 +66,9 @@ window.innerWidth > 1100
 </div>
 
 </div>
-
+  
+<MobileNav />
+  
 </div>
 
 );
