@@ -25,12 +25,14 @@ email,
 password
 );
 
+
   alert("Login successful");
 
   navigate("/dashboard");
 } catch (error) {
   alert(error.message);
 }
+
 
 }
 
@@ -63,6 +65,7 @@ marginBottom: "10px",
 }}
 >
 Welcome Back 👋 </h1>
+
 
     <p
       style={{
@@ -102,6 +105,7 @@ Welcome Back 👋 </h1>
   </div>
 </div>
 
+
 );
 }
 
@@ -128,4 +132,3 @@ fontSize: "16px",
 };
 
 export default Login;
-
