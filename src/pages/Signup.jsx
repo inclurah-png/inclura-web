@@ -6,13 +6,36 @@ createUserWithEmailAndPassword,
 
 import { auth } from "../firebase";
 
+import { useNavigate } from "react-router-dom";
 
 function Signup() {
-const [fullName, setFullName] = useState("");
+const navigate = useNavigate();
 
-const [email, setEmail] = useState("");
+const [fullName, setFullName] =
+useState("");
 
-const [password, setPassword] = useState("");
+const [email, setEmail] =
+useState("");
+
+const [password, setPassword] =
+useState("");
+
+async function handleSignup() {
+try {
+await createUserWithEmailAndPassword(
+auth,
+email,
+password
+);
+
+  alert("Account created successfully");
+
+  navigate("/onboarding");
+} catch (error) {
+  alert(error.message);
+}
+
+}
 
 return (
 <div
@@ -29,7 +52,7 @@ fontFamily: "Arial, sans-serif",
 <div
 style={{
 width: "100%",
-maxWidth: "420px",
+maxWidth: "430px",
 background: "#0f172a",
 padding: "32px",
 borderRadius: "28px",
@@ -38,11 +61,11 @@ borderRadius: "28px",
 <h1
 style={{
 color: "white",
-marginBottom: "12px",
 fontSize: "34px",
+marginBottom: "10px",
 }}
 >
-Create Account </h1>
+Join Inclura 👋 </h1>
 
     <p
       style={{
@@ -50,7 +73,8 @@ Create Account </h1>
         marginBottom: "24px",
       }}
     >
-      Join Inclura today.
+      Inclusive social experience
+      for everyone.
     </p>
 
     <input
@@ -84,16 +108,8 @@ Create Account </h1>
     />
 
     <button
-      style={{
-        width: "100%",
-        padding: "16px",
-        borderRadius: "14px",
-        border: "none",
-        background: "#38bdf8",
-        color: "white",
-        fontWeight: "700",
-        fontSize: "16px",
-      }}
+      onClick={handleSignup}
+      style={buttonStyle}
     >
       Create Account
     </button>
@@ -112,6 +128,17 @@ border: "1px solid #334155",
 background: "#1e293b",
 color: "white",
 boxSizing: "border-box",
+};
+
+const buttonStyle = {
+width: "100%",
+padding: "16px",
+borderRadius: "14px",
+border: "none",
+background: "#38bdf8",
+color: "white",
+fontWeight: "700",
+fontSize: "16px",
 };
 
 export default Signup;
