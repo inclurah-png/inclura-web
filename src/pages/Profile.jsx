@@ -179,7 +179,48 @@ $
 🛡 Role:
 {profile.role}
 </div>
+<div style={cardStyle}>
 
+<h3
+style={{
+marginBottom: "12px",
+}}
+>
+♿ Accessibility Needs
+</h3>
+
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "10px",
+}}
+>
+
+{profile.accessibilityNeeds?.map(
+(item) => (
+
+<div
+key={item}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "14px",
+}}
+>
+
+{item}
+
+</div>
+
+)
+)}
+
+</div>
+
+</div>
+  
 </div>
 
 </div>
