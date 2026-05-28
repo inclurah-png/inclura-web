@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
 createUserWithEmailAndPassword,
 signInWithPopup,
+GoogleAuthProvider,
 } from "firebase/auth";
 
 import {
@@ -13,11 +14,13 @@ serverTimestamp,
 
 import { auth, db } from "../firebase";
 
-
 import { useNavigate } from "react-router-dom";
 
+const googleProvider =
+new GoogleAuthProvider();
 
 function Signup() {
+
 const navigate = useNavigate();
 
 const [fullName, setFullName] =
@@ -28,8 +31,48 @@ useState("");
 
 const [password, setPassword] =
 useState("");
+
+const [accessibilityNeeds,
+setAccessibilityNeeds] =
+useState([]);
+
+const accessibilityOptions = [
+"🦻 Deaf/HoH",
+"👁 Blind/Low Vision",
+"♿ Wheelchair",
+"🗣 Non-verbal",
+"🤲 Motor Impaired",
+"🧠 Neurodivergent",
+"💪 No disability",
+];
+
+function toggleAccessibility(option) {
+
+if (
+accessibilityNeeds.includes(option)
+) {
+
+setAccessibilityNeeds(
+accessibilityNeeds.filter(
+(item) => item !== option
+)
+);
+
+} else {
+
+setAccessibilityNeeds([
+...accessibilityNeeds,
+option,
+]);
+
+}
+
+}
+
 async function handleSignup() {
+
 try {
+
 const userCredential =
 await createUserWithEmailAndPassword(
 auth,
@@ -37,17 +80,20 @@ email,
 password
 );
 
-const user = userCredential.user;
+const user =
+userCredential.user;
 
 await setDoc(
 doc(db, "users", user.uid),
 {
 uid: user.uid,
-fullName,
-email,
-createdAt: serverTimestamp(),
 
-accessibilityMode: false,
+fullName,
+
+email,
+
+createdAt:
+serverTimestamp(),
 
 verified: false,
 
@@ -56,53 +102,64 @@ role: "user",
 walletBalance: 0,
 
 resumeCompleted: false,
+
+accessibilityNeeds,
 }
 );
 
-
-
-alert("Account created successfully");
+alert(
+"Account created successfully"
+);
 
 navigate("/onboarding");
 
-
 } catch (error) {
+
 alert(error.message);
+
 }
+
 }
 
 async function handleGoogleSignup() {
+
 try {
+
 await signInWithPopup(
 auth,
 googleProvider
 );
 
-
 navigate("/onboarding");
 
-
 } catch (error) {
+
 alert(error.message);
+
 }
+
 }
 
 return (
+
 <div
 style={{
 minHeight: "100vh",
 background: "#020617",
 color: "white",
 padding: "24px",
-fontFamily: "Arial, sans-serif",
+fontFamily:
+"Arial, sans-serif",
 }}
 >
+
 <div
 style={{
 maxWidth: "520px",
 margin: "0 auto",
 }}
 >
+
 <h1
 style={{
 fontSize: "42px",
@@ -110,181 +167,217 @@ fontWeight: "800",
 marginBottom: "12px",
 }}
 >
-Join Inclura 👋 </h1>
+Join Inclura 👋
+</h1>
 
+<p
+style={{
+color: "#94a3b8",
+marginBottom: "30px",
+lineHeight: "1.6",
+fontSize: "17px",
+}}
+>
+The inclusive social platform
+for everyone.
+</p>
 
-    <p
-      style={{
-        color: "#94a3b8",
-        marginBottom: "30px",
-        lineHeight: "1.6",
-        fontSize: "17px",
-      }}
-    >
-      The inclusive social platform
-      for everyone.
-    </p>
+<div
+style={{
+marginBottom: "28px",
+}}
+>
 
-    <div
-      style={{
-        marginBottom: "28px",
-      }}
-    >
-      <h2
-        style={{
-          marginBottom: "14px",
-          fontSize: "20px",
-        }}
-      >
-        Choose Identity
-      </h2>
+<h2
+style={{
+marginBottom: "14px",
+fontSize: "20px",
+}}
+>
+Choose Identity
+</h2>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
-        <button style={tagStyle}>
-          ♿ Disability
-        </button>
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "12px",
+}}
+>
 
-        <button style={tagStyle}>
-          🤝 Ally
-        </button>
+<button style={tagStyle}>
+♿ Disability
+</button>
 
-        <button style={tagStyle}>
-          ❤️ Caregiver
-        </button>
+<button style={tagStyle}>
+🤝 Ally
+</button>
 
-        <button style={tagStyle}>
-          🎨 Creator
-        </button>
+<button style={tagStyle}>
+❤️ Caregiver
+</button>
 
-        <button style={tagStyle}>
-          🏢 Organization
-        </button>
+<button style={tagStyle}>
+🎨 Creator
+</button>
 
-        <button style={tagStyle}>
-          💼 Employer
-        </button>
-      </div>
-    </div>
+<button style={tagStyle}>
+🏢 Organization
+</button>
 
-    <div
-      style={{
-        marginBottom: "30px",
-      }}
-    >
-      <h2
-        style={{
-          marginBottom: "14px",
-          fontSize: "20px",
-        }}
-      >
-        Accessibility Preferences
-      </h2>
+<button style={tagStyle}>
+💼 Employer
+</button>
 
-      <div
-        style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-        }}
-      >
-        <button style={prefStyle}>
-          🔊 Audio
-        </button>
+</div>
 
-        <button style={prefStyle}>
-          🤟 Sign Language
-        </button>
+</div>
 
-        <button style={prefStyle}>
-          🔠 Large Text
-        </button>
+<div
+style={{
+marginBottom: "30px",
+}}
+>
 
-        <button style={prefStyle}>
-          🌗 High Contrast
-        </button>
+<h2
+style={{
+marginBottom: "14px",
+fontSize: "20px",
+}}
+>
+Your Accessibility Needs
+(optional)
+</h2>
 
-        <button style={prefStyle}>
-          🦽 Mobility
-        </button>
-      </div>
-    </div>
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "12px",
+}}
+>
 
-    <div
-      style={{
-        background: "#0f172a",
-        borderRadius: "28px",
-        padding: "28px",
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Full Name"
-        value={fullName}
-        onChange={(e) =>
-          setFullName(e.target.value)
-        }
-        style={inputStyle}
-      />
+{accessibilityOptions.map(
+(option) => (
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-        style={inputStyle}
-      />
+<button
+type="button"
+key={option}
+onClick={() =>
+toggleAccessibility(option)
+}
+style={{
+padding: "14px 18px",
+borderRadius: "18px",
 
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) =>
-          setPassword(e.target.value)
-        }
-        style={inputStyle}
-      />
+border:
+accessibilityNeeds.includes(option)
+? "2px solid #38bdf8"
+: "1px solid #334155",
 
-      <button
+background:
+accessibilityNeeds.includes(option)
+? "#1e3a8a"
+: "#0f172a",
+
+color: "white",
+
+fontSize: "15px",
+
+cursor: "pointer",
+}}
+
+>
+
+{option}
+
+</button>
+
+)
+)}
+
+</div>
+
+</div>
+
+<div
+style={{
+background: "#0f172a",
+borderRadius: "28px",
+padding: "28px",
+}}
+>
+
+<input
+type="text"
+placeholder="Full Name"
+value={fullName}
+onChange={(e) =>
+setFullName(
+e.target.value
+)
+}
+style={inputStyle}
+/>
+
+<input
+type="email"
+placeholder="Email"
+value={email}
+onChange={(e) =>
+setEmail(
+e.target.value
+)
+}
+style={inputStyle}
+/>
+
+<input
+type="password"
+placeholder="Password"
+value={password}
+onChange={(e) =>
+setPassword(
+e.target.value
+)
+}
+style={inputStyle}
+/>
+
+<button
 onClick={handleSignup}
 style={buttonStyle}
 
 >
 
-        Create Account
-      </button>
+Create Account </button>
 
-      <div
-        style={{
-          textAlign: "center",
-          margin: "24px 0",
-          color: "#64748b",
-        }}
-      >
-        or continue with
-      </div>
+<div
+style={{
+textAlign: "center",
+margin: "24px 0",
+color: "#64748b",
+}}
+>
+or continue with
+</div>
 
-      <button
+<button
 onClick={handleGoogleSignup}
 style={googleButton}
 
 >
 
-        🔵 Continue with Google
-      </button>
-    </div>
-  </div>
+🔵 Continue with Google </button>
+
 </div>
 
+</div>
+
+</div>
 
 );
+
 }
 
 const tagStyle = {
@@ -292,15 +385,6 @@ padding: "14px 18px",
 borderRadius: "40px",
 border: "1px solid #334155",
 background: "#0f172a",
-color: "white",
-fontSize: "15px",
-};
-
-const prefStyle = {
-padding: "14px 18px",
-borderRadius: "18px",
-border: "1px solid #2563eb",
-background: "#1e3a8a",
 color: "white",
 fontSize: "15px",
 };
@@ -325,6 +409,7 @@ background: "#38bdf8",
 color: "white",
 fontWeight: "700",
 fontSize: "16px",
+cursor: "pointer",
 };
 
 const googleButton = {
@@ -336,6 +421,7 @@ background: "#111827",
 color: "white",
 fontWeight: "600",
 fontSize: "15px",
+cursor: "pointer",
 };
 
 export default Signup;
