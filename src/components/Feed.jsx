@@ -63,7 +63,23 @@ gap: "20px",
 }}
 >
 
-{posts.map((post) => (
+{posts.length === 0 ? (
+
+<div
+style={{
+background: "#0f172a",
+padding: "24px",
+borderRadius: "24px",
+color: "#94a3b8",
+textAlign: "center",
+}}
+>
+No posts yet.
+</div>
+
+) : (
+
+posts.map((post) => (
 
 <div
 key={post.id}
@@ -99,7 +115,11 @@ fontSize: "18px",
 }}
 >
 
-{post.userName?.charAt(0)}
+{
+post.userName
+? post.userName.charAt(0)
+: "I"
+}
 
 </div>
 
@@ -110,7 +130,10 @@ style={{
 marginBottom: "4px",
 }}
 >
-{post.userName}
+{
+post.userName ||
+"Inclura User"
+}
 </h3>
 
 <p
@@ -136,8 +159,9 @@ fontSize: "16px",
 {post.text}
 </p>
 
-{post.accessibilityTags?.length >
-0 && (
+{
+post.accessibilityTags &&
+post.accessibilityTags.length > 0 && (
 
 <div
 style={{
@@ -148,7 +172,8 @@ marginBottom: "18px",
 }}
 >
 
-{post.accessibilityTags.map(
+{
+post.accessibilityTags.map(
 (tag) => (
 
 <div
@@ -166,11 +191,13 @@ fontSize: "13px",
 </div>
 
 )
-)}
+)
+}
 
 </div>
 
-)}
+)
+}
 
 <div
 style={{
@@ -201,7 +228,9 @@ fontSize: "15px",
 
 </div>
 
-))}
+))
+
+)}
 
 </div>
 
