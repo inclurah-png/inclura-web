@@ -8,9 +8,9 @@ BrowserRouter,
 
 import App from "./App";
 
-import {
-AuthProvider,
-} from "./context/AuthContext";
+import { AuthProvider }
+from "./contexts/AuthContext";
+
 
 ReactDOM.createRoot(
 document.getElementById("root")
