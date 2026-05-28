@@ -1,3 +1,5 @@
+<CreatePost />
+
 import Stories from "./Stories";
 import MediaPost from "./MediaPost";
 
