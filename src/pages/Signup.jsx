@@ -6,9 +6,13 @@ signInWithPopup,
 } from "firebase/auth";
 
 import {
-auth,
-googleProvider,
-} from "../firebase";
+doc,
+setDoc,
+serverTimestamp,
+} from "firebase/firestore";
+
+import { auth, db } from "../firebase";
+
 
 import { useNavigate } from "react-router-dom";
 
@@ -26,11 +30,35 @@ const [password, setPassword] =
 useState("");
 async function handleSignup() {
 try {
+const userCredential =
 await createUserWithEmailAndPassword(
 auth,
 email,
 password
 );
+
+const user = userCredential.user;
+
+await setDoc(
+doc(db, "users", user.uid),
+{
+uid: user.uid,
+fullName,
+email,
+createdAt: serverTimestamp(),
+
+accessibilityMode: false,
+
+verified: false,
+
+role: "user",
+
+walletBalance: 0,
+
+resumeCompleted: false,
+}
+);
+
 
 
 alert("Account created successfully");
