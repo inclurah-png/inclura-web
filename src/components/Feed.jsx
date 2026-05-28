@@ -1,120 +1,222 @@
-<CreatePost />
+import { useEffect, useState } from "react";
 
-import Stories from "./Stories";
-import MediaPost from "./MediaPost";
+import {
+collection,
+query,
+orderBy,
+onSnapshot,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
+import CreatePost from "./CreatePost";
 
 function Feed() {
-  return (
-    <div
-      style={{
-        flex: 1,
-        padding: "24px",
-        maxWidth: "800px",
-        margin: "0 auto",
-      }}
-    >
-      {/* Stories */}
-      <Stories />
 
-      {/* Create Post */}
-      <div
-        style={{
-          background: "#0f172a",
-          padding: "22px",
-          borderRadius: "24px",
-          marginBottom: "28px",
-          boxShadow: "0 8px 20px rgba(0,0,0,0.2)",
-        }}
-      >
-        <input
-          placeholder="Share something with Inclura..."
-          style={{
-            width: "100%",
-            padding: "18px",
-            borderRadius: "16px",
-            border: "none",
-            background: "#1e293b",
-            color: "white",
-            fontSize: "16px",
-            outline: "none",
-            marginBottom: "18px",
-            boxSizing: "border-box",
-          }}
-        />
+const [posts, setPosts] =
+useState([]);
 
-        {/* Actions */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: "12px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "12px",
-              flexWrap: "wrap",
-            }}
-          >
-            <button style={actionBtn}>📷 Photo</button>
+useEffect(() => {
 
-            <button style={actionBtn}>🎥 Reel</button>
+const q = query(
+collection(db, "posts"),
+orderBy(
+"createdAt",
+"desc"
+)
+);
 
-            <button style={actionBtn}>♿ Accessibility</button>
+const unsubscribe =
+onSnapshot(q, (snapshot) => {
 
-            <button style={actionBtn}>🔁 Cross-post</button>
-          </div>
+const fetchedPosts =
+snapshot.docs.map((doc) => ({
+id: doc.id,
+...doc.data(),
+}));
 
-          <button
-            style={{
-              background: "#38bdf8",
-              border: "none",
-              padding: "14px 24px",
-              borderRadius: "14px",
-              color: "white",
-              fontWeight: "700",
-              cursor: "pointer",
-            }}
-          >
-            Post
-          </button>
-        </div>
-      </div>
+setPosts(fetchedPosts);
 
-      {/* Feed Posts */}
-      <MediaPost
-        name="Sarah Johnson"
-        handle="sarahj"
-        time="2h"
-        text="Accessibility should never be optional. Inclusive design benefits everyone."
-      />
+});
 
-      <MediaPost
-        name="Inclura Team"
-        handle="inclura"
-        time="5h"
-        text="Welcome to the future of accessibility-first social networking."
-      />
+return () => unsubscribe();
 
-      <MediaPost
-        name="David Smith"
-        handle="davidsmith"
-        time="1d"
-        text="Creators with disabilities deserve equal opportunities online."
-      />
-    </div>
-  );
+}, []);
+
+return (
+
+<div
+style={{
+padding: "24px",
+maxWidth: "720px",
+margin: "0 auto",
+}}
+>
+
+<CreatePost />
+
+<div
+style={{
+display: "flex",
+flexDirection: "column",
+gap: "20px",
+}}
+>
+
+{posts.map((post) => (
+
+<div
+key={post.id}
+style={{
+background: "#0f172a",
+padding: "24px",
+borderRadius: "24px",
+border:
+"1px solid #1e293b",
+}}
+>
+
+<div
+style={{
+display: "flex",
+alignItems: "center",
+gap: "14px",
+marginBottom: "18px",
+}}
+>
+
+<div
+style={{
+width: "48px",
+height: "48px",
+borderRadius: "50%",
+background: "#38bdf8",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
+fontWeight: "700",
+fontSize: "18px",
+}}
+>
+
+{post.userName?.charAt(0)}
+
+</div>
+
+<div>
+
+<h3
+style={{
+marginBottom: "4px",
+}}
+>
+{post.userName}
+</h3>
+
+<p
+style={{
+fontSize: "13px",
+color: "#94a3b8",
+}}
+>
+Inclura Member
+</p>
+
+</div>
+
+</div>
+
+<p
+style={{
+lineHeight: "1.8",
+marginBottom: "18px",
+fontSize: "16px",
+}}
+>
+{post.text}
+</p>
+
+{post.accessibilityTags?.length >
+0 && (
+
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "10px",
+marginBottom: "18px",
+}}
+>
+
+{post.accessibilityTags.map(
+(tag) => (
+
+<div
+key={tag}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "13px",
+}}
+>
+
+{tag}
+
+</div>
+
+)
+)}
+
+</div>
+
+)}
+
+<div
+style={{
+display: "flex",
+gap: "18px",
+color: "#94a3b8",
+fontSize: "15px",
+}}
+>
+
+<button style={actionBtn}>
+❤️ Like
+</button>
+
+<button style={actionBtn}>
+💬 Comment
+</button>
+
+<button style={actionBtn}>
+🔁 Share
+</button>
+
+<button style={actionBtn}>
+♿ Support
+</button>
+
+</div>
+
+</div>
+
+))}
+
+</div>
+
+</div>
+
+);
+
 }
 
 const actionBtn = {
-  background: "#1e293b",
-  border: "none",
-  color: "white",
-  padding: "12px 16px",
-  borderRadius: "12px",
-  cursor: "pointer",
+background: "transparent",
+border: "none",
+color: "#94a3b8",
+cursor: "pointer",
+fontSize: "15px",
 };
 
 export default Feed;
