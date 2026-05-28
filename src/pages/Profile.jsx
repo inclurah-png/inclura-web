@@ -1,0 +1,201 @@
+import { useEffect, useState } from "react";
+
+import { auth, db } from "../firebase";
+
+import {
+doc,
+getDoc,
+} from "firebase/firestore";
+
+function Profile() {
+
+const [profile, setProfile] =
+useState(null);
+
+useEffect(() => {
+
+async function fetchProfile() {
+
+const user = auth.currentUser;
+
+if (!user) return;
+
+const docRef = doc(
+db,
+"users",
+user.uid
+);
+
+const docSnap =
+await getDoc(docRef);
+
+if (docSnap.exists()) {
+setProfile(docSnap.data());
+}
+
+}
+
+fetchProfile();
+
+}, []);
+
+if (!profile) {
+
+return (
+
+<div
+style={{
+background: "#020617",
+minHeight: "100vh",
+color: "white",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
+fontFamily: "Arial",
+}}
+>
+Loading profile...
+</div>
+);
+
+}
+
+return (
+
+<div
+style={{
+background: "#020617",
+minHeight: "100vh",
+padding: "24px",
+color: "white",
+fontFamily: "Arial",
+}}
+>
+
+<div
+style={{
+maxWidth: "700px",
+margin: "0 auto",
+}}
+>
+
+<div
+style={{
+background: "#0f172a",
+padding: "32px",
+borderRadius: "30px",
+border: "1px solid #1e293b",
+}}
+>
+
+<div
+style={{
+display: "flex",
+alignItems: "center",
+gap: "20px",
+marginBottom: "30px",
+}}
+>
+
+<div
+style={{
+width: "90px",
+height: "90px",
+borderRadius: "50%",
+background: "#38bdf8",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
+fontSize: "34px",
+fontWeight: "700",
+}}
+>
+
+{profile.fullName?.charAt(0)}
+
+</div>
+
+<div>
+
+<h1
+style={{
+marginBottom: "8px",
+}}
+>
+{profile.fullName}
+</h1>
+
+<p
+style={{
+color: "#94a3b8",
+}}
+>
+{profile.email}
+</p>
+
+</div>
+
+</div>
+
+<div
+style={{
+display: "flex",
+flexDirection: "column",
+gap: "18px",
+}}
+>
+
+<div style={cardStyle}>
+♿ Accessibility Mode:
+{" "}
+{profile.accessibilityMode
+? "Enabled"
+: "Disabled"}
+</div>
+
+<div style={cardStyle}>
+🏅 Verified:
+{" "}
+{profile.verified
+? "Yes"
+: "No"}
+</div>
+
+<div style={cardStyle}>
+💳 Wallet Balance:
+$
+{profile.walletBalance}
+</div>
+
+<div style={cardStyle}>
+📄 Resume Completed:
+{" "}
+{profile.resumeCompleted
+? "Yes"
+: "No"}
+</div>
+
+<div style={cardStyle}>
+🛡 Role:
+{profile.role}
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+);
+
+}
+
+const cardStyle = {
+background: "#1e293b",
+padding: "18px",
+borderRadius: "18px",
+};
+
+export default Profile;
