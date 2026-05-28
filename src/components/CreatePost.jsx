@@ -1,4 +1,11 @@
 import { useState } from "react";
+import {
+collection,
+addDoc,
+serverTimestamp,
+} from "firebase/firestore";
+
+import { db, auth } from "../firebase";
 
 function CreatePost() {
 
@@ -41,7 +48,55 @@ tag,
 
 }
 
-function handlePost() {
+async function handlePost() {
+
+if (!post.trim()) {
+
+alert(
+"Write something first"
+);
+
+return;
+
+}
+
+try {
+
+const user =
+auth.currentUser;
+
+await addDoc(
+collection(db, "posts"),
+{
+text: post,
+
+userId: user.uid,
+
+userName:
+user.displayName || "Inclura User",
+
+createdAt:
+serverTimestamp(),
+
+accessibilityTags:
+selectedTags,
+}
+);
+
+alert("Post created");
+
+setPost("");
+
+setSelectedTags([]);
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}
+
 
 if (!post.trim()) {
 
