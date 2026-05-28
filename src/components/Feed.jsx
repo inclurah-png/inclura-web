@@ -20,10 +20,7 @@ useEffect(() => {
 
 const q = query(
 collection(db, "posts"),
-orderBy(
-"createdAt",
-"desc"
-)
+orderBy("createdAt", "desc")
 );
 
 const unsubscribe =
@@ -60,26 +57,29 @@ style={{
 display: "flex",
 flexDirection: "column",
 gap: "20px",
+marginTop: "24px",
 }}
 >
 
-{posts.length === 0 ? (
+{posts.length === 0 && (
 
 <div
 style={{
 background: "#0f172a",
 padding: "24px",
 borderRadius: "24px",
-color: "#94a3b8",
 textAlign: "center",
+color: "#94a3b8",
 }}
 >
 No posts yet.
 </div>
 
-) : (
+)}
 
-posts.map((post) => (
+{posts.map((post) => {
+
+return (
 
 <div
 key={post.id}
@@ -87,8 +87,7 @@ style={{
 background: "#0f172a",
 padding: "24px",
 borderRadius: "24px",
-border:
-"1px solid #1e293b",
+border: "1px solid #1e293b",
 }}
 >
 
@@ -108,8 +107,8 @@ height: "48px",
 borderRadius: "50%",
 background: "#38bdf8",
 display: "flex",
-justifyContent: "center",
 alignItems: "center",
+justifyContent: "center",
 fontWeight: "700",
 fontSize: "18px",
 }}
@@ -127,7 +126,7 @@ post.userName
 
 <h3
 style={{
-marginBottom: "4px",
+margin: 0,
 }}
 >
 {
@@ -140,6 +139,7 @@ post.userName ||
 style={{
 fontSize: "13px",
 color: "#94a3b8",
+marginTop: "4px",
 }}
 >
 Inclura Member
@@ -203,8 +203,6 @@ fontSize: "13px",
 style={{
 display: "flex",
 gap: "18px",
-color: "#94a3b8",
-fontSize: "15px",
 }}
 >
 
@@ -228,9 +226,9 @@ fontSize: "15px",
 
 </div>
 
-))
+);
 
-)}
+})}
 
 </div>
 
