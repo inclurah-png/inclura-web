@@ -30,6 +30,17 @@ postId,
 likes = []
 ) {
 
+function handleShare(postId) {
+
+const url =
+`${window.location.origin}/post/${postId}`;
+
+navigator.clipboard.writeText(url);
+
+alert("Post link copied!");
+
+}
+
 const user =
 auth.currentUser;
 
@@ -278,9 +289,15 @@ style={actionBtn}
 ❤️ {post.likes?.length || 0}
 </button>
 
-<button style={actionBtn}>
+<button
+onClick={() =>
+handleShare(post.id)
+}
+style={actionBtn}
+>
 🔁 Share
 </button>
+
 
 <button style={actionBtn}>
 ♿ Support
