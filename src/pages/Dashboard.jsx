@@ -8,6 +8,8 @@ import Rightbar from "../components/Rightbar";
 
 import MobileNav from "../components/MobileNav";
 
+import Notifications from "../components/Notifications";
+
 function Dashboard() {
 
 return (
@@ -49,8 +51,20 @@ style={{
 flex: 1,
 }}
 >
+
 <Feed />
+
+<div
+style={{
+marginTop: "24px",
+}}
+>
+
+<Notifications />
+
 </div>
+
+<div>
 
 {/* RIGHTBAR */}
 
