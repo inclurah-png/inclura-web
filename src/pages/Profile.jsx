@@ -250,7 +250,6 @@ fontSize: "14px",
 
 </div>
   
-```jsx id="f42vkr"
 </div>
 
 </div>
