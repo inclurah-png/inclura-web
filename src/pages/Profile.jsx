@@ -129,6 +129,28 @@ marginBottom: "8px",
 {profile.fullName}
 </h1>
 
+<FollowButton
+targetUserId={auth.currentUser.uid}
+/>
+
+<p
+style={{
+color: "#94a3b8",
+marginTop: "12px",
+fontSize: "14px",
+}}
+>
+Followers:
+{" "}
+{profile.followers?.length || 0}
+
+&nbsp;•&nbsp;
+
+Following:
+{" "}
+{profile.following?.length || 0}
+</p>
+
 <p
 style={{
 color: "#94a3b8",
