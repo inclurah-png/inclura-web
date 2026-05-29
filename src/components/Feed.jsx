@@ -19,6 +19,8 @@ import CreatePost from "./CreatePost";
 
 import FollowButton from "./FollowButton";
 
+import CommentBox from "./CommentBox";
+
 import Comments from "./Comments";
 
 function Feed() {
@@ -281,6 +283,10 @@ targetUserId={post.userId}
                     gap: "18px",
                   }}
                 >
+               
+<CommentBox
+postId={post.id}
+/>
                   
 <button
 onClick={() =>
@@ -294,11 +300,6 @@ style={actionBtn}
 ❤️ {post.likes?.length || 0}
 </button>
 
-
-                  <button
-                    style={
-                      actionBtn
-                    }
                   >
                     💬 Comment
                   </button>
