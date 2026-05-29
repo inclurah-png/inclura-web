@@ -64,7 +64,7 @@ marginTop: "24px",
 
 </div>
 
-<div>
+</div>
 
 {/* RIGHTBAR */}
 
@@ -77,8 +77,6 @@ window.innerWidth > 1100
 }}
 >
 <Rightbar />
-</div>
-
 </div>
   
 <MobileNav />
