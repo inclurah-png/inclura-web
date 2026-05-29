@@ -1,16 +1,61 @@
-import Topbar from "../components/Topbar";
 
-import Sidebar from "../components/Sidebar";
+import { useEffect, useState } from "react";
 
-import Feed from "../components/Feed";
+import { auth, db } from "../firebase";
 
-import Rightbar from "../components/Rightbar"; 
+import FollowButton from "../components/FollowButton";
 
-import MobileNav from "../components/MobileNav";
+import EditProfileModal from "../components/EditProfileModal";
 
-import Notifications from "../components/Notifications";
+import {
+doc,
+onSnapshot,
+} from "firebase/firestore";
 
-function Dashboard() {
+function Profile() {
+
+const [profile, setProfile] =
+useState(null);
+
+const [showEdit,
+setShowEdit] =
+useState(false);
+
+useEffect(() => {
+
+const user =
+auth.currentUser;
+
+if (!user) return;
+
+const unsubscribe =
+onSnapshot(
+doc(
+db,
+"users",
+user.uid
+),
+(docSnap) => {
+
+if (
+docSnap.exists()
+) {
+
+setProfile(
+docSnap.data()
+);
+
+}
+
+}
+);
+
+return () =>
+unsubscribe();
+
+}, []);
+
+if (!profile) {
 
 return (
 
@@ -19,72 +64,286 @@ style={{
 background: "#020617",
 minHeight: "100vh",
 color: "white",
-}}
->
-
-<Topbar />
-
-<div
-style={{
 display: "flex",
-width: "100%",
+justifyContent: "center",
+alignItems: "center",
+fontFamily: "Arial",
 }}
 >
-
-{/* LEFT SIDEBAR */}
-
-<div
-style={{
-display:
-window.innerWidth > 900
-? "block"
-: "none",
-}}
->
-<Sidebar />
-</div>
-
-{/* MAIN FEED */}
-
-<div
-style={{
-flex: 1,
-}}
->
-
-<Feed />
-
-<div
-style={{
-marginTop: "24px",
-}}
->
-
-<Notifications />
-
-</div>
-
-</div>
-
-{/* RIGHTBAR */}
-
-<div
-style={{
-display:
-window.innerWidth > 1100
-? "block"
-: "none",
-}}
->
-<Rightbar />
-</div>
-  
-<MobileNav />
-  
+Loading profile...
 </div>
 
 );
 
 }
 
-export default Dashboard;
+return (
+
+<div
+style={{
+background: "#020617",
+minHeight: "100vh",
+padding: "24px",
+color: "white",
+fontFamily: "Arial",
+}}
+>
+
+<div
+style={{
+maxWidth: "700px",
+margin: "0 auto",
+}}
+>
+
+<div
+style={{
+background: "#0f172a",
+padding: "32px",
+borderRadius: "30px",
+border: "1px solid #1e293b",
+}}
+>
+
+<div
+style={{
+display: "flex",
+alignItems: "center",
+gap: "20px",
+marginBottom: "30px",
+}}
+>
+
+<div
+style={{
+width: "90px",
+height: "90px",
+borderRadius: "50%",
+background: "#38bdf8",
+display: "flex",
+justifyContent: "center",
+alignItems: "center",
+fontSize: "34px",
+fontWeight: "700",
+}}
+>
+
+{profile.fullName?.charAt(0)}
+
+</div>
+
+<div>
+
+<h1
+style={{
+marginBottom: "8px",
+}}
+>
+{profile.fullName}
+</h1>
+
+<button
+onClick={() =>
+setShowEdit(true)
+}
+style={{
+marginBottom: "12px",
+padding: "12px 18px",
+borderRadius: "14px",
+border: "none",
+background: "#38bdf8",
+color: "white",
+fontWeight: "700",
+cursor: "pointer",
+}}
+>
+Edit Profile
+</button>
+
+<FollowButton
+targetUserId={auth.currentUser.uid}
+/>
+
+<p
+style={{
+color: "#94a3b8",
+marginTop: "12px",
+fontSize: "14px",
+}}
+>
+Followers:
+{" "}
+{profile.followers?.length || 0}
+
+&nbsp;•&nbsp;
+
+Following:
+{" "}
+{profile.following?.length || 0}
+</p>
+
+<p
+style={{
+color: "#94a3b8",
+}}
+>
+{profile.email}
+</p>
+
+{profile.bio && (
+
+<p
+style={{
+marginTop: "18px",
+lineHeight: "1.8",
+color: "#cbd5e1",
+}}
+>
+{profile.bio}
+</p>
+
+)}
+
+{profile.location && (
+
+<p
+style={{
+marginTop: "10px",
+color: "#94a3b8",
+}}
+>
+📍 {profile.location}
+</p>
+
+)}
+
+{profile.accessibility && (
+
+<p
+style={{
+marginTop: "10px",
+color: "#94a3b8",
+}}
+>
+♿ {profile.accessibility}
+</p>
+
+)}
+
+</div>
+
+</div>
+
+<div
+style={{
+display: "flex",
+flexDirection: "column",
+gap: "18px",
+}}
+>
+
+<div style={cardStyle}>
+♿ Accessibility Mode:
+{" "}
+{profile.accessibilityMode
+? "Enabled"
+: "Disabled"}
+</div>
+
+<div style={cardStyle}>
+🏅 Verified:
+{" "}
+{profile.verified
+? "Yes"
+: "No"}
+</div>
+
+<div style={cardStyle}>
+💳 Wallet Balance:
+$
+{profile.walletBalance}
+</div>
+
+<div style={cardStyle}>
+📄 Resume Completed:
+{" "}
+{profile.resumeCompleted
+? "Yes"
+: "No"}
+</div>
+
+<div style={cardStyle}>
+🛡 Role:
+{profile.role}
+</div>
+
+<div style={cardStyle}>
+
+<h3
+style={{
+marginBottom: "12px",
+}}
+>
+♿ Accessibility Needs
+</h3>
+
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "10px",
+}}
+>
+
+{profile.accessibilityNeeds?.map(
+(item) => (
+
+<div
+key={item}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "14px",
+}}
+>
+
+{item}
+
+</div>
+
+)
+)}
+
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+{showEdit && (
+
+<EditProfileModal
+profile={profile}
+onClose={() =>
+setShowEdit(false)
+}
+/>
+
+)}
+
+</div>
+
+);
+
+}
+
+const cardStyle = {
+background: "#1e293b",
+padding: "18px",
+borderRadius: "18px",
+};
+
+export default Profile;
