@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 
 import { auth, db } from "../firebase";
 
-<FollowButton
-targetUserId={user.uid}
-/>
-
 import {
 doc,
 onSnapshot,
@@ -254,17 +250,30 @@ fontSize: "14px",
 
 </div>
   
+```jsx id="f42vkr"
 </div>
 
 </div>
 
 </div>
+
+{showEdit && (
+
+<EditProfileModal
+profile={profile}
+onClose={() =>
+setShowEdit(false)
+}
+/>
+
+)}
 
 </div>
 
 );
 
 }
+
 
 const cardStyle = {
 background: "#1e293b",
