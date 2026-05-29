@@ -17,6 +17,8 @@ import { db, auth } from "../firebase";
 
 import CreatePost from "./CreatePost";
 
+import FollowButton from "./FollowButton";
+
 import Comments from "./Comments";
 
 function Feed() {
@@ -181,6 +183,10 @@ likes: arrayUnion(user.uid),
                       {post.userName ||
                         "Inclura User"}
                     </h3>
+
+<FollowButton
+targetUserId={post.userId}
+/>
 
                     <p
                       style={{
