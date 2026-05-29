@@ -2,13 +2,17 @@ import { useEffect, useState } from "react";
 
 import { auth, db } from "../firebase";
 
+<FollowButton
+targetUserId={user.uid}
+/>
+
 import {
 doc,
 getDoc,
 } from "firebase/firestore";
 
 function Profile() {
-
+  
 const [profile, setProfile] =
 useState(null);
 
