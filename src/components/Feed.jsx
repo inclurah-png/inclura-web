@@ -17,6 +17,8 @@ import { db, auth } from "../firebase";
 
 import CreatePost from "./CreatePost";
 
+import Comments from "./Comments";
+
 function Feed() {
   const [posts, setPosts] =
     useState([]);
@@ -311,6 +313,9 @@ style={actionBtn}
                     ♿ Support
                   </button>
                 </div>
+                
+<Comments postId={post.id} />
+                
               </div>
             )
           )
