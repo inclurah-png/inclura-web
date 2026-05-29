@@ -2,19 +2,53 @@
 import { useEffect, useState } from "react";
 
 import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
+collection,
+query,
+orderBy,
+onSnapshot,
+doc,
+updateDoc,
+arrayUnion,
+arrayRemove,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+
+import { db, auth } from "../firebase";
 
 import CreatePost from "./CreatePost";
 
 function Feed() {
   const [posts, setPosts] =
     useState([]);
+
+async function toggleLike(postId, likes = []) {
+
+const user =
+auth.currentUser;
+
+if (!user) return;
+
+const postRef =
+doc(db, "posts", postId);
+
+const alreadyLiked =
+likes.includes(user.uid);
+
+if (alreadyLiked) {
+
+await updateDoc(postRef, {
+likes: arrayRemove(user.uid),
+});
+
+} else {
+
+await updateDoc(postRef, {
+likes: arrayUnion(user.uid),
+});
+
+}
+
+}
 
   useEffect(() => {
     const q = query(
@@ -239,13 +273,19 @@ function Feed() {
                     gap: "18px",
                   }}
                 >
-                  <button
-                    style={
-                      actionBtn
-                    }
-                  >
-                    ❤️ Like
-                  </button>
+                  
+<button
+onClick={() =>
+toggleLike(
+post.id,
+post.likes || []
+)
+}
+style={actionBtn}
+>
+❤️ {post.likes?.length || 0}
+</button>
+
 
                   <button
                     style={
