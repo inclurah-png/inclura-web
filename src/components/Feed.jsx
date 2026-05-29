@@ -20,9 +20,15 @@ import FollowButton from "./FollowButton";
 
 import CommentBox from "./CommentBox";
 
+import SearchBar from "./SearchBar";
+
 function Feed() {
 
 const [posts, setPosts] =
+useState([]);
+
+const [filteredPosts,
+setFilteredPosts] =
 useState([]);
 
 async function toggleLike(
@@ -87,7 +93,13 @@ id: doc.id,
 ...doc.data(),
 }));
 
-setPosts(fetchedPosts);
+setPosts(
+fetchedPosts
+);
+
+setFilteredPosts(
+fetchedPosts
+);
 
 });
 
@@ -107,6 +119,13 @@ margin: "0 auto",
 >
 
 <CreatePost />
+
+<SearchBar
+posts={posts}
+onResults={
+setFilteredPosts
+}
+/>
 
 <div
 style={{
@@ -133,7 +152,7 @@ No posts yet.
 
 ) : (
 
-posts.map((post) => (
+filteredPosts.map(
 
 <div
 key={post.id}
