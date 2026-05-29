@@ -162,18 +162,32 @@ function Feed() {
                   </div>
                 </div>
 
-                <p
-                  style={{
-                    lineHeight:
-                      "1.8",
-                    marginBottom:
-                      "18px",
-                    fontSize:
-                      "16px",
-                  }}
-                >
-                  {post.text}
-                </p>
+{post.text && (
+  <p
+    style={{
+      lineHeight: "1.8",
+      marginBottom: "18px",
+      fontSize: "16px",
+    }}
+  >
+    {post.text}
+  </p>
+)}
+
+{post.imageUrl && (
+  <img
+    src={post.imageUrl}
+    alt="Post"
+    style={{
+      width: "100%",
+      borderRadius: "20px",
+      marginBottom: "18px",
+      border:
+        "1px solid #1e293b",
+    }}
+  />
+)}
+
 
                 {post.accessibilityTags &&
                   post
