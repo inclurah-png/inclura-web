@@ -323,7 +323,10 @@ fontSize: "14px",
 
 </div>
 
+</div>
+
 {showEdit && (
+
 
 <EditProfileModal
 profile={profile}
