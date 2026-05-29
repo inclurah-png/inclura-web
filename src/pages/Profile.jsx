@@ -8,7 +8,7 @@ targetUserId={user.uid}
 
 import {
 doc,
-getDoc,
+onSnapshot,
 } from "firebase/firestore";
 
 function Profile() {
@@ -18,28 +18,35 @@ useState(null);
 
 useEffect(() => {
 
-async function fetchProfile() {
-
-const user = auth.currentUser;
+const user =
+auth.currentUser;
 
 if (!user) return;
 
-const docRef = doc(
+const unsubscribe =
+onSnapshot(
+doc(
 db,
 "users",
 user.uid
+),
+(docSnap) => {
+
+if (
+docSnap.exists()
+) {
+
+setProfile(
+docSnap.data()
 );
 
-const docSnap =
-await getDoc(docRef);
-
-if (docSnap.exists()) {
-setProfile(docSnap.data());
 }
 
 }
+);
 
-fetchProfile();
+return () =>
+unsubscribe();
 
 }, []);
 
