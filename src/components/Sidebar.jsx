@@ -62,7 +62,12 @@ item === "🔖 Saved Posts"
 ) {
 navigate("/saved-posts");
 }
-
+  
+if (
+item === "💬 Messages"
+) {
+navigate("/messages");
+}
 }}
 style={{
               background: "#0f172a",
