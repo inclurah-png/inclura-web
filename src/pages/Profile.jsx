@@ -132,10 +132,6 @@ marginBottom: "8px",
 {profile.fullName}
 </h1>
 
-<FollowButton
-targetUserId={auth.currentUser.uid}
-/>
-
 <p
 style={{
 color: "#94a3b8",
@@ -255,17 +251,6 @@ fontSize: "14px",
 </div>
 
 </div>
-
-{showEdit && (
-
-<EditProfileModal
-profile={profile}
-onClose={() =>
-setShowEdit(false)
-}
-/>
-
-)}
 
 </div>
 
