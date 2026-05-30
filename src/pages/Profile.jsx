@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 
 import { auth, db } from "../firebase";
 
+import FollowButton from "../components/FollowButton";
+
 import {
 doc,
 onSnapshot,
