@@ -78,6 +78,22 @@ useState(null);
     );
   }
 
+{image && (
+
+<img
+src={URL.createObjectURL(image)}
+alt="Preview"
+style={{
+width: "100%",
+marginTop: "16px",
+borderRadius: "18px",
+border:
+"1px solid #334155",
+}}
+/>
+
+)}
+
   async function handlePost() {
     if (
       !post.trim() &&
