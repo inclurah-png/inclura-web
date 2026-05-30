@@ -125,9 +125,40 @@ async function handleGoogleSignup() {
 
 try {
 
+const result =
 await signInWithPopup(
 auth,
 googleProvider
+);
+
+const user =
+result.user;
+
+await setDoc(
+doc(db, "users", user.uid),
+{
+uid: user.uid,
+
+fullName:
+user.displayName || "",
+
+email:
+user.email || "",
+
+createdAt:
+serverTimestamp(),
+
+verified: false,
+
+role: "user",
+
+walletBalance: 0,
+
+resumeCompleted: false,
+
+accessibilityNeeds: [],
+},
+{ merge: true }
 );
 
 navigate("/onboarding");
