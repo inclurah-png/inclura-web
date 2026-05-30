@@ -284,7 +284,7 @@ gap: "10px",
 }}
 >
 
-{profile.accessibilityNeeds?.map(
+{(profile.accessibilityNeeds || []).map(
 (item) => (
 
 <div
