@@ -1,18 +1,19 @@
 function Sidebar() {
   const items = [
-    "🏠 Home",
-    "👥 Community",
-    "💬 Messages",
-    "🔔 Notifications",
-    "🎥 Reels",
-    "🧑‍🦽 Accessibility",
-    "📄 Resume",
-    "💼 Care Gigs",
-    "♿ Accessibility ID",
-    "🏅 Badges",
-    "💳 Wallet",
-    "⚙️ Settings",
-  ];
+  "🏠 Home",
+  "👥 Community",
+  "💬 Messages",
+  "🔔 Notifications",
+  "🔖 Saved Posts",
+  "🎥 Reels",
+  "🧑‍🦽 Accessibility",
+  "📄 Resume",
+  "💼 Care Gigs",
+  "♿ Accessibility ID",
+  "🏅 Badges",
+  "💳 Wallet",
+  "⚙️ Settings",
+];
 
   return (
     <div
