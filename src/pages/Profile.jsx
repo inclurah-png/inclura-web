@@ -121,6 +121,30 @@ marginBottom: "30px",
 
 <div
 style={{
+display: "flex",
+flexDirection: "column",
+alignItems: "center",
+gap: "10px",
+}}
+>
+
+{profile.photoURL ? (
+
+<img
+src={profile.photoURL}
+alt="Profile"
+style={{
+width: "90px",
+height: "90px",
+borderRadius: "50%",
+objectFit: "cover",
+}}
+/>
+
+) : (
+
+<div
+style={{
 width: "90px",
 height: "90px",
 borderRadius: "50%",
@@ -132,8 +156,22 @@ fontSize: "34px",
 fontWeight: "700",
 }}
 >
-
 {profile.fullName?.charAt(0)}
+</div>
+
+)}
+
+<input
+type="file"
+accept="image/*"
+onChange={handlePhotoUpload}
+/>
+
+{uploading && (
+<p style={{ color: "#38bdf8" }}>
+Uploading...
+</p>
+)}
 
 </div>
 
@@ -146,7 +184,21 @@ marginBottom: "8px",
 >
 {profile.fullName}
 </h1>
-
+  
+<button
+style={{
+background: "#38bdf8",
+border: "none",
+padding: "10px 18px",
+borderRadius: "12px",
+color: "white",
+fontWeight: "600",
+cursor: "pointer",
+marginTop: "10px",
+}}
+>
+Edit Profile
+</button>
 <p
 style={{
 color: "#94a3b8",
