@@ -1,4 +1,8 @@
 import { useNavigate } from "react-router-dom";
+
+import { signOut } from "firebase/auth";
+
+import { auth } from "../firebase";
 function Sidebar() {
 
 const navigate =
@@ -18,6 +22,7 @@ useNavigate();
   "🏅 Badges",
   "💳 Wallet",
   "⚙️ Settings",
+  "🚪 Logout",
 ];
 
   return (
@@ -62,12 +67,23 @@ item === "🔖 Saved Posts"
 ) {
 navigate("/saved-posts");
 }
-  
+
 if (
 item === "💬 Messages"
 ) {
 navigate("/messages");
 }
+
+if (
+item === "🚪 Logout"
+) {
+
+signOut(auth);
+
+navigate("/login");
+
+}
+
 }}
 style={{
               background: "#0f172a",
