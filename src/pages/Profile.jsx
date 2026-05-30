@@ -1,20 +1,7 @@
-import { storage } from "../firebase";
-
-import {
-ref,
-uploadBytes,
-getDownloadURL,
-} from "firebase/storage";
-
-import {
-updateDoc,
-} from "firebase/firestore";
 
 import { useEffect, useState } from "react";
 
 import { auth, db } from "../firebase";
-
-import FollowButton from "../components/FollowButton";
 
 import {
 doc,
@@ -26,40 +13,6 @@ function Profile() {
 const [profile, setProfile] =
 useState(null);
   
-const [uploading, setUploading] =
-useState(false);
-
-async function handlePhotoUpload(e) {
-
-const file = e.target.files[0];
-
-if (!file) return;
-
-try {
-
-setUploading(true);
-
-const user = auth.currentUser;
-
-const storageRef = ref(
-storage,
-`profiles/${user.uid}`
-);
-
-await uploadBytes(
-storageRef,
-file
-);
-
-const photoURL =
-await getDownloadURL(storageRef);
-
-await updateDoc(
-doc(db, "users", user.uid),
-{
-photoURL,
-}
-);
 
 alert("Profile photo updated");
 
