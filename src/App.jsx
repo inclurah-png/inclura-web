@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import Messages from "./pages/Messages";
 import SavedPosts from "./pages/SavedPosts";
 function Home() {
 return (
@@ -59,6 +60,15 @@ path="/saved-posts"
 element={
 <ProtectedRoute>
 <SavedPosts />
+</ProtectedRoute>
+}
+/>
+    
+    <Route
+path="/messages"
+element={
+<ProtectedRoute>
+<Messages />
 </ProtectedRoute>
 }
 />
