@@ -48,8 +48,6 @@ console.log(error);
 
 alert(error.code);
 
-}
-
 } finally {
 
 setLoading(false);
