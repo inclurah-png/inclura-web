@@ -2,10 +2,16 @@
 import { useState } from "react";
 
 import {
-  collection,
-  addDoc,
-  serverTimestamp,
+collection,
+addDoc,
+serverTimestamp,
 } from "firebase/firestore";
+
+import {
+ref,
+uploadBytes,
+getDownloadURL,
+} from "firebase/storage";
 
 import {
   ref,
@@ -14,9 +20,9 @@ import {
 } from "firebase/storage";
 
 import {
-  db,
-  auth,
-  storage,
+db,
+auth,
+storage,
 } from "../firebase";
 
 function CreatePost() {
@@ -109,6 +115,27 @@ border:
       const user =
         auth.currentUser;
 
+let imageUrl = "";
+
+if (image) {
+
+const imageRef = ref(
+storage,
+`posts/${Date.now()}_${image.name}`
+);
+
+await uploadBytes(
+imageRef,
+image
+);
+
+imageUrl =
+await getDownloadURL(
+imageRef
+);
+
+}
+
       let imageUrl = "";
 
       if (image) {
@@ -150,6 +177,9 @@ border:
         }
       );
 
+imageUrl:
+imageUrl,
+
       alert(
         "Post created"
       );
@@ -161,6 +191,9 @@ border:
       setPreview("");
 
       setSelectedTags([]);
+      
+setImage(null);
+
     } catch (error) {
       alert(error.message);
     }
