@@ -22,7 +22,10 @@ import {
 function CreatePost() {
   const [post, setPost] =
     useState("");
-
+  
+const [image,
+setImage] =
+useState(null);
   const [selectedTags,
     setSelectedTags] =
     useState([]);
@@ -199,7 +202,18 @@ function CreatePost() {
             "20px",
         }}
       />
-
+      
+<input
+type="file"
+accept="image/*"
+onChange={(e) =>
+setImage(
+e.target.files[0]
+)
+}
+/>
+      
+  <div    
       <input
         type="file"
         accept="image/*"
