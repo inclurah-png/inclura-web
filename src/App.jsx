@@ -9,7 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
-
+import SavedPosts from "./pages/SavedPosts";
 function Home() {
 return (
 <> <Navbar /> <Hero />
@@ -53,6 +53,15 @@ element={<Home />}
         </ProtectedRoute>
       }
     />
+    
+    <Route
+path="/saved-posts"
+element={
+<ProtectedRoute>
+<SavedPosts />
+</ProtectedRoute>
+}
+/>
   </Routes>
 </div>
 
