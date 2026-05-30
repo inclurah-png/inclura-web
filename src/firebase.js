@@ -2,9 +2,13 @@
 import { initializeApp } from "firebase/app";
 
 import {
-  getAuth,
-  GoogleAuthProvider,
+getAuth,
+GoogleAuthProvider,
 } from "firebase/auth";
+
+import {
+getStorage,
+} from "firebase/storage";
 
 import {
   getFirestore,
@@ -39,6 +43,9 @@ const app =
 
 export const auth =
   getAuth(app);
+
+export const storage =
+getStorage(app);
 
 export const db =
   getFirestore(app);
