@@ -1,4 +1,9 @@
+import { useNavigate } from "react-router-dom";
 function Sidebar() {
+
+const navigate =
+useNavigate();
+  
   const items = [
   "🏠 Home",
   "👥 Community",
@@ -43,8 +48,23 @@ function Sidebar() {
       >
         {items.map((item) => (
           <button
-            key={item}
-            style={{
+key={item}
+onClick={() => {
+
+if (
+item === "🏠 Home"
+) {
+navigate("/dashboard");
+}
+
+if (
+item === "🔖 Saved Posts"
+) {
+navigate("/saved-posts");
+}
+
+}}
+style={{
               background: "#0f172a",
               border: "none",
               color: "white",
