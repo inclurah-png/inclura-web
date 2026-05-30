@@ -12,6 +12,9 @@ arrayUnion,
 arrayRemove,
 } from "firebase/firestore";
 
+getDoc,
+setDoc,
+
 import { db, auth } from "../firebase";
 
 import CreatePost from "./CreatePost";
@@ -317,9 +320,17 @@ style={actionBtn}
 🔁 Share
 </button>
 
-
 <button style={actionBtn}>
 ♿ Support
+</button>
+
+<button
+onClick={() =>
+savePost(post)
+}
+style={actionBtn}
+>
+🔖 Save
 </button>
 
 </div>
