@@ -44,7 +44,11 @@ navigate("/dashboard");
 
 } catch (error) {
 
-alert(error.message);
+console.log(error);
+
+alert(error.code);
+
+}
 
 } finally {
 
