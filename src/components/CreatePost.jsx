@@ -212,7 +212,23 @@ e.target.files[0]
 )
 }
 />
-      
+  
+{image && (
+
+<img
+src={URL.createObjectURL(image)}
+alt="Preview"
+style={{
+width: "100%",
+marginTop: "16px",
+borderRadius: "18px",
+border:
+"1px solid #334155",
+}}
+/>
+
+)}
+
   <div    
       <input
         type="file"
