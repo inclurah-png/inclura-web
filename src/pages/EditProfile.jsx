@@ -24,9 +24,30 @@ useState("");
 const [category, setCategory] =
 useState("");
   
+function EditProfile() {
+
+const [fullName, setFullName] =
+useState("");
+
+const [location, setLocation] =
+useState("");
+
+const [bio, setBio] =
+useState("");
+
+const [category, setCategory] =
+useState("");
+
+const [accessibilityNeeds,
+setAccessibilityNeeds] =
+useState([]);
+
 const navigate =
 useNavigate();
-
+  
+const navigate =
+useNavigate();
+  
 useEffect(() => {
 
 async function loadProfile() {
@@ -66,6 +87,10 @@ setCategory(
 data.category || ""
 );
 
+setAccessibilityNeeds(
+data.accessibilityNeeds || []
+);
+  
 }
 
 }
@@ -94,6 +119,7 @@ fullName,
 location,
 bio,
 category,
+accessibilityNeeds,
 }
 );
 
@@ -207,6 +233,155 @@ Advocate
 </option>
 
 </select>
+<div
+style={{
+marginBottom:"20px",
+}}
+>
+
+<h3>
+Accessibility Needs
+</h3>
+
+<label>
+<input
+type="checkbox"
+value="Visual Impairment"
+checked={accessibilityNeeds.includes(
+"Visual Impairment"
+)}
+onChange={(e)=>{
+
+if(e.target.checked){
+
+setAccessibilityNeeds([
+...accessibilityNeeds,
+e.target.value
+]);
+
+}else{
+
+setAccessibilityNeeds(
+accessibilityNeeds.filter(
+(item)=>
+item !== e.target.value
+)
+);
+
+}
+
+}}
+/>
+
+ Visual Impairment
+</label>
+
+<br/>
+
+<label>
+<input
+type="checkbox"
+value="Hearing Impairment"
+checked={accessibilityNeeds.includes(
+"Hearing Impairment"
+)}
+onChange={(e)=>{
+
+if(e.target.checked){
+
+setAccessibilityNeeds([
+...accessibilityNeeds,
+e.target.value
+]);
+
+}else{
+
+setAccessibilityNeeds(
+accessibilityNeeds.filter(
+(item)=>
+item !== e.target.value
+)
+);
+
+}
+
+}}
+/>
+
+ Hearing Impairment
+</label>
+
+<br/>
+
+<label>
+<input
+type="checkbox"
+value="Mobility Impairment"
+checked={accessibilityNeeds.includes(
+"Mobility Impairment"
+)}
+onChange={(e)=>{
+
+if(e.target.checked){
+
+setAccessibilityNeeds([
+...accessibilityNeeds,
+e.target.value
+]);
+
+}else{
+
+setAccessibilityNeeds(
+accessibilityNeeds.filter(
+(item)=>
+item !== e.target.value
+)
+);
+
+}
+
+}}
+/>
+
+ Mobility Impairment
+</label>
+
+<br/>
+
+<label>
+<input
+type="checkbox"
+value="Speech Impairment"
+checked={accessibilityNeeds.includes(
+"Speech Impairment"
+)}
+onChange={(e)=>{
+
+if(e.target.checked){
+
+setAccessibilityNeeds([
+...accessibilityNeeds,
+e.target.value
+]);
+
+}else{
+
+setAccessibilityNeeds(
+accessibilityNeeds.filter(
+(item)=>
+item !== e.target.value
+)
+);
+
+}
+
+}}
+/>
+
+ Speech Impairment
+</label>
+
+</div>
 <button
 onClick={handleSave}
 style={buttonStyle}
