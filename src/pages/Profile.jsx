@@ -1,6 +1,8 @@
 
 import { useEffect, useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import { auth, db } from "../firebase";
 
 import {
@@ -12,7 +14,8 @@ function Profile() {
   
 const [profile, setProfile] =
 useState(null);
-  
+const navigate =
+useNavigate();  
 
 alert("Profile photo updated");
 
@@ -224,7 +227,25 @@ color: "#94a3b8",
 >
 {profile.email}
 </p>
-
+  
+<button
+onClick={() =>
+navigate("/edit-profile")
+}
+style={{
+background: "#38bdf8",
+border: "none",
+padding: "10px 18px",
+borderRadius: "12px",
+color: "white",
+fontWeight: "600",
+cursor: "pointer",
+marginTop: "10px",
+}}
+>
+Edit Profile
+</button>
+  
 </div>
 
 </div>
