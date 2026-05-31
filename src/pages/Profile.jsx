@@ -202,6 +202,19 @@ marginTop: "10px",
 >
 Edit Profile
 </button>
+{profile.bio && (
+
+<p
+style={{
+marginTop: "12px",
+color: "#cbd5e1",
+lineHeight: "1.6",
+}}
+>
+{profile.bio}
+</p>
+
+)}
 <p
 style={{
 color: "#94a3b8",
