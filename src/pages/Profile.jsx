@@ -305,7 +305,12 @@ $
 🛡 Role:
 {profile.role}
 </div>
+  
 <div style={cardStyle}>
+🏷 Category:
+{" "}
+{profile.category || "Not Selected"}
+</div>
 
 <h3
 style={{
