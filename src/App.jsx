@@ -9,6 +9,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
+import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
 import SavedPosts from "./pages/SavedPosts";
 function Home() {
@@ -54,6 +55,15 @@ element={<Home />}
         </ProtectedRoute>
       }
     />
+    
+    <Route
+  path="/edit-profile"
+  element={
+    <ProtectedRoute>
+      <EditProfile />
+    </ProtectedRoute>
+  }
+/>
     
     <Route
 path="/saved-posts"
