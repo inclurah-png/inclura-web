@@ -1,4 +1,14 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { auth, db } from "../firebase";
+
+import {
+doc,
+getDoc,
+updateDoc,
+} from "firebase/firestore";
+
+import { useNavigate } from "react-router-dom";
 
 function EditProfile() {
 
@@ -10,7 +20,45 @@ useState("");
 
 const [bio, setBio] =
 useState("");
+  
+const navigate =
+useNavigate();
 
+async function handleSave() {
+
+try {
+
+const user =
+auth.currentUser;
+
+if (!user) return;
+
+await updateDoc(
+doc(
+db,
+"users",
+user.uid
+),
+{
+fullName,
+location,
+bio,
+}
+);
+
+alert(
+"Profile updated successfully"
+);
+
+navigate("/profile");
+
+} catch (error) {
+
+alert(error.message);
+
+}
+
+}
 return (
 
 <div
@@ -66,6 +114,7 @@ height:"120px",
 />
 
 <button
+onClick={handleSave}
 style={buttonStyle}
 >
 Save Changes
