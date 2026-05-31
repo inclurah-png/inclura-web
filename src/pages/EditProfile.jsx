@@ -21,8 +21,58 @@ useState("");
 const [bio, setBio] =
 useState("");
   
+const [category, setCategory] =
+useState("");
+  
 const navigate =
 useNavigate();
+
+useEffect(() => {
+
+async function loadProfile() {
+
+const user =
+auth.currentUser;
+
+if (!user) return;
+
+const snap =
+await getDoc(
+doc(
+db,
+"users",
+user.uid
+)
+);
+
+if (snap.exists()) {
+
+const data =
+snap.data();
+
+setFullName(
+data.fullName || ""
+);
+
+setLocation(
+data.location || ""
+);
+
+setBio(
+data.bio || ""
+);
+
+setCategory(
+data.category || ""
+);
+
+}
+
+}
+
+loadProfile();
+
+}, []);
 
 async function handleSave() {
 
@@ -43,6 +93,7 @@ user.uid
 fullName,
 location,
 bio,
+category,
 }
 );
 
@@ -112,7 +163,50 @@ style={{
 height:"120px",
 }}
 />
+  
+<select
+value={category}
+onChange={(e) =>
+setCategory(
+e.target.value
+)
+}
+style={inputStyle}
+>
 
+<option value="">
+Select Category
+</option>
+
+<option value="Creator">
+Creator
+</option>
+
+<option value="Caregiver">
+Caregiver
+</option>
+
+<option value="Employer">
+Employer
+</option>
+
+<option value="Job Seeker">
+Job Seeker
+</option>
+
+<option value="Volunteer">
+Volunteer
+</option>
+
+<option value="Organization">
+Organization
+</option>
+
+<option value="Advocate">
+Advocate
+</option>
+
+</select>
 <button
 onClick={handleSave}
 style={buttonStyle}
