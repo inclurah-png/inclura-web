@@ -148,8 +148,8 @@ objectFit: "cover",
 
 <div
 style={{
-width: "90px",
-height: "90px",
+width: "140px",
+height: "140px",
 borderRadius: "50%",
 background: "#38bdf8",
 display: "flex",
