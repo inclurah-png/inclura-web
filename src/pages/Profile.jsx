@@ -112,13 +112,25 @@ borderRadius: "30px",
 border: "1px solid #1e293b",
 }}
 >
-
+  
+<div
+style={{
+height: "180px",
+background:
+"linear-gradient(135deg,#2563eb,#38bdf8)",
+borderRadius: "20px",
+marginBottom: "70px",
+}}
+>
+  
 <div
 style={{
 display: "flex",
 alignItems: "center",
 gap: "20px",
 marginBottom: "30px",
+marginTop: "-120px",
+paddingLeft: "20px",
 }}
 >
 
@@ -137,8 +149,8 @@ gap: "10px",
 src={profile.photoURL}
 alt="Profile"
 style={{
-width: "140px",
-height: "140px",
+width: "160px",
+height: "160px",
 borderRadius: "50%",
 objectFit: "cover",
 }}
@@ -148,14 +160,14 @@ objectFit: "cover",
 
 <div
 style={{
-width: "140px",
-height: "140px",
+width: "160px",
+height: "160px",
 borderRadius: "50%",
 background: "#38bdf8",
 display: "flex",
 justifyContent: "center",
 alignItems: "center",
-fontSize:  "48px",,
+fontSize: "60px",
 fontWeight: "700",
 }}
 >
