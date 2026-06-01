@@ -183,14 +183,21 @@ function EditProfile() {
         />
 
         <select
-          value={category}
-          onChange={(e)=>
-            setCategory(
-              e.target.value
-            )
-          }
-          style={inputStyle}
-        >
+  value={category}
+  onChange={(e) =>
+    setCategory(e.target.value)
+  }
+  style={{
+    width:"100%",
+    padding:"16px",
+    marginBottom:"16px",
+    borderRadius:"14px",
+    border:"1px solid #334155",
+    background:"#ffffff",
+    color:"#000000",
+    boxSizing:"border-box",
+  }}
+>
 
           <option value="">
             Select Category
