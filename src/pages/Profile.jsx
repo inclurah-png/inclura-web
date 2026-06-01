@@ -317,9 +317,9 @@ $
 </div>
 
 <div style={cardStyle}>
-🏷 Category:
+📱 Phone:
 {" "}
-{profile.category || "Not Selected"}
+{profile.phoneNumber || "Not provided"}
 </div>
   
 <div style={cardStyle}>
