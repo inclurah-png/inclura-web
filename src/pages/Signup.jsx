@@ -31,7 +31,10 @@ useState("");
 
 const [password, setPassword] =
 useState("");
-
+  
+const [category, setCategory] =
+useState("");
+  
 const [accessibilityNeeds,
 setAccessibilityNeeds] =
 useState([]);
@@ -91,7 +94,9 @@ uid: user.uid,
 fullName,
 
 email,
-
+  
+category,
+  
 createdAt:
 serverTimestamp(),
 
@@ -236,28 +241,139 @@ gap: "12px",
 }}
 >
 
-<button style={tagStyle}>
+<button
+onClick={() =>
+setCategory("Disability")
+}
+style={{
+...tagStyle,
+background:
+category === "Disability"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
 ♿ Disability
 </button>
 
-<button style={tagStyle}>
+<button
+onClick={() =>
+setCategory("Ally")
+}
+style={{
+...tagStyle,
+background:
+category === "Ally"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
 🤝 Ally
 </button>
 
-<button style={tagStyle}>
+<button
+onClick={() =>
+setCategory("Caregiver")
+}
+style={{
+...tagStyle,
+background:
+category === "Caregiver"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
 ❤️ Caregiver
 </button>
-
-<button style={tagStyle}>
+  
+<button
+onClick={() =>
+setCategory("Volunteer")
+}
+style={{
+...tagStyle,
+background:
+category === "Volunteer"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
+🙋 Volunteer
+</button>
+  
+<button
+onClick={() =>
+setCategory("Creator")
+}
+style={{
+...tagStyle,
+background:
+category === "Creator"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
 🎨 Creator
 </button>
 
-<button style={tagStyle}>
+<button
+onClick={() =>
+setCategory("Organization")
+}
+style={{
+...tagStyle,
+background:
+category === "Organization"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
 🏢 Organization
 </button>
 
-<button style={tagStyle}>
-💼 Employer
+<button
+onClick={() =>
+setCategory("Employer")
+}
+style={{
+...tagStyle,
+background:
+category === "Employer"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
+🏢 Employer
+</button>
+
+<button
+onClick={() =>
+setCategory("Job Seeker")
+}
+style={{
+...tagStyle,
+background:
+category === "Job Seeker"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
+💼 Job Seeker
+</button>
+
+<button
+onClick={() =>
+setCategory("Advocate")
+}
+style={{
+...tagStyle,
+background:
+category === "Advocate"
+? "#38bdf8"
+: "#0f172a",
+}}
+>
+📢 Advocate
 </button>
 
 </div>
