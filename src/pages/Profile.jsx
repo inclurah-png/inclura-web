@@ -137,8 +137,8 @@ gap: "10px",
 src={profile.photoURL}
 alt="Profile"
 style={{
-width: "90px",
-height: "90px",
+width: "140px",
+height: "140px",
 borderRadius: "50%",
 objectFit: "cover",
 }}
@@ -242,7 +242,7 @@ style={{
 color: "#94a3b8",
 }}
 >
-{profile.email}
+📧 Private Email
 </p>
   
 <button
