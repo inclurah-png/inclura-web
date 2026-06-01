@@ -189,6 +189,10 @@ marginBottom: "8px",
 </h1>
   
 <button
+onClick={() =>
+window.location.href =
+"/edit-profile"
+}
 style={{
 background: "#38bdf8",
 border: "none",
