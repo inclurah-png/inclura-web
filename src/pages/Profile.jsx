@@ -155,7 +155,7 @@ background: "#38bdf8",
 display: "flex",
 justifyContent: "center",
 alignItems: "center",
-fontSize: "34px",
+fontSize:  "48px",,
 fontWeight: "700",
 }}
 >
