@@ -18,7 +18,10 @@ function EditProfile() {
 
   const [location, setLocation] =
     useState("");
-
+  
+  const [phoneNumber, setPhoneNumber] =
+    useState("");
+  
   const [bio, setBio] =
     useState("");
 
@@ -63,7 +66,10 @@ function EditProfile() {
         setLocation(
           data.location || ""
         );
-
+        
+setPhoneNumber(
+data.phoneNumber || ""
+);
         setBio(
           data.bio || ""
         );
@@ -102,6 +108,7 @@ function EditProfile() {
         {
           fullName,
           location,
+          phoneNumber,
           bio,
           category,
           accessibilityNeeds,
@@ -167,7 +174,18 @@ function EditProfile() {
           }
           style={inputStyle}
         />
-
+        
+<input
+placeholder="Phone Number"
+value={phoneNumber}
+onChange={(e)=>
+setPhoneNumber(
+e.target.value
+)
+}
+style={inputStyle}
+/>
+        
         <textarea
           placeholder="Bio"
           value={bio}
