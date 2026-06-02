@@ -368,6 +368,39 @@ $
 {profile.category || "Not Selected"}
 </div>
 
+<div style={cardStyle}>
+
+<h3>
+♿ Accessibility Needs
+</h3>
+
+{profile.accessibilityNeeds?.length ? (
+
+profile.accessibilityNeeds.map(
+(item) => (
+
+<div
+key={item}
+style={{
+marginTop:"8px",
+}}
+>
+• {item}
+</div>
+
+)
+)
+
+) : (
+
+<div>
+No accessibility needs selected
+</div>
+
+)}
+
+</div>
+  
 <h3
 style={{
 marginBottom: "12px",
