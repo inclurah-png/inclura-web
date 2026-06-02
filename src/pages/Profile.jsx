@@ -202,19 +202,54 @@ marginBottom: "8px",
 
 Edit Profile
 </button>
-{profile.bio && (
+<div
+style={{
+marginTop: "16px",
+marginBottom: "16px",
+}}
+>
 
 <p
 style={{
-marginTop: "12px",
-color: "#cbd5e1",
-lineHeight: "1.6",
+fontSize: "14px",
+color: "#94a3b8",
+marginBottom: "8px",
 }}
 >
-{profile.bio}
+Profile Completion
 </p>
 
-)}
+<div
+style={{
+width: "100%",
+height: "10px",
+background: "#1e293b",
+borderRadius: "999px",
+overflow: "hidden",
+}}
+>
+
+<div
+style={{
+width: `${
+(
+(profile.fullName ? 1 : 0) +
+(profile.bio ? 1 : 0) +
+(profile.location ? 1 : 0) +
+(profile.phoneNumber ? 1 : 0) +
+(profile.category ? 1 : 0) +
+(profile.photoURL ? 1 : 0)
+) * 100 / 6
+}%`,
+height: "100%",
+background: "#38bdf8",
+}}
+/>
+
+</div>
+
+</div>
+
 <p
 style={{
 color: "#94a3b8",
