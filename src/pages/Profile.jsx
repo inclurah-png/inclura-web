@@ -149,8 +149,8 @@ gap: "10px",
 src={profile.photoURL}
 alt="Profile"
 style={{
-width: "160px",
-height: "160px",
+width: "200px",
+height: "200px",
 borderRadius: "50%",
 objectFit: "cover",
 }}
@@ -160,14 +160,14 @@ objectFit: "cover",
 
 <div
 style={{
-width: "160px",
-height: "160px",
+width: "200px",
+height: "200px",
 borderRadius: "50%",
 background: "#38bdf8",
 display: "flex",
 justifyContent: "center",
 alignItems: "center",
-fontSize: "60px",
+fontSize: "80px",
 fontWeight: "700",
 }}
 >
@@ -199,23 +199,7 @@ marginBottom: "8px",
 >
 {profile.fullName}
 </h1>
-  
-<button
-onClick={() =>
-window.location.href =
-"/edit-profile"
-}
-style={{
-background: "#38bdf8",
-border: "none",
-padding: "10px 18px",
-borderRadius: "12px",
-color: "white",
-fontWeight: "600",
-cursor: "pointer",
-marginTop: "10px",
-}}
->
+
 Edit Profile
 </button>
 {profile.bio && (
@@ -254,7 +238,16 @@ style={{
 color: "#94a3b8",
 }}
 >
-📧 Private Email
+📱 {profile.phoneNumber || "No phone number"}
+</p>
+  
+<p
+style={{
+color: "#38bdf8",
+fontWeight: "600",
+}}
+>
+🏷️ {profile.category || "No category selected"}
 </p>
   
 <button
