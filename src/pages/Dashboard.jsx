@@ -198,14 +198,6 @@ color: "#cbd5e1",
 {profile.bio}
 </p>
 
-)}
-
-{profile.location && (
-
-)}
-
-{profile.accessibility && (
-
 <p
 style={{
 marginTop: "10px",
@@ -311,8 +303,6 @@ fontSize: "14px",
 </div>
 
 </div>
-
-)}
 
 </div>
 
