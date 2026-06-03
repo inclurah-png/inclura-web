@@ -1,11 +1,10 @@
+import { useNavigate } from "react-router-dom";
 
 import { useEffect, useState } from "react";
 
 import { auth, db } from "../firebase";
 
 import FollowButton from "../components/FollowButton";
-
-import EditProfileModal from "../components/EditProfileModal";
 
 import {
 doc,
@@ -17,9 +16,8 @@ function Profile() {
 const [profile, setProfile] =
 useState(null);
 
-const [showEdit,
-setShowEdit] =
-useState(false);
+const navigate =
+useNavigate();
 
 useEffect(() => {
 
@@ -143,9 +141,7 @@ marginBottom: "8px",
 </h1>
 
 <button
-onClick={() =>
-setShowEdit(true)
-}
+onClick={() => navigate("/edit-profile")}
 style={{
 marginBottom: "12px",
 padding: "12px 18px",
@@ -205,15 +201,6 @@ color: "#cbd5e1",
 )}
 
 {profile.location && (
-
-<p
-style={{
-marginTop: "10px",
-color: "#94a3b8",
-}}
->
-📍 {profile.location}
-</p>
 
 )}
 
@@ -324,16 +311,6 @@ fontSize: "14px",
 </div>
 
 </div>
-
-{showEdit && (
-
-
-<EditProfileModal
-profile={profile}
-onClose={() =>
-setShowEdit(false)
-}
-/>
 
 )}
 
