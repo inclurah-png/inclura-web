@@ -137,6 +137,7 @@ style={{
 marginBottom: "8px",
 }}
 >
+</h1>
 {profile.fullName}
 </h1>
 
@@ -173,7 +174,6 @@ Following:
 </p>
 
 {profile.bio && (
-<>
 <p
 style={{
 marginTop: "18px",
@@ -183,6 +183,7 @@ color: "#cbd5e1",
 >
 {profile.bio}
 </p>
+)}
 
 <p
 style={{
@@ -260,6 +261,22 @@ gap: "10px",
 }}
 >
 
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "10px",
+}}
+>
+
+<div
+style={{
+display: "flex",
+flexWrap: "wrap",
+gap: "10px",
+}}
+>
+
 {profile.accessibilityNeeds?.map(
 (item) => (
 
@@ -272,10 +289,75 @@ borderRadius: "14px",
 fontSize: "14px",
 }}
 >
-
 {item}
+</div>
+
+)
+)}
 
 </div>
+
+</div>
+
+</div>
+
+);
+
+}
+
+
+<div
+key={item}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "14px",
+}}
+>
+{item}
+</div>
+
+)
+)}
+
+</div>
+
+</div>
+
+</div>
+
+);
+
+}
+
+
+<div
+key={item}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "14px",
+}}
+>
+{item}
+</div>
+
+)
+)}
+
+<div
+key={item}
+style={{
+background: "#1e3a8a",
+padding: "10px 14px",
+borderRadius: "14px",
+fontSize: "14px",
+}}
+>
+
+{item}
 
 )
 )}
