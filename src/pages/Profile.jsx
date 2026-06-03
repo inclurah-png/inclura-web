@@ -10,27 +10,39 @@ doc,
 onSnapshot,
 } from "firebase/firestore";
 
-function Profile() {
-  
-const [profile, setProfile] =
-useState(null);
-const navigate =
-useNavigate();  
+const [profile, setProfile] = useState(null);
 
-alert("Profile photo updated");
+const [uploading, setUploading] =
+useState(false);
+
+const navigate = useNavigate();
+
+async function handlePhotoUpload(e) {
+
+const file = e.target.files[0];
+
+if (!file) return;
+
+try {
+
+setUploading(true);
+
+alert(
+  "Photo upload function needs to be reconnected."
+);
 
 } catch (error) {
 
 alert(error.message);
 
 } finally {
-
+  
 setUploading(false);
 
 }
 
 }
-useEffect(() => {
+
 
 const user =
 auth.currentUser;
@@ -276,15 +288,6 @@ color: "#94a3b8",
 📱 {profile.phoneNumber || "No phone number"}
 </p>
   
-<p
-style={{
-color: "#38bdf8",
-fontWeight: "600",
-}}
->
-🏷️ {profile.category || "No category selected"}
-</p>
-  
 <button
 onClick={() =>
 navigate("/edit-profile")
@@ -369,27 +372,6 @@ $
 </div>
 
 <div style={cardStyle}>
-
-<h3>
-♿ Accessibility Needs
-</h3>
-
-{profile.accessibilityNeeds?.length ? (
-
-profile.accessibilityNeeds.map(
-(item) => (
-
-<div
-key={item}
-style={{
-marginTop:"8px",
-}}
->
-• {item}
-</div>
-
-)
-)
 
 ) : (
 
