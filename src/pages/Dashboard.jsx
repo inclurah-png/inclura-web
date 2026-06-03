@@ -174,6 +174,29 @@ Following:
 </p>
 
 {profile.bio && (
+<>
+</>
+<p
+style={{
+marginTop: "18px",
+lineHeight: "1.8",
+color: "#cbd5e1",
+}}
+>
+{profile.bio}
+</p>
+
+<p
+style={{
+marginTop: "10px",
+color: "#94a3b8",
+}}
+>
+♿ {profile.accessibility}
+</p>
+</>
+)}
+
 <p
 style={{
 marginTop: "18px",
