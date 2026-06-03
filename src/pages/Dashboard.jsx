@@ -160,13 +160,6 @@ Edit Profile
 targetUserId={auth.currentUser.uid}
 />
 
-<p
-style={{
-color: "#94a3b8",
-marginTop: "12px",
-fontSize: "14px",
-}}
->
 Followers:
 {" "}
 {profile.followers?.length || 0}
@@ -178,16 +171,8 @@ Following:
 {profile.following?.length || 0}
 </p>
 
-<p
-style={{
-color: "#94a3b8",
-}}
->
-{profile.email}
-</p>
-
 {profile.bio && (
-
+<>
 <p
 style={{
 marginTop: "18px",
@@ -206,7 +191,7 @@ color: "#94a3b8",
 >
 ♿ {profile.accessibility}
 </p>
-
+</>
 )}
 
 </div>
