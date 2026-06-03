@@ -268,6 +268,7 @@ $
 </div>
 
 <div style={cardStyle}>
+<div style={cardStyle}>
 
 <h3
 style={{
@@ -276,22 +277,6 @@ marginBottom: "12px",
 >
 ♿ Accessibility Needs
 </h3>
-
-<div
-style={{
-display: "flex",
-flexWrap: "wrap",
-gap: "10px",
-}}
->
-
-<div
-style={{
-display: "flex",
-flexWrap: "wrap",
-gap: "10px",
-}}
->
 
 <div
 style={{
