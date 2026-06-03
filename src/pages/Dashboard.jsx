@@ -159,7 +159,8 @@ Edit Profile
 <FollowButton
 targetUserId={auth.currentUser.uid}
 />
-
+  
+<p>
 Followers:
 {" "}
 {profile.followers?.length || 0}
@@ -278,13 +279,7 @@ fontSize: "14px",
 
 )
 )}
-
-</div>
-
-</div>
-
-</div>
-
+  
 </div>
 
 </div>
@@ -302,4 +297,3 @@ borderRadius: "18px",
 };
 
 export default Profile;
-
