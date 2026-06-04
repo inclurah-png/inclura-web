@@ -76,7 +76,7 @@
 
       <button
 onClick={() => {
-window.location.href = "/dashboard";
+window.location.href = "/profile";
 }}
 style={{
 width: "100%",
