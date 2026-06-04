@@ -40,8 +40,8 @@ password
 
 alert("Login successful");
 
-navigate("/dashboard");
-
+navigate("/profile");
+ 
 } catch (error) {
 
 console.log(error);
