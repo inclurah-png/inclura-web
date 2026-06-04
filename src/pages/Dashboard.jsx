@@ -220,21 +220,32 @@ function Profile() {
                   gap: "10px",
                 }}
               >
-                {profile.accessibilityNeeds?.map(
-                  (item) => (
-                    <div
-                      key={item}
-                      style={{
-                        background: "#1e3a8a",
-                        padding: "10px 14px",
-                        borderRadius: "14px",
-                        fontSize: "14px",
-                      }}
-                    >
-                      {item}
-                    </div>
-                  )
-                )}
+                {profile.accessibilityNeeds?.length > 0 ? (
+  profile.accessibilityNeeds.map((item) => (
+    <div
+      key={item}
+      style={{
+        background: "#2563eb",
+        color: "white",
+        padding: "12px 16px",
+        borderRadius: "999px",
+        fontSize: "14px",
+        fontWeight: "600",
+        border: "1px solid #60a5fa",
+      }}
+    >
+      ♿ {item}
+    </div>
+  ))
+) : (
+  <p
+    style={{
+      color: "#94a3b8",
+    }}
+  >
+    No accessibility needs selected
+  </p>
+)}
               </div>
             </div>
           </div>
