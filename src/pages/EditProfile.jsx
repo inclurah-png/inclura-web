@@ -119,7 +119,7 @@ data.phoneNumber || ""
         "Profile updated successfully"
       );
 
-      navigate("/dashboard");
+      navigate("/profile");
 
     } catch (error) {
 
