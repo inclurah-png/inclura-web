@@ -198,7 +198,12 @@ function Profile() {
             <div style={cardStyle}>
               🛡 Role: {profile.role}
             </div>
-
+            
+<div style={cardStyle}>
+🏷 Category:
+{profile.category || "Not selected"}
+</div>
+            
             <div style={cardStyle}>
               <h3
                 style={{
