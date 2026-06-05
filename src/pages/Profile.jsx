@@ -1,5 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
+
 import { useEffect, useState } from "react";
 
 import { auth, db, storage } from "../firebase";
@@ -19,17 +20,15 @@ import {
 } from "firebase/storage";
 
 function Profile() {
+
   const [profile, setProfile] = useState(null);
 
-const [uploading, setUploading] =
-  useState(false;
+  const [uploading, setUploading] =
+    useState(false);
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const user = auth.currentUser;
-
-async function handlePhotoUpload(e) {
+  async function handlePhotoUpload(e) {
   const file = e.target.files[0];
 
   if (!file) return;
@@ -37,8 +36,7 @@ async function handlePhotoUpload(e) {
   try {
     setUploading(true);
 
-    const user =
-      auth.currentUser;
+    const user = auth.currentUser;
 
     const storageRef = ref(
       storage,
@@ -69,26 +67,30 @@ async function handlePhotoUpload(e) {
     alert(
       "Profile photo updated!"
     );
+
   } catch (error) {
     alert(error.message);
   } finally {
     setUploading(false);
   }
 }
-    
-    if (!user) return;
 
-    const unsubscribe = onSnapshot(
-      doc(db, "users", user.uid),
-      (docSnap) => {
-        if (docSnap.exists()) {
-          setProfile(docSnap.data());
-        }
+  useEffect(() => {
+  const user = auth.currentUser;
+
+  if (!user) return;
+
+  const unsubscribe = onSnapshot(
+    doc(db, "users", user.uid),
+    (docSnap) => {
+      if (docSnap.exists()) {
+        setProfile(docSnap.data());
       }
-    );
+    }
+  );
 
-    return () => unsubscribe();
-  }, []);
+  return () => unsubscribe();
+}, []);
 
   if (!profile) {
     return (
