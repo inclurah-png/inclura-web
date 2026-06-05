@@ -1,21 +1,81 @@
 
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { auth, db } from "../firebase";
+
+import { auth, db, storage } from "../firebase";
+
 import FollowButton from "../components/FollowButton";
+
 import {
   doc,
   onSnapshot,
+  updateDoc,
 } from "firebase/firestore";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
 function Profile() {
   const [profile, setProfile] = useState(null);
+
+const [uploading, setUploading] =
+  useState(false;
 
   const navigate = useNavigate();
 
   useEffect(() => {
     const user = auth.currentUser;
 
+async function handlePhotoUpload(e) {
+  const file = e.target.files[0];
+
+  if (!file) return;
+
+  try {
+    setUploading(true);
+
+    const user =
+      auth.currentUser;
+
+    const storageRef = ref(
+      storage,
+      `profilePhotos/${user.uid}`
+    );
+
+    await uploadBytes(
+      storageRef,
+      file
+    );
+
+    const photoURL =
+      await getDownloadURL(
+        storageRef
+      );
+
+    await updateDoc(
+      doc(
+        db,
+        "users",
+        user.uid
+      ),
+      {
+        photoURL,
+      }
+    );
+
+    alert(
+      "Profile photo updated!"
+    );
+  } catch (error) {
+    alert(error.message);
+  } finally {
+    setUploading(false);
+  }
+}
+    
     if (!user) return;
 
     const unsubscribe = onSnapshot(
@@ -80,22 +140,58 @@ function Profile() {
               marginBottom: "30px",
             }}
           >
-            <div
-              style={{
-                width: "90px",
-                height: "90px",
-                borderRadius: "50%",
-                background: "#38bdf8",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                fontSize: "34px",
-                fontWeight: "700",
-              }}
-            >
-              {profile.fullName?.charAt(0)}
-            </div>
+        
+<div
+  style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "10px",
+  }}
+>
+  {profile.photoURL ? (
+    <img
+      src={profile.photoURL}
+      alt="Profile"
+      style={{
+        width: "120px",
+        height: "120px",
+        borderRadius: "50%",
+        objectFit: "cover",
+        border: "3px solid #38bdf8",
+      }}
+    />
+  ) : (
+    <div
+      style={{
+        width: "120px",
+        height: "120px",
+        borderRadius: "50%",
+        background: "#38bdf8",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        fontSize: "42px",
+        fontWeight: "700",
+      }}
+    >
+      {profile.fullName?.charAt(0)}
+    </div>
+  )}
 
+  <input
+    type="file"
+    accept="image/*"
+    onChange={handlePhotoUpload}
+  />
+</div>
+
+            {uploading && (
+  <p style={{ color: "#38bdf8" }}>
+    Uploading...
+  </p>
+)}
+            
             <div>
               <h1
                 style={{
