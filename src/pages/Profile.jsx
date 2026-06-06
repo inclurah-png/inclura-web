@@ -219,6 +219,24 @@ function Profile() {
                 Edit Profile
               </button>
 
+              <button
+  onClick={() =>
+    navigate("/search")
+  }
+  style={{
+    marginLeft:"10px",
+    padding:"12px 18px",
+    borderRadius:"14px",
+    border:"none",
+    background:"#2563eb",
+    color:"white",
+    fontWeight:"700",
+    cursor:"pointer",
+  }}
+>
+  Search Users
+</button>
+
               <FollowButton
                 targetUserId={auth.currentUser.uid}
               />
