@@ -1,7 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-
 import ProtectedRoute from "./components/ProtectedRoute";
-
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
 
@@ -11,6 +9,15 @@ import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
+import Search from "./pages/Search";
+<Route
+  path="/search"
+  element={
+    <ProtectedRoute>
+      <Search />
+    </ProtectedRoute>
+  }
+/>
 import SavedPosts from "./pages/SavedPosts";
 function Home() {
 return (
