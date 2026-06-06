@@ -9,6 +9,7 @@ import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
+import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 <Route
   path="/search"
@@ -18,7 +19,6 @@ import Search from "./pages/Search";
     </ProtectedRoute>
   }
 />
-import SavedPosts from "./pages/SavedPosts";
 function Home() {
 return (
 <> <Navbar /> <Hero />
@@ -37,7 +37,6 @@ minHeight: "100vh",
 path="/"
 element={<Home />}
 />
-
 
     <Route
       path="/login"
