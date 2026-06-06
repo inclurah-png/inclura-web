@@ -28,8 +28,7 @@ minHeight: "100vh",
     
 > <Routes>
 <Route
-path="/"
-element={<Home />}
+path="/"element={<Home />}
 />
 
     <Route
@@ -90,6 +89,7 @@ element={
     </ProtectedRoute>
   }
 />
+    
     <Route
 path="/messages"
 element={
@@ -98,6 +98,7 @@ element={
 </ProtectedRoute>
 }
 />
+    
   </Routes>
 </div>
 );
