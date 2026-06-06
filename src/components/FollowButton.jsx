@@ -148,6 +148,19 @@ user.uid
 }
 );
 
+  const currentUserName =
+  auth.currentUser.displayName ||
+  "Inclura User";
+
+await addDoc(
+  collection(db, "notifications"),
+  {
+    targetUserId: targetUserId,
+    message: `${currentUserName} started following you`,
+    createdAt: serverTimestamp(),
+  }
+);
+  
 }
 
 } catch (error) {
