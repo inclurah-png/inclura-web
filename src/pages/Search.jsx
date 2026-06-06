@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import { useNavigate } from "react-router-dom";
 import {
   collection,
   getDocs,
@@ -8,6 +8,7 @@ import {
 import { db } from "../firebase";
 
 function Search() {
+  const navigate = useNavigate();
   const [query, setQuery] =
     useState("");
 
@@ -70,15 +71,19 @@ function Search() {
       />
 
       {filteredUsers.map((user) => (
-        <div
-          key={user.id}
-          style={{
-            background:"#1e293b",
-            padding:"16px",
-            borderRadius:"14px",
-            marginBottom:"12px",
-          }}
-        >
+  <div
+    key={user.id}
+    onClick={() =>
+      navigate(`/user/${user.id}`)
+    }
+    style={{
+      background:"#1e293b",
+      padding:"16px",
+      borderRadius:"14px",
+      marginBottom:"12px",
+      cursor:"pointer",
+    }}
+  >
           <h3>
             {user.fullName}
           </h3>
