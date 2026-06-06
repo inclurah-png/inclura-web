@@ -14,6 +14,12 @@ db,
 auth,
 } from "../firebase";
 
+import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
 function FollowButton({
 targetUserId,
 }) {
