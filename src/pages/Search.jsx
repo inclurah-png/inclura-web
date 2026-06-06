@@ -41,7 +41,7 @@ function Search() {
           query.toLowerCase()
         )
     );
-
+  
   return (
     <div
       style={{
