@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -12,21 +11,17 @@ arrayUnion,
 arrayRemove,
 } from "firebase/firestore";
 
-getDoc,
-setDoc,
-
-import { db, auth } from "../firebase";
+import {
+db,
+auth,
+} from "../firebase";
 
 import CreatePost from "./CreatePost";
-
 import FollowButton from "./FollowButton";
-
 import CommentBox from "./CommentBox";
-
 import SearchBar from "./SearchBar";
 
 function Feed() {
-
 const [posts, setPosts] =
 useState([]);
 
@@ -34,51 +29,7 @@ const [filteredPosts,
 setFilteredPosts] =
 useState([]);
 
-async function toggleLike(
-postId,
-likes = []
-) {
-
-function handleShare(postId) {
-
-const url =
-`${window.location.origin}/post/${postId}`;
-
-navigator.clipboard.writeText(url);
-
-alert("Post link copied!");
-
-}
-
-const user =
-auth.currentUser;
-
-if (!user) return;
-
-const postRef =
-doc(db, "posts", postId);
-
-const alreadyLiked =
-likes.includes(user.uid);
-
-if (alreadyLiked) {
-
-await updateDoc(postRef, {
-likes: arrayRemove(user.uid),
-});
-
-} else {
-
-await updateDoc(postRef, {
-likes: arrayUnion(user.uid),
-});
-
-}
-
-}
-
 useEffect(() => {
-
 const q = query(
 collection(db, "posts"),
 orderBy(
@@ -88,277 +39,205 @@ orderBy(
 );
 
 const unsubscribe =
-onSnapshot(q, (snapshot) => {
+  onSnapshot(
+    q,
+    (snapshot) => {
+      const fetchedPosts =
+        snapshot.docs.map(
+          (doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })
+        );
 
-const fetchedPosts =
-snapshot.docs.map((doc) => ({
-id: doc.id,
-...doc.data(),
-}));
+      setPosts(
+        fetchedPosts
+      );
 
-setPosts(
-fetchedPosts
-);
-
-setFilteredPosts(
-fetchedPosts
-);
-
-});
+      setFilteredPosts(
+        fetchedPosts
+      );
+    }
+  );
 
 return () =>
-unsubscribe();
+  unsubscribe();
 
 }, []);
 
-return (
+async function toggleLike(
+postId,
+likes = []
+) {
+const user =
+auth.currentUser;
 
+if (!user) return;
+
+const postRef =
+  doc(
+    db,
+    "posts",
+    postId
+  );
+
+const alreadyLiked =
+  likes.includes(
+    user.uid
+  );
+
+if (alreadyLiked) {
+  await updateDoc(
+    postRef,
+    {
+      likes:
+        arrayRemove(
+          user.uid
+        ),
+    }
+  );
+} else {
+  await updateDoc(
+    postRef,
+    {
+      likes:
+        arrayUnion(
+          user.uid
+        ),
+    }
+  );
+}
+
+}
+
+function handleShare(
+postId
+) {
+const url =
+`${window.location.origin}/post/${postId}`;
+
+navigator.clipboard.writeText(
+  url
+);
+
+alert(
+  "Post link copied!"
+);
+
+}
+
+return (
 <div
 style={{
 padding: "24px",
 maxWidth: "720px",
 margin: "0 auto",
 }}
->
+> <CreatePost />
 
-<CreatePost />
+  <SearchBar
+    posts={posts}
+    onResults={
+      setFilteredPosts
+    }
+  />
 
-<SearchBar
-posts={posts}
-onResults={
-setFilteredPosts
-}
-/>
+  <div
+    style={{
+      marginTop: "24px",
+    }}
+  >
+    {filteredPosts.map(
+      (post) => (
+        <div
+          key={post.id}
+          style={{
+            background:
+              "#0f172a",
+            padding:
+              "24px",
+            borderRadius:
+              "24px",
+            marginBottom:
+              "20px",
+          }}
+        >
+          <h3>
+            {post.userName}
+          </h3>
 
-<div
-style={{
-display: "flex",
-flexDirection: "column",
-gap: "20px",
-marginTop: "24px",
-}}
->
+          <FollowButton
+            targetUserId={
+              post.userId
+            }
+          />
 
-{posts.length === 0 ? (
+          <p>
+            {post.text}
+          </p>
 
-<div
-style={{
-background: "#0f172a",
-padding: "24px",
-borderRadius: "24px",
-textAlign: "center",
-color: "#94a3b8",
-}}
->
-No posts yet.
-</div>
+          {post.imageUrl && (
+            <img
+              src={
+                post.imageUrl
+              }
+              alt="Post"
+              style={{
+                width:
+                  "100%",
+                borderRadius:
+                  "16px",
+              }}
+            />
+          )}
 
-) : (
+          <div
+            style={{
+              display:
+                "flex",
+              gap: "12px",
+              marginTop:
+                "16px",
+            }}
+          >
+            <button
+              onClick={() =>
+                toggleLike(
+                  post.id,
+                  post.likes ||
+                    []
+                )
+              }
+            >
+              ❤️{" "}
+              {post.likes
+                ?.length ||
+                0}
+            </button>
 
-filteredPosts.map(
+            <button
+              onClick={() =>
+                handleShare(
+                  post.id
+                )
+              }
+            >
+              🔁 Share
+            </button>
+          </div>
 
-<div
-key={post.id}
-style={{
-background: "#0f172a",
-padding: "24px",
-borderRadius: "24px",
-border: "1px solid #1e293b",
-}}
->
-
-<div
-style={{
-display: "flex",
-alignItems: "center",
-gap: "14px",
-marginBottom: "18px",
-}}
->
-
-<div
-style={{
-width: "48px",
-height: "48px",
-borderRadius: "50%",
-background: "#38bdf8",
-display: "flex",
-alignItems: "center",
-justifyContent: "center",
-fontWeight: "700",
-fontSize: "18px",
-}}
->
-
-{post.userName
-? post.userName[0]
-: "I"}
-
-</div>
-
-<div>
-
-<h3
-style={{
-margin: 0,
-}}
->
-{post.userName ||
-"Inclura User"}
-</h3>
-
-<FollowButton
-targetUserId={post.userId}
-/>
-
-<p
-style={{
-fontSize: "13px",
-color: "#94a3b8",
-marginTop: "4px",
-}}
->
-Inclura Member
-</p>
-
-</div>
-
-</div>
-
-{post.text && (
-
-<p
-style={{
-lineHeight: "1.8",
-marginBottom: "18px",
-fontSize: "16px",
-}}
->
-{post.text}
-</p>
-
-)}
-
-{post.imageUrl && (
-
-<img
-src={post.imageUrl}
-alt="Post"
-style={{
-width: "100%",
-borderRadius: "20px",
-marginBottom: "18px",
-border:
-"1px solid #1e293b",
-}}
-/>
-
-)}
-
-{post.accessibilityTags &&
-post.accessibilityTags.length > 0 && (
-
-<div
-style={{
-display: "flex",
-flexWrap: "wrap",
-gap: "10px",
-marginBottom: "18px",
-}}
->
-
-{post.accessibilityTags.map(
-(tag, index) => (
-
-<div
-key={index}
-style={{
-background: "#1e3a8a",
-padding: "10px 14px",
-borderRadius: "14px",
-fontSize: "13px",
-}}
->
-
-{tag}
-
-</div>
-
-)
-)}
-
-</div>
-
-)}
-
-<div
-style={{
-display: "flex",
-gap: "18px",
-marginBottom: "18px",
-}}
->
-
-<button
-onClick={() =>
-toggleLike(
-post.id,
-post.likes || []
-)
-}
-style={actionBtn}
->
-❤️ {post.likes?.length || 0}
-</button>
-
-<button
-onClick={() =>
-handleShare(post.id)
-}
-style={actionBtn}
->
-🔁 Share
-</button>
-
-<button style={actionBtn}>
-♿ Support
-</button>
-
-<button
-onClick={() =>
-savePost(post)
-}
-style={actionBtn}
->
-🔖 Save
-</button>
-
-</div>
-
-<CommentBox
-postId={post.id}
-/>
-
-</div>
-
-))
-
-)}
-
-</div>
-
+          <CommentBox
+            postId={
+              post.id
+            }
+          />
+        </div>
+      )
+    )}
+  </div>
 </div>
 
 );
-
 }
-
-const actionBtn = {
-background: "transparent",
-border: "none",
-color: "#94a3b8",
-cursor: "pointer",
-fontSize: "15px",
-};
 
 export default Feed;
