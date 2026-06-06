@@ -84,6 +84,7 @@ function Search() {
       cursor:"pointer",
     }}
   >
+    
           <h3>
             {user.fullName}
           </h3>
