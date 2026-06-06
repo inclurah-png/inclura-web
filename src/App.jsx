@@ -19,6 +19,17 @@ import Search from "./pages/Search";
     </ProtectedRoute>
   }
 />
+import UserProfile from "./pages/UserProfile";
+
+<Route
+  path="/user/:userId"
+  element={
+    <ProtectedRoute>
+      <UserProfile />
+    </ProtectedRoute>
+  }
+/>
+
 function Home() {
 return (
 <> <Navbar /> <Hero />
