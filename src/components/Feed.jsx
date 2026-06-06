@@ -12,6 +12,14 @@ arrayRemove,
 } from "firebase/firestore";
 
 import {
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+} from "firebase/firestore";
+
+import {
 db,
 auth,
 } from "../firebase";
@@ -60,6 +68,46 @@ const unsubscribe =
     }
   );
 
+  async function savePost(post) {
+  try {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    const userRef = doc(
+      db,
+      "users",
+      user.uid
+    );
+
+    const userSnap =
+      await getDoc(userRef);
+
+    const savedPosts =
+      userSnap.data()?.savedPosts || [];
+
+    if (
+      savedPosts.includes(post.id)
+    ) {
+      await updateDoc(userRef, {
+        savedPosts:
+          arrayRemove(post.id),
+      });
+
+      alert("Post removed");
+    } else {
+      await updateDoc(userRef, {
+        savedPosts:
+          arrayUnion(post.id),
+      });
+
+      alert("Post saved");
+    }
+  } catch (error) {
+    alert(error.message);
+  }
+  }
+  
 return () =>
   unsubscribe();
 
