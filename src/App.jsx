@@ -10,7 +10,6 @@ import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
-import UserProfile from "./pages/UserProfile";
 
 function Home() {
 return (
@@ -81,15 +80,6 @@ element={
   }
 />
 
-<Route
-  path="/user/:userId"
-  element={
-    <ProtectedRoute>
-      <UserProfile />
-    </ProtectedRoute>
-  }
-/>
-    
     <Route
 path="/messages"
 element={
