@@ -11,6 +11,7 @@ import Messages from "./pages/Messages";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
+import Notifications from "./pages/Notifications";
 
 function Home() {
 return (
@@ -77,6 +78,15 @@ element={
   element={
     <ProtectedRoute>
       <Search />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/notifications"
+  element={
+    <ProtectedRoute>
+      <Notifications />
     </ProtectedRoute>
   }
 />
