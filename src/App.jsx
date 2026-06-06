@@ -25,6 +25,7 @@ return (
 style={{
 minHeight: "100vh",
 }}
+    
 > <Routes>
 <Route
 path="/"
@@ -99,8 +100,6 @@ element={
 />
   </Routes>
 </div>
-
-
 );
 }
 
