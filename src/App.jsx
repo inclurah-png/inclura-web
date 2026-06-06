@@ -19,6 +19,7 @@ import Search from "./pages/Search";
     </ProtectedRoute>
   }
 />
+
 import UserProfile from "./pages/UserProfile";
 
 <Route
