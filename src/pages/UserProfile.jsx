@@ -1,4 +1,5 @@
-
+import FollowButton from "../components/FollowButton";
+import { auth } from "../firebase";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
@@ -104,6 +105,20 @@ function UserProfile() {
         )}
 
         <h1>{user.fullName}</h1>
+
+{auth.currentUser &&
+ auth.currentUser.uid !== userId && (
+  <div
+    style={{
+      marginTop: "12px",
+      marginBottom: "20px",
+    }}
+  >
+    <FollowButton
+      targetUserId={userId}
+    />
+  </div>
+)}
 
         <p>{user.bio}</p>
 
