@@ -36,6 +36,10 @@ useEffect(() => {
 
 const user =
 auth.currentUser;
+if (user.uid === targetUserId) {
+  alert("You cannot follow yourself");
+  return;
+}
 
 if (!user)
 return;
