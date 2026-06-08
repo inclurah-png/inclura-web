@@ -17,12 +17,6 @@ db,
 auth,
 } from "../firebase";
 
-import {
-  addDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
-
 function FollowButton({
 targetUserId,
 }) {
@@ -38,10 +32,6 @@ useState(false);
 useEffect(() => {
 const user =
 auth.currentUser;
-if (user.uid === targetUserId) {
-  alert("You cannot follow yourself");
-  return;
-}
 
 if (!user)
 return;
@@ -88,7 +78,11 @@ async function handleFollow() {
 
 const user =
 auth.currentUser;
-
+if (user.uid === targetUserId) {
+  alert("You cannot follow yourself");
+  return;
+}
+  
 if (!user)
 return;
 
@@ -171,19 +165,6 @@ user.uid,
 createdAt:
 serverTimestamp(),
 }
-);
-  
-  const currentUserName =
-  auth.currentUser.displayName ||
-  "Inclura User";
-
-await addDoc(
-  collection(db, "notifications"),
-  {
-    targetUserId: targetUserId,
-    message: `${currentUserName} started following you`,
-    createdAt: serverTimestamp(),
-  }
 );
   
 }
