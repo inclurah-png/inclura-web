@@ -36,7 +36,6 @@ setLoading] =
 useState(false);
 
 useEffect(() => {
-
 const user =
 auth.currentUser;
 if (user.uid === targetUserId) {
