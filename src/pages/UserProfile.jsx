@@ -2,7 +2,14 @@ import FollowButton from "../components/FollowButton";
 import { auth } from "../firebase";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
+import PostCard from "../components/PostCard";
 import { db } from "../firebase";
 
 import {
@@ -14,9 +21,11 @@ function UserProfile() {
   const { userId } = useParams();
 
   const [user, setUser] = useState(null);
-
+  const [posts, setPosts] = useState([]);
+ 
   useEffect(() => {
     loadUser();
+    loadPosts();
   }, [userId]);
 
   async function loadUser() {
@@ -37,7 +46,25 @@ function UserProfile() {
       console.error(error);
     }
   }
+  
+async function loadPosts() {
+  const q = query(
+    collection(db, "posts"),
+    where("userId", "==", userId)
+  );
 
+  const snapshot =
+    await getDocs(q);
+
+  const data =
+    snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+  setPosts(data);
+}
+  
   if (!user) {
     return (
       <div
@@ -145,6 +172,27 @@ function UserProfile() {
           {" "}
           {user.following?.length || 0}
         </p>
+        
+        <h2
+  style={{
+    marginTop: "30px",
+    marginBottom: "20px",
+  }}
+>
+  Posts
+</h2>
+
+{posts.length === 0 ? (
+  <p>No posts yet</p>
+) : (
+  posts.map((post) => (
+    <PostCard
+      key={post.id}
+      name={post.userName}
+      text={post.text}
+    />
+  ))
+)}
       </div>
     </div>
   );
