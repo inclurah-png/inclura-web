@@ -22,7 +22,9 @@ function UserProfile() {
 
   const [user, setUser] = useState(null);
   const [posts, setPosts] = useState([]);
- 
+  const [activeTab, setActiveTab] =
+  useState("posts");
+  
   useEffect(() => {
     loadUser();
     loadPosts();
@@ -172,15 +174,94 @@ async function loadPosts() {
           {" "}
           {user.following?.length || 0}
         </p>
-        
-        <h2
+
+        <div
   style={{
-    marginTop: "30px",
-    marginBottom: "20px",
+    display: "flex",
+    gap: "12px",
+    marginTop: "24px",
+    marginBottom: "24px",
   }}
 >
-  Posts
-</h2>
+  <button
+    onClick={() =>
+      setActiveTab("posts")
+    }
+  >
+    Posts
+  </button>
+
+  <button
+    onClick={() =>
+      setActiveTab("about")
+    }
+  >
+    About
+  </button>
+
+  <button
+    onClick={() =>
+      setActiveTab(
+        "accessibility"
+      )
+    }
+  >
+    Accessibility
+  </button>
+</div>
+        
+        {activeTab === "posts" && (
+  <>
+    <h2>Posts</h2>
+
+    {posts.length === 0 ? (
+      <p>No posts yet</p>
+    ) : (
+      posts.map((post) => (
+        <PostCard
+          key={post.id}
+          name={post.userName}
+          text={post.text}
+        />
+      ))
+    )}
+  </>
+)}
+
+{activeTab === "about" && (
+  <>
+    <p>{user.bio}</p>
+
+    <p>
+      Category: {user.category}
+    </p>
+
+    <p>
+      Followers:
+      {user.followers?.length || 0}
+    </p>
+
+    <p>
+      Following:
+      {user.following?.length || 0}
+    </p>
+  </>
+)}
+
+{activeTab === "accessibility" && (
+  <>
+    <p>
+      Accessibility:
+      {user.accessibility}
+    </p>
+
+    <p>
+      {user.accessibilityNeeds?.join(
+        ", "
+      )}
+    </p>
+  </>
+)}
 
 {posts.length === 0 ? (
   <p>No posts yet</p>
