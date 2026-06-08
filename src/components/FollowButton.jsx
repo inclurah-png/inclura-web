@@ -7,6 +7,9 @@ updateDoc,
 arrayUnion,
 arrayRemove,
 onSnapshot,
+addDoc,
+collection,
+serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -151,7 +154,26 @@ user.uid
 ),
 }
 );
+  
+await addDoc(
+collection(db, "notifications"),
+{
+targetUserId:
+targetUserId,
 
+message:
+`${user.displayName || "Someone"} started following you`,
+
+type: "follow",
+
+fromUserId:
+user.uid,
+
+createdAt:
+serverTimestamp(),
+}
+);
+  
   const currentUserName =
   auth.currentUser.displayName ||
   "Inclura User";
