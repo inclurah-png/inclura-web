@@ -14,13 +14,17 @@ import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 
 import Feed from "./components/Feed";
+import { auth } from "./firebase";
 
 function Home() {
   return (
     <>
       <Navbar />
       <Hero />
-      <Feed />
+
+      {auth.currentUser && (
+        <Feed />
+      )}
     </>
   );
 }
