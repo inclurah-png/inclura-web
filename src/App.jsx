@@ -1,7 +1,13 @@
+
 import { Routes, Route } from "react-router-dom";
+
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
+import Feed from "./components/Feed";
+
+import { auth } from "./firebase";
+
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Onboarding from "./pages/Onboarding";
@@ -12,9 +18,6 @@ import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
-
-import Feed from "./components/Feed";
-import { auth } from "./firebase";
 
 function Home() {
   return (
@@ -30,97 +33,98 @@ function Home() {
 }
 
 function App() {
-return (
-<div
-style={{
-minHeight: "100vh",
-}}
-    
-> <Routes>
-<Route
-path="/"element={<Home />}
-/>
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+      }}
+    >
+      <Routes>
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-    <Route
-      path="/login"
-      element={<Login />}
-    />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-    <Route
-      path="/signup"
-      element={<Signup />}
-    />
+        <Route
+          path="/signup"
+          element={<Signup />}
+        />
 
-    <Route
-      path="/onboarding"
-      element={<Onboarding />}
-    />
+        <Route
+          path="/onboarding"
+          element={<Onboarding />}
+        />
 
-    <Route
-  path="/profile"
-  element={
-    <ProtectedRoute>
-      <Profile />
-    </ProtectedRoute>
-  }
-/>
-    
-    <Route
-  path="/edit-profile"
-  element={
-    <ProtectedRoute>
-      <EditProfile />
-    </ProtectedRoute>
-  }
-/>
-    
-    <Route
-path="/saved-posts"
-element={
-<ProtectedRoute>
-<SavedPosts />
-</ProtectedRoute>
-}
-/>
-  <Route
-  path="/search"
-  element={
-    <ProtectedRoute>
-      <Search />
-    </ProtectedRoute>
-  }
-/>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
-<Route
-  path="/notifications"
-  element={
-    <ProtectedRoute>
-      <Notifications />
-    </ProtectedRoute>
-  }
-/>
-    
-<Route
-  path="/user/:userId"
-  element={
-    <ProtectedRoute>
-      <UserProfile />
-    </ProtectedRoute>
-  }
-/> 
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-path="/messages"
-element={
-<ProtectedRoute>
-<Messages />
-</ProtectedRoute>
-}
-/>
-    
-  </Routes>
-</div>
-);
+        <Route
+          path="/saved-posts"
+          element={
+            <ProtectedRoute>
+              <SavedPosts />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <Search />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/user/:userId"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </div>
+  );
 }
 
 export default App;
