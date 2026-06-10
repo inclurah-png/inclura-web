@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import {
@@ -23,7 +24,8 @@ function Feed() {
 const [posts, setPosts] = useState([]);
 const [filteredPosts, setFilteredPosts] =
 useState([]);
-
+const navigate = useNavigate();
+  
 useEffect(() => {
 const q = query(
 collection(db, "posts"),
@@ -64,7 +66,7 @@ auth.currentUser;
 
   const savedPosts =
     userSnap.data()?.savedPosts || [];
-
+  
   if (
     savedPosts.includes(post.id)
   ) {
@@ -185,9 +187,16 @@ margin: "0 auto",
                 "20px",
             }}
           >
-            <h3>
-              {post.userName}
-            </h3>
+            <h3
+  onClick={() =>
+    navigate(`/user/${post.userId}`)
+  }
+  style={{
+    cursor: "pointer",
+  }}
+>
+  {post.userName}
+</h3>
 
             <FollowButton
               targetUserId={
