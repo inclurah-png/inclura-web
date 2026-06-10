@@ -13,11 +13,16 @@ import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 
+import Feed from "./components/Feed";
+
 function Home() {
-return (
-<> <Navbar /> <Hero />
-</>
-);
+  return (
+    <>
+      <Navbar />
+      <Hero />
+      <Feed />
+    </>
+  );
 }
 
 function App() {
