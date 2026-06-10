@@ -40,7 +40,7 @@ password
 
 alert("Login successful");
 
-navigate("/profile");
+navigate("/");
  
 } catch (error) {
 
