@@ -289,24 +289,6 @@ async function handleLogout() {
   Search Users
 </button>
 
-<button
-  onClick={() =>
-    navigate("/notifications")
-  }
-  style={{
-    marginLeft: "10px",
-    padding: "12px 18px",
-    borderRadius: "14px",
-    border: "none",
-    background: "#f59e0b",
-    color: "white",
-    fontWeight: "700",
-    cursor: "pointer",
-  }}
->
-  Notifications
-</button>
-
               <p
                 style={{
                   color: "#94a3b8",
