@@ -242,6 +242,12 @@ function Profile() {
     fontWeight:"700",
     cursor:"pointer",
   }}
+
+  <button
+  onClick={handleLogout}
+>
+  Logout
+</button>
 >
   Search Users
 </button>
