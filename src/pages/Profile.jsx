@@ -7,8 +7,6 @@ import { auth, db, storage } from "../firebase";
 
 import { signOut } from "firebase/auth";
 
-import { auth } from "../firebase";
-
 import FollowButton from "../components/FollowButton";
 
 import {
@@ -31,10 +29,16 @@ function Profile() {
     useState(false);
 
   const navigate = useNavigate();
-
-  async function handlePhotoUpload(e) {
-  const file = e.target.files[0];
-
+  
+async function handleLogout() {
+  try {
+    await signOut(auth);
+    navigate("/");
+  } catch (error) {
+    alert(error.message);
+  }
+}
+  
   async function handleLogout() {
   await signOut(auth);
   navigate("/");
@@ -213,38 +217,71 @@ function Profile() {
               </h1>
 
               <button
-                onClick={() => navigate("/edit-profile")}
-                style={{
-                  marginBottom: "12px",
-                  padding: "12px 18px",
-                  borderRadius: "14px",
-                  border: "none",
-                  background: "#38bdf8",
-                  color: "white",
-                  fontWeight: "700",
-                  cursor: "pointer",
-                }}
-              >
-                Edit Profile
-              </button>
+  onClick={() =>
+    navigate("/edit-profile")
+  }
+  style={{
+    marginBottom: "12px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#38bdf8",
+    color: "white",
+    fontWeight: "700",
+    cursor: "pointer",
+  }}
+>
+  Edit Profile
+</button>
 
-              <button
+<button
   onClick={() =>
     navigate("/search")
   }
   style={{
-    marginLeft:"10px",
-    padding:"12px 18px",
-    borderRadius:"14px",
-    border:"none",
-    background:"#2563eb",
-    color:"white",
-    fontWeight:"700",
-    cursor:"pointer",
+    marginLeft: "10px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#2563eb",
+    color: "white",
+    fontWeight: "700",
+    cursor: "pointer",
   }}
+>
+  Search Users
+</button>
 
-  <button
+<button
+  onClick={() =>
+    navigate("/notifications")
+  }
+  style={{
+    marginLeft: "10px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#f59e0b",
+    color: "white",
+    fontWeight: "700",
+    cursor: "pointer",
+  }}
+>
+  Notifications
+</button>
+
+<button
   onClick={handleLogout}
+  style={{
+    marginLeft: "10px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#ef4444",
+    color: "white",
+    fontWeight: "700",
+    cursor: "pointer",
+  }}
 >
   Logout
 </button>
@@ -252,9 +289,23 @@ function Profile() {
   Search Users
 </button>
 
-              <FollowButton
-                targetUserId={auth.currentUser.uid}
-              />
+<button
+  onClick={() =>
+    navigate("/notifications")
+  }
+  style={{
+    marginLeft: "10px",
+    padding: "12px 18px",
+    borderRadius: "14px",
+    border: "none",
+    background: "#f59e0b",
+    color: "white",
+    fontWeight: "700",
+    cursor: "pointer",
+  }}
+>
+  Notifications
+</button>
 
               <p
                 style={{
