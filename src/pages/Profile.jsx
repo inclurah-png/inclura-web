@@ -5,6 +5,10 @@ import { useEffect, useState } from "react";
 
 import { auth, db, storage } from "../firebase";
 
+import { signOut } from "firebase/auth";
+
+import { auth } from "../firebase";
+
 import FollowButton from "../components/FollowButton";
 
 import {
@@ -30,6 +34,11 @@ function Profile() {
 
   async function handlePhotoUpload(e) {
   const file = e.target.files[0];
+
+  async function handleLogout() {
+  await signOut(auth);
+  navigate("/");
+    }
 
   if (!file) return;
 
