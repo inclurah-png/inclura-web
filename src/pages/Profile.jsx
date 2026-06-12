@@ -96,7 +96,7 @@ function Profile() {
 
   if (!profile) {
     return (
-  <DashboardLayout>
+        <div
         style={{
           background: "#020617",
           minHeight: "100vh",
@@ -112,7 +112,7 @@ function Profile() {
   }
 
   return (
-    <div
+  <DashboardLayout>
       style={{
         background: "#020617",
         minHeight: "100vh",
