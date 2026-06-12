@@ -96,7 +96,7 @@ function Profile() {
 
   if (!profile) {
     return (
-      <div
+  <DashboardLayout>
         style={{
           background: "#020617",
           minHeight: "100vh",
@@ -365,8 +365,25 @@ function Profile() {
             </div>
           </div>
         </div>
+          <div
+            style={{
+              marginTop: "30px",
+            }}
+          >
+            <CreatePost />
+          </div>
+
+          <div
+            style={{
+              marginTop: "30px",
+            }}
+          >
+            <Feed />
+          </div>
+
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 
