@@ -1,4 +1,6 @@
-
+import DashboardLayout from "../components/DashboardLayout";
+import CreatePost from "../components/CreatePost";
+import Feed from "../components/Feed";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
