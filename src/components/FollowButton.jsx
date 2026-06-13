@@ -13,6 +13,12 @@ serverTimestamp,
 } from "firebase/firestore";
 
 import {
+  addDoc,
+  collection,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import {
 db,
 auth,
 } from "../firebase";
@@ -149,22 +155,17 @@ user.uid
 );
   
 await addDoc(
-collection(db, "notifications"),
-{
-targetUserId:
-targetUserId,
-
-message:
-`${user.displayName || "Someone"} started following you`,
-
-type: "follow",
-
-fromUserId:
-user.uid,
-
-createdAt:
-serverTimestamp(),
-}
+  collection(db, "notifications"),
+  {
+    receiverId: targetUserId,
+    senderId: auth.currentUser.uid,
+    type: "follow",
+    text:
+      currentUser.fullName +
+      " started following you",
+    read: false,
+    createdAt: serverTimestamp(),
+  }
 );
   
 }
