@@ -23,20 +23,26 @@ function ChatWindow({
       return;
 
     await addDoc(
-      collection(
-        db,
-        "chats",
-        selectedChat.id,
-        "messages"
-      ),
-      {
-        text,
-        senderId:
-          auth.currentUser.uid,
-        createdAt:
-          serverTimestamp(),
-      }
-    );
+  collection(
+    db,
+    "chats",
+    selectedChat.id,
+    "messages"
+  ),
+  {
+    text,
+    senderId:
+      auth.currentUser.uid,
+    createdAt:
+      serverTimestamp(),
+
+    status: "sent",
+
+    readBy: [
+      auth.currentUser.uid,
+    ],
+  }
+);
 
     setText("");
   }
@@ -94,15 +100,50 @@ function ChatWindow({
         }}
       >
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            style={{
-              marginBottom: "12px",
-            }}
-          >
-            {msg.text}
-          </div>
-        ))}
+  <div
+    key={msg.id}
+    style={{
+      display: "flex",
+      justifyContent:
+        msg.senderId ===
+        auth.currentUser.uid
+          ? "flex-end"
+          : "flex-start",
+      marginBottom: "12px",
+    }}
+  >
+    <div
+      style={{
+        background:
+          msg.senderId ===
+          auth.currentUser.uid
+            ? "#38bdf8"
+            : "#1e293b",
+        color: "white",
+        padding: "12px",
+        borderRadius: "16px",
+        maxWidth: "70%",
+      }}
+    >
+      <div>{msg.text}</div>
+
+      {msg.senderId ===
+        auth.currentUser.uid && (
+        <div
+          style={{
+            fontSize: "11px",
+            color: "#cbd5e1",
+            marginTop: "4px",
+          }}
+        >
+          {msg.status === "read"
+            ? "✓✓ Read"
+            : "✓ Sent"}
+        </div>
+      )}
+    </div>
+  </div>
+))}
       </div>
 
       <div
