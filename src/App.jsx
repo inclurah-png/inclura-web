@@ -1,6 +1,5 @@
 import { Routes, Route } from "react-router-dom";
 
-
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import Navbar from "./components/Navbar";
@@ -19,106 +18,108 @@ import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 
 function Home() {
-return (
-<> <Navbar /> <Hero /> <Feed />
-</>
-);
+  return (
+    <>
+      <Navbar />
+      <Hero />
+      <Feed />
+    </>
+  );
 }
 
 function App() {
-return (
-<div
-style={{
-minHeight: "100vh",
-}}
-> <Routes>
-<Route
-path="/"
-element={<Home />}
-/>
-  
-    <Route
-      path="/login"
-      element={<Login />}
-    />
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+      }}
+    >
+      <Routes>
+        <Route
+          path="/"
+          element={<Home />}
+        />
 
-    <Route
-      path="/signup"
-      element={<Signup />}
-    />
+        <Route
+          path="/login"
+          element={<Login />}
+        />
 
-    <Route
-      path="/onboarding"
-      element={<Onboarding />}
-    />
+        <Route
+          path="/signup"
+          element={<Signup />}
+        />
 
-    <Route
-      path="/profile"
-      element={
-        <ProtectedRoute>
-          <Profile />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/onboarding"
+          element={<Onboarding />}
+        />
 
-    <Route
-      path="/edit-profile"
-      element={
-        <ProtectedRoute>
-          <EditProfile />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-      path="/messages"
-      element={
-        <ProtectedRoute>
-          <Messages />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-      path="/saved-posts"
-      element={
-        <ProtectedRoute>
-          <SavedPosts />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Messages />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-      path="/search"
-      element={
-        <ProtectedRoute>
-          <Search />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/saved-posts"
+          element={
+            <ProtectedRoute>
+              <SavedPosts />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-      path="/notifications"
-      element={
-        <ProtectedRoute>
-          <Notifications />
-        </ProtectedRoute>
-      }
-    />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <Search />
+            </ProtectedRoute>
+          }
+        />
 
-    <Route
-      path="/user/:userId"
-      element={
-        <ProtectedRoute>
-          <UserProfile />
-        </ProtectedRoute>
-      }
-    />
-  </Routes>
-</div>
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
 
-);
+        <Route
+          path="/user/:userId"
+          element={
+            <ProtectedRoute>
+              <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </div>
+  );
 }
 
 export default App;
-
