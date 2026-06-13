@@ -6,9 +6,6 @@ import {
   arrayUnion,
   arrayRemove,
   onSnapshot,
-  addDoc,
-  collection,
-  serverTimestamp,
   getDoc,
 } from "firebase/firestore";
 
@@ -38,15 +35,11 @@ function FollowButton({
       (snapshot) => {
         const data = snapshot.data();
 
-        if (
+        setIsFollowing(
           data?.following?.includes(
             targetUserId
           )
-        ) {
-          setIsFollowing(true);
-        } else {
-          setIsFollowing(false);
-        }
+        );
       }
     );
 
@@ -100,48 +93,27 @@ function FollowButton({
               ),
           }
         );
-} else {
+      } else {
+        await updateDoc(
+          currentUserRef,
+          {
+            following:
+              arrayUnion(
+                targetUserId
+              ),
+          }
+        );
 
-  await updateDoc(
-    currentUserRef,
-    {
-      following: arrayUnion(
-        targetUserId
-      ),
-    }
-  );
+        await updateDoc(
+          targetUserRef,
+          {
+            followers:
+              arrayUnion(
+                user.uid
+              ),
+          }
+        );
 
-  await updateDoc(
-    targetUserRef,
-    {
-      followers: arrayUnion(
-        user.uid
-      ),
-    }
-  );
-
-  const currentUserSnap =
-    await getDoc(
-      currentUserRef
-    );
-
-  const currentUser =
-    currentUserSnap.data();
-
-  await sendNotification({
-    receiverId:
-      targetUserId,
-    senderId:
-      user.uid,
-    type: "follow",
-    text:
-      currentUser.fullName +
-      " started following you",
-  });
-
-}
-
-        // get current user profile
         const currentUserSnap =
           await getDoc(
             currentUserRef
@@ -150,24 +122,17 @@ function FollowButton({
         const currentUser =
           currentUserSnap.data();
 
-        await addDoc(
-          collection(
-            db,
-            "notifications"
-          ),
-          {
-            receiverId:
-              targetUserId,
-            senderId:
-              user.uid,
-            type: "follow",
-            text:
-              `${currentUser?.fullName || "Someone"} started following you`,
-            read: false,
-            createdAt:
-              serverTimestamp(),
-          }
-        );
+        await sendNotification({
+          receiverId:
+            targetUserId,
+          senderId: user.uid,
+          type: "follow",
+          text:
+            `${
+              currentUser?.fullName ||
+              "Someone"
+            } started following you`,
+        });
       }
     } catch (error) {
       alert(error.message);
