@@ -1,4 +1,9 @@
 import {
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import {
   addDoc,
   collection,
   serverTimestamp,
@@ -14,7 +19,32 @@ function ChatWindow({
 }) {
   const [text, setText] =
     useState("");
+  
+async function updateTypingStatus(
+  isTyping
+) {
+  if (!selectedChat)
+    return;
 
+  try {
+    await updateDoc(
+      doc(
+        db,
+        "chats",
+        selectedChat.id
+      ),
+      {
+        typing:
+          isTyping,
+        typingUser:
+          auth.currentUser.uid,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+  }
+}
+  
   async function sendMessage() {
     if (
       !text.trim() ||
@@ -44,6 +74,9 @@ function ChatWindow({
   }
 );
 
+    await updateTypingStatus(
+  false
+);
     setText("");
   }
 
@@ -86,8 +119,8 @@ function ChatWindow({
     fontSize: "13px",
   }}
 >
-  {selectedChat.typing
-    ? "Typing..."
+  {selectedChat?.typing
+    ? "Someone is typing..."
     : ""}
 </p>
       </div>
@@ -154,19 +187,27 @@ function ChatWindow({
         }}
       >
         <input
-          value={text}
-          onChange={(e) =>
-            setText(
-              e.target.value
-            )
-          }
-          placeholder="Type a message..."
-          style={{
-            flex: 1,
-            padding: "14px",
-            borderRadius: "12px",
-          }}
-        />
+  value={text}
+  onChange={(e) => {
+    setText(e.target.value);
+
+    updateTypingStatus(
+      true
+    );
+  }}
+  onBlur={() =>
+    updateTypingStatus(
+      false
+    )
+  }
+  placeholder="Type a message..."
+  style={{
+    flex: 1,
+    padding: "14px",
+    borderRadius: "12px",
+  }}
+/>
+        
 <input
   type="file"
   accept="image/*"
