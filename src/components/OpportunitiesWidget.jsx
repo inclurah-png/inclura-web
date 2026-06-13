@@ -3,9 +3,9 @@ function OpportunitiesWidget() {
     <div
       style={{
         background: "#1e293b",
-        padding: "20px",
+        padding: "18px",
         borderRadius: "18px",
-        marginBottom: "24px",
+        marginBottom: "16px",
       }}
     >
       <h2>🚀 Opportunities</h2>
