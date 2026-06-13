@@ -248,9 +248,8 @@ return (
           entrepreneurs,
           students,
           advocates,
-          employers and
-          caregivers from
-          the Inclura community.
+          employers and caregivers
+          from the Inclura community.
         </p>
       </div>
 
@@ -261,8 +260,8 @@ return (
         <p>
           Accessibility tips,
           disability stories,
-          job wins,
-          creator content and
+          creator content,
+          job wins and
           community highlights.
         </p>
       </div>
@@ -278,9 +277,11 @@ return (
       >
         <Feed />
       </div>
+
     </div>
   </DashboardLayout>
 );
+}
 
 const cardStyle = {
   background: "#1e293b",
@@ -335,4 +336,3 @@ const btnRed = {
 };
 
 export default Profile;
-  
