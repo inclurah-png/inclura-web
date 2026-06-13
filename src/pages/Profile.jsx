@@ -118,6 +118,7 @@ return (
         color: "white",
       }}
     >
+      {/* PROFILE HEADER */}
       <div
         style={{
           background: "#0f172a",
@@ -127,168 +128,37 @@ return (
           marginBottom: "24px",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            gap: "24px",
-            marginBottom: "30px",
-          }}
-        >
-          <div>
-            {profile.photoURL ? (
-              <img
-                src={profile.photoURL}
-                alt="Profile"
-                style={{
-                  width: "120px",
-                  height: "120px",
-                  borderRadius: "50%",
-                  objectFit: "cover",
-                  border: "3px solid #38bdf8",
-                }}
-              />
-            ) : (
-              <div
-                style={{
-                  width: "120px",
-                  height: "120px",
-                  borderRadius: "50%",
-                  background: "#38bdf8",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "40px",
-                  fontWeight: "700",
-                }}
-              >
-                {profile.fullName?.charAt(0)}
-              </div>
-            )}
+        {/* Existing profile image section */}
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-              style={{
-                marginTop: "12px",
-              }}
-            />
-          </div>
+        {/* Existing profile details section */}
 
-          <div>
-            <h1>{profile.fullName}</h1>
-
-            <p
-              style={{
-                color: "#94a3b8",
-              }}
-            >
-              Followers:
-              {profile.followers?.length || 0}
-              {" • "}
-              Following:
-              {profile.following?.length || 0}
-            </p>
-
-            {profile.bio && (
-              <p>{profile.bio}</p>
-            )}
-
-            {uploading && (
-              <p
-                style={{
-                  color: "#38bdf8",
-                }}
-              >
-                Uploading...
-              </p>
-            )}
-
-            <div
-              style={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: "10px",
-                marginTop: "20px",
-              }}
-            >
-              <button
-                onClick={() =>
-                  navigate("/edit-profile")
-                }
-                style={btnBlue}
-              >
-                Edit Profile
-              </button>
-
-              <button
-                onClick={() =>
-                  navigate("/search")
-                }
-                style={btnIndigo}
-              >
-                Search Users
-              </button>
-
-              <button
-                onClick={() =>
-                  navigate("/notifications")
-                }
-                style={btnOrange}
-              >
-                Notifications
-              </button>
-
-              <button
-                onClick={() =>
-                  navigate("/saved-posts")
-                }
-                style={btnGreen}
-              >
-                Saved Posts
-              </button>
-
-              <button
-                onClick={handleLogout}
-                style={btnRed}
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </div>
-
+        {/* Existing Category */}
         <div style={cardStyle}>
           🏷 Category:
-          {" "}
-          {profile.category ||
-            "Not selected"}
+          {profile.category || "Not selected"}
         </div>
 
+        {/* Existing Role */}
         <div style={cardStyle}>
           🛡 Role:
-          {" "}
-          {profile.role ||
-            "Member"}
+          {profile.role || "Member"}
         </div>
 
+        {/* Existing Verified */}
         <div style={cardStyle}>
           🏅 Verified:
-          {" "}
-          {profile.verified
-            ? "Yes"
-            : "No"}
+          {profile.verified ? "Yes" : "No"}
         </div>
 
+        {/* Existing Wallet */}
         <div style={cardStyle}>
           💳 Wallet:
-          {" "}
-          $
-          {profile.walletBalance || 0}
+          ${profile.walletBalance || 0}
         </div>
 
+        {/* Existing Accessibility */}
         <div style={cardStyle}>
-          ♿ Accessibility Needs
+          <h3>♿ Accessibility Needs</h3>
 
           <div
             style={{
@@ -298,88 +168,101 @@ return (
               gap: "10px",
             }}
           >
-            {profile.accessibilityNeeds?.length >
-            0 ? (
-              profile.accessibilityNeeds.map(
-                (item) => (
-                  <div
-                    key={item}
-                    style={{
-                      background:
-                        "#2563eb",
-                      padding:
-                        "10px 14px",
-                      borderRadius:
-                        "999px",
-                    }}
-                  >
-                    {item}
-                  </div>
+            {profile.accessibilityNeeds?.length > 0
+              ? profile.accessibilityNeeds.map(
+                  (item) => (
+                    <div
+                      key={item}
+                      style={{
+                        background: "#2563eb",
+                        padding: "10px 14px",
+                        borderRadius: "999px",
+                      }}
+                    >
+                      {item}
+                    </div>
+                  )
                 )
-              )
-            ) : (
-              <p>
-                No accessibility
-                needs selected
-              </p>
-            )}
+              : "No accessibility needs selected"}
           </div>
         </div>
       </div>
-      
-<div style={cardStyle}>
-    <h3>📝 Posts</h3>
-    <h2>{profile.postCount || 0}</h2>
-  </div>
 
-  <div style={cardStyle}>
-    <h3>👥 Followers</h3>
-    <h2>
-      {profile.followers?.length || 0}
-    </h2>
-  </div>
+      {/* DASHBOARD STATS */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(200px,1fr))",
+          gap: "16px",
+          marginBottom: "24px",
+        }}
+      >
+        <div style={cardStyle}>
+          <h3>📝 Posts</h3>
+          <h2>{profile.postCount || 0}</h2>
+        </div>
 
-  <div style={cardStyle}>
-    <h3>➡ Following</h3>
-    <h2>
-      {profile.following?.length || 0}
-    </h2>
-  </div>
+        <div style={cardStyle}>
+          <h3>👥 Followers</h3>
+          <h2>
+            {profile.followers?.length || 0}
+          </h2>
+        </div>
 
-  <div style={cardStyle}>
-    <h3>🏆 XP</h3>
-    <h2>{profile.xp || 0}</h2>
-  </div>
-</div>
+        <div style={cardStyle}>
+          <h3>➡ Following</h3>
+          <h2>
+            {profile.following?.length || 0}
+          </h2>
+        </div>
 
-    <div style={cardStyle}>
-  ♿ Accessibility Needs
-</div>
+        <div style={cardStyle}>
+          <h3>🏆 XP</h3>
+          <h2>{profile.xp || 0}</h2>
+        </div>
+      </div>
 
-{/* OPPORTUNITIES */}
-<div style={cardStyle}>
-  <h2>🚀 Opportunities</h2>
+      {/* OPPORTUNITIES */}
+      <div style={cardStyle}>
+        <h2>🚀 Opportunities</h2>
 
-  <ul>
-    <li>Remote Jobs</li>
-    <li>Scholarships</li>
-    <li>Mentorship Programs</li>
-    <li>Volunteer Opportunities</li>
-  </ul>
-</div>
-    
-    {/* COMMUNITY HIGHLIGHTS */}
-<div style={cardStyle}>
-  <h2>🌟 Community Highlights</h2>
+        <ul>
+          <li>Remote Jobs</li>
+          <li>Scholarships</li>
+          <li>Mentorship Programs</li>
+          <li>Volunteer Opportunities</li>
+        </ul>
+      </div>
 
-  <p>
-    Featured creators,
-    entrepreneurs,
-    students and advocates
-    from the Inclura community.
-  </p>
-</div>
-    
+      {/* COMMUNITY HIGHLIGHTS */}
+      <div style={cardStyle}>
+        <h2>🌟 Community Highlights</h2>
+
+        <p>
+          Featured creators,
+          entrepreneurs,
+          students,
+          advocates,
+          employers and
+          caregivers from
+          the Inclura community.
+        </p>
+      </div>
+
+      {/* REELS SECTION */}
+      <div style={cardStyle}>
+        <h2>🎬 Inclura Reels</h2>
+
+        <p>
+          Accessibility tips,
+          disability stories,
+          job wins,
+          creator content and
+          community highlights.
+        </p>
+      </div>
+
       {/* CREATE POST */}
       <CreatePost />
 
@@ -394,7 +277,6 @@ return (
     </div>
   </DashboardLayout>
 );
-}
 
 const cardStyle = {
   background: "#1e293b",
