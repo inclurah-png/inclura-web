@@ -9,6 +9,14 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import { storage } from "../firebase";
+
 import { useState } from "react";
 
 import { db, auth } from "../firebase";
@@ -44,6 +52,55 @@ async function updateTypingStatus(
     console.log(error);
   }
 }
+  
+  async function handleImageUpload(
+  e
+) {
+  const file =
+    e.target.files[0];
+
+  if (!file)
+    return;
+
+  try {
+    const storageRef = ref(
+      storage,
+      `chatImages/${Date.now()}`
+    );
+
+    await uploadBytes(
+      storageRef,
+      file
+    );
+
+    const imageUrl =
+      await getDownloadURL(
+        storageRef
+      );
+
+    await addDoc(
+      collection(
+        db,
+        "chats",
+        selectedChat.id,
+        "messages"
+      ),
+      {
+        senderId:
+          auth.currentUser.uid,
+        imageUrl,
+        createdAt:
+          serverTimestamp(),
+        status: "sent",
+        readBy: [
+          auth.currentUser.uid,
+        ],
+      }
+    );
+  } catch (error) {
+    alert(error.message);
+  }
+  }
   
   async function sendMessage() {
     if (
@@ -158,7 +215,25 @@ async function updateTypingStatus(
         maxWidth: "70%",
       }}
     >
-      <div>{msg.text}</div>
+<>
+  {msg.text && (
+    <div>
+      {msg.text}
+    </div>
+  )}
+
+  {msg.imageUrl && (
+    <img
+      src={msg.imageUrl}
+      alt="Chat"
+      style={{
+        width: "220px",
+        borderRadius: "12px",
+        marginTop: "8px",
+      }}
+    />
+  )}
+</>
 
       {msg.senderId ===
         auth.currentUser.uid && (
@@ -211,6 +286,7 @@ async function updateTypingStatus(
 <input
   type="file"
   accept="image/*"
+  onChange={handleImageUpload}
 />
         <button>
   🎤 Voice Note
