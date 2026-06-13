@@ -74,9 +74,16 @@ function ChatWindow({
             "1px solid #1e293b",
         }}
       >
-        <h3>
-          {selectedChat.name}
-        </h3>
+        <p
+  style={{
+    color: "#94a3b8",
+    fontSize: "13px",
+  }}
+>
+  {selectedChat.typing
+    ? "Typing..."
+    : ""}
+</p>
       </div>
 
       <div
@@ -119,12 +126,31 @@ function ChatWindow({
             borderRadius: "12px",
           }}
         />
-
+<input
+  type="file"
+  accept="image/*"
+/>
+        <button>
+  🎤 Voice Note
+</button>
+        
         <button
           onClick={sendMessage}
         >
           Send
         </button>
+        
+        <button>
+  🔊 Read
+</button>
+
+<button>
+  🎙 Speech To Text
+</button>
+
+<button>
+  📝 Text To Speech
+</button>
       </div>
     </div>
   );
