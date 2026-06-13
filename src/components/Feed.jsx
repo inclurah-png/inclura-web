@@ -143,13 +143,18 @@ padding: "24px",
 maxWidth: "720px",
 margin: "0 auto",
 }}
-> <CreatePost />
-
+  
+return (
+<div
+  style={{
+    padding: "24px",
+    maxWidth: "720px",
+    margin: "0 auto",
+  }}
+>
   <SearchBar
     posts={posts}
-    onResults={
-      setFilteredPosts
-    }
+    onResults={setFilteredPosts}
   />
 
   <div
