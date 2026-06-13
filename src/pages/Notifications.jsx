@@ -1,15 +1,15 @@
-
 import { useEffect, useState } from "react";
+import { auth, db } from "../firebase";
 
 import {
   collection,
   query,
   where,
-  onSnapshot,
   orderBy,
+  onSnapshot,
+  updateDoc,
+  doc,
 } from "firebase/firestore";
-
-import { db, auth } from "../firebase";
 
 function Notifications() {
   const [notifications, setNotifications] =
@@ -22,77 +22,68 @@ function Notifications() {
 
     const q = query(
       collection(db, "notifications"),
-      where("targetUserId", "==", user.uid),
+      where("receiverId", "==", user.uid),
       orderBy("createdAt", "desc")
     );
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const data =
-          snapshot.docs.map((doc) => ({
+    const unsubscribe =
+      onSnapshot(q, (snapshot) => {
+        const data = snapshot.docs.map(
+          (doc) => ({
             id: doc.id,
             ...doc.data(),
-          }));
+          })
+        );
 
         setNotifications(data);
-      }
-    );
+      });
 
     return () => unsubscribe();
   }, []);
+
+  async function markAsRead(id) {
+    await updateDoc(
+      doc(db, "notifications", id),
+      {
+        read: true,
+      }
+    );
+  }
 
   return (
     <div
       style={{
         background: "#020617",
         minHeight: "100vh",
-        padding: "24px",
         color: "white",
+        padding: "24px",
       }}
     >
-      <div
-        style={{
-          maxWidth: "700px",
-          margin: "0 auto",
-        }}
-      >
-        <h1
-          style={{
-            marginBottom: "24px",
-          }}
-        >
-          🔔 Notifications
-        </h1>
+      <h1>🔔 Notifications</h1>
 
-        {notifications.length === 0 ? (
+      {notifications.length === 0 ? (
+        <p>No notifications yet</p>
+      ) : (
+        notifications.map((item) => (
           <div
+            key={item.id}
+            onClick={() =>
+              markAsRead(item.id)
+            }
             style={{
-              background: "#0f172a",
-              padding: "24px",
-              borderRadius: "20px",
-              textAlign: "center",
-              color: "#94a3b8",
+              background: item.read
+                ? "#1e293b"
+                : "#2563eb",
+              padding: "16px",
+              borderRadius: "14px",
+              marginTop: "12px",
+              cursor: "pointer",
             }}
           >
-            No notifications yet
+            <p>{item.text}</p>
           </div>
-        ) : (
-          notifications.map((item) => (
-            <div
-              key={item.id}
-              style={{
-                background: "#0f172a",
-                padding: "20px",
-                borderRadius: "18px",
-                marginBottom: "14px",
-              }}
-            >
-              {item.message}
-            </div>
-          ))
-        )}
-      </div>
+        ))
+      )}
     </div>
   );
 }
