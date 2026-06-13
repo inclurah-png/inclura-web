@@ -4,6 +4,7 @@ import CommunityHighlights from "../components/CommunityHighlights";
 import ReelsSection from "../components/ReelsSection";
 import DashboardLayout from "../components/DashboardLayout";
 import CreatePost from "../components/CreatePost";
+import StoriesSection from "../components/StoriesSection";
 import Feed from "../components/Feed";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
