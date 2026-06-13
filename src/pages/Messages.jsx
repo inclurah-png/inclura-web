@@ -1,8 +1,16 @@
 import { useState } from "react";
-
+import { useState, useEffect } from "react";
 import ChatList from "../components/ChatList";
 import ChatWindow from "../components/ChatWindow";
-
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  arrayUnion,
+} from "firebase/firestore";
 import {
   collection,
   query,
@@ -36,14 +44,40 @@ const [messages, setMessages] = useState([]);
   const unsubscribe =
     onSnapshot(q, (snapshot) => {
       const loadedMessages =
-        snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
+  snapshot.docs.map((docSnap) => {
+    const data =
+      docSnap.data();
 
-      setMessages(
-        loadedMessages
+    if (
+      data.senderId !==
+      auth.currentUser.uid
+    ) {
+      updateDoc(
+        doc(
+          db,
+          "chats",
+          selectedChat.id,
+          "messages",
+          docSnap.id
+        ),
+        {
+          status: "read",
+          readBy: arrayUnion(
+            auth.currentUser.uid
+          ),
+        }
       );
+    }
+
+    return {
+      id: docSnap.id,
+      ...data,
+    };
+  });
+
+setMessages(
+  loadedMessages
+);
     });
 
   return () => unsubscribe();
