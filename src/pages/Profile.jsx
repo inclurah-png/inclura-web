@@ -94,297 +94,253 @@ function Profile() {
     }
   }
 
-  if (!profile) {
-    return (
-        <div
-        style={{
-          background: "#020617",
-          minHeight: "100vh",
-          color: "white",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        Loading Profile...
-      </div>
-    );
-  }
-
+if (!profile) {
   return (
-  <DashboardLayout>
+    <div
       style={{
         background: "#020617",
         minHeight: "100vh",
-        padding: "24px",
+        color: "white",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      Loading Profile...
+    </div>
+  );
+}
+
+return (
+  <DashboardLayout>
+    <div
+      style={{
         color: "white",
       }}
     >
       <div
         style={{
-          maxWidth: "900px",
-          margin: "0 auto",
+          background: "#0f172a",
+          padding: "32px",
+          borderRadius: "30px",
+          border: "1px solid #1e293b",
+          marginBottom: "24px",
         }}
       >
         <div
           style={{
-            background: "#0f172a",
-            padding: "32px",
-            borderRadius: "30px",
-            border: "1px solid #1e293b",
+            display: "flex",
+            gap: "24px",
+            marginBottom: "30px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              gap: "24px",
-              marginBottom: "30px",
-            }}
-          >
-            <div>
-              {profile.photoURL ? (
-                <img
-                  src={profile.photoURL}
-                  alt="Profile"
-                  style={{
-                    width: "120px",
-                    height: "120px",
-                    borderRadius: "50%",
-                    objectFit: "cover",
-                    border:
-                      "3px solid #38bdf8",
-                  }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "120px",
-                    height: "120px",
-                    borderRadius: "50%",
-                    background: "#38bdf8",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "40px",
-                    fontWeight: "700",
-                  }}
-                >
-                  {profile.fullName?.charAt(
-                    0
-                  )}
-                </div>
-              )}
-
-              <input
-                type="file"
-                accept="image/*"
-                onChange={
-                  handlePhotoUpload
-                }
+          <div>
+            {profile.photoURL ? (
+              <img
+                src={profile.photoURL}
+                alt="Profile"
                 style={{
-                  marginTop: "12px",
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  objectFit: "cover",
+                  border: "3px solid #38bdf8",
                 }}
               />
-            </div>
-
-            <div>
-              <h1>
-                {profile.fullName}
-              </h1>
-
-              <p
-                style={{
-                  color: "#94a3b8",
-                }}
-              >
-                Followers:
-                {profile.followers
-                  ?.length || 0}
-                {" • "}
-                Following:
-                {profile.following
-                  ?.length || 0}
-              </p>
-
-              {profile.bio && (
-                <p>
-                  {profile.bio}
-                </p>
-              )}
-
-              {profile.accessibility && (
-                <p>
-                  ♿{" "}
-                  {
-                    profile.accessibility
-                  }
-                </p>
-              )}
-
-              {uploading && (
-                <p
-                  style={{
-                    color:
-                      "#38bdf8",
-                  }}
-                >
-                  Uploading...
-                </p>
-              )}
-
+            ) : (
               <div
                 style={{
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  background: "#38bdf8",
                   display: "flex",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                  marginTop: "20px",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "40px",
+                  fontWeight: "700",
                 }}
               >
-                <button
-                  onClick={() =>
-                    navigate(
-                      "/edit-profile"
-                    )
-                  }
-                  style={btnBlue}
-                >
-                  Edit Profile
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigate(
-                      "/search"
-                    )
-                  }
-                  style={btnIndigo}
-                >
-                  Search Users
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigate(
-                      "/notifications"
-                    )
-                  }
-                  style={btnOrange}
-                >
-                  Notifications
-                </button>
-
-                <button
-                  onClick={() =>
-                    navigate(
-                      "/saved-posts"
-                    )
-                  }
-                  style={btnGreen}
-                >
-                  Saved Posts
-                </button>
-
-                <button
-                  onClick={
-                    handleLogout
-                  }
-                  style={btnRed}
-                >
-                  Logout
-                </button>
+                {profile.fullName?.charAt(0)}
               </div>
-            </div>
-          </div>
+            )}
 
-          <div style={cardStyle}>
-            🏷 Category:
-            {" "}
-            {profile.category ||
-              "Not selected"}
-          </div>
-
-          <div style={cardStyle}>
-            🛡 Role:
-            {" "}
-            {profile.role ||
-              "Member"}
-          </div>
-
-          <div style={cardStyle}>
-            🏅 Verified:
-            {" "}
-            {profile.verified
-              ? "Yes"
-              : "No"}
-          </div>
-
-          <div style={cardStyle}>
-            💳 Wallet:
-            {" "}
-            $
-            {profile.walletBalance ||
-              0}
-          </div>
-
-          <div style={cardStyle}>
-            ♿ Accessibility Needs
-            <div
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handlePhotoUpload}
               style={{
                 marginTop: "12px",
+              }}
+            />
+          </div>
+
+          <div>
+            <h1>{profile.fullName}</h1>
+
+            <p
+              style={{
+                color: "#94a3b8",
+              }}
+            >
+              Followers:
+              {profile.followers?.length || 0}
+              {" • "}
+              Following:
+              {profile.following?.length || 0}
+            </p>
+
+            {profile.bio && (
+              <p>{profile.bio}</p>
+            )}
+
+            {uploading && (
+              <p
+                style={{
+                  color: "#38bdf8",
+                }}
+              >
+                Uploading...
+              </p>
+            )}
+
+            <div
+              style={{
                 display: "flex",
                 flexWrap: "wrap",
                 gap: "10px",
+                marginTop: "20px",
               }}
             >
-              {profile
-                .accessibilityNeeds
-                ?.length > 0 ? (
-                profile.accessibilityNeeds.map(
-                  (item) => (
-                    <div
-                      key={item}
-                      style={{
-                        background:
-                          "#2563eb",
-                        padding:
-                          "10px 14px",
-                        borderRadius:
-                          "999px",
-                      }}
-                    >
-                      {item}
-                    </div>
-                  )
-                )
-              ) : (
-                <p>
-                  No accessibility
-                  needs selected
-                </p>
-              )}
+              <button
+                onClick={() =>
+                  navigate("/edit-profile")
+                }
+                style={btnBlue}
+              >
+                Edit Profile
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate("/search")
+                }
+                style={btnIndigo}
+              >
+                Search Users
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate("/notifications")
+                }
+                style={btnOrange}
+              >
+                Notifications
+              </button>
+
+              <button
+                onClick={() =>
+                  navigate("/saved-posts")
+                }
+                style={btnGreen}
+              >
+                Saved Posts
+              </button>
+
+              <button
+                onClick={handleLogout}
+                style={btnRed}
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>
-          <div
-            style={{
-              marginTop: "30px",
-            }}
-          >
-            <CreatePost />
-          </div>
+
+        <div style={cardStyle}>
+          🏷 Category:
+          {" "}
+          {profile.category ||
+            "Not selected"}
+        </div>
+
+        <div style={cardStyle}>
+          🛡 Role:
+          {" "}
+          {profile.role ||
+            "Member"}
+        </div>
+
+        <div style={cardStyle}>
+          🏅 Verified:
+          {" "}
+          {profile.verified
+            ? "Yes"
+            : "No"}
+        </div>
+
+        <div style={cardStyle}>
+          💳 Wallet:
+          {" "}
+          $
+          {profile.walletBalance || 0}
+        </div>
+
+        <div style={cardStyle}>
+          ♿ Accessibility Needs
 
           <div
             style={{
-              marginTop: "30px",
+              marginTop: "12px",
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "10px",
             }}
           >
-            <Feed />
+            {profile.accessibilityNeeds?.length >
+            0 ? (
+              profile.accessibilityNeeds.map(
+                (item) => (
+                  <div
+                    key={item}
+                    style={{
+                      background:
+                        "#2563eb",
+                      padding:
+                        "10px 14px",
+                      borderRadius:
+                        "999px",
+                    }}
+                  >
+                    {item}
+                  </div>
+                )
+              )
+            ) : (
+              <p>
+                No accessibility
+                needs selected
+              </p>
+            )}
           </div>
-
         </div>
       </div>
-    </DashboardLayout>
-  );
+
+      {/* CREATE POST */}
+      <CreatePost />
+
+      {/* FEED */}
+      <div
+        style={{
+          marginTop: "24px",
+        }}
+      >
+        <Feed />
+      </div>
+    </div>
+  </DashboardLayout>
+);
 }
 
 const cardStyle = {
@@ -440,3 +396,4 @@ const btnRed = {
 };
 
 export default Profile;
+  
