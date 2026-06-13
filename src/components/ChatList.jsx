@@ -27,8 +27,30 @@ function ChatList({
                 ? "#1e293b"
                 : "transparent",
           }}
-        >
-          <h4>{chat.name}</h4>
+        ><div
+  style={{
+    display: "flex",
+    justifyContent: "space-between",
+  }}
+>
+  <h4>{chat.name}</h4>
+
+  {chat.unreadCount > 0 && (
+    <div
+      style={{
+        background: "#ef4444",
+        borderRadius: "50%",
+        width: "22px",
+        height: "22px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {chat.unreadCount}
+    </div>
+  )}
+</div>
 
           <p
             style={{
