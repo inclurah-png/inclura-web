@@ -1,134 +1,142 @@
-
 import { useEffect, useState } from "react";
 
 import {
-collection,
-query,
-where,
-orderBy,
-onSnapshot,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
 
 function Notifications() {
+  const [notifications, setNotifications] =
+    useState([]);
 
-const [notifications,
-setNotifications] =
-useState([]);
+  useEffect(() => {
+    const user = auth.currentUser;
 
-useEffect(() => {
+    if (!user) return;
 
-const user =
-auth.currentUser;
+    const q = query(
+      collection(db, "notifications"),
+      where(
+        "receiverId",
+        "==",
+        user.uid
+      ),
+      orderBy(
+        "createdAt",
+        "desc"
+      )
+    );
 
-if (!user) return;
+    const unsubscribe =
+      onSnapshot(q, (snapshot) => {
+        const data =
+          snapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
 
-const q = query(
-collection(
-db,
-"notifications"
-),
-where(
-"targetUserId",
-"==",
-user.uid
-),
-orderBy(
-"createdAt",
-"desc"
-)
-);
+        setNotifications(data);
+      });
 
-const unsubscribe =
-onSnapshot(q, (snapshot) => {
+    return () => unsubscribe();
+  }, []);
 
-const items =
-snapshot.docs.map((doc) => ({
-id: doc.id,
-...doc.data(),
-}));
+  async function markAsRead(id) {
+    try {
+      await updateDoc(
+        doc(
+          db,
+          "notifications",
+          id
+        ),
+        {
+          read: true,
+        }
+      );
+    } catch (error) {
+      console.log(error);
+    }
+  }
 
-setNotifications(items);
+  return (
+    <div
+      style={{
+        background: "#020617",
+        minHeight: "100vh",
+        padding: "24px",
+        color: "white",
+      }}
+    >
+      <h1>
+        🔔 Notifications
+      </h1>
 
-});
+      {notifications.length === 0 ? (
+        <div
+          style={{
+            marginTop: "20px",
+            background: "#0f172a",
+            padding: "20px",
+            borderRadius: "20px",
+          }}
+        >
+          No notifications yet
+        </div>
+      ) : (
+        notifications.map(
+          (notification) => (
+            <div
+              key={notification.id}
+              onClick={() =>
+                markAsRead(
+                  notification.id
+                )
+              }
+              style={{
+                background:
+                  notification.read
+                    ? "#0f172a"
+                    : "#1e293b",
+                padding: "20px",
+                borderRadius:
+                  "20px",
+                marginTop: "12px",
+                cursor: "pointer",
+                border:
+                  notification.read
+                    ? "none"
+                    : "1px solid #38bdf8",
+              }}
+            >
+              <p>
+                {notification.text}
+              </p>
 
-return () =>
-unsubscribe();
-
-}, []);
-
-return (
-
-<div
-style={{
-background: "#0f172a",
-padding: "24px",
-borderRadius: "24px",
-border: "1px solid #1e293b",
-}}
->
-
-<h2
-style={{
-marginBottom: "20px",
-}}
->
-🔔 Notifications
-</h2>
-
-<div
-style={{
-display: "flex",
-flexDirection: "column",
-gap: "14px",
-}}
->
-
-{notifications.length === 0 ? (
-
-<div
-style={{
-color: "#94a3b8",
-}}
->
-No notifications yet.
-</div>
-
-) : (
-
-notifications.map((item) => (
-
-<div
-key={item.id}
-style={{
-background: "#1e293b",
-padding: "16px",
-borderRadius: "16px",
-}}
->
-
-<p
-style={{
-margin: 0,
-lineHeight: "1.6",
-}}
->
-{item.message}
-</p>
-
-</div>
-
-))
-
-)}
-
-</div>
-
-</div>
-
-);
-
+              {!notification.read && (
+                <span
+                  style={{
+                    color:
+                      "#38bdf8",
+                    fontSize:
+                      "13px",
+                  }}
+                >
+                  NEW
+                </span>
+              )}
+            </div>
+          )
+        )
+      )}
+    </div>
+  );
 }
 
 export default Notifications;
