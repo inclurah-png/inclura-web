@@ -15,7 +15,6 @@ getDoc,
 
 import { db, auth } from "../firebase";
 
-import CreatePost from "./CreatePost";
 import FollowButton from "./FollowButton";
 import CommentBox from "./CommentBox";
 import SearchBar from "./SearchBar";
@@ -144,13 +143,6 @@ maxWidth: "720px",
 margin: "0 auto",
 }}
   
-return (
-<div
-  style={{
-    padding: "24px",
-    maxWidth: "720px",
-    margin: "0 auto",
-  }}
 >
   <SearchBar
     posts={posts}
