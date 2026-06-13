@@ -193,91 +193,25 @@ return (
         </div>
       </div>
 
-      {/* DASHBOARD STATS */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "repeat(auto-fit,minmax(200px,1fr))",
-          gap: "16px",
-          marginBottom: "24px",
-        }}
-      >
-        <div style={cardStyle}>
-          <h3>📝 Posts</h3>
-          <h2>{profile.postCount || 0}</h2>
-        </div>
+<DashboardStats profile={profile} />
 
-        <div style={cardStyle}>
-          <h3>👥 Followers</h3>
-          <h2>
-            {profile.followers?.length || 0}
-          </h2>
-        </div>
+<StoriesSection />
 
-        <div style={cardStyle}>
-          <h3>➡ Following</h3>
-          <h2>
-            {profile.following?.length || 0}
-          </h2>
-        </div>
+<OpportunitiesWidget />
 
-        <div style={cardStyle}>
-          <h3>🏆 XP</h3>
-          <h2>{profile.xp || 0}</h2>
-        </div>
-      </div>
+<CommunityHighlights />
 
-      {/* OPPORTUNITIES */}
-      <div style={cardStyle}>
-        <h2>🚀 Opportunities</h2>
+<ReelsSection />
 
-        <ul>
-          <li>Remote Jobs</li>
-          <li>Scholarships</li>
-          <li>Mentorship Programs</li>
-          <li>Volunteer Opportunities</li>
-        </ul>
-      </div>
-
-      {/* COMMUNITY HIGHLIGHTS */}
-      <div style={cardStyle}>
-        <h2>🌟 Community Highlights</h2>
-
-        <p>
-          Featured creators,
-          entrepreneurs,
-          students,
-          advocates,
-          employers and caregivers
-          from the Inclura community.
-        </p>
-      </div>
-
-      {/* REELS SECTION */}
-      <div style={cardStyle}>
-        <h2>🎬 Inclura Reels</h2>
-
-        <p>
-          Accessibility tips,
-          disability stories,
-          creator content,
-          job wins and
-          community highlights.
-        </p>
-      </div>
-
-      {/* CREATE POST */}
       <CreatePost />
 
-      {/* FEED */}
-      <div
-        style={{
-          marginTop: "24px",
-        }}
-      >
-        <Feed />
-      </div>
+<div
+  style={{
+    marginTop: "24px",
+  }}
+>
+  <Feed />
+</div>
 
     </div>
   </DashboardLayout>
