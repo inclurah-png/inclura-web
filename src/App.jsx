@@ -15,6 +15,7 @@ import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
+import ForgotPassword from "./pages/ForgotPassword";
 
 function Home() {
   return (
@@ -44,6 +45,11 @@ function App() {
           element={<Login />}
         />
 
+        <Route
+  path="/forgot-password"
+  element={<ForgotPassword />}
+/>
+        
         <Route
           path="/signup"
           element={<Signup />}
