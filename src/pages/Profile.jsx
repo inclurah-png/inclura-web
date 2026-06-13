@@ -1,3 +1,7 @@
+import DashboardStats from "../components/DashboardStats";
+import OpportunitiesWidget from "../components/OpportunitiesWidget";
+import CommunityHighlights from "../components/CommunityHighlights";
+import ReelsSection from "../components/ReelsSection";
 import DashboardLayout from "../components/DashboardLayout";
 import CreatePost from "../components/CreatePost";
 import Feed from "../components/Feed";
