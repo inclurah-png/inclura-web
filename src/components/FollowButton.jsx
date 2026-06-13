@@ -1,222 +1,184 @@
-
 import { useEffect, useState } from "react";
 
 import {
-doc,
-updateDoc,
-arrayUnion,
-arrayRemove,
-onSnapshot,
-addDoc,
-collection,
-serverTimestamp,
+  doc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+  onSnapshot,
+  addDoc,
+  collection,
+  serverTimestamp,
+  getDoc,
 } from "firebase/firestore";
 
 import {
-db,
-auth,
+  db,
+  auth,
 } from "../firebase";
 
 function FollowButton({
-targetUserId,
+  targetUserId,
 }) {
-  
-const [isFollowing,
-setIsFollowing] =
-useState(false);
+  const [isFollowing, setIsFollowing] =
+    useState(false);
 
-const [loading,
-setLoading] =
-useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-const currentUserSnap =
-  await getDoc(currentUserRef);
+  useEffect(() => {
+    const user = auth.currentUser;
 
-const currentUser =
-  currentUserSnap.data();
+    if (!user) return;
 
-useEffect(() => {
-const user =
-auth.currentUser;
+    const unsubscribe = onSnapshot(
+      doc(db, "users", user.uid),
+      (snapshot) => {
+        const data = snapshot.data();
 
-if (!user)
-return;
+        if (
+          data?.following?.includes(
+            targetUserId
+          )
+        ) {
+          setIsFollowing(true);
+        } else {
+          setIsFollowing(false);
+        }
+      }
+    );
 
-const unsubscribe =
-onSnapshot(
-doc(
-db,
-"users",
-user.uid
-),
-(snapshot) => {
+    return () => unsubscribe();
+  }, [targetUserId]);
 
-const data =
-snapshot.data();
+  async function handleFollow() {
+    const user = auth.currentUser;
 
-if (
-data?.following?.includes(
-targetUserId
-)
-) {
+    if (!user) return;
 
-setIsFollowing(
-true
-);
+    if (user.uid === targetUserId) {
+      alert(
+        "You cannot follow yourself"
+      );
+      return;
+    }
 
-} else {
+    setLoading(true);
 
-setIsFollowing(
-false
-);
+    try {
+      const currentUserRef = doc(
+        db,
+        "users",
+        user.uid
+      );
 
-}
+      const targetUserRef = doc(
+        db,
+        "users",
+        targetUserId
+      );
 
-}
-);
+      if (isFollowing) {
+        await updateDoc(
+          currentUserRef,
+          {
+            following:
+              arrayRemove(
+                targetUserId
+              ),
+          }
+        );
 
-return () =>
-unsubscribe();
+        await updateDoc(
+          targetUserRef,
+          {
+            followers:
+              arrayRemove(
+                user.uid
+              ),
+          }
+        );
+      } else {
+        await updateDoc(
+          currentUserRef,
+          {
+            following:
+              arrayUnion(
+                targetUserId
+              ),
+          }
+        );
 
-}, [targetUserId]);
+        await updateDoc(
+          targetUserRef,
+          {
+            followers:
+              arrayUnion(
+                user.uid
+              ),
+          }
+        );
 
-async function handleFollow() {
+        // get current user profile
+        const currentUserSnap =
+          await getDoc(
+            currentUserRef
+          );
 
-const user =
-auth.currentUser;
-if (user.uid === targetUserId) {
-  alert("You cannot follow yourself");
-  return;
-}
-  
-if (!user)
-return;
+        const currentUser =
+          currentUserSnap.data();
 
-setLoading(true);
+        await addDoc(
+          collection(
+            db,
+            "notifications"
+          ),
+          {
+            receiverId:
+              targetUserId,
+            senderId:
+              user.uid,
+            type: "follow",
+            text:
+              `${currentUser?.fullName || "Someone"} started following you`,
+            read: false,
+            createdAt:
+              serverTimestamp(),
+          }
+        );
+      }
+    } catch (error) {
+      alert(error.message);
+    }
 
-try {
-
-const currentUserRef =
-doc(
-db,
-"users",
-user.uid
-);
-
-const targetUserRef =
-doc(
-db,
-"users",
-targetUserId
-);
-
-if (isFollowing) {
-
-await updateDoc(
-currentUserRef,
-{
-following:
-arrayRemove(
-targetUserId
-),
-}
-);
-
-await updateDoc(
-targetUserRef,
-{
-followers:
-arrayRemove(
-user.uid
-),
-}
-);
-
-} else {
-
-await updateDoc(
-currentUserRef,
-{
-following:
-arrayUnion(
-targetUserId
-),
-}
-);
-
-await updateDoc(
-targetUserRef,
-{
-followers:
-arrayUnion(
-user.uid
-),
-}
-);
-  
-await addDoc(
-  collection(db, "notifications"),
-  {
-    receiverId: targetUserId,
-    senderId: auth.currentUser.uid,
-    type: "follow",
-    text:
-      currentUser.fullName +
-      " started following you",
-    read: false,
-    createdAt: serverTimestamp(),
+    setLoading(false);
   }
-);
-  
-}
 
-} catch (error) {
-
-alert(error.message);
-
-}
-
-setLoading(false);
-
-}
-
-return (
-
-<button
-onClick={
-handleFollow
-}
-disabled={loading}
-style={{
-padding:
-"12px 18px",
-borderRadius:
-"14px",
-border: "none",
-background:
-isFollowing
-? "#334155"
-: "#38bdf8",
-color: "white",
-fontWeight:
-"700",
-cursor:
-"pointer",
-fontSize:
-"14px",
-}}
->
-
-{loading
-? "Loading..."
-: isFollowing
-? "Following"
-: "Follow"}
-
-</button>
-
-);
-
+  return (
+    <button
+      onClick={handleFollow}
+      disabled={loading}
+      style={{
+        padding: "12px 18px",
+        borderRadius: "14px",
+        border: "none",
+        background:
+          isFollowing
+            ? "#334155"
+            : "#38bdf8",
+        color: "white",
+        fontWeight: "700",
+        cursor: "pointer",
+        fontSize: "14px",
+      }}
+    >
+      {loading
+        ? "Loading..."
+        : isFollowing
+        ? "Following"
+        : "Follow"}
+    </button>
+  );
 }
 
 export default FollowButton;
