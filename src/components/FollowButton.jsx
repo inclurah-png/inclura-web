@@ -20,7 +20,7 @@ auth,
 function FollowButton({
 targetUserId,
 }) {
-
+  
 const [isFollowing,
 setIsFollowing] =
 useState(false);
