@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useState, useEffect } from "react";
 import ChatList from "../components/ChatList";
 import ChatWindow from "../components/ChatWindow";
@@ -11,14 +10,8 @@ import {
   updateDoc,
   arrayUnion,
 } from "firebase/firestore";
-import {
-  collection,
-  query,
-  orderBy,
-  onSnapshot,
-} from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 function Messages() {
   const [selectedChat,
