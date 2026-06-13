@@ -326,7 +326,60 @@ return (
           </div>
         </div>
       </div>
+      
+<div style={cardStyle}>
+    <h3>📝 Posts</h3>
+    <h2>{profile.postCount || 0}</h2>
+  </div>
 
+  <div style={cardStyle}>
+    <h3>👥 Followers</h3>
+    <h2>
+      {profile.followers?.length || 0}
+    </h2>
+  </div>
+
+  <div style={cardStyle}>
+    <h3>➡ Following</h3>
+    <h2>
+      {profile.following?.length || 0}
+    </h2>
+  </div>
+
+  <div style={cardStyle}>
+    <h3>🏆 XP</h3>
+    <h2>{profile.xp || 0}</h2>
+  </div>
+</div>
+
+    <div style={cardStyle}>
+  ♿ Accessibility Needs
+</div>
+
+{/* OPPORTUNITIES */}
+<div style={cardStyle}>
+  <h2>🚀 Opportunities</h2>
+
+  <ul>
+    <li>Remote Jobs</li>
+    <li>Scholarships</li>
+    <li>Mentorship Programs</li>
+    <li>Volunteer Opportunities</li>
+  </ul>
+</div>
+    
+    {/* COMMUNITY HIGHLIGHTS */}
+<div style={cardStyle}>
+  <h2>🌟 Community Highlights</h2>
+
+  <p>
+    Featured creators,
+    entrepreneurs,
+    students and advocates
+    from the Inclura community.
+  </p>
+</div>
+    
       {/* CREATE POST */}
       <CreatePost />
 
