@@ -3,15 +3,19 @@ function ReelsSection() {
     <div
       style={{
         background: "#1e293b",
-        padding: "20px",
+        padding: "18px",
         borderRadius: "18px",
-        marginBottom: "24px",
+        marginBottom: "16px",
       }}
     >
-      <h2>🎥 Inclura Reels</h2>
+      <h2>🎬 Inclura Reels</h2>
 
       <p>
-        Reels feature coming soon.
+        Accessibility tips,
+        disability stories,
+        creator content,
+        job wins and
+        community highlights.
       </p>
     </div>
   );
