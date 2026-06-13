@@ -3,9 +3,9 @@ function CommunityHighlights() {
     <div
       style={{
         background: "#1e293b",
-        padding: "20px",
+        padding: "18px",
         borderRadius: "18px",
-        marginBottom: "24px",
+        marginBottom: "16px",
       }}
     >
       <h2>🌟 Community Highlights</h2>
@@ -13,7 +13,9 @@ function CommunityHighlights() {
       <p>
         Featured creators,
         entrepreneurs,
-        students and advocates
+        students,
+        employers,
+        advocates and caregivers
         from the Inclura community.
       </p>
     </div>
