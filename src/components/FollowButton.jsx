@@ -13,12 +13,6 @@ serverTimestamp,
 } from "firebase/firestore";
 
 import {
-  addDoc,
-  collection,
-  serverTimestamp,
-} from "firebase/firestore";
-
-import {
 db,
 auth,
 } from "../firebase";
@@ -34,6 +28,12 @@ useState(false);
 const [loading,
 setLoading] =
 useState(false);
+
+const currentUserSnap =
+  await getDoc(currentUserRef);
+
+const currentUser =
+  currentUserSnap.data();
 
 useEffect(() => {
 const user =
