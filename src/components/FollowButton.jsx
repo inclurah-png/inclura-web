@@ -17,6 +17,8 @@ import {
   auth,
 } from "../firebase";
 
+import { sendNotification } from "../utils/notificationHelper";
+
 function FollowButton({
   targetUserId,
 }) {
@@ -98,26 +100,46 @@ function FollowButton({
               ),
           }
         );
-      } else {
-        await updateDoc(
-          currentUserRef,
-          {
-            following:
-              arrayUnion(
-                targetUserId
-              ),
-          }
-        );
+} else {
 
-        await updateDoc(
-          targetUserRef,
-          {
-            followers:
-              arrayUnion(
-                user.uid
-              ),
-          }
-        );
+  await updateDoc(
+    currentUserRef,
+    {
+      following: arrayUnion(
+        targetUserId
+      ),
+    }
+  );
+
+  await updateDoc(
+    targetUserRef,
+    {
+      followers: arrayUnion(
+        user.uid
+      ),
+    }
+  );
+
+  const currentUserSnap =
+    await getDoc(
+      currentUserRef
+    );
+
+  const currentUser =
+    currentUserSnap.data();
+
+  await sendNotification({
+    receiverId:
+      targetUserId,
+    senderId:
+      user.uid,
+    type: "follow",
+    text:
+      currentUser.fullName +
+      " started following you",
+  });
+
+}
 
         // get current user profile
         const currentUserSnap =
