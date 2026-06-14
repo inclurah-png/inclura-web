@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import StoriesSection from "./StoriesSection";
 
 import {
 collection,
@@ -137,13 +138,14 @@ alert("Post link copied!");
 
 return (
 <div
-style={{
-padding: "24px",
-maxWidth: "720px",
-margin: "0 auto",
-}}
-  
+  style={{
+    padding: "24px",
+    maxWidth: "720px",
+    margin: "0 auto",
+  }}
 >
+  <StoriesSection />
+
   <SearchBar
     posts={posts}
     onResults={setFilteredPosts}
