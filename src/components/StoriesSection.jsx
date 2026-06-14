@@ -74,7 +74,6 @@ function StoriesSection() {
             "10px",
         }}
       >
-        <StoryUploader />
         {stories
           .slice(0, 14)
           .map(
@@ -103,7 +102,7 @@ function StoriesSection() {
                 }}
               >
                 <img
-  src={story.mediaUrl}
+src={story.mediaUrl || story.imageUrl}
   alt={story.userName}
   style={{
     width: "100%",
