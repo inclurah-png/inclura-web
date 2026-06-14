@@ -118,8 +118,15 @@ if (!profile) {
 
 return (
   <DashboardLayout>
-    <div
-      style={{
+<div
+  style={{
+    background: "red",
+    color: "white",
+    padding: "20px",
+  }}
+>
+  PROFILE PAGE TEST
+</div>      style={{
         color: "white",
       }}
     >
