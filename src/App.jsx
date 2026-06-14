@@ -1,4 +1,5 @@
 import { Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StoriesSection from "./components/StoriesSection";
 
@@ -68,7 +69,7 @@ function App() {
           element={<Onboarding />}
         />
 
-        <<Route
+        <Route
   path="/profile"
   element={<Profile />}
 />
