@@ -62,7 +62,7 @@ function CreateStory() {
             user.displayName ||
             "Inclura User",
           mediaUrl: imageUrl,
-mediaType: "image",,
+mediaType: "image",
           createdAt:
             serverTimestamp(),
           expiresAt:
