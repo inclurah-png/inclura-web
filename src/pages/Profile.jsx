@@ -193,17 +193,7 @@ return (
         </div>
       </div>
 
-<DashboardStats profile={profile} />
-
 <StoriesSection />
-
-<OpportunitiesWidget />
-
-<CommunityHighlights />
-
-<ReelsSection />
-
-      <CreatePost />
 
 <div
   style={{
