@@ -118,106 +118,17 @@ if (!profile) {
 
 console.log("PROFILE LOADED", profile);
   return (
-  <DashboardLayout>
-    <div
-      style={{
-        color: "white",
-      }}
-    >
-      <div
-        style={{
-          background: "red",
-          color: "white",
-          padding: "20px",
-          borderRadius: "12px",
-          marginBottom: "20px",
-        }}
-      >
-        PROFILE PAGE TEST
-      </div>
-
-      {/* PROFILE HEADER */}
-      <div
-        style={{
-          background: "#0f172a",
-          padding: "32px",
-          borderRadius: "30px",
-          border: "1px solid #1e293b",
-          marginBottom: "24px",
-        }}
-      >
-        <div style={cardStyle}>
-          🏷 Category:
-          {profile.category || "Not selected"}
-        </div>
-
-        <div style={cardStyle}>
-          🛡 Role:
-          {profile.role || "Member"}
-        </div>
-
-        <div style={cardStyle}>
-          🏅 Verified:
-          {profile.verified ? "Yes" : "No"}
-        </div>
-
-        <div style={cardStyle}>
-          💳 Wallet:
-          ${profile.walletBalance || 0}
-        </div>
-
-        <div style={cardStyle}>
-          <h3>♿ Accessibility Needs</h3>
-
-          <div
-            style={{
-              marginTop: "12px",
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "10px",
-            }}
-          >
-            {profile.accessibilityNeeds?.length > 0
-              ? profile.accessibilityNeeds.map(
-                  (item) => (
-                    <div
-                      key={item}
-                      style={{
-                        background: "#2563eb",
-                        padding: "10px 14px",
-                        borderRadius: "999px",
-                      }}
-                    >
-                      {item}
-                    </div>
-                  )
-                )
-              : "No accessibility needs selected"}
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
-          background: "green",
-          color: "white",
-          padding: "20px",
-          borderRadius: "12px",
-          marginBottom: "20px",
-        }}
-      >
-        STORIES TEST
-      </div>
-
-      <div
-        style={{
-          marginTop: "24px",
-        }}
-      >
-        <Feed />
-      </div>
-    </div>
-  </DashboardLayout>
+  <div
+    style={{
+      background: "red",
+      color: "white",
+      minHeight: "100vh",
+      padding: "40px",
+      fontSize: "30px",
+    }}
+  >
+    PROFILE PAGE WORKING
+  </div>
 );
 }
 
