@@ -43,8 +43,14 @@ function StoriesSection() {
 
     return () =>
       unsubscribe();
+    
   }, []);
+console.log(
+  "Stories Loaded:",
+  stories
+);
 
+return (
   return (
     <div
       style={{
@@ -60,7 +66,15 @@ function StoriesSection() {
       <h2>
         📸 Stories
       </h2>
-
+<p
+  style={{
+    color: "white",
+    marginBottom: "10px",
+  }}
+>
+  Stories Count: {stories.length}
+</p>
+      
       <CreateStory />
 
       <div
