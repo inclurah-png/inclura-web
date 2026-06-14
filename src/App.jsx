@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import StoriesSection from "./components/StoriesSection";
 
 import Navbar from "./components/Navbar";
 import Hero from "./components/Hero";
@@ -17,15 +18,22 @@ import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import ForgotPassword from "./pages/ForgotPassword";
 
-function Home() {
-  return (
-    <>
-      <Navbar />
-      <Hero />
-      <Feed />
-    </>
-  );
-}
+const stories = [
+  { name: "You" },
+  { name: "Ade" },
+  { name: "Tolu" },
+  { name: "Mary" },
+  { name: "David" },
+  { name: "Grace" },
+  { name: "Amina" },
+  { name: "John" },
+  { name: "Sarah" },
+  { name: "Emeka" },
+  { name: "Bola" },
+  { name: "Femi" },
+  { name: "Ngozi" },
+  { name: "Paul" },
+];
 
 function App() {
   return (
