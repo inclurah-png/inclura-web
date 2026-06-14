@@ -116,6 +116,8 @@ if (!profile) {
   );
 }
 
+console.log("PROFILE LOADED", profile);
+  
 return (
   <DashboardLayout>
 <div
@@ -200,7 +202,16 @@ return (
         </div>
       </div>
 
-<StoriesSection />
+<div
+  style={{
+    background: "red",
+    color: "white",
+    padding: "20px",
+    borderRadius: "12px",
+  }}
+>
+  STORIES TEST
+</div>
 
 <div
   style={{
