@@ -5,8 +5,8 @@ import {
   orderBy,
   onSnapshot,
 } from "firebase/firestore";
-import { db } from "../firebase";
 
+import { db } from "../firebase";
 import CreateStory from "./CreateStory";
 
 function StoriesSection() {
@@ -23,131 +23,106 @@ function StoriesSection() {
     );
 
     const unsubscribe =
-      onSnapshot(
-        q,
-        (snapshot) => {
-          const loadedStories =
-            snapshot.docs.map(
-              (doc) => ({
-                id: doc.id,
-                ...doc.data(),
-              })
-            );
-
-          setStories(
-            loadedStories
+      onSnapshot(q, (snapshot) => {
+        const loadedStories =
+          snapshot.docs.map(
+            (doc) => ({
+              id: doc.id,
+              ...doc.data(),
+            })
           );
-        }
-      );
 
-    return () =>
-      unsubscribe();
-    
+        setStories(
+          loadedStories
+        );
+      });
+
+    return () => unsubscribe();
   }, []);
-console.log(
-  "Stories Loaded:",
-  stories
-);
 
-return (
+  console.log(
+    "Stories Loaded:",
+    stories
+  );
+
   return (
     <div
       style={{
-        background:
-          "#1e293b",
+        background: "#1e293b",
         padding: "18px",
-        borderRadius:
-          "18px",
-        marginBottom:
-          "16px",
+        borderRadius: "18px",
+        marginBottom: "16px",
       }}
     >
-      <h2>
-        📸 Stories
-      </h2>
-      
-<p
-  style={{
-    color: "white",
-    marginBottom: "10px",
-  }}
->
-  Stories Count: {stories.length}
-</p>
-      
+      <h2>📸 Stories</h2>
+
+      <p
+        style={{
+          color: "white",
+          marginBottom: "10px",
+        }}
+      >
+        Stories Count: {stories.length}
+      </p>
+
       <CreateStory />
 
       <div
         style={{
           display: "flex",
           gap: "12px",
-          overflowX:
-            "auto",
-          paddingTop:
-            "10px",
+          overflowX: "auto",
+          paddingTop: "10px",
         }}
       >
         {stories
           .slice(0, 14)
-          .map(
-            (
-              story
-            ) => (
-              <div
-                key={
-                  story.id
+          .map((story) => (
+            <div
+              key={story.id}
+              style={{
+                minWidth: "90px",
+                height: "150px",
+                borderRadius: "16px",
+                overflow: "hidden",
+                position: "relative",
+                border:
+                  "3px solid #38bdf8",
+                cursor: "pointer",
+              }}
+            >
+              <img
+                src={
+                  story.mediaUrl ||
+                  story.imageUrl
                 }
+                alt={story.userName}
                 style={{
-                  minWidth:
-                    "90px",
-                  height:
-                    "150px",
-                  borderRadius:
-                    "16px",
-                  overflow:
-                    "hidden",
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                }}
+              />
+
+              <div
+                style={{
                   position:
-                    "relative",
-                  border:
-                    "3px solid #38bdf8",
-                  cursor:
-                    "pointer",
+                    "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: "8px",
+                  background:
+                    "rgba(0,0,0,0.5)",
+                  color: "white",
+                  fontSize: "12px",
+                  textAlign: "center",
                 }}
               >
-                <img
-src={story.mediaUrl || story.imageUrl}
-  alt={story.userName}
-  style={{
-    width: "100%",
-    height: "100%",
-    objectFit: "cover",
-  }}
-/>
-
-                <div
-                  style={{
-                    position:
-                      "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding:
-                      "8px",
-                    background:
-                      "rgba(0,0,0,0.5)",
-                    color:
-                      "white",
-                    fontSize:
-                      "12px",
-                    textAlign:
-                      "center",
-                  }}
-                >
-                  {story.userName}
-                </div>
+                {story.userName}
               </div>
-            )
-          )}
+            </div>
+          ))}
       </div>
     </div>
   );
