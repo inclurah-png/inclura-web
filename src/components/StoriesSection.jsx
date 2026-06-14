@@ -2,14 +2,13 @@ function StoriesSection() {
   return (
     <div
       style={{
-        background: "red",
+        background: "#1e293b",
+        padding: "20px",
+        borderRadius: "16px",
         color: "white",
-        padding: "30px",
-        borderRadius: "20px",
-        marginBottom: "20px",
       }}
     >
-      STORIES SECTION WORKING
+      STORIES COMPONENT WORKING
     </div>
   );
 }
