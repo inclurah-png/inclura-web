@@ -103,21 +103,14 @@ function StoriesSection() {
                 }}
               >
                 <img
-                  src={
-                    story.imageUrl
-                  }
-                  alt={
-                    story.userName
-                  }
-                  style={{
-                    width:
-                      "100%",
-                    height:
-                      "100%",
-                    objectFit:
-                      "cover",
-                  }}
-                />
+  src={story.mediaUrl}
+  alt={story.userName}
+  style={{
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+  }}
+/>
 
                 <div
                   style={{
