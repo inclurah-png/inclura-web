@@ -68,15 +68,10 @@ function App() {
           element={<Onboarding />}
         />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
+        <<Route
+  path="/profile"
+  element={<Profile />}
+/>
         <Route
           path="/edit-profile"
           element={
