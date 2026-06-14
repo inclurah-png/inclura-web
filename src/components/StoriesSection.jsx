@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import StoryUploader from "./StoryUploader";
 import {
   collection,
   query,
@@ -74,6 +74,7 @@ function StoriesSection() {
             "10px",
         }}
       >
+        <StoryUploader />
         {stories
           .slice(0, 14)
           .map(
