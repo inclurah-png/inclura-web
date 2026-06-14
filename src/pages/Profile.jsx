@@ -117,21 +117,25 @@ if (!profile) {
 }
 
 console.log("PROFILE LOADED", profile);
-  
-return (
+  return (
   <DashboardLayout>
-<div
-  style={{
-    background: "red",
-    color: "white",
-    padding: "20px",
-  }}
->
-  PROFILE PAGE TEST
-</div>      style={{
+    <div
+      style={{
         color: "white",
       }}
     >
+      <div
+        style={{
+          background: "red",
+          color: "white",
+          padding: "20px",
+          borderRadius: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        PROFILE PAGE TEST
+      </div>
+
       {/* PROFILE HEADER */}
       <div
         style={{
@@ -142,35 +146,26 @@ return (
           marginBottom: "24px",
         }}
       >
-        {/* Existing profile image section */}
-
-        {/* Existing profile details section */}
-
-        {/* Existing Category */}
         <div style={cardStyle}>
           🏷 Category:
           {profile.category || "Not selected"}
         </div>
 
-        {/* Existing Role */}
         <div style={cardStyle}>
           🛡 Role:
           {profile.role || "Member"}
         </div>
 
-        {/* Existing Verified */}
         <div style={cardStyle}>
           🏅 Verified:
           {profile.verified ? "Yes" : "No"}
         </div>
 
-        {/* Existing Wallet */}
         <div style={cardStyle}>
           💳 Wallet:
           ${profile.walletBalance || 0}
         </div>
 
-        {/* Existing Accessibility */}
         <div style={cardStyle}>
           <h3>♿ Accessibility Needs</h3>
 
@@ -202,25 +197,25 @@ return (
         </div>
       </div>
 
-<div
-  style={{
-    background: "red",
-    color: "white",
-    padding: "20px",
-    borderRadius: "12px",
-  }}
->
-  STORIES TEST
-</div>
+      <div
+        style={{
+          background: "green",
+          color: "white",
+          padding: "20px",
+          borderRadius: "12px",
+          marginBottom: "20px",
+        }}
+      >
+        STORIES TEST
+      </div>
 
-<div
-  style={{
-    marginTop: "24px",
-  }}
->
-  <Feed />
-</div>
-
+      <div
+        style={{
+          marginTop: "24px",
+        }}
+      >
+        <Feed />
+      </div>
     </div>
   </DashboardLayout>
 );
