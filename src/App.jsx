@@ -1,5 +1,4 @@
 import { Routes, Route } from "react-router-dom";
-import Home from "./pages/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
 import StoriesSection from "./components/StoriesSection";
 
@@ -45,9 +44,15 @@ function App() {
     >
       <Routes>
         <Route
-          path="/"
-          element={<Home />}
-        />
+  path="/"
+  element={
+    <>
+      <Navbar />
+      <Hero />
+      <Feed />
+    </>
+  }
+/>
 
         <Route
           path="/login"
