@@ -6,7 +6,10 @@ signInWithEmailAndPassword,
 
 import { auth } from "../firebase";
 
-import { useNavigate } from "react-router-dom";
+import {
+  useNavigate,
+  Link,
+} from "react-router-dom";
 
 function Login() {
 
@@ -129,6 +132,43 @@ style={buttonStyle}
 {loading ? "Signing In..." : "Sign In"}
 
 </button>
+ 
+ <div
+  style={{
+    marginTop: "20px",
+    textAlign: "center",
+  }}
+>
+  <Link
+    to="/forgot-password"
+    style={{
+      color: "#38bdf8",
+      textDecoration: "none",
+      display: "block",
+      marginBottom: "14px",
+    }}
+  >
+    Forgot Password?
+  </Link>
+
+  <p
+    style={{
+      color: "#94a3b8",
+      margin: 0,
+    }}
+  >
+    Don't have an account?{" "}
+    <Link
+      to="/signup"
+      style={{
+        color: "#38bdf8",
+        textDecoration: "none",
+      }}
+    >
+      Sign Up
+    </Link>
+  </p>
+</div>
 
 </div>
 
