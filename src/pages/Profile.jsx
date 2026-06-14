@@ -1,23 +1,16 @@
 function Profile() {
   return (
-  <DashboardLayout>
-
     <div
       style={{
         background: "#2563eb",
         color: "white",
-        padding: "20px",
-        borderRadius: "12px",
-        marginBottom: "20px",
+        minHeight: "100vh",
+        padding: "40px",
       }}
     >
-      STORIES SECTION TEST
+      PROFILE WORKING
     </div>
-
-    <StoriesSection />
-
-  </DashboardLayout>
-);
+  );
 }
 
 export default Profile;
