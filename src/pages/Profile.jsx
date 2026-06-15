@@ -1,4 +1,5 @@
 import CreatePost from "../components/CreatePost";
+import Feed from "../components/Feed";
 import StoriesSection from "../components/StoriesSection";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardStats from "../components/DashboardStats";
@@ -76,7 +77,7 @@ function Profile() {
           marginBottom: "20px",
         }}
       >
-        📰 Feed
+        <Feed />
       </div>
 
       {/* Accessibility Hub */}
