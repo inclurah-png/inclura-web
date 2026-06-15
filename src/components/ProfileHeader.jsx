@@ -28,16 +28,13 @@ function ProfileHeader({ profile }) {
             height: "120px",
             borderRadius: "50%",
             objectFit: "cover",
-            border: "4px solid #38bdf8",
+            border:
+              "4px solid #38bdf8",
           }}
         />
 
         <div>
-          <h2
-            style={{
-              margin: 0,
-            }}
-          >
+          <h2>
             {profile?.fullName ||
               "Inclura User"}
           </h2>
@@ -45,11 +42,10 @@ function ProfileHeader({ profile }) {
           <p
             style={{
               color: "#94a3b8",
-              marginTop: "8px",
             }}
           >
             {profile?.bio ||
-              "No bio added yet"}
+              "No bio yet"}
           </p>
 
           <div
@@ -57,17 +53,19 @@ function ProfileHeader({ profile }) {
               display: "flex",
               gap: "10px",
               flexWrap: "wrap",
-              marginTop: "12px",
+              marginTop: "10px",
             }}
           >
             <span style={tag}>
-              🏷 {profile?.category ||
+              🏷️
+              {profile?.category ||
                 "Member"}
             </span>
 
             <span style={tag}>
-              🛡 {profile?.role ||
-                "User"}
+              📍
+              {profile?.location ||
+                "Unknown"}
             </span>
 
             <span style={tag}>
