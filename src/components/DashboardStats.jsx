@@ -1,4 +1,7 @@
 function DashboardStats({ profile }) {
+  const wallet =
+    profile?.walletBalance || 0;
+
   return (
     <div
       style={{
@@ -29,8 +32,23 @@ function DashboardStats({ profile }) {
       </div>
 
       <div style={card}>
-        <h3>🏆 XP</h3>
-        <h2>{profile?.xp || 0}</h2>
+        <h3>💵 USD Wallet</h3>
+        <h2>${wallet}</h2>
+      </div>
+
+      <div style={card}>
+        <h3>💶 EUR Wallet</h3>
+        <h2>€{wallet}</h2>
+      </div>
+
+      <div style={card}>
+        <h3>💷 GBP Wallet</h3>
+        <h2>£{wallet}</h2>
+      </div>
+
+      <div style={card}>
+        <h3>🇳🇬 NGN Wallet</h3>
+        <h2>₦{wallet}</h2>
       </div>
     </div>
   );
@@ -40,6 +58,8 @@ const card = {
   background: "#1e293b",
   padding: "18px",
   borderRadius: "18px",
+  textAlign: "center",
+  color: "white",
 };
 
 export default DashboardStats;
