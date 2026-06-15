@@ -3,15 +3,17 @@ import DashboardLayout from "../components/DashboardLayout";
 function Profile() {
   return (
     <DashboardLayout>
-      <div
-        style={{
-          background: "#2563eb",
-          color: "white",
-          padding: "20px",
-          borderRadius: "12px",
-          marginBottom: "20px",
-        }}
-      >
+<div
+  style={{
+    background: "green",
+    color: "white",
+    padding: "20px",
+    borderRadius: "12px",
+    marginBottom: "20px",
+  }}
+>
+  DASHBOARD STATS TEST
+</div>
         DASHBOARD LAYOUT WORKING
       </div>
 
