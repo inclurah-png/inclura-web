@@ -136,25 +136,24 @@ alert("Post link copied!");
 }
 
 return (
-<div
-  style={{
-    padding: "24px",
-    maxWidth: "720px",
-    margin: "0 auto",
-  }}
->
-  <StoriesSection />
-
-  <SearchBar
-    posts={posts}
-    onResults={setFilteredPosts}
-  />
-
   <div
     style={{
-      marginTop: "24px",
+      padding: "24px",
+      maxWidth: "720px",
+      margin: "0 auto",
     }}
   >
+    <SearchBar
+      posts={posts}
+      onResults={setFilteredPosts}
+    />
+
+    <div
+      style={{
+        marginTop: "24px",
+      }}
+    >
+      
     {filteredPosts.length ===
     0 ? (
       <div
