@@ -1,7 +1,6 @@
-
 import { useEffect, useState } from "react";
 
-import { auth, db } from "../firebase";
+import { auth, db, storage } from "../firebase";
 
 import {
   doc,
@@ -9,23 +8,31 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
 import { useNavigate } from "react-router-dom";
 
 function EditProfile() {
-
   const [fullName, setFullName] =
     useState("");
 
   const [location, setLocation] =
     useState("");
-  
+
   const [phoneNumber, setPhoneNumber] =
     useState("");
-  
+
   const [bio, setBio] =
     useState("");
 
   const [category, setCategory] =
+    useState("");
+
+  const [photoURL, setPhotoURL] =
     useState("");
 
   const [
@@ -33,13 +40,14 @@ function EditProfile() {
     setAccessibilityNeeds,
   ] = useState([]);
 
+  const [loading, setLoading] =
+    useState(false);
+
   const navigate =
     useNavigate();
 
   useEffect(() => {
-
     async function loadProfile() {
-
       const user =
         auth.currentUser;
 
@@ -55,7 +63,6 @@ function EditProfile() {
         );
 
       if (snap.exists()) {
-
         const data =
           snap.data();
 
@@ -66,10 +73,11 @@ function EditProfile() {
         setLocation(
           data.location || ""
         );
-        
-setPhoneNumber(
-data.phoneNumber || ""
-);
+
+        setPhoneNumber(
+          data.phoneNumber || ""
+        );
+
         setBio(
           data.bio || ""
         );
@@ -78,21 +86,60 @@ data.phoneNumber || ""
           data.category || ""
         );
 
+        setPhotoURL(
+          data.photoURL || ""
+        );
+
         setAccessibilityNeeds(
           data.accessibilityNeeds || []
         );
-
       }
-
     }
 
     loadProfile();
-
   }, []);
 
-  async function handleSave() {
+  async function handlePhotoUpload(
+    e
+  ) {
+    const file =
+      e.target.files[0];
+
+    if (!file) return;
 
     try {
+      const user =
+        auth.currentUser;
+
+      const storageRef =
+        ref(
+          storage,
+          `profilePhotos/${user.uid}`
+        );
+
+      await uploadBytes(
+        storageRef,
+        file
+      );
+
+      const url =
+        await getDownloadURL(
+          storageRef
+        );
+
+      setPhotoURL(url);
+
+      alert(
+        "Photo uploaded successfully"
+      );
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  async function handleSave() {
+    try {
+      setLoading(true);
 
       const user =
         auth.currentUser;
@@ -112,6 +159,7 @@ data.phoneNumber || ""
           bio,
           category,
           accessibilityNeeds,
+          photoURL,
         }
       );
 
@@ -120,43 +168,112 @@ data.phoneNumber || ""
       );
 
       navigate("/profile");
-
     } catch (error) {
-
       alert(error.message);
-
+    } finally {
+      setLoading(false);
     }
+  }
 
+  function toggleNeed(
+    value
+  ) {
+    if (
+      accessibilityNeeds.includes(
+        value
+      )
+    ) {
+      setAccessibilityNeeds(
+        accessibilityNeeds.filter(
+          (item) =>
+            item !== value
+        )
+      );
+    } else {
+      setAccessibilityNeeds([
+        ...accessibilityNeeds,
+        value,
+      ]);
+    }
   }
 
   return (
-
     <div
       style={{
-        background:"#020617",
-        minHeight:"100vh",
-        padding:"24px",
-        color:"white",
-        fontFamily:"Arial",
+        background:
+          "#020617",
+        minHeight:
+          "100vh",
+        padding: "24px",
+        color: "white",
+        fontFamily:
+          "Arial",
       }}
     >
-
       <div
         style={{
-          maxWidth:"700px",
-          margin:"0 auto",
-          background:"#0f172a",
-          padding:"30px",
-          borderRadius:"24px",
+          maxWidth:
+            "700px",
+          margin:
+            "0 auto",
+          background:
+            "#0f172a",
+          padding: "30px",
+          borderRadius:
+            "24px",
         }}
       >
+        <h1>
+          Edit Profile
+        </h1>
 
-        <h1>Edit Profile</h1>
+        <div
+          style={{
+            textAlign:
+              "center",
+            marginBottom:
+              "24px",
+          }}
+        >
+          <img
+            src={
+              photoURL ||
+              "https://via.placeholder.com/120"
+            }
+            alt="Profile"
+            style={{
+              width:
+                "120px",
+              height:
+                "120px",
+              borderRadius:
+                "50%",
+              objectFit:
+                "cover",
+              border:
+                "4px solid #38bdf8",
+            }}
+          />
+
+          <br />
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={
+              handlePhotoUpload
+            }
+            style={{
+              marginTop:
+                "12px",
+            }}
+          />
+        </div>
 
         <input
           placeholder="Full Name"
           value={fullName}
-          onChange={(e)=>
+          onChange={(e) =>
             setFullName(
               e.target.value
             )
@@ -167,274 +284,185 @@ data.phoneNumber || ""
         <input
           placeholder="Location"
           value={location}
-          onChange={(e)=>
+          onChange={(e) =>
             setLocation(
               e.target.value
             )
           }
           style={inputStyle}
         />
-        
-<input
-type="tel"
-placeholder="Phone Number"
-value={phoneNumber}
-onChange={(e)=>
-setPhoneNumber(
-e.target.value
-)
-}
-style={inputStyle}
-/>
-        
+
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={
+            phoneNumber
+          }
+          onChange={(e) =>
+            setPhoneNumber(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
         <textarea
           placeholder="Bio"
           value={bio}
-          onChange={(e)=>
+          onChange={(e) =>
             setBio(
               e.target.value
             )
           }
           style={{
             ...inputStyle,
-            height:"120px",
+            height: "120px",
           }}
         />
 
         <select
-  value={category}
-  onChange={(e) =>
-    setCategory(e.target.value)
-  }
-  style={{
-    width:"100%",
-    padding:"16px",
-    marginBottom:"16px",
-    borderRadius:"14px",
-    border:"1px solid #334155",
-    background:"#ffffff",
-    color:"#000000",
-    boxSizing:"border-box",
-  }}
->
-
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value
+            )
+          }
+          style={{
+            width: "100%",
+            padding:
+              "16px",
+            marginBottom:
+              "16px",
+            borderRadius:
+              "14px",
+            border:
+              "1px solid #334155",
+            background:
+              "#ffffff",
+            color:
+              "#000000",
+            boxSizing:
+              "border-box",
+          }}
+        >
           <option value="">
             Select Category
           </option>
 
-          <option value="Creator">
+          <option>
             Creator
           </option>
 
-          <option value="Caregiver">
+          <option>
             Caregiver
           </option>
 
-          <option value="Employer">
+          <option>
             Employer
           </option>
 
-          <option value="Job Seeker">
+          <option>
             Job Seeker
           </option>
 
-          <option value="Volunteer">
+          <option>
             Volunteer
           </option>
 
-          <option value="Organization">
+          <option>
             Organization
           </option>
 
-          <option value="Advocate">
+          <option>
             Advocate
           </option>
-
         </select>
 
         <div
-          
-style={{
-marginBottom:"20px",
-}}
->
+          style={{
+            marginBottom:
+              "20px",
+          }}
+        >
+          <h3>
+            Accessibility
+            Needs
+          </h3>
 
-<h3>
-Accessibility Needs
-</h3>
-
-<label>
-<input
-type="checkbox"
-value="Visual Impairment"
-checked={accessibilityNeeds.includes(
-"Visual Impairment"
-)}
-onChange={(e)=>{
-
-if(e.target.checked){
-
-setAccessibilityNeeds([
-...accessibilityNeeds,
-e.target.value
-]);
-
-}else{
-
-setAccessibilityNeeds(
-accessibilityNeeds.filter(
-(item)=>
-item !== e.target.value
-)
-);
-
-}
-
-}}
-/>
-
-Visual Impairment </label>
-
-<br />
-
-<label>
-<input
-type="checkbox"
-value="Hearing Impairment"
-checked={accessibilityNeeds.includes(
-"Hearing Impairment"
-)}
-onChange={(e)=>{
-
-if(e.target.checked){
-
-setAccessibilityNeeds([
-...accessibilityNeeds,
-e.target.value
-]);
-
-}else{
-
-setAccessibilityNeeds(
-accessibilityNeeds.filter(
-(item)=>
-item !== e.target.value
-)
-);
-
-}
-
-}}
-/>
-
-Hearing Impairment </label>
-
-<br />
-
-<label>
-<input
-type="checkbox"
-value="Mobility Impairment"
-checked={accessibilityNeeds.includes(
-"Mobility Impairment"
-)}
-onChange={(e)=>{
-
-if(e.target.checked){
-
-setAccessibilityNeeds([
-...accessibilityNeeds,
-e.target.value
-]);
-
-}else{
-
-setAccessibilityNeeds(
-accessibilityNeeds.filter(
-(item)=>
-item !== e.target.value
-)
-);
-
-}
-
-}}
-/>
-
-Mobility Impairment </label>
-
-<br />
-
-<label>
-<input
-type="checkbox"
-value="Speech Impairment"
-checked={accessibilityNeeds.includes(
-"Speech Impairment"
-)}
-onChange={(e)=>{
-
-if(e.target.checked){
-
-setAccessibilityNeeds([
-...accessibilityNeeds,
-e.target.value
-]);
-
-}else{
-
-setAccessibilityNeeds(
-accessibilityNeeds.filter(
-(item)=>
-item !== e.target.value
-)
-);
-
-}
-
-}}
-/>
-
-Speech Impairment </label>
-
-</div>
-
+          {[
+            "Visual Impairment",
+            "Hearing Impairment",
+            "Mobility Impairment",
+            "Speech Impairment",
+          ].map(
+            (need) => (
+              <div
+                key={need}
+              >
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={accessibilityNeeds.includes(
+                      need
+                    )}
+                    onChange={() =>
+                      toggleNeed(
+                        need
+                      )
+                    }
+                  />
+                  {" "}
+                  {need}
+                </label>
+              </div>
+            )
+          )}
+        </div>
 
         <button
-          onClick={handleSave}
-          style={buttonStyle}
+          onClick={
+            handleSave
+          }
+          disabled={
+            loading
+          }
+          style={
+            buttonStyle
+          }
         >
-          Save Changes
+          {loading
+            ? "Saving..."
+            : "Save Changes"}
         </button>
-
       </div>
-
     </div>
-
   );
-
 }
 
 const inputStyle = {
-  width:"100%",
-  padding:"16px",
-  marginBottom:"16px",
-  borderRadius:"14px",
-  border:"1px solid #334155",
-  background:"#1e293b",
-  color:"white",
-  boxSizing:"border-box",
+  width: "100%",
+  padding: "16px",
+  marginBottom: "16px",
+  borderRadius: "14px",
+  border:
+    "1px solid #334155",
+  background:
+    "#1e293b",
+  color: "white",
+  boxSizing:
+    "border-box",
 };
 
 const buttonStyle = {
-  width:"100%",
-  padding:"16px",
-  borderRadius:"14px",
-  border:"none",
-  background:"#38bdf8",
-  color:"white",
-  fontWeight:"700",
-  cursor:"pointer",
+  width: "100%",
+  padding: "16px",
+  borderRadius: "14px",
+  border: "none",
+  background:
+    "#38bdf8",
+  color: "white",
+  fontWeight: "700",
+  cursor: "pointer",
 };
 
 export default EditProfile;
