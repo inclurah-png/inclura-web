@@ -16,6 +16,7 @@ import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
+import AccessibilityHub from "./pages/AccessibilityHub";
 
 function App() {
   return (
@@ -92,6 +93,11 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/accessibility"
+  element={<AccessibilityHub />}
+/>
 
       <Route
         path="/notifications"
