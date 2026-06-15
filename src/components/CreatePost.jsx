@@ -1,5 +1,16 @@
 import { useState } from "react";
 
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import {
+  db,
+  auth,
+} from "../firebase";
+
 function CreatePost() {
   const [postText, setPostText] =
     useState("");
@@ -7,17 +18,54 @@ function CreatePost() {
   const [category, setCategory] =
     useState("General");
 
-  function handlePost() {
+  const [loading, setLoading] =
+    useState(false);
+
+  async function handlePost() {
     if (!postText.trim()) {
       alert("Write something first.");
       return;
     }
 
-    alert(
-      "Post system connected. Firebase comes next."
-    );
+    try {
+      setLoading(true);
 
-    setPostText("");
+      const user =
+        auth.currentUser;
+
+      if (!user) {
+        alert(
+          "Please login again."
+        );
+        return;
+      }
+
+      await addDoc(
+        collection(db, "posts"),
+        {
+          text: postText,
+          category,
+          userId: user.uid,
+          userName:
+            user.displayName ||
+            "Inclura User",
+          likes: [],
+          createdAt:
+            serverTimestamp(),
+        }
+      );
+
+      setPostText("");
+
+      alert(
+        "Post created successfully!"
+      );
+    } catch (error) {
+      console.log(error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -41,19 +89,23 @@ function CreatePost() {
       <textarea
         value={postText}
         onChange={(e) =>
-          setPostText(e.target.value)
+          setPostText(
+            e.target.value
+          )
         }
         placeholder="Share something with the Inclura community..."
         style={{
           width: "100%",
           minHeight: "120px",
           borderRadius: "14px",
-          border: "1px solid #334155",
+          border:
+            "1px solid #334155",
           background: "#1e293b",
           color: "white",
           padding: "14px",
           resize: "vertical",
-          boxSizing: "border-box",
+          boxSizing:
+            "border-box",
         }}
       />
 
@@ -68,7 +120,9 @@ function CreatePost() {
         <select
           value={category}
           onChange={(e) =>
-            setCategory(e.target.value)
+            setCategory(
+              e.target.value
+            )
           }
           style={{
             padding: "10px",
@@ -76,12 +130,24 @@ function CreatePost() {
             border: "none",
           }}
         >
-          <option>General</option>
-          <option>Accessibility</option>
-          <option>Care-Gig</option>
-          <option>Opportunity</option>
-          <option>Mentorship</option>
-          <option>Marketplace</option>
+          <option>
+            General
+          </option>
+          <option>
+            Accessibility
+          </option>
+          <option>
+            Care-Gig
+          </option>
+          <option>
+            Opportunity
+          </option>
+          <option>
+            Mentorship
+          </option>
+          <option>
+            Marketplace
+          </option>
         </select>
 
         <button
@@ -99,24 +165,30 @@ function CreatePost() {
         <button
           style={actionBtn}
         >
-          ♿ Accessibility Tag
+          ♿ Accessibility
         </button>
       </div>
 
       <button
         onClick={handlePost}
+        disabled={loading}
         style={{
           marginTop: "16px",
           background: "#38bdf8",
           border: "none",
           color: "white",
-          padding: "12px 18px",
-          borderRadius: "12px",
+          padding:
+            "12px 18px",
+          borderRadius:
+            "12px",
           cursor: "pointer",
-          fontWeight: "bold",
+          fontWeight:
+            "bold",
         }}
       >
-        Post
+        {loading
+          ? "Posting..."
+          : "Post"}
       </button>
     </div>
   );
@@ -124,7 +196,8 @@ function CreatePost() {
 
 const actionBtn = {
   background: "#1e293b",
-  border: "1px solid #334155",
+  border:
+    "1px solid #334155",
   color: "white",
   padding: "10px 14px",
   borderRadius: "12px",
