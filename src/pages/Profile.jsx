@@ -1,18 +1,16 @@
 import DashboardLayout from "../components/DashboardLayout";
+import StoriesSection from "../components/StoriesSection";
+import CreatePost from "../components/CreatePost";
+import Feed from "../components/Feed";
 
 function Profile() {
   return (
     <DashboardLayout>
-      <div
-        style={{
-          background: "green",
-          color: "white",
-          padding: "20px",
-          borderRadius: "12px",
-        }}
-      >
-        PROFILE WORKING
-      </div>
+      <StoriesSection />
+
+      <CreatePost />
+
+      <Feed />
     </DashboardLayout>
   );
 }
