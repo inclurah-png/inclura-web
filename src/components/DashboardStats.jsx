@@ -36,22 +36,26 @@ function DashboardStats({ profile }) {
         <h3>💰 Wallet</h3>
         <h2>
           ₦
-          {profile?.walletNaira ||
+          {profile?.walletBalance ||
             0}
         </h2>
-        <small>
-          $
-          {profile?.walletUSD ||
-            0}
-          {" | "}
-          €
-          {profile?.walletEUR ||
-            0}
-          {" | "}
-          £
-          {profile?.walletGBP ||
-            0}
-        </small>
+      </div>
+
+      <div style={card}>
+        <h3>✔ Verified</h3>
+        <h2>
+          {profile?.verified
+            ? "Yes"
+            : "No"}
+        </h2>
+      </div>
+
+      <div style={card}>
+        <h3>🏷 Role</h3>
+        <h2>
+          {profile?.role ||
+            "User"}
+        </h2>
       </div>
     </div>
   );
