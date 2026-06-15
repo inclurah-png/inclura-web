@@ -9,9 +9,21 @@ function Profile() {
           color: "white",
           padding: "20px",
           borderRadius: "12px",
+          marginBottom: "20px",
         }}
       >
         DASHBOARD LAYOUT WORKING
+      </div>
+
+      <div
+        style={{
+          background: "#0f172a",
+          color: "white",
+          padding: "20px",
+          borderRadius: "12px",
+        }}
+      >
+        STORIES PLACEHOLDER
       </div>
     </DashboardLayout>
   );
