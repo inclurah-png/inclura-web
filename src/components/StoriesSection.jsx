@@ -13,35 +13,12 @@ function StoriesSection() {
     >
       <h3>📸 Stories</h3>
 
-<CreateStory />
+      <CreateStory />
 
-  <div
-    style={{
-      display: "flex",
-      gap: "12px",
-      overflowX: "auto",
-    }}
-  >
-    {demoStories.map((story) => (
-      <div
-        key={story.id}
-        style={{
-          minWidth: "90px",
-          height: "140px",
-          background: "#1e293b",
-          borderRadius: "16px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-          padding: "10px",
-        }}
-      >
-        {story.name}
+      <div>
+        Stories area ready
       </div>
-    ))}
-  </div>
-</div>
+    </div>
   );
 }
 
