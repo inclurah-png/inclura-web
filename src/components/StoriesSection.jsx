@@ -1,3 +1,5 @@
+import CreateStory from "./CreateStory";
+
 function StoriesSection() {
   return (
     <div
@@ -9,7 +11,13 @@ function StoriesSection() {
         marginBottom: "20px",
       }}
     >
-      📸 Stories Component Connected
+      <h3>📸 Stories</h3>
+
+      <CreateStory />
+
+      <div>
+        Stories area ready
+      </div>
     </div>
   );
 }
