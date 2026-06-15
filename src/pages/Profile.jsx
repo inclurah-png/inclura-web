@@ -1,3 +1,4 @@
+import CreatePost from "../components/CreatePost";
 import StoriesSection from "../components/StoriesSection";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardStats from "../components/DashboardStats";
@@ -49,6 +50,8 @@ function Profile() {
 
       {/* Stories */}
 <StoriesSection />
+
+<CreatePost />
 
       {/* Create Post */}
       <div
