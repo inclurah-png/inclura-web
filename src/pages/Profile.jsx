@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import DashboardLayout from "../components/DashboardLayout";
 import ProfileHeader from "../components/ProfileHeader";
 import DashboardStats from "../components/DashboardStats";
@@ -5,34 +7,55 @@ import StoriesSection from "../components/StoriesSection";
 import CreatePost from "../components/CreatePost";
 import Feed from "../components/Feed";
 
-const demoProfile = {
-  fullName: "Inclura User",
-  bio: "Building an inclusive future.",
-  category: "Member",
-  role: "User",
+import { auth, db } from "../firebase";
 
-  postCount: 0,
-
-  followers: [],
-  following: [],
-
-  walletNaira: 0,
-  walletUSD: 0,
-  walletEUR: 0,
-  walletGBP: 0,
-
-  xp: 0,
-};
+import {
+  doc,
+  getDoc,
+} from "firebase/firestore";
 
 function Profile() {
+  const [profile, setProfile] =
+    useState(null);
+
+  useEffect(() => {
+    async function loadProfile() {
+      try {
+        const user =
+          auth.currentUser;
+
+        if (!user) return;
+
+        const snap =
+          await getDoc(
+            doc(
+              db,
+              "users",
+              user.uid
+            )
+          );
+
+        if (snap.exists()) {
+          setProfile(
+            snap.data()
+          );
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+
+    loadProfile();
+  }, []);
+
   return (
     <DashboardLayout>
       <ProfileHeader
-        profile={demoProfile}
+        profile={profile}
       />
 
       <DashboardStats
-        profile={demoProfile}
+        profile={profile}
       />
 
       <StoriesSection />
