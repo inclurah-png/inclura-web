@@ -16,15 +16,17 @@ function DashboardSidebar() {
   return (
     <div
       style={{
-        width: "250px",
+        width: "260px",
         background: "#0f172a",
         padding: "20px",
         borderRadius: "20px",
+        overflowY: "auto",
       }}
     >
       <h2
         style={{
           marginBottom: "24px",
+          color: "white",
         }}
       >
         Inclura
@@ -39,6 +41,48 @@ function DashboardSidebar() {
 
       <div
         style={itemStyle}
+        onClick={() => navigate("/accessibility")}
+      >
+        ♿ Accessibility Hub
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/opportunities")}
+      >
+        💼 Opportunities Hub
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/care-gigs")}
+      >
+        🤝 Care-Gigs
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/mentor-hub")}
+      >
+        🎓 Mentor Hub
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/marketplace")}
+      >
+        🛒 Marketplace
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/reels")}
+      >
+        🎥 Reels
+      </div>
+
+      <div
+        style={itemStyle}
         onClick={() => navigate("/messages")}
       >
         💬 Messages
@@ -49,6 +93,27 @@ function DashboardSidebar() {
         onClick={() => navigate("/notifications")}
       >
         🔔 Notifications
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/wallet")}
+      >
+        💰 Wallet
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/enterprise")}
+      >
+        🏢 Enterprise
+      </div>
+
+      <div
+        style={itemStyle}
+        onClick={() => navigate("/sos")}
+      >
+        🚨 SOS
       </div>
 
       <div
