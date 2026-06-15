@@ -1,3 +1,4 @@
+import StoriesSection from "../components/StoriesSection";
 import DashboardLayout from "../components/DashboardLayout";
 import DashboardStats from "../components/DashboardStats";
 
@@ -47,17 +48,7 @@ function Profile() {
       <DashboardStats profile={profile} />
 
       {/* Stories */}
-      <div
-        style={{
-          background: "#0f172a",
-          color: "white",
-          padding: "20px",
-          borderRadius: "20px",
-          marginBottom: "20px",
-        }}
-      >
-        📸 Stories
-      </div>
+<StoriesSection />
 
       {/* Create Post */}
       <div
