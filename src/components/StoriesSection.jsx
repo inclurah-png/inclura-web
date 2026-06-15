@@ -2,13 +2,14 @@ function StoriesSection() {
   return (
     <div
       style={{
-        background: "#1e293b",
-        padding: "20px",
-        borderRadius: "16px",
+        background: "#0f172a",
         color: "white",
+        padding: "20px",
+        borderRadius: "12px",
+        marginBottom: "20px",
       }}
     >
-      STORIES COMPONENT WORKING
+      📸 Stories Component Connected
     </div>
   );
 }
