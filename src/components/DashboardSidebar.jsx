@@ -1,143 +1,151 @@
 import { useNavigate } from "react-router-dom";
 
 function DashboardSidebar() {
-  const navigate = useNavigate();
+const navigate = useNavigate();
 
-  const itemStyle = {
-    padding: "14px",
-    borderRadius: "12px",
-    cursor: "pointer",
-    marginBottom: "10px",
-    background: "#1e293b",
-    color: "white",
-    fontWeight: "600",
-  };
+const itemStyle = {
+padding: "14px",
+borderRadius: "12px",
+cursor: "pointer",
+marginBottom: "10px",
+background: "#1e293b",
+color: "white",
+fontWeight: "600",
+};
 
-  return (
-    <div
-      style={{
-        width: "260px",
-        background: "#0f172a",
-        padding: "20px",
-        borderRadius: "20px",
-        overflowY: "auto",
-      }}
-    >
-      <h2
-        style={{
-          marginBottom: "24px",
-          color: "white",
-        }}
-      >
-        Inclura
-      </h2>
+return (
+<div
+style={{
+width: "260px",
+background: "#0f172a",
+padding: "20px",
+borderRadius: "20px",
+overflowY: "auto",
+}}
+>
+<h2
+style={{
+marginBottom: "24px",
+color: "white",
+}}
+>
+Inclura
+</h2>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/profile")}
-      >
-        🏠 Dashboard
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/profile")}
+  >
+    🏠 Dashboard
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/accessibility")}
-      >
-        ♿ Accessibility Hub
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/accessibility")}
+  >
+    ♿ Accessibility Hub
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/opportunities")}
-      >
-        💼 Opportunities Hub
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/opportunities")}
+  >
+    💼 Opportunities Hub
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/care-gigs")}
-      >
-        🤝 Care-Gigs
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/care-gigs")}
+  >
+    🤝 Care-Gigs
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/mentor-hub")}
-      >
-        🎓 Mentor Hub
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/mentor-hub")}
+  >
+    🎓 Mentor Hub
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/marketplace")}
-      >
-        🛒 Marketplace
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/marketplace")}
+  >
+    🛒 Marketplace
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/reels")}
-      >
-        🎥 Reels
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/reels")}
+  >
+    🎥 Reels
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/messages")}
-      >
-        💬 Messages
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/messages")}
+  >
+    💬 Messages
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/notifications")}
-      >
-        🔔 Notifications
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/notifications")}
+  >
+    🔔 Notifications
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/wallet")}
-      >
-        💰 Wallet
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/wallet")}
+  >
+    💰 Wallet
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/enterprise")}
-      >
-        🏢 Enterprise
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/creator-earnings")}
+  >
+    💵 Creator Earnings
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/sos")}
-      >
-        🚨 SOS
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/enterprise")}
+  >
+    🏢 Enterprise
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/saved-posts")}
-      >
-        🔖 Saved Posts
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/sos")}
+  >
+    🚨 SOS
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/search")}
-      >
-        🔍 Search
-      </div>
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/saved-posts")}
+  >
+    🔖 Saved Posts
+  </div>
 
-      <div
-        style={itemStyle}
-        onClick={() => navigate("/edit-profile")}
-      >
-        ⚙ Edit Profile
-      </div>
-    </div>
-  );
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/search")}
+  >
+    🔍 Search
+  </div>
+
+  <div
+    style={itemStyle}
+    onClick={() => navigate("/edit-profile")}
+  >
+    ⚙ Edit Profile
+  </div>
+</div>
+
+);
 }
 
 export default DashboardSidebar;
