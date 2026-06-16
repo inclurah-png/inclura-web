@@ -1,6 +1,9 @@
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 
 function Wallet() {
+const navigate = useNavigate();
+    
 return (
 <DashboardLayout>
 <div
@@ -46,17 +49,14 @@ marginBottom: "24px",
       </div>
     </div>
 
-    <div
-      style={{
-        display: "flex",
-        gap: "12px",
-        flexWrap: "wrap",
-        marginBottom: "30px",
-      }}
-    >
-      <button style={actionBtn}>
-        ⬆ Pay & Top-Up
-      </button>
+<button
+  style={actionBtn}
+  onClick={() =>
+    navigate("/pay-topup")
+  }
+>
+  ⬆ Pay & Top-Up
+</button>
 
       <button style={actionBtn}>
         ⬇ Withdraw
