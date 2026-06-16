@@ -13,6 +13,7 @@ import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
 
 import AdManager from "./pages/AdManager";
+import EnterpriseAds from "./pages/EnterpriseAds";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -81,6 +82,15 @@ return (
   element={
     <ProtectedRoute>
       <AdManager />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/enterprise-ads"
+  element={
+    <ProtectedRoute>
+      <EnterpriseAds />
     </ProtectedRoute>
   }
 />
