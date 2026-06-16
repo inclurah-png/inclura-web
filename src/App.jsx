@@ -19,6 +19,7 @@ import Notifications from "./pages/Notifications";
 import AccessibilityHub from "./pages/AccessibilityHub";
 import OpportunitiesHub from "./pages/OpportunitiesHub";
 import CareGigs from "./pages/CareGigs";
+import CreatorEarnings from "./pages/CreatorEarnings";
 import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
@@ -129,6 +130,15 @@ return (
     }
   />
 
+  <Route
+  path="/creator-earnings"
+  element={
+    <ProtectedRoute>
+      <CreatorEarnings />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
     path="/mentor-hub"
     element={
