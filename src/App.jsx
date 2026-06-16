@@ -17,6 +17,7 @@ import EnterpriseAds from "./pages/EnterpriseAds";
 import AdminPanel from "./pages/AdminPanel";
 import VerificationManager from "./pages/VerificationManager";
 import AdApprovalQueue from "./pages/AdApprovalQueue";
+import WalletMonitoring from "./pages/WalletMonitoring";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -121,6 +122,15 @@ return (
   element={
     <ProtectedRoute>
       <AdApprovalQueue />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/wallet-monitoring"
+  element={
+    <ProtectedRoute>
+      <WalletMonitoring />
     </ProtectedRoute>
   }
 />
