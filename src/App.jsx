@@ -16,6 +16,13 @@ import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
 import AccessibilityHub from "./pages/AccessibilityHub";
+import OpportunitiesHub from "./pages/OpportunitiesHub";
+import CareGigs from "./pages/CareGigs";
+import MentorHub from "./pages/MentorHub";
+import Marketplace from "./pages/Marketplace";
+import Wallet from "./pages/Wallet";
+import Enterprise from "./pages/Enterprise";
+import SOS from "./pages/SOS";
 
 function App() {
   return (
@@ -106,6 +113,69 @@ function App() {
           </ProtectedRoute>
         }
       />
+
+      <Route
+  path="/opportunities"
+  element={
+    <ProtectedRoute>
+      <OpportunitiesHub />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/care-gigs"
+  element={
+    <ProtectedRoute>
+      <CareGigs />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/mentor-hub"
+  element={
+    <ProtectedRoute>
+      <MentorHub />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/marketplace"
+  element={
+    <ProtectedRoute>
+      <Marketplace />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/wallet"
+  element={
+    <ProtectedRoute>
+      <Wallet />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/enterprise"
+  element={
+    <ProtectedRoute>
+      <Enterprise />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/sos"
+  element={
+    <ProtectedRoute>
+      <SOS />
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/user/:userId"
