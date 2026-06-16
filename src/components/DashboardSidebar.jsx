@@ -128,6 +128,15 @@ Inclura
 >
   🏢 Enterprise Campaigns
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/platform-analytics")
+  }
+>
+  📊 Platform Analytics
+</div>
   
    <div
   style={itemStyle}
