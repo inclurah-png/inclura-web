@@ -131,6 +131,15 @@ Inclura
 </div>
   
   <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/verification-manager")
+  }
+>
+  ✅ Verification Manager
+</div>
+  
+  <div
     style={itemStyle}
     onClick={() => navigate("/enterprise")}
   >
