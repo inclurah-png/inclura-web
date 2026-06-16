@@ -122,6 +122,13 @@ Inclura
 >
   🏢 Enterprise Ads
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() => navigate("/admin")}
+>
+  👨‍💼 Admin Panel
+</div>
   
   <div
     style={itemStyle}
