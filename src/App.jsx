@@ -102,7 +102,11 @@ function App() {
 
       <Route
   path="/accessibility"
-  element={<AccessibilityHub />}
+  element={
+    <ProtectedRoute>
+      <AccessibilityHub />
+    </ProtectedRoute>
+  }
 />
 
       <Route
