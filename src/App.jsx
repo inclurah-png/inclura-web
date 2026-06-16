@@ -21,6 +21,7 @@ import CareGigs from "./pages/CareGigs";
 import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
+import PayTopup from "./pages/PayTopup";
 import Enterprise from "./pages/Enterprise";
 import SOS from "./pages/SOS";
 
@@ -159,6 +160,15 @@ function App() {
   element={
     <ProtectedRoute>
       <Wallet />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/pay-topup"
+  element={
+    <ProtectedRoute>
+      <PayTopup />
     </ProtectedRoute>
   }
 />
