@@ -145,6 +145,15 @@ Inclura
 >
   📋 Ad Approval Queue
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/wallet-monitoring")
+  }
+>
+  💰 Wallet Monitoring
+</div>
   
   <div
     style={itemStyle}
