@@ -115,6 +115,13 @@ Inclura
 >
   📢 Ad Manager
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() => navigate("/enterprise-ads")}
+>
+  🏢 Enterprise Ads
+</div>
   
   <div
     style={itemStyle}
