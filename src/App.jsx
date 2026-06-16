@@ -31,6 +31,7 @@ import CreatorEarnings from "./pages/CreatorEarnings";
 import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
+import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
 import Transfer from "./pages/Transfer";
@@ -247,6 +248,15 @@ return (
     }
   />
 
+  <Route
+  path="/advertiser-dashboard"
+  element={
+    <ProtectedRoute>
+      <AdvertiserDashboard />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
     path="/pay-topup"
     element={
