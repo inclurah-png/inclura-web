@@ -11,6 +11,7 @@ import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Messages from "./pages/Messages";
+import AdManager from "./pages/AdManager";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -75,6 +76,15 @@ return (
     }
   />
 
+  <Route
+  path="/ad-manager"
+  element={
+    <ProtectedRoute>
+      <AdManager />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
     path="/notifications"
     element={
