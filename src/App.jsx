@@ -31,10 +31,12 @@ import CreatorEarnings from "./pages/CreatorEarnings";
 import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
+import ReelsSystem from "./pages/ReelsSystem";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
+import PricingManager from "./pages/PricingManager";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
 import Transfer from "./pages/Transfer";
@@ -252,6 +254,15 @@ return (
   />
 
   <Route
+  path="/reels-system"
+  element={
+    <ProtectedRoute>
+      <ReelsSystem />
+    </ProtectedRoute>
+  }
+/>
+  
+  <Route
   path="/advertiser-dashboard"
   element={
     <ProtectedRoute>
@@ -283,6 +294,15 @@ return (
   element={
     <ProtectedRoute>
       <PlatformAnalytics />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/pricing-manager"
+  element={
+    <ProtectedRoute>
+      <PricingManager />
     </ProtectedRoute>
   }
 />
