@@ -47,7 +47,6 @@ marginBottom: "24px",
         <h3>🇳🇬 NGN</h3>
         <h2>₦0.00</h2>
       </div>
-    </div>
 
 <button
   style={actionBtn}
