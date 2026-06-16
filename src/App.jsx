@@ -23,6 +23,9 @@ import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
 import PayTopup from "./pages/PayTopup";
+import Withdraw from "./pages/Withdraw";
+import Transfer from "./pages/Transfer";
+import Transactions from "./pages/Transactions";
 import Enterprise from "./pages/Enterprise";
 import SOS from "./pages/SOS";
 
@@ -163,6 +166,33 @@ return (
     }
   />
 
+  <Route
+  path="/withdraw"
+  element={
+    <ProtectedRoute>
+      <Withdraw />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/transfer"
+  element={
+    <ProtectedRoute>
+      <Transfer />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/transactions"
+  element={
+    <ProtectedRoute>
+      <Transactions />
+    </ProtectedRoute>
+  }
+/>
+  
   {/* ENTERPRISE */}
   <Route
     path="/enterprise"
