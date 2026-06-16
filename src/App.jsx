@@ -34,6 +34,7 @@ import Wallet from "./pages/Wallet";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
+import PlatformAnalytics from "./pages/PlatformAnalytics";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
 import Transfer from "./pages/Transfer";
@@ -273,6 +274,15 @@ return (
   element={
     <ProtectedRoute>
       <EnterpriseCampaignManager />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/platform-analytics"
+  element={
+    <ProtectedRoute>
+      <PlatformAnalytics />
     </ProtectedRoute>
   }
 />
