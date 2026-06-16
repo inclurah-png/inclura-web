@@ -76,7 +76,7 @@ Inclura
 
   <div
     style={itemStyle}
-    onClick={() => navigate("/reels")}
+    onClick={() => navigate("/reels-system")}
   >
     🎥 Reels
   </div>
@@ -136,6 +136,15 @@ Inclura
   }
 >
   📊 Platform Analytics
+</div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/pricing-manager")
+  }
+>
+  💲 Pricing Manager
 </div>
   
    <div
