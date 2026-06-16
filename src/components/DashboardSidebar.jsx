@@ -138,6 +138,13 @@ Inclura
 >
   ✅ Verification Manager
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() => navigate("/ad-approval")}
+>
+  📋 Ad Approval Queue
+</div>
   
   <div
     style={itemStyle}
