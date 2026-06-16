@@ -33,6 +33,7 @@ import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
+import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
 import Transfer from "./pages/Transfer";
@@ -263,6 +264,15 @@ return (
   element={
     <ProtectedRoute>
       <CreatorMonetization />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/enterprise-campaigns"
+  element={
+    <ProtectedRoute>
+      <EnterpriseCampaignManager />
     </ProtectedRoute>
   }
 />
