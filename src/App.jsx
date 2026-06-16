@@ -19,6 +19,7 @@ import VerificationManager from "./pages/VerificationManager";
 import AdApprovalQueue from "./pages/AdApprovalQueue";
 import WalletMonitoring from "./pages/WalletMonitoring";
 import UsersManagement from "./pages/UsersManagement";
+import ReportsAndViolations from "./pages/ReportsAndViolations";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -141,6 +142,15 @@ return (
   element={
     <ProtectedRoute>
       <UsersManagement />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/reports-violations"
+  element={
+    <ProtectedRoute>
+      <ReportsAndViolations />
     </ProtectedRoute>
   }
 />
