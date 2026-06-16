@@ -101,6 +101,15 @@ Inclura
   >
     💰 Wallet
   </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/advertiser-dashboard")
+  }
+>
+  📢 Advertiser Dashboard
+</div>
   
    <div
   style={itemStyle}
