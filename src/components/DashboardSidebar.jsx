@@ -108,7 +108,14 @@ Inclura
   >
     💵 Creator Earnings
   </div>
-
+  
+<div
+  style={itemStyle}
+  onClick={() => navigate("/ad-manager")}
+>
+  📢 Ad Manager
+</div>
+  
   <div
     style={itemStyle}
     onClick={() => navigate("/enterprise")}
