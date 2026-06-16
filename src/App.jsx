@@ -18,6 +18,7 @@ import AdminPanel from "./pages/AdminPanel";
 import VerificationManager from "./pages/VerificationManager";
 import AdApprovalQueue from "./pages/AdApprovalQueue";
 import WalletMonitoring from "./pages/WalletMonitoring";
+import UsersManagement from "./pages/UsersManagement";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -131,6 +132,15 @@ return (
   element={
     <ProtectedRoute>
       <WalletMonitoring />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/users-management"
+  element={
+    <ProtectedRoute>
+      <UsersManagement />
     </ProtectedRoute>
   }
 />
