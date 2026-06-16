@@ -101,7 +101,16 @@ Inclura
   >
     💰 Wallet
   </div>
-
+  
+   <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/users-management")
+  }
+>
+  👥 Users Management
+</div>
+  
   <div
     style={itemStyle}
     onClick={() => navigate("/creator-earnings")}
