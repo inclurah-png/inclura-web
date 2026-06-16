@@ -110,6 +110,15 @@ Inclura
 >
   📢 Advertiser Dashboard
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/creator-monetization")
+  }
+>
+  💵 Creator Monetization
+</div>
   
    <div
   style={itemStyle}
