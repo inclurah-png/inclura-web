@@ -57,13 +57,26 @@ marginBottom: "24px",
   ⬆ Pay & Top-Up
 </button>
 
-      <button style={actionBtn}>
-        ⬇ Withdraw
-      </button>
+<button
+  style={actionBtn}
+  onClick={() => navigate("/withdraw")}
+>
+  ⬇ Withdraw
+</button>
 
-      <button style={actionBtn}>
-        💸 Transfer
-      </button>
+<button
+  style={actionBtn}
+  onClick={() => navigate("/transfer")}
+>
+  💸 Transfer
+</button>
+
+<button
+  style={actionBtn}
+  onClick={() => navigate("/transactions")}
+>
+  📜 Transactions
+</button>
     </div>
 
     <div
