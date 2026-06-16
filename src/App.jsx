@@ -14,6 +14,7 @@ import Messages from "./pages/Messages";
 
 import AdManager from "./pages/AdManager";
 import EnterpriseAds from "./pages/EnterpriseAds";
+import AdminPanel from "./pages/AdminPanel";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -91,6 +92,15 @@ return (
   element={
     <ProtectedRoute>
       <EnterpriseAds />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/admin"
+  element={
+    <ProtectedRoute>
+      <AdminPanel />
     </ProtectedRoute>
   }
 />
