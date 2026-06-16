@@ -15,6 +15,7 @@ import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
 import EnterpriseAds from "./pages/EnterpriseAds";
 import AdminPanel from "./pages/AdminPanel";
+import VerificationManager from "./pages/VerificationManager";
 import SavedPosts from "./pages/SavedPosts";
 import Search from "./pages/Search";
 import UserProfile from "./pages/UserProfile";
@@ -101,6 +102,15 @@ return (
   element={
     <ProtectedRoute>
       <AdminPanel />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/verification-manager"
+  element={
+    <ProtectedRoute>
+      <VerificationManager />
     </ProtectedRoute>
   }
 />
