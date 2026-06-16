@@ -119,6 +119,15 @@ Inclura
 >
   💵 Creator Monetization
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/enterprise-campaigns")
+  }
+>
+  🏢 Enterprise Campaigns
+</div>
   
    <div
   style={itemStyle}
