@@ -32,6 +32,7 @@ import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
+import CreatorMonetization from "./pages/CreatorMonetization";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
 import Transfer from "./pages/Transfer";
@@ -253,6 +254,15 @@ return (
   element={
     <ProtectedRoute>
       <AdvertiserDashboard />
+    </ProtectedRoute>
+  }
+/>
+
+  <Route
+  path="/creator-monetization"
+  element={
+    <ProtectedRoute>
+      <CreatorMonetization />
     </ProtectedRoute>
   }
 />
