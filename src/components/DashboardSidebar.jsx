@@ -110,6 +110,15 @@ Inclura
 >
   👥 Users Management
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/reports-violations")
+  }
+>
+  🚨 Reports & Violations
+</div>
   
   <div
     style={itemStyle}
