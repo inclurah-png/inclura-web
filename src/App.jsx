@@ -34,6 +34,7 @@ import Wallet from "./pages/Wallet";
 import ReelsSystem from "./pages/ReelsSystem";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
+import CreatorAnalytics from "./pages/CreatorAnalytics";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
 import PricingManager from "./pages/PricingManager";
@@ -280,6 +281,15 @@ return (
   }
 />
 
+  <Route
+  path="/creator-analytics"
+  element={
+    <ProtectedRoute>
+      <CreatorAnalytics />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
   path="/enterprise-campaigns"
   element={
