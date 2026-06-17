@@ -141,6 +141,15 @@ Inclura
   <div
   style={itemStyle}
   onClick={() =>
+    navigate("/enterprise-analytics")
+  }
+>
+  🏢 Enterprise Analytics
+</div>
+  
+  <div
+  style={itemStyle}
+  onClick={() =>
     navigate("/platform-analytics")
   }
 >
