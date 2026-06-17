@@ -1,57 +1,158 @@
+import { useState } from "react";
+
+import {
+addDoc,
+collection,
+serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
 import DashboardLayout from "../components/DashboardLayout";
 
 function VerificationCenter() {
-  return (
-    <DashboardLayout>
-      <div style={{ color: "white" }}>
-        <h1>🔐 Verification Center</h1>
+const [accountType, setAccountType] =
+useState("user");
 
-        <div style={card}>
-          👤 Verify Individual Account
-        </div>
+const submitVerification =
+async () => {
+try {
+await addDoc(
+collection(
+db,
+"verificationRequests"
+),
+{
+accountType,
+status: "pending",
+createdAt:
+serverTimestamp(),
+}
+);
 
-        <div style={card}>
-          🎥 Verify Creator Account
-        </div>
+    alert(
+      "Verification request submitted successfully"
+    );
+  } catch (error) {
+    console.error(error);
 
-        <div style={card}>
-          🏢 Verify Organization
-        </div>
+    alert(
+      "Verification submission failed"
+    );
+  }
+};
 
-        <div style={card}>
-          🤝 Verify NGO
-        </div>
+return (
+<DashboardLayout>
+<div style={{ color: "white" }}>
+<h1>🔐 Verification Center</h1>
 
-        <div style={card}>
-          🏥 Verify Hospital
-        </div>
+    <select
+      value={accountType}
+      onChange={(e) =>
+        setAccountType(
+          e.target.value
+        )
+      }
+      style={{
+        padding: "12px",
+        borderRadius: "12px",
+        marginBottom: "20px",
+        width: "100%",
+      }}
+    >
+      <option value="user">
+        Individual User
+      </option>
 
-        <div style={card}>
-          🎓 Verify University
-        </div>
+      <option value="creator">
+        Creator
+      </option>
 
-        <div style={card}>
-          🏛 Verify Government Account
-        </div>
+      <option value="organization">
+        Organization
+      </option>
 
-        <div style={card}>
-          ⭐ Verification Status
-        </div>
+      <option value="ngo">
+        NGO
+      </option>
 
-        <div style={card}>
-          📄 Submitted Documents
-        </div>
-      </div>
-    </DashboardLayout>
-  );
+      <option value="hospital">
+        Hospital
+      </option>
+
+      <option value="university">
+        University
+      </option>
+
+      <option value="government">
+        Government
+      </option>
+    </select>
+
+    <button
+      onClick={submitVerification}
+      style={{
+        padding: "14px 24px",
+        borderRadius: "14px",
+        border: "none",
+        background: "#38bdf8",
+        color: "white",
+        fontWeight: "700",
+        cursor: "pointer",
+        marginBottom: "24px",
+      }}
+    >
+      Submit Verification
+    </button>
+
+    <div style={card}>
+      👤 Verify Individual Account
+    </div>
+
+    <div style={card}>
+      🎥 Verify Creator Account
+    </div>
+
+    <div style={card}>
+      🏢 Verify Organization
+    </div>
+
+    <div style={card}>
+      🤝 Verify NGO
+    </div>
+
+    <div style={card}>
+      🏥 Verify Hospital
+    </div>
+
+    <div style={card}>
+      🎓 Verify University
+    </div>
+
+    <div style={card}>
+      🏛 Verify Government Account
+    </div>
+
+    <div style={card}>
+      ⭐ Verification Status
+    </div>
+
+    <div style={card}>
+      📄 Submitted Documents
+    </div>
+  </div>
+</DashboardLayout>
+
+);
 }
 
 const card = {
-  background: "#0f172a",
-  padding: "24px",
-  borderRadius: "20px",
-  marginBottom: "20px",
-  fontWeight: "600",
+background: "#0f172a",
+padding: "24px",
+borderRadius: "20px",
+marginBottom: "20px",
+fontWeight: "600",
 };
 
 export default VerificationCenter;
