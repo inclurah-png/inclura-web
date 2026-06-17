@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
 collection,
 getDocs,
+doc,
+updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -33,9 +35,9 @@ db,
 
     const data =
       snapshot.docs.map(
-        (doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        (item) => ({
+          id: item.id,
+          ...item.data(),
         })
       );
 
@@ -47,16 +49,68 @@ db,
   }
 };
 
+const approveRequest =
+async (requestId) => {
+try {
+await updateDoc(
+doc(
+db,
+"verificationRequests",
+requestId
+),
+{
+status: "approved",
+}
+);
+
+    alert(
+      "Request approved"
+    );
+
+    loadRequests();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const rejectRequest =
+async (requestId) => {
+try {
+await updateDoc(
+doc(
+db,
+"verificationRequests",
+requestId
+),
+{
+status: "rejected",
+}
+);
+
+    alert(
+      "Request rejected"
+    );
+
+    loadRequests();
+  } catch (error) {
+    console.error(error);
+  }
+};
+
 return (
 <DashboardLayout>
-<div style={{ color: "white" }}>
+<div
+style={{
+color: "white",
+}}
+>
 <h1>
 📋 Verification Requests
 </h1>
 
     {loading ? (
       <div style={card}>
-        Loading requests...
+        Loading...
       </div>
     ) : requests.length ===
       0 ? (
@@ -72,7 +126,7 @@ return (
             style={card}
           >
             <h3>
-              Request ID:
+              Request ID
             </h3>
 
             <p>
@@ -95,14 +149,63 @@ return (
               {request.status}
             </p>
 
-            <p>
-              <strong>
-                Created:
-              </strong>{" "}
-              {request.createdAt
-                ? "Submitted"
-                : "No timestamp"}
-            </p>
+            <div
+              style={{
+                display:
+                  "flex",
+                gap: "10px",
+                marginTop:
+                  "20px",
+              }}
+            >
+              <button
+                onClick={() =>
+                  approveRequest(
+                    request.id
+                  )
+                }
+                style={{
+                  background:
+                    "green",
+                  color:
+                    "white",
+                  border:
+                    "none",
+                  padding:
+                    "10px 18px",
+                  borderRadius:
+                    "10px",
+                  cursor:
+                    "pointer",
+                }}
+              >
+                ✅ Approve
+              </button>
+
+              <button
+                onClick={() =>
+                  rejectRequest(
+                    request.id
+                  )
+                }
+                style={{
+                  background:
+                    "red",
+                  color:
+                    "white",
+                  border:
+                    "none",
+                  padding:
+                    "10px 18px",
+                  borderRadius:
+                    "10px",
+                  cursor:
+                    "pointer",
+                }}
+              >
+                ❌ Reject
+              </button>
+            </div>
           </div>
         )
       )
@@ -118,7 +221,6 @@ background: "#0f172a",
 padding: "24px",
 borderRadius: "20px",
 marginBottom: "20px",
-fontWeight: "600",
 };
 
 export default VerificationRequestsManager;
