@@ -219,6 +219,15 @@ Inclura
 >
   👨‍💼 Admin Panel
 </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/verification-requests")
+  }
+>
+  📋 Verification Requests
+</div>
   
   <div
   style={itemStyle}
