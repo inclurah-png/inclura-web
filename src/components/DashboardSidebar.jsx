@@ -159,6 +159,15 @@ Inclura
   <div
   style={itemStyle}
   onClick={() =>
+    navigate("/premium-dashboard")
+  }
+>
+  ⭐ Premium Dashboard
+</div>
+  
+  <div
+  style={itemStyle}
+  onClick={() =>
     navigate("/pricing-manager")
   }
 >
