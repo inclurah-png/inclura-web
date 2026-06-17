@@ -6,7 +6,7 @@ collection,
 serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -23,12 +23,17 @@ db,
 "verificationRequests"
 ),
 {
-accountType,
-status: "pending",
-createdAt:
-serverTimestamp(),
-}
-);
+userId:
+auth.currentUser?.uid,
+
+        accountType,
+
+        status: "pending",
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
 
     alert(
       "Verification request submitted successfully"
@@ -45,7 +50,9 @@ serverTimestamp(),
 return (
 <DashboardLayout>
 <div style={{ color: "white" }}>
-<h1>🔐 Verification Center</h1>
+<h1>
+🔐 Verification Center
+</h1>
 
     <select
       value={accountType}
@@ -56,8 +63,10 @@ return (
       }
       style={{
         padding: "12px",
-        borderRadius: "12px",
-        marginBottom: "20px",
+        borderRadius:
+          "12px",
+        marginBottom:
+          "20px",
         width: "100%",
       }}
     >
@@ -91,27 +100,36 @@ return (
     </select>
 
     <button
-      onClick={submitVerification}
+      onClick={
+        submitVerification
+      }
       style={{
-        padding: "14px 24px",
-        borderRadius: "14px",
+        padding:
+          "14px 24px",
+        borderRadius:
+          "14px",
         border: "none",
-        background: "#38bdf8",
+        background:
+          "#38bdf8",
         color: "white",
-        fontWeight: "700",
+        fontWeight:
+          "700",
         cursor: "pointer",
-        marginBottom: "24px",
+        marginBottom:
+          "24px",
       }}
     >
       Submit Verification
     </button>
 
     <div style={card}>
-      👤 Verify Individual Account
+      👤 Verify Individual
+      Account
     </div>
 
     <div style={card}>
-      🎥 Verify Creator Account
+      🎥 Verify Creator
+      Account
     </div>
 
     <div style={card}>
@@ -131,15 +149,18 @@ return (
     </div>
 
     <div style={card}>
-      🏛 Verify Government Account
+      🏛 Verify Government
+      Account
     </div>
 
     <div style={card}>
-      ⭐ Verification Status
+      ⭐ Verification
+      Status
     </div>
 
     <div style={card}>
-      📄 Submitted Documents
+      📄 Submitted
+      Documents
     </div>
   </div>
 </DashboardLayout>
