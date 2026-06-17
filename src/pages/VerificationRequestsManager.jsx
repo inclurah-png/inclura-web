@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 
 import {
@@ -50,37 +51,57 @@ db,
 };
 
 const approveRequest =
-async (requestId) => {
+async (request) => {
 try {
 await updateDoc(
 doc(
 db,
 "verificationRequests",
-requestId
+request.id
 ),
 {
 status: "approved",
 }
 );
 
+    if (request.userId) {
+      await updateDoc(
+        doc(
+          db,
+          "users",
+          request.userId
+        ),
+        {
+          verified: true,
+
+          badgeType:
+            request.accountType,
+        }
+      );
+    }
+
     alert(
-      "Request approved"
+      "Verification approved successfully"
     );
 
     loadRequests();
   } catch (error) {
     console.error(error);
+
+    alert(
+      "Approval failed"
+    );
   }
 };
 
 const rejectRequest =
-async (requestId) => {
+async (request) => {
 try {
 await updateDoc(
 doc(
 db,
 "verificationRequests",
-requestId
+request.id
 ),
 {
 status: "rejected",
@@ -88,7 +109,7 @@ status: "rejected",
 );
 
     alert(
-      "Request rejected"
+      "Verification rejected"
     );
 
     loadRequests();
@@ -135,6 +156,15 @@ color: "white",
 
             <p>
               <strong>
+                User ID:
+              </strong>{" "}
+              {
+                request.userId
+              }
+            </p>
+
+            <p>
+              <strong>
                 Account Type:
               </strong>{" "}
               {
@@ -146,7 +176,9 @@ color: "white",
               <strong>
                 Status:
               </strong>{" "}
-              {request.status}
+              {
+                request.status
+              }
             </p>
 
             <div
@@ -161,7 +193,7 @@ color: "white",
               <button
                 onClick={() =>
                   approveRequest(
-                    request.id
+                    request
                   )
                 }
                 style={{
@@ -185,7 +217,7 @@ color: "white",
               <button
                 onClick={() =>
                   rejectRequest(
-                    request.id
+                    request
                   )
                 }
                 style={{
