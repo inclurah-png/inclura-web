@@ -36,6 +36,7 @@ import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
 import CreatorAnalytics from "./pages/CreatorAnalytics";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
+import EnterpriseAnalytics from "./pages/EnterpriseAnalytics";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
 import PricingManager from "./pages/PricingManager";
 import PayTopup from "./pages/PayTopup";
@@ -299,6 +300,15 @@ return (
   }
 />
 
+  <Route
+  path="/enterprise-analytics"
+  element={
+    <ProtectedRoute>
+      <EnterpriseAnalytics />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
   path="/platform-analytics"
   element={
