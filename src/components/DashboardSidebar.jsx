@@ -279,6 +279,15 @@ Inclura
   >
     ⚙ Edit Profile
   </div>
+
+  <div
+  style={itemStyle}
+  onClick={() =>
+    navigate("/verification-center")
+  }
+>
+  🔐 Verification Center
+</div>
 </div>
 
 );
