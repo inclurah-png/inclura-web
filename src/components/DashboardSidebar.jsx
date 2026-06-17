@@ -123,6 +123,15 @@ Inclura
   <div
   style={itemStyle}
   onClick={() =>
+    navigate("/creator-analytics")
+  }
+>
+  📈 Creator Analytics
+</div>
+  
+  <div
+  style={itemStyle}
+  onClick={() =>
     navigate("/enterprise-campaigns")
   }
 >
