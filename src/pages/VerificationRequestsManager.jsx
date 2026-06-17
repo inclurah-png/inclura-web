@@ -1,57 +1,124 @@
+import { useEffect, useState } from "react";
+
+import {
+collection,
+getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
 import DashboardLayout from "../components/DashboardLayout";
 
 function VerificationRequestsManager() {
-  return (
-    <DashboardLayout>
-      <div style={{ color: "white" }}>
-        <h1>📋 Verification Requests</h1>
+const [requests, setRequests] =
+useState([]);
 
-        <div style={card}>
-          👤 Individual Verification Requests
-        </div>
+const [loading, setLoading] =
+useState(true);
 
-        <div style={card}>
-          🎥 Creator Verification Requests
-        </div>
+useEffect(() => {
+loadRequests();
+}, []);
 
-        <div style={card}>
-          🏢 Organization Verification Requests
-        </div>
+const loadRequests =
+async () => {
+try {
+const snapshot =
+await getDocs(
+collection(
+db,
+"verificationRequests"
+)
+);
 
-        <div style={card}>
-          🤝 NGO Verification Requests
-        </div>
+    const data =
+      snapshot.docs.map(
+        (doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })
+      );
 
-        <div style={card}>
-          🏥 Hospital Verification Requests
-        </div>
+    setRequests(data);
+  } catch (error) {
+    console.error(error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-        <div style={card}>
-          🎓 University Verification Requests
-        </div>
+return (
+<DashboardLayout>
+<div style={{ color: "white" }}>
+<h1>
+📋 Verification Requests
+</h1>
 
-        <div style={card}>
-          🏛 Government Verification Requests
-        </div>
-
-        <div style={card}>
-          ✅ Approved Requests
-        </div>
-
-        <div style={card}>
-          ❌ Rejected Requests
-        </div>
+    {loading ? (
+      <div style={card}>
+        Loading requests...
       </div>
-    </DashboardLayout>
-  );
+    ) : requests.length ===
+      0 ? (
+      <div style={card}>
+        No verification
+        requests found
+      </div>
+    ) : (
+      requests.map(
+        (request) => (
+          <div
+            key={request.id}
+            style={card}
+          >
+            <h3>
+              Request ID:
+            </h3>
+
+            <p>
+              {request.id}
+            </p>
+
+            <p>
+              <strong>
+                Account Type:
+              </strong>{" "}
+              {
+                request.accountType
+              }
+            </p>
+
+            <p>
+              <strong>
+                Status:
+              </strong>{" "}
+              {request.status}
+            </p>
+
+            <p>
+              <strong>
+                Created:
+              </strong>{" "}
+              {request.createdAt
+                ? "Submitted"
+                : "No timestamp"}
+            </p>
+          </div>
+        )
+      )
+    )}
+  </div>
+</DashboardLayout>
+
+);
 }
 
 const card = {
-  background: "#0f172a",
-  padding: "24px",
-  borderRadius: "20px",
-  marginBottom: "20px",
-  fontWeight: "600",
+background: "#0f172a",
+padding: "24px",
+borderRadius: "20px",
+marginBottom: "20px",
+fontWeight: "600",
 };
 
 export default VerificationRequestsManager;
