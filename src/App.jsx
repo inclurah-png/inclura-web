@@ -10,6 +10,7 @@ import Onboarding from "./pages/Onboarding";
 
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
+import VerificationCenter from "./pages/VerificationCenter";
 import Messages from "./pages/Messages";
 
 import AdManager from "./pages/AdManager";
@@ -83,6 +84,15 @@ return (
     }
   />
 
+  <Route
+  path="/verification-center"
+  element={
+    <ProtectedRoute>
+      <VerificationCenter />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
     path="/messages"
     element={
