@@ -16,6 +16,7 @@ import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
 import EnterpriseAds from "./pages/EnterpriseAds";
 import AdminPanel from "./pages/AdminPanel";
+import VerificationRequestsManager from "./pages/VerificationRequestsManager";
 import VerificationManager from "./pages/VerificationManager";
 import AdApprovalQueue from "./pages/AdApprovalQueue";
 import WalletMonitoring from "./pages/WalletMonitoring";
@@ -129,6 +130,15 @@ return (
   }
 />
 
+  <Route
+  path="/verification-requests"
+  element={
+    <ProtectedRoute>
+      <VerificationRequestsManager />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
   path="/verification-manager"
   element={
