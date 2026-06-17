@@ -38,6 +38,7 @@ import CreatorAnalytics from "./pages/CreatorAnalytics";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import EnterpriseAnalytics from "./pages/EnterpriseAnalytics";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
+import PremiumDashboard from "./pages/PremiumDashboard";
 import PricingManager from "./pages/PricingManager";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
@@ -318,6 +319,15 @@ return (
   }
 />
 
+  <Route
+  path="/premium-dashboard"
+  element={
+    <ProtectedRoute>
+      <PremiumDashboard />
+    </ProtectedRoute>
+  }
+/>
+  
   <Route
   path="/pricing-manager"
   element={
