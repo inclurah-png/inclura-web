@@ -1,220 +1,260 @@
 import { useState } from "react";
 
 import {
-  collection,
-  addDoc,
-  getDocs,
-  query,
-  where,
-  serverTimestamp,
+collection,
+addDoc,
+getDocs,
+query,
+where,
+serverTimestamp,
+doc,
+getDoc,
 } from "firebase/firestore";
 
 import {
-  db,
-  auth,
+db,
+auth,
 } from "../firebase";
 
 function CreateStory() {
-  const [storyText, setStoryText] =
-    useState("");
+const [storyText, setStoryText] =
+useState("");
 
-  const [uploading, setUploading] =
-    useState(false);
+const [uploading, setUploading] =
+useState(false);
 
-  async function submitTextStory() {
-    try {
-      const user =
-        auth.currentUser;
+async function submitTextStory() {
+try {
+const user =
+auth.currentUser;
 
-      if (!user) {
-        alert("Login required");
-        return;
-      }
+  if (!user) {
+    alert("Login required");
+    return;
+  }
 
-      if (!storyText.trim()) {
-        alert(
-          "Write a story first"
-        );
-        return;
-      }
+  if (!storyText.trim()) {
+    alert(
+      "Write a story first"
+    );
+    return;
+  }
 
-      setUploading(true);
+  setUploading(true);
 
-      const storiesQuery = query(
-        collection(db, "stories"),
-        where(
-          "userId",
-          "==",
-          user.uid
-        )
-      );
+  const userRef = doc(
+    db,
+    "users",
+    user.uid
+  );
 
-      const storiesSnapshot =
-        await getDocs(
-          storiesQuery
-        );
+  const userSnap =
+    await getDoc(userRef);
 
-      if (
-        storiesSnapshot.docs.length >=
-        12
-      ) {
-        alert(
-          "Maximum of 12 active stories allowed"
-        );
-        return;
-      }
+  const profile =
+    userSnap.data();
 
-      const expiresAt =
-        Date.now() +
-        24 *
-          60 *
-          60 *
-          1000;
+  const storiesQuery = query(
+    collection(db, "stories"),
+    where(
+      "userId",
+      "==",
+      user.uid
+    )
+  );
 
-      await addDoc(
-        collection(
-          db,
-          "stories"
-        ),
-        {
-          userId: user.uid,
+  const storiesSnapshot =
+    await getDocs(
+      storiesQuery
+    );
 
-          userName:
-            auth.currentUser
-              .displayName ||
-            "Inclura User",
+  const activeStories =
+    storiesSnapshot.docs.filter(
+      (doc) =>
+        doc.data()
+          .expiresAt >
+        Date.now()
+    );
 
-          storyType: "text",
+  if (
+    activeStories.length >=
+    12
+  ) {
+    alert(
+      "Maximum of 12 active stories allowed"
+    );
+    return;
+  }
 
-          storyText,
+  const expiresAt =
+    Date.now() +
+    24 *
+      60 *
+      60 *
+      1000;
 
-          storyUrl: "",
+  await addDoc(
+    collection(
+      db,
+      "stories"
+    ),
+    {
+      userId: user.uid,
 
-          createdAt:
-            serverTimestamp(),
+      userName:
+        profile?.fullName ||
+        user.displayName ||
+        "Inclura User",
 
-          expiresAt,
+      verified:
+        profile?.verified ||
+        false,
 
-          views: [],
-        }
-      );
+      badgeType:
+        profile?.badgeType ||
+        "",
 
-      setStoryText("");
+      role:
+        profile?.role ||
+        "user",
 
-      alert(
-        "Story posted successfully"
-      );
-    } catch (error) {
-      console.error(error);
+      category:
+        profile?.category ||
+        "Member",
 
-      alert(
-        "Failed to post story"
-      );
-    } finally {
-      setUploading(false);
+      storyType: "text",
+
+      storyText,
+
+      storyUrl: "",
+
+      createdAt:
+        serverTimestamp(),
+
+      expiresAt,
+
+      views: [],
     }
-  }
+  );
 
-  function imageStoryComingSoon() {
-    alert(
-      "Image stories will activate automatically when Firebase Storage is enabled."
-    );
-  }
+  setStoryText("");
 
-  function videoStoryComingSoon() {
-    alert(
-      "Video stories will activate automatically when Firebase Storage is enabled."
-    );
-  }
+  alert(
+    "Story posted successfully"
+  );
+} catch (error) {
+  console.error(error);
 
-  return (
-    <div
+  alert(
+    "Failed to post story"
+  );
+} finally {
+  setUploading(false);
+}
+
+}
+
+function imageStoryComingSoon() {
+alert(
+"Image stories will activate automatically when Firebase Storage is enabled."
+);
+}
+
+function videoStoryComingSoon() {
+alert(
+"Video stories will activate automatically when Firebase Storage is enabled."
+);
+}
+
+return (
+<div
+style={{
+background: "#1e293b",
+padding: "16px",
+borderRadius: "16px",
+marginBottom: "20px",
+}}
+>
+<textarea
+value={storyText}
+onChange={(e) =>
+setStoryText(
+e.target.value
+)
+}
+placeholder="Share a story..."
+style={{
+width: "100%",
+minHeight: "90px",
+borderRadius: "12px",
+border:
+"1px solid #334155",
+background: "#0f172a",
+color: "white",
+padding: "12px",
+marginBottom: "14px",
+boxSizing:
+"border-box",
+}}
+/>
+
+  <div
+    style={{
+      display: "flex",
+      gap: "10px",
+      flexWrap: "wrap",
+    }}
+  >
+    <button
+      onClick={
+        submitTextStory
+      }
+      style={buttonStyle}
+    >
+      📝 Text Story
+    </button>
+
+    <button
+      onClick={
+        imageStoryComingSoon
+      }
+      style={buttonStyle}
+    >
+      📷 Image Story
+    </button>
+
+    <button
+      onClick={
+        videoStoryComingSoon
+      }
+      style={buttonStyle}
+    >
+      🎥 Video Story
+    </button>
+  </div>
+
+  {uploading && (
+    <p
       style={{
-        background: "#1e293b",
-        padding: "16px",
-        borderRadius: "16px",
-        marginBottom: "20px",
+        marginTop: "12px",
+        color: "#38bdf8",
       }}
     >
-      <textarea
-        value={storyText}
-        onChange={(e) =>
-          setStoryText(
-            e.target.value
-          )
-        }
-        placeholder="Share a story..."
-        style={{
-          width: "100%",
-          minHeight: "90px",
-          borderRadius: "12px",
-          border:
-            "1px solid #334155",
-          background: "#0f172a",
-          color: "white",
-          padding: "12px",
-          marginBottom: "14px",
-          boxSizing:
-            "border-box",
-        }}
-      />
+      Posting story...
+    </p>
+  )}
+</div>
 
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          flexWrap: "wrap",
-        }}
-      >
-        <button
-          onClick={
-            submitTextStory
-          }
-          style={buttonStyle}
-        >
-          📝 Text Story
-        </button>
-
-        <button
-          onClick={
-            imageStoryComingSoon
-          }
-          style={buttonStyle}
-        >
-          📷 Image Story
-        </button>
-
-        <button
-          onClick={
-            videoStoryComingSoon
-          }
-          style={buttonStyle}
-        >
-          🎥 Video Story
-        </button>
-      </div>
-
-      {uploading && (
-        <p
-          style={{
-            marginTop: "12px",
-            color: "#38bdf8",
-          }}
-        >
-          Posting story...
-        </p>
-      )}
-    </div>
-  );
+);
 }
 
 const buttonStyle = {
-  background: "#38bdf8",
-  border: "none",
-  color: "white",
-  padding: "10px 16px",
-  borderRadius: "12px",
-  cursor: "pointer",
+background: "#38bdf8",
+border: "none",
+color: "white",
+padding: "10px 16px",
+borderRadius: "12px",
+cursor: "pointer",
 };
 
 export default CreateStory;
