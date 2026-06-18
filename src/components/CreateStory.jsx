@@ -116,17 +116,33 @@ auth.currentUser;
 
       role:
         profile?.role ||
-        "user",
+        "individual",
 
       category:
         profile?.category ||
         "Member",
+
+      premium:
+        profile?.premium ||
+        false,
+
+      premiumTier:
+        profile?.premiumTier ||
+        "",
 
       storyType: "text",
 
       storyText,
 
       storyUrl: "",
+
+      accessibility: {
+        screenReader: true,
+        textOnly: true,
+        voiceStory: false,
+        highContrast: false,
+        largeText: false,
+      },
 
       createdAt:
         serverTimestamp(),
