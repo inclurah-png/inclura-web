@@ -1,12 +1,6 @@
 import { useState } from "react";
 
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
   collection,
   addDoc,
   getDocs,
@@ -16,26 +10,31 @@ import {
 } from "firebase/firestore";
 
 import {
-  storage,
   db,
   auth,
 } from "../firebase";
 
 function CreateStory() {
+  const [storyText, setStoryText] =
+    useState("");
+
   const [uploading, setUploading] =
     useState(false);
 
-  async function handleFile(e) {
-    const file = e.target.files[0];
-
-    if (!file) return;
-
+  async function submitTextStory() {
     try {
       const user =
         auth.currentUser;
 
       if (!user) {
         alert("Login required");
+        return;
+      }
+
+      if (!storyText.trim()) {
+        alert(
+          "Write a story first"
+        );
         return;
       }
 
@@ -65,24 +64,6 @@ function CreateStory() {
         return;
       }
 
-      const fileName =
-        `${Date.now()}-${file.name}`;
-
-      const storageRef = ref(
-        storage,
-        `stories/${user.uid}/${fileName}`
-      );
-
-      await uploadBytes(
-        storageRef,
-        file
-      );
-
-      const downloadURL =
-        await getDownloadURL(
-          storageRef
-        );
-
       const expiresAt =
         Date.now() +
         24 *
@@ -99,11 +80,15 @@ function CreateStory() {
           userId: user.uid,
 
           userName:
-            user.displayName ||
+            auth.currentUser
+              .displayName ||
             "Inclura User",
 
-          storyUrl:
-            downloadURL,
+          storyType: "text",
+
+          storyText,
+
+          storyUrl: "",
 
           createdAt:
             serverTimestamp(),
@@ -114,51 +99,122 @@ function CreateStory() {
         }
       );
 
+      setStoryText("");
+
       alert(
-        "Story uploaded successfully"
+        "Story posted successfully"
       );
     } catch (error) {
       console.error(error);
 
       alert(
-        "Failed to upload story"
+        "Failed to post story"
       );
     } finally {
       setUploading(false);
     }
   }
 
+  function imageStoryComingSoon() {
+    alert(
+      "Image stories will activate automatically when Firebase Storage is enabled."
+    );
+  }
+
+  function videoStoryComingSoon() {
+    alert(
+      "Video stories will activate automatically when Firebase Storage is enabled."
+    );
+  }
+
   return (
-    <label
+    <div
       style={{
-        background:
-          "#38bdf8",
-        color: "white",
-        padding:
-          "12px 18px",
-        borderRadius:
-          "12px",
-        cursor: "pointer",
-        display:
-          "inline-block",
-        marginBottom:
-          "16px",
+        background: "#1e293b",
+        padding: "16px",
+        borderRadius: "16px",
+        marginBottom: "20px",
       }}
     >
-      {uploading
-        ? "Uploading..."
-        : "+ Add Story"}
-
-      <input
-        type="file"
-        accept="image/*"
-        hidden
-        onChange={
-          handleFile
+      <textarea
+        value={storyText}
+        onChange={(e) =>
+          setStoryText(
+            e.target.value
+          )
         }
+        placeholder="Share a story..."
+        style={{
+          width: "100%",
+          minHeight: "90px",
+          borderRadius: "12px",
+          border:
+            "1px solid #334155",
+          background: "#0f172a",
+          color: "white",
+          padding: "12px",
+          marginBottom: "14px",
+          boxSizing:
+            "border-box",
+        }}
       />
-    </label>
+
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          flexWrap: "wrap",
+        }}
+      >
+        <button
+          onClick={
+            submitTextStory
+          }
+          style={buttonStyle}
+        >
+          📝 Text Story
+        </button>
+
+        <button
+          onClick={
+            imageStoryComingSoon
+          }
+          style={buttonStyle}
+        >
+          📷 Image Story
+        </button>
+
+        <button
+          onClick={
+            videoStoryComingSoon
+          }
+          style={buttonStyle}
+        >
+          🎥 Video Story
+        </button>
+      </div>
+
+      {uploading && (
+        <p
+          style={{
+            marginTop: "12px",
+            color: "#38bdf8",
+          }}
+        >
+          Posting story...
+        </p>
+      )}
+    </div>
   );
 }
+
+const buttonStyle = {
+  background: "#38bdf8",
+  border: "none",
+  color: "white",
+  padding: "10px 16px",
+  borderRadius: "12px",
+  cursor: "pointer",
+};
 
 export default CreateStory;
