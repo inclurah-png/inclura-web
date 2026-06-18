@@ -190,9 +190,27 @@ return (
   }
   style={{
     cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   }}
 >
   {post.userName}
+
+  {post.verified && (
+    <span
+      style={{
+        background: "#16a34a",
+        color: "white",
+        fontSize: "11px",
+        padding: "4px 8px",
+        borderRadius: "999px",
+      }}
+    >
+      {post.badgeType ||
+        "Verified"}
+    </span>
+  )}
 </h3>
 
             <FollowButton
