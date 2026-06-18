@@ -23,6 +23,21 @@ useState("");
 const [uploading, setUploading] =
 useState(false);
 
+const [screenReader, setScreenReader] =
+useState(true);
+
+const [textOnly, setTextOnly] =
+useState(true);
+
+const [voiceStory, setVoiceStory] =
+useState(false);
+
+const [highContrast, setHighContrast] =
+useState(false);
+
+const [largeText, setLargeText] =
+useState(false);
+
 async function submitTextStory() {
 try {
 const user =
@@ -130,18 +145,21 @@ auth.currentUser;
         profile?.premiumTier ||
         "",
 
-      storyType: "text",
+      storyType:
+        voiceStory
+          ? "voice"
+          : "text",
 
       storyText,
 
       storyUrl: "",
 
       accessibility: {
-        screenReader: true,
-        textOnly: true,
-        voiceStory: false,
-        highContrast: false,
-        largeText: false,
+        screenReader,
+        textOnly,
+        voiceStory,
+        highContrast,
+        largeText,
       },
 
       createdAt:
@@ -185,56 +203,176 @@ alert(
 return (
 <div
 style={{
-background: "#1e293b",
+background:
+"#1e293b",
 padding: "16px",
 borderRadius: "16px",
-marginBottom: "20px",
+marginBottom:
+"20px",
 }}
 >
-<textarea
-value={storyText}
-onChange={(e) =>
-setStoryText(
-e.target.value
-)
-}
-placeholder="Share a story..."
+<h3
 style={{
-width: "100%",
-minHeight: "90px",
-borderRadius: "12px",
-border:
-"1px solid #334155",
-background: "#0f172a",
 color: "white",
-padding: "12px",
-marginBottom: "14px",
-boxSizing:
-"border-box",
+marginBottom:
+"12px",
 }}
-/>
+>
+Create Story
+</h3>
+
+  <textarea
+    value={storyText}
+    onChange={(e) =>
+      setStoryText(
+        e.target.value
+      )
+    }
+    placeholder="Share a story..."
+    style={{
+      width: "100%",
+      minHeight: "90px",
+      borderRadius:
+        "12px",
+      border:
+        "1px solid #334155",
+      background:
+        "#0f172a",
+      color: "white",
+      padding: "12px",
+      marginBottom:
+        "14px",
+      boxSizing:
+        "border-box",
+      fontSize:
+        largeText
+          ? "22px"
+          : "16px",
+    }}
+  />
+
+  <div
+    style={{
+      display: "grid",
+      gap: "8px",
+      marginBottom:
+        "16px",
+      color: "white",
+    }}
+  >
+    <label>
+      <input
+        type="checkbox"
+        checked={
+          screenReader
+        }
+        onChange={(e) =>
+          setScreenReader(
+            e.target
+              .checked
+          )
+        }
+      />
+      {" "}
+      🔊 Screen Reader
+      Support
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        checked={
+          textOnly
+        }
+        onChange={(e) =>
+          setTextOnly(
+            e.target
+              .checked
+          )
+        }
+      />
+      {" "}
+      📄 Text Only Story
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        checked={
+          voiceStory
+        }
+        onChange={(e) =>
+          setVoiceStory(
+            e.target
+              .checked
+          )
+        }
+      />
+      {" "}
+      🎤 Voice Story
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        checked={
+          highContrast
+        }
+        onChange={(e) =>
+          setHighContrast(
+            e.target
+              .checked
+          )
+        }
+      />
+      {" "}
+      🎨 High Contrast
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        checked={
+          largeText
+        }
+        onChange={(e) =>
+          setLargeText(
+            e.target
+              .checked
+          )
+        }
+      />
+      {" "}
+      🔠 Large Text Mode
+    </label>
+  </div>
 
   <div
     style={{
       display: "flex",
       gap: "10px",
-      flexWrap: "wrap",
+      flexWrap:
+        "wrap",
     }}
   >
     <button
       onClick={
         submitTextStory
       }
-      style={buttonStyle}
+      style={
+        buttonStyle
+      }
     >
-      📝 Text Story
+      📝 Post Story
     </button>
 
     <button
       onClick={
         imageStoryComingSoon
       }
-      style={buttonStyle}
+      style={
+        buttonStyle
+      }
     >
       📷 Image Story
     </button>
@@ -243,7 +381,9 @@ boxSizing:
       onClick={
         videoStoryComingSoon
       }
-      style={buttonStyle}
+      style={
+        buttonStyle
+      }
     >
       🎥 Video Story
     </button>
@@ -252,8 +392,10 @@ boxSizing:
   {uploading && (
     <p
       style={{
-        marginTop: "12px",
-        color: "#38bdf8",
+        marginTop:
+          "12px",
+        color:
+          "#38bdf8",
       }}
     >
       Posting story...
