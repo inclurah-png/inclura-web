@@ -16,12 +16,16 @@ useState([]);
 const [selectedStory, setSelectedStory] =
 useState(null);
 
+const [seenStories, setSeenStories] =
+useState([]);
+
 useEffect(() => {
 const unsubscribe =
 onSnapshot(
 collection(db, "stories"),
 (snapshot) => {
-const now = Date.now();
+const now =
+Date.now();
 
       const data =
         snapshot.docs
@@ -31,7 +35,8 @@ const now = Date.now();
           }))
           .filter(
             (story) =>
-              story.expiresAt > now
+              story.expiresAt >
+              now
           )
           .slice(0, 12);
 
@@ -39,26 +44,95 @@ const now = Date.now();
     }
   );
 
-return () => unsubscribe();
+return () =>
+  unsubscribe();
 
 }, []);
+
+function openStory(story) {
+setSelectedStory(story);
+
+if (
+  !seenStories.includes(
+    story.id
+  )
+) {
+  setSeenStories([
+    ...seenStories,
+    story.id,
+  ]);
+}
+
+}
+
+function getBadge(story) {
+if (!story.verified)
+return null;
+
+switch (
+  story.badgeType
+) {
+  case "creator":
+    return "🎥";
+
+  case "organization":
+    return "🏢";
+
+  case "ngo":
+    return "🤝";
+
+  case "hospital":
+    return "🏥";
+
+  case "government":
+    return "🏛️";
+
+  default:
+    return "✅";
+}
+
+}
+
+function getPremium(story) {
+if (!story.premium)
+return null;
+
+switch (
+  story.premiumTier
+) {
+  case "silver":
+    return "🥈";
+
+  case "gold":
+    return "🥇";
+
+  case "platinum":
+    return "💎";
+
+  case "enterprise":
+    return "🏆";
+
+  default:
+    return "⭐";
+}
+
+}
 
 return (
 <>
 <div
 style={{
-background: "#0f172a",
+background:
+"#0f172a",
 color: "white",
 padding: "20px",
-borderRadius: "16px",
-marginBottom: "20px",
+borderRadius:
+"16px",
+marginBottom:
+"20px",
 }}
 >
-<h3
-style={{
-marginBottom: "16px",
-}}
->
+<h3>
 📸 Stories
 </h3>
 
@@ -66,99 +140,128 @@ marginBottom: "16px",
 
     <div
       style={{
-        display: "flex",
+        display:
+          "flex",
         gap: "14px",
-        overflowX: "auto",
-        paddingTop: "12px",
-        scrollbarWidth: "none",
+        overflowX:
+          "auto",
+        paddingTop:
+          "12px",
       }}
     >
-      {stories.length === 0 ? (
-        <div
-          style={{
-            color: "#94a3b8",
-          }}
-        >
+      {stories.length ===
+      0 ? (
+        <div>
           No active stories
         </div>
       ) : (
-        stories.map((story) => (
-          <div
-            key={story.id}
-            onClick={() =>
-              setSelectedStory(
-                story
-              )
-            }
-            style={{
-              minWidth: "85px",
-              textAlign: "center",
-              cursor: "pointer",
-            }}
-          >
+        stories.map(
+          (story) => (
             <div
-              style={{
-                width: "72px",
-                height: "72px",
-                borderRadius: "50%",
-                border:
-                  "3px solid #38bdf8",
-                background:
-                  "#1e293b",
-                display: "flex",
-                justifyContent:
-                  "center",
-                alignItems:
-                  "center",
-                margin: "0 auto",
-                fontSize: "24px",
-                fontWeight: "700",
-                color: "white",
-                overflow:
-                  "hidden",
-              }}
-            >
-              {story.storyType ===
-                "image" &&
-              story.storyUrl ? (
-                <img
-                  src={
-                    story.storyUrl
-                  }
-                  alt="story"
-                  style={{
-                    width:
-                      "100%",
-                    height:
-                      "100%",
-                    objectFit:
-                      "cover",
-                  }}
-                />
-              ) : (
-                story.userName?.charAt(
-                  0
+              key={
+                story.id
+              }
+              onClick={() =>
+                openStory(
+                  story
                 )
-              )}
-            </div>
-
-            <p
+              }
               style={{
-                fontSize: "11px",
-                marginTop: "6px",
-                color: "white",
-                overflow:
-                  "hidden",
-                textOverflow:
-                  "ellipsis",
-                whiteSpace:
-                  "nowrap",
+                minWidth:
+                  "90px",
+                textAlign:
+                  "center",
+                cursor:
+                  "pointer",
               }}
             >
-              {story.userName}
-            </p>
-          </div>
-        ))
+              <div
+                style={{
+                  width:
+                    "72px",
+                  height:
+                    "72px",
+                  borderRadius:
+                    "50%",
+                  border: seenStories.includes(
+                    story.id
+                  )
+                    ? "3px solid #64748b"
+                    : "3px solid #38bdf8",
+                  background:
+                    "#1e293b",
+                  display:
+                    "flex",
+                  justifyContent:
+                    "center",
+                  alignItems:
+                    "center",
+                  margin:
+                    "0 auto",
+                  overflow:
+                    "hidden",
+                  position:
+                    "relative",
+                }}
+              >
+                {story.storyType ===
+                  "image" &&
+                story.storyUrl ? (
+                  <img
+                    src={
+                      story.storyUrl
+                    }
+                    alt="story"
+                    style={{
+                      width:
+                        "100%",
+                      height:
+                        "100%",
+                      objectFit:
+                        "cover",
+                    }}
+                  />
+                ) : (
+                  <span
+                    style={{
+                      fontSize:
+                        "24px",
+                      fontWeight:
+                        "700",
+                    }}
+                  >
+                    {story.userName?.charAt(
+                      0
+                    )}
+                  </span>
+                )}
+              </div>
+
+              <div
+                style={{
+                  marginTop:
+                    "4px",
+                  fontSize:
+                    "11px",
+                }}
+              >
+                {
+                  story.userName
+                }
+              </div>
+
+              <div>
+                {getBadge(
+                  story
+                )}
+                {" "}
+                {getPremium(
+                  story
+                )}
+              </div>
+            </div>
+          )
+        )
       )}
     </div>
   </div>
@@ -166,32 +269,44 @@ marginBottom: "16px",
   {selectedStory && (
     <div
       onClick={() =>
-        setSelectedStory(null)
+        setSelectedStory(
+          null
+        )
       }
       style={{
-        position: "fixed",
+        position:
+          "fixed",
         inset: 0,
         background:
           "rgba(0,0,0,0.95)",
-        display: "flex",
+        display:
+          "flex",
         justifyContent:
           "center",
         alignItems:
           "center",
         zIndex: 9999,
-        padding: "20px",
+        padding:
+          "20px",
       }}
     >
       <div
         style={{
-          maxWidth: "500px",
+          maxWidth:
+            "500px",
           width: "100%",
           background:
-            "#0f172a",
+            selectedStory
+              ?.accessibility
+              ?.highContrast
+              ? "#000"
+              : "#0f172a",
+          color:
+            "white",
           borderRadius:
             "20px",
-          padding: "24px",
-          color: "white",
+          padding:
+            "24px",
           textAlign:
             "center",
         }}
@@ -200,24 +315,60 @@ marginBottom: "16px",
           {
             selectedStory.userName
           }
+          {" "}
+          {getBadge(
+            selectedStory
+          )}
+          {" "}
+          {getPremium(
+            selectedStory
+          )}
         </h3>
+
+        {selectedStory
+          ?.accessibility
+          ?.screenReader && (
+          <div
+            style={{
+              color:
+                "#38bdf8",
+              marginBottom:
+                "10px",
+            }}
+          >
+            🔊 Screen Reader
+            Supported
+          </div>
+        )}
 
         {selectedStory.storyType ===
           "text" && (
           <div
             style={{
-              fontSize: "24px",
+              fontSize:
+                selectedStory
+                  ?.accessibility
+                  ?.largeText
+                  ? "34px"
+                  : "24px",
               fontWeight:
                 "700",
               marginTop:
-                "30px",
+                "20px",
               marginBottom:
-                "30px",
+                "20px",
             }}
           >
             {
               selectedStory.storyText
             }
+          </div>
+        )}
+
+        {selectedStory.storyType ===
+          "voice" && (
+          <div>
+            🎤 Voice Story
           </div>
         )}
 
@@ -238,14 +389,21 @@ marginBottom: "16px",
             />
           )}
 
-        {selectedStory.storyType ===
-          "video" && (
-          <div>
-            🎥 Video Story
-            (Storage Upgrade
-            Required)
-          </div>
-        )}
+        <div
+          style={{
+            marginTop:
+              "12px",
+            color:
+              "#94a3b8",
+          }}
+        >
+          👁️ Views:
+          {" "}
+          {selectedStory
+            ?.views
+            ?.length ||
+            0}
+        </div>
 
         <button
           onClick={() =>
@@ -258,7 +416,8 @@ marginBottom: "16px",
               "20px",
             background:
               "#38bdf8",
-            border: "none",
+            border:
+              "none",
             color:
               "white",
             padding:
