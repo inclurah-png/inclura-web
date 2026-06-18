@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 
 import {
-  collection,
-  onSnapshot,
+collection,
+onSnapshot,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -10,170 +10,273 @@ import { db } from "../firebase";
 import CreateStory from "./CreateStory";
 
 function StoriesSection() {
-  const [stories, setStories] =
-    useState([]);
+const [stories, setStories] =
+useState([]);
 
-  useEffect(() => {
-    const unsubscribe =
-      onSnapshot(
-        collection(
-          db,
-          "stories"
-        ),
-        (snapshot) => {
-          const now =
-            Date.now();
+const [selectedStory, setSelectedStory] =
+useState(null);
 
-          const data =
-            snapshot.docs
-              .map((doc) => ({
-                id: doc.id,
-                ...doc.data(),
-              }))
-              .filter(
-                (story) =>
-                  story.expiresAt >
-                  now
-              );
+useEffect(() => {
+const unsubscribe =
+onSnapshot(
+collection(db, "stories"),
+(snapshot) => {
+const now = Date.now();
 
-          setStories(data);
-        }
-      );
+      const data =
+        snapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .filter(
+            (story) =>
+              story.expiresAt > now
+          )
+          .slice(0, 12);
 
-    return () =>
-      unsubscribe();
-  }, []);
+      setStories(data);
+    }
+  );
 
-  return (
+return () => unsubscribe();
+
+}, []);
+
+return (
+<>
+<div
+style={{
+background: "#0f172a",
+color: "white",
+padding: "20px",
+borderRadius: "16px",
+marginBottom: "20px",
+}}
+>
+<h3
+style={{
+marginBottom: "16px",
+}}
+>
+📸 Stories
+</h3>
+
+    <CreateStory />
+
     <div
       style={{
-        background: "#0f172a",
-        color: "white",
-        padding: "20px",
-        borderRadius: "12px",
-        marginBottom: "20px",
+        display: "flex",
+        gap: "14px",
+        overflowX: "auto",
+        paddingTop: "12px",
+        scrollbarWidth: "none",
       }}
     >
-      <h3>📸 Stories</h3>
-
-      <CreateStory />
-
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          overflowX: "auto",
-          paddingTop: "10px",
-        }}
-      >
-        {stories.length ===
-        0 ? (
-          <div>
-            No active stories
-          </div>
-        ) : (
-          stories.map(
-            (story) => (
-              <div
-                key={story.id}
-                onClick={() =>
-                  alert(
-                    story.storyType ===
-                      "text"
-                      ? story.storyText
-                      : "Story Viewer Coming Soon"
-                  )
-                }
-                style={{
-                  minWidth:
-                    "90px",
-                  height:
-                    "140px",
-                  background:
-                    "#1e293b",
-                  borderRadius:
-                    "16px",
-                  padding:
-                    "10px",
-                  cursor:
-                    "pointer",
-                  display:
-                    "flex",
-                  flexDirection:
-                    "column",
-                  justifyContent:
-                    "space-between",
-                }}
-              >
-                <div
+      {stories.length === 0 ? (
+        <div
+          style={{
+            color: "#94a3b8",
+          }}
+        >
+          No active stories
+        </div>
+      ) : (
+        stories.map((story) => (
+          <div
+            key={story.id}
+            onClick={() =>
+              setSelectedStory(
+                story
+              )
+            }
+            style={{
+              minWidth: "85px",
+              textAlign: "center",
+              cursor: "pointer",
+            }}
+          >
+            <div
+              style={{
+                width: "72px",
+                height: "72px",
+                borderRadius: "50%",
+                border:
+                  "3px solid #38bdf8",
+                background:
+                  "#1e293b",
+                display: "flex",
+                justifyContent:
+                  "center",
+                alignItems:
+                  "center",
+                margin: "0 auto",
+                fontSize: "24px",
+                fontWeight: "700",
+                color: "white",
+                overflow:
+                  "hidden",
+              }}
+            >
+              {story.storyType ===
+                "image" &&
+              story.storyUrl ? (
+                <img
+                  src={
+                    story.storyUrl
+                  }
+                  alt="story"
                   style={{
                     width:
-                      "50px",
+                      "100%",
                     height:
-                      "50px",
-                    borderRadius:
-                      "50%",
-                    background:
-                      "#38bdf8",
-                    display:
-                      "flex",
-                    alignItems:
-                      "center",
-                    justifyContent:
-                      "center",
-                    fontWeight:
-                      "700",
-                    fontSize:
-                      "20px",
+                      "100%",
+                    objectFit:
+                      "cover",
                   }}
-                >
-                  {story.userName?.charAt(
-                    0
-                  )}
-                </div>
+                />
+              ) : (
+                story.userName?.charAt(
+                  0
+                )
+              )}
+            </div>
 
-                <div>
-                  <div
-                    style={{
-                      fontSize:
-                        "12px",
-                      fontWeight:
-                        "700",
-                    }}
-                  >
-                    {
-                      story.userName
-                    }
-                  </div>
+            <p
+              style={{
+                fontSize: "11px",
+                marginTop: "6px",
+                color: "white",
+                overflow:
+                  "hidden",
+                textOverflow:
+                  "ellipsis",
+                whiteSpace:
+                  "nowrap",
+              }}
+            >
+              {story.userName}
+            </p>
+          </div>
+        ))
+      )}
+    </div>
+  </div>
 
-                  {story.storyType ===
-                    "text" && (
-                    <div
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#cbd5e1",
-                        marginTop:
-                          "4px",
-                        overflow:
-                          "hidden",
-                      }}
-                    >
-                      {story.storyText?.slice(
-                        0,
-                        40
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )
-          )
+  {selectedStory && (
+    <div
+      onClick={() =>
+        setSelectedStory(null)
+      }
+      style={{
+        position: "fixed",
+        inset: 0,
+        background:
+          "rgba(0,0,0,0.95)",
+        display: "flex",
+        justifyContent:
+          "center",
+        alignItems:
+          "center",
+        zIndex: 9999,
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          maxWidth: "500px",
+          width: "100%",
+          background:
+            "#0f172a",
+          borderRadius:
+            "20px",
+          padding: "24px",
+          color: "white",
+          textAlign:
+            "center",
+        }}
+      >
+        <h3>
+          {
+            selectedStory.userName
+          }
+        </h3>
+
+        {selectedStory.storyType ===
+          "text" && (
+          <div
+            style={{
+              fontSize: "24px",
+              fontWeight:
+                "700",
+              marginTop:
+                "30px",
+              marginBottom:
+                "30px",
+            }}
+          >
+            {
+              selectedStory.storyText
+            }
+          </div>
         )}
+
+        {selectedStory.storyType ===
+          "image" &&
+          selectedStory.storyUrl && (
+            <img
+              src={
+                selectedStory.storyUrl
+              }
+              alt="story"
+              style={{
+                width:
+                  "100%",
+                borderRadius:
+                  "16px",
+              }}
+            />
+          )}
+
+        {selectedStory.storyType ===
+          "video" && (
+          <div>
+            🎥 Video Story
+            (Storage Upgrade
+            Required)
+          </div>
+        )}
+
+        <button
+          onClick={() =>
+            setSelectedStory(
+              null
+            )
+          }
+          style={{
+            marginTop:
+              "20px",
+            background:
+              "#38bdf8",
+            border: "none",
+            color:
+              "white",
+            padding:
+              "12px 20px",
+            borderRadius:
+              "12px",
+            cursor:
+              "pointer",
+          }}
+        >
+          Close
+        </button>
       </div>
     </div>
-  );
+  )}
+</>
+
+);
 }
 
 export default StoriesSection;
