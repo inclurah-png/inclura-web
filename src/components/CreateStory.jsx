@@ -109,41 +109,50 @@ auth.currentUser;
       1000;
 
   await addDoc(
-    collection(
-      db,
-      "stories"
-    ),
-    {
-      userId: user.uid,
+  collection(
+    db,
+    "stories"
+  ),
+  {
+    userId: user.uid,
 
-      userName:
-        profile?.fullName ||
-        user.displayName ||
-        "Inclura User",
+    userName:
+      profile?.fullName ||
+      user.displayName ||
+      "Inclura User",
 
-      verified:
-        profile?.verified ||
-        false,
+    profilePhoto:
+      profile?.profilePhoto ||
+      profile?.photoURL ||
+      user.photoURL ||
+      "",
 
-      badgeType:
-        profile?.badgeType ||
-        "",
+    verified:
+      profile?.verified ||
+      false,
 
-      role:
-        profile?.role ||
-        "individual",
+    badgeType:
+      profile?.badgeType ||
+      "",
 
-      category:
-        profile?.category ||
-        "Member",
+    role:
+      profile?.role ||
+      "individual",
 
-      premium:
-        profile?.premium ||
-        false,
+    category:
+      profile?.category ||
+      "Member",
 
-      premiumTier:
-        profile?.premiumTier ||
-        "",
+    accessibilityNeeds:
+      profile?.accessibilityNeeds || [],
+
+    premium:
+      profile?.premium ||
+      false,
+
+    premiumTier:
+      profile?.premiumTier ||
+      "",
 
       storyType:
         voiceStory
