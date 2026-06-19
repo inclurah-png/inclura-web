@@ -56,47 +56,56 @@ try {
     userSnap.data();
 
   await addDoc(
-    collection(db, "posts"),
-    {
-      text: postText,
+  collection(db, "posts"),
+  {
+    text: postText,
 
-      category,
+    category,
 
-      userId: user.uid,
+    userId: user.uid,
 
-      userName:
-        profile?.fullName ||
-        user.displayName ||
-        "Inclura User",
+    userName:
+      profile?.fullName ||
+      user.displayName ||
+      "Inclura User",
 
-      role:
-        profile?.role ||
-        "user",
+    profilePhoto:
+      profile?.profilePhoto || "",
 
-      verified:
-        profile?.verified ||
-        false,
+    role:
+      profile?.role ||
+      "user",
 
-      badgeType:
-        profile?.badgeType ||
-        "",
+    category:
+      profile?.category || "",
 
-      premium:
-        profile?.premium ||
-        false,
+    accessibilityNeeds:
+      profile?.accessibilityNeeds || [],
 
-      premiumTier:
-        profile?.premiumTier ||
-        "",
+    verified:
+      profile?.verified ||
+      false,
 
-      likes: [],
+    badgeType:
+      profile?.badgeType ||
+      "",
 
-      comments: [],
+    premium:
+      profile?.premium ||
+      false,
 
-      createdAt:
-        serverTimestamp(),
-    }
-  );
+    premiumTier:
+      profile?.premiumTier ||
+      "",
+
+    likes: [],
+
+    comments: [],
+
+    createdAt:
+      serverTimestamp(),
+  }
+);
 
   setPostText("");
 
