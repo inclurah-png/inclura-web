@@ -25,7 +25,10 @@ function SavedPosts() {
       const user =
         auth.currentUser;
 
-      if (!user) return;
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
       const userSnap =
         await getDoc(
@@ -58,6 +61,60 @@ function SavedPosts() {
     }
 
     setLoading(false);
+  }
+
+  function getBadge(post) {
+    if (!post?.verified)
+      return null;
+
+    switch (
+      post?.badgeType
+    ) {
+      case "creator":
+        return "🎥";
+
+      case "organization":
+        return "🏢";
+
+      case "ngo":
+        return "🤝";
+
+      case "hospital":
+        return "🏥";
+
+      case "university":
+        return "🎓";
+
+      case "government":
+        return "🏛️";
+
+      default:
+        return "✅";
+    }
+  }
+
+  function getPremium(post) {
+    if (!post?.premium)
+      return null;
+
+    switch (
+      post?.premiumTier
+    ) {
+      case "silver":
+        return "🥈";
+
+      case "gold":
+        return "🥇";
+
+      case "platinum":
+        return "💎";
+
+      case "enterprise":
+        return "🏆";
+
+      default:
+        return "⭐";
+    }
   }
 
   if (loading) {
@@ -123,21 +180,106 @@ function SavedPosts() {
                 marginBottom: "20px",
               }}
             >
-              <h3>
-                {post.userName ||
-                  "Inclura User"}
-              </h3>
+              {/* HEADER */}
+
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "14px",
+                  marginBottom: "16px",
+                }}
+              >
+                {post.profilePhoto ? (
+                  <img
+                    src={
+                      post.profilePhoto
+                    }
+                    alt="profile"
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius:
+                        "50%",
+                      objectFit:
+                        "cover",
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: "56px",
+                      height: "56px",
+                      borderRadius:
+                        "50%",
+                      background:
+                        "#38bdf8",
+                      display: "flex",
+                      alignItems:
+                        "center",
+                      justifyContent:
+                        "center",
+                      fontWeight:
+                        "700",
+                      fontSize:
+                        "20px",
+                    }}
+                  >
+                    {post.userName?.charAt(
+                      0
+                    )}
+                  </div>
+                )}
+
+                <div>
+                  <h3
+                    style={{
+                      margin: 0,
+                    }}
+                  >
+                    {post.userName ||
+                      "Inclura User"}
+                    {" "}
+                    {getBadge(
+                      post
+                    )}
+                    {" "}
+                    {getPremium(
+                      post
+                    )}
+                  </h3>
+
+                  <div
+                    style={{
+                      color:
+                        "#94a3b8",
+                      fontSize:
+                        "13px",
+                      marginTop:
+                        "4px",
+                    }}
+                  >
+                    {post.category ||
+                      "General"}
+                  </div>
+                </div>
+              </div>
+
+              {/* POST TEXT */}
 
               {post.text && (
                 <p
                   style={{
                     marginTop: "12px",
                     lineHeight: "1.8",
+                    fontSize: "15px",
                   }}
                 >
                   {post.text}
                 </p>
               )}
+
+              {/* IMAGE */}
 
               {post.imageUrl && (
                 <img
@@ -146,20 +288,70 @@ function SavedPosts() {
                   style={{
                     width: "100%",
                     marginTop: "16px",
-                    borderRadius: "18px",
+                    borderRadius:
+                      "18px",
                   }}
                 />
               )}
 
+              {/* ACCESSIBILITY NEEDS */}
+
+              {post
+                .accessibilityNeeds
+                ?.length > 0 && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap:
+                      "wrap",
+                    gap: "10px",
+                    marginTop:
+                      "16px",
+                  }}
+                >
+                  {post.accessibilityNeeds.map(
+                    (
+                      need,
+                      index
+                    ) => (
+                      <div
+                        key={
+                          index
+                        }
+                        style={{
+                          background:
+                            "#14532d",
+                          padding:
+                            "8px 12px",
+                          borderRadius:
+                            "12px",
+                          fontSize:
+                            "13px",
+                        }}
+                      >
+                        ♿ {need}
+                      </div>
+                    )
+                  )}
+                </div>
+              )}
+
+              {/* ACCESSIBILITY TAGS */}
+
               {post.accessibilityTags &&
-                post.accessibilityTags
-                  .length > 0 && (
+                post
+                  .accessibilityTags
+                  .length >
+                  0 && (
                   <div
                     style={{
-                      display: "flex",
-                      flexWrap: "wrap",
+                      display:
+                        "flex",
+                      flexWrap:
+                        "wrap",
                       gap: "10px",
-                      marginTop: "16px",
+                      marginTop:
+                        "16px",
                     }}
                   >
                     {post.accessibilityTags.map(
@@ -168,7 +360,9 @@ function SavedPosts() {
                         index
                       ) => (
                         <div
-                          key={index}
+                          key={
+                            index
+                          }
                           style={{
                             background:
                               "#1e3a8a",
@@ -186,6 +380,36 @@ function SavedPosts() {
                     )}
                   </div>
                 )}
+
+              {/* STATS */}
+
+              <div
+                style={{
+                  marginTop:
+                    "18px",
+                  display:
+                    "flex",
+                  gap: "16px",
+                  color:
+                    "#94a3b8",
+                  fontSize:
+                    "14px",
+                }}
+              >
+                <span>
+                  ❤️{" "}
+                  {post.likes
+                    ?.length ||
+                    0}
+                </span>
+
+                <span>
+                  💬{" "}
+                  {post.comments
+                    ?.length ||
+                    0}
+                </span>
+              </div>
             </div>
           ))
         )}
