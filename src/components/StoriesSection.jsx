@@ -9,7 +9,6 @@ import { db } from "../firebase";
 
 import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
-
 function StoriesSection() {
   const [stories, setStories] =
     useState([]);
