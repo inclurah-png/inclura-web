@@ -1,194 +1,506 @@
 import DashboardLayout from "../components/DashboardLayout";
+import { useState } from "react";
 
 function PricingManager() {
-return (
-<DashboardLayout>
-<div style={{ color: "white" }}>
-<h1
-style={{
-marginBottom: "30px",
-}}
->
-💲 Inclura Pricing Manager
-</h1>
+  const [pricing, setPricing] =
+    useState({
+      creatorVerification: 5000,
+      verifiedCreatorBadge: 10000,
+      marketplaceCommission: 5,
+      careGigCommission: 8,
+      mentorCommission: 10,
+      premiumMonthly: 3000,
+      premiumYearly: 30000,
+    });
 
-    {/* ADVERTISING */}
+  function updatePrice(
+    key,
+    value
+  ) {
+    setPricing((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  }
 
-    <Section title="📢 Advertising">
+  return (
+    <DashboardLayout>
+      <div
+        style={{
+          color: "white",
+        }}
+      >
+        <h1
+          style={{
+            marginBottom:
+              "30px",
+          }}
+        >
+          💲 Inclura Pricing Manager
+        </h1>
 
-      <Card title="Basic Banner Ad" />
-      <Card title="Premium Banner Ad" />
-      <Card title="Video Advertisement" />
-      <Card title="Sponsored Post" />
-      <Card title="Sponsored Reel" />
+        {/* Revenue Overview */}
 
-      <Card title="Country Targeting Fee" />
-      <Card title="State Targeting Fee" />
-      <Card title="City Targeting Fee" />
-      <Card title="Accessibility Audience Fee" />
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(220px,1fr))",
+            gap: "14px",
+            marginBottom:
+              "40px",
+          }}
+        >
+          <RevenueCard
+            title="Today's Revenue"
+            value="₦0"
+          />
 
-    </Section>
+          <RevenueCard
+            title="Monthly Revenue"
+            value="₦0"
+          />
 
-    {/* REELS */}
+          <RevenueCard
+            title="Subscriptions"
+            value="₦0"
+          />
 
-    <Section title="🎥 Reels Economy">
+          <RevenueCard
+            title="Marketplace Revenue"
+            value="₦0"
+          />
+        </div>
 
-      <Card title="Reel Boost" />
-      <Card title="Featured Reel" />
-      <Card title="Trending Placement" />
-      <Card title="Sponsored Reel Placement" />
+        <Section title="📢 Advertising">
+          <PricingCard
+            title="Basic Banner Ad"
+          />
+          <PricingCard
+            title="Premium Banner Ad"
+          />
+          <PricingCard
+            title="Video Advertisement"
+          />
+          <PricingCard
+            title="Sponsored Post"
+          />
+          <PricingCard
+            title="Sponsored Reel"
+          />
+          <PricingCard
+            title="Country Targeting Fee"
+          />
+          <PricingCard
+            title="State Targeting Fee"
+          />
+          <PricingCard
+            title="City Targeting Fee"
+          />
+          <PricingCard
+            title="Accessibility Audience Fee"
+          />
+        </Section>
 
-    </Section>
+        <Section title="🎥 Reels Economy">
+          <PricingCard
+            title="Reel Boost"
+          />
+          <PricingCard
+            title="Featured Reel"
+          />
+          <PricingCard
+            title="Trending Placement"
+          />
+          <PricingCard
+            title="Sponsored Reel Placement"
+          />
+        </Section>
 
-    {/* CREATORS */}
+        <Section title="💵 Creator Economy">
+          <EditableCard
+            title="Creator Verification"
+            value={
+              pricing.creatorVerification
+            }
+            onChange={(value) =>
+              updatePrice(
+                "creatorVerification",
+                value
+              )
+            }
+          />
 
-    <Section title="💵 Creator Economy">
+          <PricingCard
+            title="Creator Subscription"
+          />
 
-      <Card title="Creator Verification" />
-      <Card title="Creator Subscription" />
-      <Card title="Sponsored Content Fee" />
-      <Card title="Creator Analytics Pro" />
-      <Card title="Creator Withdrawal Fee" />
+          <PricingCard
+            title="Sponsored Content Fee"
+          />
 
-    </Section>
+          <PricingCard
+            title="Creator Analytics Pro"
+          />
 
-    {/* MARKETPLACE */}
+          <PricingCard
+            title="Creator Withdrawal Fee"
+          />
+        </Section>
 
-    <Section title="🛒 Marketplace Economy">
+        <Section title="🛒 Marketplace Economy">
+          <PricingCard
+            title="Listing Fee"
+          />
 
-      <Card title="Listing Fee" />
-      <Card title="Featured Listing" />
-      <Card title="Marketplace Commission %" />
-      <Card title="Store Verification" />
-      <Card title="Premium Store Subscription" />
+          <PricingCard
+            title="Featured Listing"
+          />
 
-    </Section>
+          <EditableCard
+            title="Marketplace Commission (%)"
+            value={
+              pricing.marketplaceCommission
+            }
+            onChange={(value) =>
+              updatePrice(
+                "marketplaceCommission",
+                value
+              )
+            }
+          />
 
-    {/* CARE-GIGS */}
+          <PricingCard
+            title="Store Verification"
+          />
 
-    <Section title="🤝 Care-Gigs Economy">
+          <PricingCard
+            title="Premium Store Subscription"
+          />
+        </Section>
 
-      <Card title="Gig Posting Fee" />
-      <Card title="Gig Promotion Fee" />
-      <Card title="Care-Gig Commission %" />
+        <Section title="🤝 Care-Gigs Economy">
+          <PricingCard
+            title="Gig Posting Fee"
+          />
 
-    </Section>
+          <PricingCard
+            title="Gig Promotion Fee"
+          />
 
-    {/* MENTORS */}
+          <EditableCard
+            title="Care-Gig Commission (%)"
+            value={
+              pricing.careGigCommission
+            }
+            onChange={(value) =>
+              updatePrice(
+                "careGigCommission",
+                value
+              )
+            }
+          />
+        </Section>
 
-    <Section title="🎓 Mentor Economy">
+        <Section title="🎓 Mentor Economy">
+          <PricingCard
+            title="Mentor Subscription"
+          />
 
-      <Card title="Mentor Subscription" />
-      <Card title="Premium Mentor Badge" />
-      <Card title="Session Commission %" />
+          <PricingCard
+            title="Premium Mentor Badge"
+          />
 
-    </Section>
+          <EditableCard
+            title="Session Commission (%)"
+            value={
+              pricing.mentorCommission
+            }
+            onChange={(value) =>
+              updatePrice(
+                "mentorCommission",
+                value
+              )
+            }
+          />
+        </Section>
 
-    {/* ENTERPRISE */}
+        <Section title="🏢 Enterprise Economy">
+          <PricingCard
+            title="Enterprise Verification"
+          />
 
-    <Section title="🏢 Enterprise Economy">
+          <PricingCard
+            title="Enterprise Subscription"
+          />
 
-      <Card title="Enterprise Verification" />
-      <Card title="Enterprise Subscription" />
-      <Card title="Recruitment Campaign Fee" />
-      <Card title="Accessibility Program Fee" />
-      <Card title="Grant Campaign Fee" />
-      <Card title="Government Campaign Fee" />
-      <Card title="Enterprise Analytics Pro" />
+          <PricingCard
+            title="Recruitment Campaign Fee"
+          />
 
-    </Section>
+          <PricingCard
+            title="Accessibility Program Fee"
+          />
 
-    {/* WALLET */}
+          <PricingCard
+            title="Grant Campaign Fee"
+          />
 
-    <Section title="💰 Wallet Economy">
+          <PricingCard
+            title="Government Campaign Fee"
+          />
 
-      <Card title="Top-Up Fee" />
-      <Card title="Transfer Fee" />
-      <Card title="Withdrawal Fee" />
-      <Card title="International Withdrawal Fee" />
-      <Card title="Currency Conversion Fee" />
+          <PricingCard
+            title="Enterprise Analytics Pro"
+          />
+        </Section>
 
-    </Section>
+        <Section title="💰 Wallet Economy">
+          <PricingCard
+            title="Top-Up Fee"
+          />
 
-    {/* VERIFICATION */}
+          <PricingCard
+            title="Transfer Fee"
+          />
 
-    <Section title="🏷 Verification & Badges">
+          <PricingCard
+            title="Withdrawal Fee"
+          />
 
-      <Card title="Verified User Badge" />
-      <Card title="Verified Creator Badge" />
-      <Card title="Verified Organization Badge" />
-      <Card title="Verified NGO Badge" />
-      <Card title="Verified University Badge" />
-      <Card title="Verified Hospital Badge" />
-      <Card title="Verified Government Badge" />
+          <PricingCard
+            title="International Withdrawal Fee"
+          />
 
-    </Section>
+          <PricingCard
+            title="Currency Conversion Fee"
+          />
+        </Section>
 
-    {/* BUSINESS TOOLS */}
+        <Section title="🏷 Verification & Badges">
+          <PricingCard
+            title="Verified User Badge"
+          />
 
-    <Section title="🧰 Premium Business Tools">
+          <EditableCard
+            title="Verified Creator Badge"
+            value={
+              pricing.verifiedCreatorBadge
+            }
+            onChange={(value) =>
+              updatePrice(
+                "verifiedCreatorBadge",
+                value
+              )
+            }
+          />
 
-      <Card title="HubSpot Integration" />
-      <Card title="Canva Pro Add-On" />
-      <Card title="HubSpot + Canva Bundle" />
-      <Card title="Business Tools Suite" />
-      <Card title="Analytics Pro" />
+          <PricingCard
+            title="Verified Organization Badge"
+          />
 
-    </Section>
+          <PricingCard
+            title="Verified NGO Badge"
+          />
 
-    {/* MEMBERSHIP */}
+          <PricingCard
+            title="Verified University Badge"
+          />
 
-    <Section title="⭐ Premium Membership">
+          <PricingCard
+            title="Verified Hospital Badge"
+          />
 
-      <Card title="Inclura Plus Monthly" />
-      <Card title="Inclura Plus Yearly" />
-      <Card title="Premium Profile" />
-      <Card title="Premium Analytics" />
-      <Card title="Priority Support" />
+          <PricingCard
+            title="Verified Government Badge"
+          />
+        </Section>
 
-    </Section>
+        <Section title="🧰 Premium Business Tools">
+          <PricingCard
+            title="HubSpot Integration"
+          />
 
-  </div>
-</DashboardLayout>
+          <PricingCard
+            title="Canva Pro Add-On"
+          />
 
-);
+          <PricingCard
+            title="HubSpot + Canva Bundle"
+          />
+
+          <PricingCard
+            title="Business Tools Suite"
+          />
+
+          <PricingCard
+            title="Analytics Pro"
+          />
+        </Section>
+
+        <Section title="⭐ Premium Membership">
+          <EditableCard
+            title="Inclura Plus Monthly"
+            value={
+              pricing.premiumMonthly
+            }
+            onChange={(value) =>
+              updatePrice(
+                "premiumMonthly",
+                value
+              )
+            }
+          />
+
+          <EditableCard
+            title="Inclura Plus Yearly"
+            value={
+              pricing.premiumYearly
+            }
+            onChange={(value) =>
+              updatePrice(
+                "premiumYearly",
+                value
+              )
+            }
+          />
+
+          <PricingCard
+            title="Premium Profile"
+          />
+
+          <PricingCard
+            title="Premium Analytics"
+          />
+
+          <PricingCard
+            title="Priority Support"
+          />
+        </Section>
+      </div>
+    </DashboardLayout>
+  );
 }
 
-function Section({ title, children }) {
-return (
-<div
-style={{
-marginBottom: "35px",
-}}
->
-<h2
-style={{
-marginBottom: "15px",
-}}
->
-{title}
-</h2>
+function Section({
+  title,
+  children,
+}) {
+  return (
+    <div
+      style={{
+        marginBottom: "35px",
+      }}
+    >
+      <h2
+        style={{
+          marginBottom:
+            "15px",
+        }}
+      >
+        {title}
+      </h2>
 
-  {children}
-</div>
-
-);
+      {children}
+    </div>
+  );
 }
 
-function Card({ title }) {
-return (
-<div
-style={{
-background: "#0f172a",
-padding: "20px",
-borderRadius: "16px",
-marginBottom: "12px",
-fontWeight: "600",
-}}
->
-{title}
-</div>
-);
+function RevenueCard({
+  title,
+  value,
+}) {
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        padding: "20px",
+        borderRadius: "16px",
+      }}
+    >
+      <div>{title}</div>
+
+      <h2>{value}</h2>
+    </div>
+  );
+}
+
+function PricingCard({
+  title,
+}) {
+  const [enabled, setEnabled] =
+    useState(true);
+
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        padding: "20px",
+        borderRadius: "16px",
+        marginBottom: "12px",
+        display: "flex",
+        justifyContent:
+          "space-between",
+        alignItems: "center",
+      }}
+    >
+      <span>{title}</span>
+
+      <button
+        onClick={() =>
+          setEnabled(
+            !enabled
+          )
+        }
+      >
+        {enabled
+          ? "Enabled"
+          : "Disabled"}
+      </button>
+    </div>
+  );
+}
+
+function EditableCard({
+  title,
+  value,
+  onChange,
+}) {
+  return (
+    <div
+      style={{
+        background: "#0f172a",
+        padding: "20px",
+        borderRadius: "16px",
+        marginBottom: "12px",
+      }}
+    >
+      <div
+        style={{
+          marginBottom:
+            "10px",
+        }}
+      >
+        {title}
+      </div>
+
+      <input
+        type="number"
+        value={value}
+        onChange={(e) =>
+          onChange(
+            e.target.value
+          )
+        }
+        style={{
+          width: "100%",
+          padding: "10px",
+          borderRadius: "10px",
+          border: "none",
+        }}
+      />
+    </div>
+  );
 }
 
 export default PricingManager;
