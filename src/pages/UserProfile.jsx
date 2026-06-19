@@ -7,321 +7,409 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import {
-doc,
-getDoc,
-collection,
-query,
-where,
-getDocs,
+  doc,
+  getDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 
 function UserProfile() {
-const { userId } = useParams();
+  const { userId } = useParams();
 
-const [user, setUser] = useState(null);
-const [posts, setPosts] = useState([]);
-const [activeTab, setActiveTab] =
-useState("posts");
+  const [user, setUser] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [activeTab, setActiveTab] =
+    useState("posts");
 
-useEffect(() => {
-loadUser();
-loadPosts();
-}, [userId]);
+  useEffect(() => {
+    loadUser();
+    loadPosts();
+  }, [userId]);
 
-async function loadUser() {
-try {
-const docRef = doc(
-db,
-"users",
-userId
-);
+  async function loadUser() {
+    try {
+      const docRef = doc(
+        db,
+        "users",
+        userId
+      );
 
-  const docSnap =
-    await getDoc(docRef);
+      const docSnap =
+        await getDoc(docRef);
 
-  if (docSnap.exists()) {
-    setUser(docSnap.data());
+      if (docSnap.exists()) {
+        setUser(docSnap.data());
+      }
+    } catch (error) {
+      console.error(error);
+    }
   }
-} catch (error) {
-  console.error(error);
-}
 
-}
+  async function loadPosts() {
+    const q = query(
+      collection(db, "posts"),
+      where("userId", "==", userId)
+    );
 
-async function loadPosts() {
-const q = query(
-collection(db, "posts"),
-where("userId", "==", userId)
-);
+    const snapshot =
+      await getDocs(q);
 
-const snapshot =
-  await getDocs(q);
+    const data =
+      snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
 
-const data =
-  snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+    setPosts(data);
+  }
 
-setPosts(data);
-
-}
-
-if (!user) {
-return (
-<div
-style={{
-background: "#020617",
-minHeight: "100vh",
-color: "white",
-display: "flex",
-justifyContent: "center",
-alignItems: "center",
-}}
->
-Loading...
-</div>
-);
-}
-
-const getBadge = () => {
-if (!user?.verified) return null;
-
-switch (user?.badgeType) {
-  case "creator":
-    return "🎥 Verified Creator";
-
-  case "organization":
-    return "🏢 Verified Organization";
-
-  case "ngo":
-    return "🤝 Verified NGO";
-
-  case "hospital":
-    return "🏥 Verified Hospital";
-
-  case "university":
-    return "🎓 Verified University";
-
-  case "government":
-    return "🏛 Verified Government";
-
-  default:
-    return "✅ Verified User";
-}
-
-};
-
-return (
-<div
-style={{
-background: "#020617",
-minHeight: "100vh",
-padding: "24px",
-color: "white",
-}}
->
-<div
-style={{
-maxWidth: "700px",
-margin: "0 auto",
-background: "#0f172a",
-padding: "30px",
-borderRadius: "24px",
-}}
->
-<button
-onClick={() =>
-window.history.back()
-}
-style={{
-padding: "10px 16px",
-borderRadius: "12px",
-border: "none",
-background: "#38bdf8",
-color: "white",
-cursor: "pointer",
-marginBottom: "20px",
-}}
->
-← Back
-</button>
-
-    {user.photoURL ? (
-      <img
-        src={user.photoURL}
-        alt="profile"
-        style={{
-          width: "120px",
-          height: "120px",
-          borderRadius: "50%",
-          objectFit: "cover",
-          marginBottom: "20px",
-        }}
-      />
-    ) : (
+  if (!user) {
+    return (
       <div
         style={{
-          width: "120px",
-          height: "120px",
-          borderRadius: "50%",
-          background: "#38bdf8",
+          background: "#020617",
+          minHeight: "100vh",
+          color: "white",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          fontSize: "40px",
-          fontWeight: "700",
-          marginBottom: "20px",
         }}
       >
-        {user.fullName?.charAt(0)}
+        Loading...
       </div>
-    )}
+    );
+  }
 
+  const getBadge = () => {
+    if (!user?.verified)
+      return null;
+
+    switch (
+      user?.badgeType
+    ) {
+      case "creator":
+        return "🎥 Verified Creator";
+
+      case "organization":
+        return "🏢 Verified Organization";
+
+      case "ngo":
+        return "🤝 Verified NGO";
+
+      case "hospital":
+        return "🏥 Verified Hospital";
+
+      case "university":
+        return "🎓 Verified University";
+
+      case "government":
+        return "🏛 Verified Government";
+
+      default:
+        return "✅ Verified User";
+    }
+  };
+
+  return (
     <div
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "12px",
-        flexWrap: "wrap",
+        background: "#020617",
+        minHeight: "100vh",
+        padding: "24px",
+        color: "white",
       }}
     >
-      <h1>{user.fullName}</h1>
-
-      {user.verified && (
-        <div
+      <div
+        style={{
+          maxWidth: "700px",
+          margin: "0 auto",
+          background: "#0f172a",
+          padding: "30px",
+          borderRadius: "24px",
+        }}
+      >
+        <button
+          onClick={() =>
+            window.history.back()
+          }
           style={{
-            background: "#16a34a",
+            padding: "10px 16px",
+            borderRadius: "12px",
+            border: "none",
+            background:
+              "#38bdf8",
             color: "white",
-            padding: "6px 12px",
-            borderRadius: "999px",
-            fontSize: "13px",
-            fontWeight: "700",
+            cursor: "pointer",
+            marginBottom:
+              "20px",
           }}
         >
-          {getBadge()}
-        </div>
-      )}
-    </div>
+          ← Back
+        </button>
 
-    {auth.currentUser &&
-      auth.currentUser.uid !== userId && (
+        {(user.profilePhoto ||
+          user.photoURL) ? (
+          <img
+            src={
+              user.profilePhoto ||
+              user.photoURL
+            }
+            alt="profile"
+            style={{
+              width: "120px",
+              height: "120px",
+              borderRadius:
+                "50%",
+              objectFit:
+                "cover",
+              marginBottom:
+                "20px",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              width: "120px",
+              height: "120px",
+              borderRadius:
+                "50%",
+              background:
+                "#38bdf8",
+              display: "flex",
+              justifyContent:
+                "center",
+              alignItems:
+                "center",
+              fontSize: "40px",
+              fontWeight:
+                "700",
+              marginBottom:
+                "20px",
+            }}
+          >
+            {user.fullName?.charAt(
+              0
+            )}
+          </div>
+        )}
+
         <div
           style={{
-            marginTop: "12px",
-            marginBottom: "20px",
+            display: "flex",
+            alignItems:
+              "center",
+            gap: "12px",
+            flexWrap:
+              "wrap",
           }}
         >
-          <FollowButton
-            targetUserId={userId}
-          />
+          <h1>
+            {user.fullName}
+          </h1>
+
+          {user.verified && (
+            <div
+              style={{
+                background:
+                  "#16a34a",
+                color: "white",
+                padding:
+                  "6px 12px",
+                borderRadius:
+                  "999px",
+                fontSize:
+                  "13px",
+                fontWeight:
+                  "700",
+              }}
+            >
+              {getBadge()}
+            </div>
+          )}
         </div>
-      )}
 
-    <p>{user.bio}</p>
+        {auth.currentUser &&
+          auth.currentUser.uid !==
+            userId && (
+            <div
+              style={{
+                marginTop:
+                  "12px",
+                marginBottom:
+                  "20px",
+              }}
+            >
+              <FollowButton
+                targetUserId={
+                  userId
+                }
+              />
+            </div>
+          )}
 
-    <p>
-      Category: {user.category}
-    </p>
-
-    <p>
-      Accessibility:{" "}
-      {user.accessibility}
-    </p>
-
-    <p>
-      Followers:{" "}
-      {user.followers?.length || 0}
-    </p>
-
-    <p>
-      Following:{" "}
-      {user.following?.length || 0}
-    </p>
-
-    <div
-      style={{
-        display: "flex",
-        gap: "12px",
-        marginTop: "24px",
-        marginBottom: "24px",
-      }}
-    >
-      <button
-        onClick={() =>
-          setActiveTab("posts")
-        }
-      >
-        Posts
-      </button>
-
-      <button
-        onClick={() =>
-          setActiveTab("about")
-        }
-      >
-        About
-      </button>
-
-      <button
-        onClick={() =>
-          setActiveTab(
-            "accessibility"
-          )
-        }
-      >
-        Accessibility
-      </button>
-    </div>
-
-    {activeTab === "posts" && (
-      <>
-        <h2>Posts</h2>
-
-        {posts.length === 0 ? (
-          <p>No posts yet</p>
-        ) : (
-          posts.map((post) => (
-            <PostCard
-              key={post.id}
-              name={post.userName}
-              text={post.text}
-            />
-          ))
-        )}
-      </>
-    )}
-
-    {activeTab === "about" && (
-      <>
         <p>{user.bio}</p>
 
         <p>
+          Role:{" "}
+          {user.role ||
+            "user"}
+        </p>
+
+        <p>
           Category:{" "}
-          {user.category}
-        </p>
-      </>
-    )}
-
-    {activeTab ===
-      "accessibility" && (
-      <>
-        <p>
-          Accessibility:{" "}
-          {user.accessibility}
+          {user.category ||
+            "Not set"}
         </p>
 
         <p>
-          {user.accessibilityNeeds?.join(
-            ", "
-          )}
+          Followers:{" "}
+          {user.followers
+            ?.length || 0}
         </p>
-      </>
-    )}
-  </div>
-</div>
 
-);
+        <p>
+          Following:{" "}
+          {user.following
+            ?.length || 0}
+        </p>
+
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginTop:
+              "24px",
+            marginBottom:
+              "24px",
+          }}
+        >
+          <button
+            onClick={() =>
+              setActiveTab(
+                "posts"
+              )
+            }
+          >
+            Posts
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab(
+                "about"
+              )
+            }
+          >
+            About
+          </button>
+
+          <button
+            onClick={() =>
+              setActiveTab(
+                "accessibility"
+              )
+            }
+          >
+            Accessibility
+          </button>
+        </div>
+
+        {activeTab ===
+          "posts" && (
+          <>
+            <h2>Posts</h2>
+
+            {posts.length ===
+            0 ? (
+              <p>
+                No posts yet
+              </p>
+            ) : (
+              posts.map(
+                (post) => (
+                  <PostCard
+                    key={
+                      post.id
+                    }
+                    name={
+                      post.userName
+                    }
+                    text={
+                      post.text
+                    }
+                    verified={
+                      post.verified
+                    }
+                    badgeType={
+                      post.badgeType
+                    }
+                  />
+                )
+              )
+            )}
+          </>
+        )}
+
+        {activeTab ===
+          "about" && (
+          <>
+            <p>{user.bio}</p>
+
+            <p>
+              Category:{" "}
+              {user.category}
+            </p>
+
+            <p>
+              Role:{" "}
+              {user.role}
+            </p>
+          </>
+        )}
+
+        {activeTab ===
+          "accessibility" && (
+          <>
+            <h3>
+              Accessibility
+              Needs
+            </h3>
+
+            {user
+              .accessibilityNeeds
+              ?.length >
+            0 ? (
+              <ul>
+                {user.accessibilityNeeds.map(
+                  (
+                    need,
+                    index
+                  ) => (
+                    <li
+                      key={
+                        index
+                      }
+                    >
+                      {need}
+                    </li>
+                  )
+                )}
+              </ul>
+            ) : (
+              <p>
+                No
+                accessibility
+                needs
+                specified.
+              </p>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
 }
 
-export default UserProfile;
+export default UserProfile
