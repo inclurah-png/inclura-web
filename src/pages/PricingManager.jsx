@@ -1,17 +1,71 @@
+import { useEffect, useState } from "react";
+
+import {
+  doc,
+  getDoc,
+  updateDoc,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
 import DashboardLayout from "../components/DashboardLayout";
-import { useState } from "react";
 
 function PricingManager() {
   const [pricing, setPricing] =
-    useState({
-      creatorVerification: 5000,
-      verifiedCreatorBadge: 10000,
-      marketplaceCommission: 5,
-      careGigCommission: 8,
-      mentorCommission: 10,
-      premiumMonthly: 3000,
-      premiumYearly: 30000,
-    });
+    useState({});
+
+  const [loading, setLoading] =
+    useState(true);
+
+  const [saving, setSaving] =
+    useState(false);
+
+  useEffect(() => {
+    loadPricing();
+  }, []);
+
+  async function loadPricing() {
+    try {
+      const snap = await getDoc(
+        doc(
+          db,
+          "pricing",
+          "main"
+        )
+      );
+
+      if (snap.exists()) {
+        setPricing(snap.data());
+      }
+    } catch (error) {
+      console.log(error);
+    }
+
+    setLoading(false);
+  }
+
+  async function savePricing() {
+    try {
+      setSaving(true);
+
+      await updateDoc(
+        doc(
+          db,
+          "pricing",
+          "main"
+        ),
+        pricing
+      );
+
+      alert(
+        "Pricing updated successfully"
+      );
+    } catch (error) {
+      alert(error.message);
+    }
+
+    setSaving(false);
+  }
 
   function updatePrice(
     key,
@@ -19,8 +73,26 @@ function PricingManager() {
   ) {
     setPricing((prev) => ({
       ...prev,
-      [key]: value,
+      [key]: {
+        ...prev[key],
+        price: Number(value),
+      },
     }));
+  }
+  
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div
+          style={{
+            color: "white",
+            padding: "40px",
+          }}
+        >
+          Loading pricing...
+        </div>
+      </DashboardLayout>
+    );
   }
 
   return (
@@ -28,100 +100,412 @@ function PricingManager() {
       <div
         style={{
           color: "white",
+          padding: "20px",
         }}
       >
-        <h1
-          style={{
-            marginBottom:
-              "30px",
-          }}
-        >
-          💲 Inclura Pricing Manager
-        </h1>
-
-        {/* Revenue Overview */}
-
         <div
           style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(220px,1fr))",
-            gap: "14px",
-            marginBottom:
-              "40px",
+            display: "flex",
+            justifyContent:
+              "space-between",
+            alignItems: "center",
+            marginBottom: "30px",
           }}
         >
-          <RevenueCard
-            title="Today's Revenue"
-            value="₦0"
-          />
+          <h1>
+            💲 Inclura Pricing Manager
+          </h1>
 
-          <RevenueCard
-            title="Monthly Revenue"
-            value="₦0"
-          />
-
-          <RevenueCard
-            title="Subscriptions"
-            value="₦0"
-          />
-
-          <RevenueCard
-            title="Marketplace Revenue"
-            value="₦0"
-          />
+          <button
+            onClick={savePricing}
+            disabled={saving}
+            style={{
+              background:
+                "#38bdf8",
+              color: "white",
+              border: "none",
+              padding:
+                "12px 20px",
+              borderRadius:
+                "12px",
+              cursor: "pointer",
+              fontWeight: "700",
+            }}
+          >
+            {saving
+              ? "Saving..."
+              : "Save Pricing"}
+          </button>
         </div>
 
         <Section title="📢 Advertising">
-          <PricingCard
+
+          <EditableCard
             title="Basic Banner Ad"
+            value={
+              pricing
+                .basicBannerAd
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .basicBannerAd
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "basicBannerAd",
+                value
+              )
+            }
+            onToggle={(
+              enabled
+            ) =>
+              updateEnabled(
+                "basicBannerAd",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Premium Banner Ad"
+            value={
+              pricing
+                .premiumBannerAd
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .premiumBannerAd
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "premiumBannerAd",
+                value
+              )
+            }
+            onToggle={(
+              enabled
+            ) =>
+              updateEnabled(
+                "premiumBannerAd",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Video Advertisement"
+            value={
+              pricing
+                .videoAdvertisement
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .videoAdvertisement
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "videoAdvertisement",
+                value
+              )
+            }
+            onToggle={(
+              enabled
+            ) =>
+              updateEnabled(
+                "videoAdvertisement",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Sponsored Post"
+            value={
+              pricing
+                .sponsoredPost
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .sponsoredPost
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "sponsoredPost",
+                value
+              )
+            }
+            onToggle={(
+              enabled
+            ) =>
+              updateEnabled(
+                "sponsoredPost",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+        </Section>
+        <Section title="📢 Advertising">
+
+          <EditableCard
             title="Sponsored Reel"
+            value={
+              pricing
+                .sponsoredReel
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .sponsoredReel
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "sponsoredReel",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "sponsoredReel",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Country Targeting Fee"
+            value={
+              pricing
+                .countryTargetingFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .countryTargetingFee
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "countryTargetingFee",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "countryTargetingFee",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="State Targeting Fee"
+            value={
+              pricing
+                .stateTargetingFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .stateTargetingFee
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "stateTargetingFee",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "stateTargetingFee",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="City Targeting Fee"
+            value={
+              pricing
+                .cityTargetingFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .cityTargetingFee
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "cityTargetingFee",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "cityTargetingFee",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Accessibility Audience Fee"
+            value={
+              pricing
+                .accessibilityAudienceFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .accessibilityAudienceFee
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "accessibilityAudienceFee",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "accessibilityAudienceFee",
+                enabled
+              )
+            }
           />
+
         </Section>
 
         <Section title="🎥 Reels Economy">
-          <PricingCard
+
+          <EditableCard
             title="Reel Boost"
+            value={
+              pricing.reelBoost
+                ?.price || 0
+            }
+            enabled={
+              pricing.reelBoost
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "reelBoost",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "reelBoost",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Featured Reel"
+            value={
+              pricing
+                .featuredReel
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .featuredReel
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "featuredReel",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "featuredReel",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Trending Placement"
+            value={
+              pricing
+                .trendingPlacement
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .trendingPlacement
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "trendingPlacement",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "trendingPlacement",
+                enabled
+              )
+            }
           />
-          <PricingCard
+
+          <EditableCard
             title="Sponsored Reel Placement"
+            value={
+              pricing
+                .sponsoredReelPlacement
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .sponsoredReelPlacement
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "sponsoredReelPlacement",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "sponsoredReelPlacement",
+                enabled
+              )
+            }
           />
+
         </Section>
 
         <Section title="💵 Creator Economy">
+
           <EditableCard
             title="Creator Verification"
             value={
-              pricing.creatorVerification
+              pricing
+                .creatorVerification
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .creatorVerification
+                ?.enabled || false
             }
             onChange={(value) =>
               updatePrice(
@@ -129,259 +513,407 @@ function PricingManager() {
                 value
               )
             }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "creatorVerification",
+                enabled
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Creator Subscription"
+            value={
+              pricing
+                .creatorSubscription
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .creatorSubscription
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "creatorSubscription",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "creatorSubscription",
+                enabled
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Sponsored Content Fee"
+            value={
+              pricing
+                .sponsoredContentFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .sponsoredContentFee
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "sponsoredContentFee",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "sponsoredContentFee",
+                enabled
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Creator Analytics Pro"
+            value={
+              pricing
+                .creatorAnalyticsPro
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .creatorAnalyticsPro
+                ?.enabled || false
+            }
+            onChange={(value) =>
+              updatePrice(
+                "creatorAnalyticsPro",
+                value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "creatorAnalyticsPro",
+                enabled
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Creator Withdrawal Fee"
-          />
-        </Section>
-
-        <Section title="🛒 Marketplace Economy">
-          <PricingCard
-            title="Listing Fee"
-          />
-
-          <PricingCard
-            title="Featured Listing"
-          />
-
-          <EditableCard
-            title="Marketplace Commission (%)"
             value={
-              pricing.marketplaceCommission
+              pricing
+                .creatorWithdrawalFee
+                ?.price || 0
+            }
+            enabled={
+              pricing
+                .creatorWithdrawalFee
+                ?.enabled || false
             }
             onChange={(value) =>
               updatePrice(
-                "marketplaceCommission",
+                "creatorWithdrawalFee",
                 value
+              )
+            }
+            onToggle={(enabled) =>
+              updateEnabled(
+                "creatorWithdrawalFee",
+                enabled
               )
             }
           />
 
-          <PricingCard
-            title="Store Verification"
-          />
-
-          <PricingCard
-            title="Premium Store Subscription"
-          />
         </Section>
-
-        <Section title="🤝 Care-Gigs Economy">
-          <PricingCard
-            title="Gig Posting Fee"
-          />
-
-          <PricingCard
-            title="Gig Promotion Fee"
-          />
-
-          <EditableCard
-            title="Care-Gig Commission (%)"
-            value={
-              pricing.careGigCommission
-            }
-            onChange={(value) =>
-              updatePrice(
-                "careGigCommission",
-                value
-              )
-            }
-          />
-        </Section>
-
-        <Section title="🎓 Mentor Economy">
-          <PricingCard
-            title="Mentor Subscription"
-          />
-
-          <PricingCard
-            title="Premium Mentor Badge"
-          />
-
-          <EditableCard
-            title="Session Commission (%)"
-            value={
-              pricing.mentorCommission
-            }
-            onChange={(value) =>
-              updatePrice(
-                "mentorCommission",
-                value
-              )
-            }
-          />
-        </Section>
-
-        <Section title="🏢 Enterprise Economy">
-          <PricingCard
-            title="Enterprise Verification"
-          />
-
-          <PricingCard
-            title="Enterprise Subscription"
-          />
-
-          <PricingCard
-            title="Recruitment Campaign Fee"
-          />
-
-          <PricingCard
-            title="Accessibility Program Fee"
-          />
-
-          <PricingCard
-            title="Grant Campaign Fee"
-          />
-
-          <PricingCard
-            title="Government Campaign Fee"
-          />
-
-          <PricingCard
-            title="Enterprise Analytics Pro"
-          />
-        </Section>
-
-        <Section title="💰 Wallet Economy">
-          <PricingCard
-            title="Top-Up Fee"
-          />
-
-          <PricingCard
-            title="Transfer Fee"
-          />
-
-          <PricingCard
-            title="Withdrawal Fee"
-          />
-
-          <PricingCard
-            title="International Withdrawal Fee"
-          />
-
-          <PricingCard
-            title="Currency Conversion Fee"
-          />
-        </Section>
-
         <Section title="🏷 Verification & Badges">
-          <PricingCard
+
+          <EditableCard
             title="Verified User Badge"
+            value={
+              pricing.verifiedUserBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedUserBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedUserBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedUserBadge"
+              )
+            }
           />
 
           <EditableCard
             title="Verified Creator Badge"
             value={
               pricing.verifiedCreatorBadge
+                ?.price || 0
             }
-            onChange={(value) =>
+            enabled={
+              pricing.verifiedCreatorBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
               updatePrice(
                 "verifiedCreatorBadge",
                 value
               )
             }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedCreatorBadge"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Verified Organization Badge"
+            value={
+              pricing.verifiedOrganizationBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedOrganizationBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedOrganizationBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedOrganizationBadge"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Verified NGO Badge"
+            value={
+              pricing.verifiedNGOBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedNGOBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedNGOBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedNGOBadge"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Verified University Badge"
+            value={
+              pricing.verifiedUniversityBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedUniversityBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedUniversityBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedUniversityBadge"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Verified Hospital Badge"
+            value={
+              pricing.verifiedHospitalBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedHospitalBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedHospitalBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedHospitalBadge"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Verified Government Badge"
+            value={
+              pricing.verifiedGovernmentBadge
+                ?.price || 0
+            }
+            enabled={
+              pricing.verifiedGovernmentBadge
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "verifiedGovernmentBadge",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "verifiedGovernmentBadge"
+              )
+            }
           />
-        </Section>
 
-        <Section title="🧰 Premium Business Tools">
-          <PricingCard
-            title="HubSpot Integration"
-          />
-
-          <PricingCard
-            title="Canva Pro Add-On"
-          />
-
-          <PricingCard
-            title="HubSpot + Canva Bundle"
-          />
-
-          <PricingCard
-            title="Business Tools Suite"
-          />
-
-          <PricingCard
-            title="Analytics Pro"
-          />
         </Section>
 
         <Section title="⭐ Premium Membership">
+
           <EditableCard
-            title="Inclura Plus Monthly"
+            title="Premium Monthly"
             value={
               pricing.premiumMonthly
+                ?.price || 0
             }
-            onChange={(value) =>
+            enabled={
+              pricing.premiumMonthly
+                ?.enabled
+            }
+            onPriceChange={(value) =>
               updatePrice(
                 "premiumMonthly",
                 value
               )
             }
+            onToggle={() =>
+              toggleEnabled(
+                "premiumMonthly"
+              )
+            }
           />
 
           <EditableCard
-            title="Inclura Plus Yearly"
+            title="Premium Yearly"
             value={
               pricing.premiumYearly
+                ?.price || 0
             }
-            onChange={(value) =>
+            enabled={
+              pricing.premiumYearly
+                ?.enabled
+            }
+            onPriceChange={(value) =>
               updatePrice(
                 "premiumYearly",
                 value
               )
             }
+            onToggle={() =>
+              toggleEnabled(
+                "premiumYearly"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Premium Profile"
+            value={
+              pricing.premiumProfile
+                ?.price || 0
+            }
+            enabled={
+              pricing.premiumProfile
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "premiumProfile",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "premiumProfile"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Premium Analytics"
+            value={
+              pricing.premiumAnalytics
+                ?.price || 0
+            }
+            enabled={
+              pricing.premiumAnalytics
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "premiumAnalytics",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "premiumAnalytics"
+              )
+            }
           />
 
-          <PricingCard
+          <EditableCard
             title="Priority Support"
+            value={
+              pricing.prioritySupport
+                ?.price || 0
+            }
+            enabled={
+              pricing.prioritySupport
+                ?.enabled
+            }
+            onPriceChange={(value) =>
+              updatePrice(
+                "prioritySupport",
+                value
+              )
+            }
+            onToggle={() =>
+              toggleEnabled(
+                "prioritySupport"
+              )
+            }
           />
+
         </Section>
+
       </div>
     </DashboardLayout>
   );
-}
-
+  }
 function Section({
   title,
   children,
@@ -394,8 +926,7 @@ function Section({
     >
       <h2
         style={{
-          marginBottom:
-            "15px",
+          marginBottom: "15px",
         }}
       >
         {title}
@@ -425,46 +956,12 @@ function RevenueCard({
   );
 }
 
-function PricingCard({
-  title,
-}) {
-  const [enabled, setEnabled] =
-    useState(true);
-
-  return (
-    <div
-      style={{
-        background: "#0f172a",
-        padding: "20px",
-        borderRadius: "16px",
-        marginBottom: "12px",
-        display: "flex",
-        justifyContent:
-          "space-between",
-        alignItems: "center",
-      }}
-    >
-      <span>{title}</span>
-
-      <button
-        onClick={() =>
-          setEnabled(
-            !enabled
-          )
-        }
-      >
-        {enabled
-          ? "Enabled"
-          : "Disabled"}
-      </button>
-    </div>
-  );
-}
-
 function EditableCard({
   title,
   value,
-  onChange,
+  enabled,
+  onPriceChange,
+  onToggle,
 }) {
   return (
     <div
@@ -477,26 +974,53 @@ function EditableCard({
     >
       <div
         style={{
-          marginBottom:
-            "10px",
+          display: "flex",
+          justifyContent:
+            "space-between",
+          alignItems: "center",
+          marginBottom: "12px",
         }}
       >
-        {title}
+        <strong>{title}</strong>
+
+        <button
+          onClick={onToggle}
+          style={{
+            background: enabled
+              ? "#22c55e"
+              : "#ef4444",
+            color: "white",
+            border: "none",
+            padding:
+              "8px 12px",
+            borderRadius:
+              "8px",
+            cursor: "pointer",
+          }}
+        >
+          {enabled
+            ? "Enabled"
+            : "Disabled"}
+        </button>
       </div>
 
       <input
         type="number"
         value={value}
         onChange={(e) =>
-          onChange(
+          onPriceChange(
             e.target.value
           )
         }
         style={{
           width: "100%",
-          padding: "10px",
+          padding: "12px",
           borderRadius: "10px",
-          border: "none",
+          border:
+            "1px solid #334155",
+          background:
+            "#1e293b",
+          color: "white",
         }}
       />
     </div>
