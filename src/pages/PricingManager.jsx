@@ -330,7 +330,6 @@ function PricingManager() {
   }
 />
 
-          <EditableCard
 <EditableCard
   title="Accessibility Audience Fee"
   value={
