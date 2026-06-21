@@ -11,7 +11,6 @@ import Onboarding from "./pages/Onboarding";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import VerificationCenter from "./pages/VerificationCenter";
-
 import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
 import EnterpriseAds from "./pages/EnterpriseAds";
@@ -94,7 +93,6 @@ return (
   }
 />
 
-  <
   <Route
     path="/messages"
     element={
