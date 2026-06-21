@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import {
 addDoc,
@@ -13,6 +14,7 @@ import DashboardLayout from "../components/DashboardLayout";
 function VerificationCenter() {
 const [accountType, setAccountType] =
 useState("user");
+const navigate = useNavigate();
 
 const submitVerification =
 async () => {
@@ -99,28 +101,39 @@ return (
       </option>
     </select>
 
-    <button
-      onClick={
-        submitVerification
-      }
-      style={{
-        padding:
-          "14px 24px",
-        borderRadius:
-          "14px",
-        border: "none",
-        background:
-          "#38bdf8",
-        color: "white",
-        fontWeight:
-          "700",
-        cursor: "pointer",
-        marginBottom:
-          "24px",
-      }}
-    >
-      Submit Verification
-    </button>
+<button
+  onClick={() => {
+    if (
+      accountType ===
+      "creator"
+    ) {
+      navigate(
+        "/creator-verification-payment"
+      );
+    } else {
+      submitVerification();
+    }
+  }}
+  style={{
+    padding:
+      "14px 24px",
+    borderRadius:
+      "14px",
+    border: "none",
+    background:
+      "#38bdf8",
+    color: "white",
+    fontWeight:
+      "700",
+    cursor: "pointer",
+    marginBottom:
+      "24px",
+  }}
+>
+  {accountType === "creator"
+    ? "Pay & Verify Creator"
+    : "Submit Verification"}
+</button>
 
     <div style={card}>
       👤 Verify Individual
