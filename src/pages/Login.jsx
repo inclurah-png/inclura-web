@@ -54,12 +54,12 @@ function Login() {
       
       navigate("/profile");
   } catch (error) {
-  console.log(error);    
+  console.log("Google Login Error:", error);
+  console.log("Code:", error.code);
+  console.log("Message:", error.message);
+
   alert(
-    "Code: " +
-      error.code +
-      "\n\nMessage: " +
-      error.message
+    `${error.code}\n${error.message}`
   );
 }
 
