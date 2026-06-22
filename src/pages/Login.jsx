@@ -54,8 +54,8 @@ function Login() {
       
       navigate("/profile");
   } catch (error) {
-    console.log(error);
-    alert(error.message
+  console.log(error);
+  alert(error.message);
     }
   }
 
