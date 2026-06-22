@@ -51,7 +51,6 @@ function Login() {
         auth,
         googleProvider
       );
-
       navigate("/profile");
   } catch (error) {
     console.log(error);
