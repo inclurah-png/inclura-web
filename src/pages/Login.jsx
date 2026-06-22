@@ -53,8 +53,9 @@ function Login() {
       );
 
       navigate("/profile");
-    } catch (error) {
-      alert(error.message);
+  } catch (error) {
+    console.log(error);
+    alert(error.message
     }
   }
 
