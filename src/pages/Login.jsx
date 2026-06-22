@@ -1,4 +1,226 @@
+import { useState } from "react";
 
+import {
+  signInWithEmailAndPassword,
+  signInWithPopup,
+} from "firebase/auth";
+
+import {
+  auth,
+  googleProvider,
+} from "../firebase";
+
+import {
+  useNavigate,
+  Link,
+} from "react-router-dom";
+
+function Login() {
+  const navigate = useNavigate();
+
+  const [email, setEmail] =
+    useState("");
+
+  const [password, setPassword] =
+    useState("");
+
+  const [loading, setLoading] =
+    useState(false);
+
+  async function handleLogin() {
+    try {
+      setLoading(true);
+
+      await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      navigate("/profile");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleGoogleLogin() {
+    try {
+      await signInWithPopup(
+        auth,
+        googleProvider
+      );
+
+      navigate("/profile");
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
+  return (
+    <div
+      style={{
+        minHeight: "100vh",
+        background: "#020617",
+        color: "white",
+        display: "flex",
+        justifyContent:
+          "center",
+        alignItems: "center",
+        padding: "24px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "420px",
+          background: "#0f172a",
+          padding: "32px",
+          borderRadius: "24px",
+        }}
+      >
+        <h1
+          style={{
+            marginBottom: "10px",
+          }}
+        >
+          Welcome Back 👋
+        </h1>
+
+        <p
+          style={{
+            color: "#94a3b8",
+            marginBottom: "24px",
+          }}
+        >
+          Sign in to continue to
+          Inclura
+        </p>
+
+        <button
+          onClick={
+            handleGoogleLogin
+          }
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "12px",
+            border: "none",
+            background: "white",
+            color: "#111827",
+            fontWeight: "700",
+            marginBottom: "20px",
+            cursor: "pointer",
+          }}
+        >
+          Continue with Google
+        </button>
+
+        <div
+          style={{
+            textAlign: "center",
+            marginBottom: "20px",
+            color: "#64748b",
+          }}
+        >
+          OR
+        </div>
+
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) =>
+            setEmail(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) =>
+            setPassword(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <button
+          onClick={handleLogin}
+          disabled={loading}
+          style={{
+            width: "100%",
+            padding: "14px",
+            borderRadius: "12px",
+            border: "none",
+            background: "#38bdf8",
+            color: "white",
+            fontWeight: "700",
+            cursor: "pointer",
+            marginTop: "10px",
+          }}
+        >
+          {loading
+            ? "Signing In..."
+            : "Sign In"}
+        </button>
+
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "20px",
+          }}
+        >
+          <Link
+            to="/forgot-password"
+            style={{
+              color: "#38bdf8",
+            }}
+          >
+            Forgot Password?
+          </Link>
+        </p>
+
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: "16px",
+            color: "#94a3b8",
+          }}
+        >
+          Don't have an account?{" "}
+          <Link
+            to="/signup"
+            style={{
+              color: "#38bdf8",
+            }}
+          >
+            Sign Up
+          </Link>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+const inputStyle = {
+  width: "100%",
+  padding: "14px",
+  borderRadius: "12px",
+  border: "1px solid #334155",
+  background: "#1e293b",
+  color: "white",
+  marginBottom: "14px",
+  boxSizing: "border-box",
+};
+
+export default Login;
                                 
                                                         
 
