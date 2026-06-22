@@ -2,22 +2,31 @@ import { initializeApp } from "firebase/app";
 
 import {
   getAuth,
-    GoogleAuthProvider
-    } from "firebase/auth";
+  GoogleAuthProvider,
+} from "firebase/auth";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
-        authDomain: "inclura-prod-90734.firebaseapp.com",
-          projectId: "inclura-prod-90734",
-            storageBucket: "inclura-prod-90734.firebasestorage.app",
-              messagingSenderId: "694509989399",
-                appId: "1:694509989399:web:dda8a2ba4cd25efd4af652"
-                };
+import {
+  getFirestore,
+} from "firebase/firestore";
 
-                const app = initializeApp(firebaseConfig);
+const firebaseConfig = {
+  apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
+  authDomain: "inclura-prod-90734.firebaseapp.com",
+  projectId: "inclura-prod-90734",
+  storageBucket:
+    "inclura-prod-90734.firebasestorage.app",
+  messagingSenderId: "694509989399",
+  appId:
+    "1:694509989399:web:dda8a2ba4cd25efd4af652",
+};
 
-                export const auth = getAuth(app);
+const app = initializeApp(firebaseConfig);
 
-                export const googleProvider = new GoogleAuthProvider();
+export const auth = getAuth(app);
 
-                export default app;
+export const db = getFirestore(app);
+
+export const googleProvider =
+  new GoogleAuthProvider();
+
+export default app;
