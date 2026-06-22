@@ -55,9 +55,14 @@ function Login() {
       navigate("/profile");
   } catch (error) {
   console.log(error);
-  alert(error.message);
-    }
-  }
+
+  alert(
+    "Code: " +
+      error.code +
+      "\n\nMessage: " +
+      error.message
+  );
+}
 
   return (
     <div
