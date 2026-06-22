@@ -61,6 +61,7 @@ return (
     path="/forgot-password"
     element={<ForgotPassword />}
   />
+  
   <Route
     path="/onboarding"
     element={<Onboarding />}
