@@ -76,9 +76,6 @@ try {
       profile?.role ||
       "user",
 
-    category:
-      profile?.category || "",
-
     accessibilityNeeds:
       profile?.accessibilityNeeds || [],
 
