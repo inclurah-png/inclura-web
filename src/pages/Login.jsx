@@ -55,7 +55,6 @@ function Login() {
       navigate("/profile");
   } catch (error) {
   console.log(error);
-
   alert(
     "Code: " +
       error.code +
