@@ -185,7 +185,6 @@ color: "white",
     </div>
   </div>
 </div>
-
 );
 }
 
