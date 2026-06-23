@@ -25,7 +25,7 @@ const VERIFICATION_FEE =
 
 const config = {
   public_key:
-    "FLWPUBK_TEST-...",
+    "FLWPUBK_TEST-1ee584892828ffa6942ef2e45a970768-X",
 
   tx_ref:
     Date.now().toString(),
@@ -106,25 +106,47 @@ const config = {
   closePaymentModal();
 },
 
-if (user) {
-  await updateDoc(
-    doc(db, "users", user.uid),
-    {
-      verified: true,
-      badgeType: "creator",
-      creatorVerified: true,
-      verificationDate:
-        serverTimestamp(),
-    }
+callback: async (
+  response
+) => {
+  console.log(response);
+
+  const user =
+    auth.currentUser;
+
+  if (
+    response.status ===
+      "successful" &&
+    user
+  ) {
+    await updateDoc(
+      doc(
+        db,
+        "users",
+        user.uid
+      ),
+      {
+        verified: true,
+        badgeType:
+          "creator",
+        creatorVerified:
+          true,
+        creatorVerifiedAt:
+          serverTimestamp(),
+        paymentReference:
+          response.tx_ref,
+        transactionId:
+          response.transaction_id,
+      }
+    );
+  }
+
+  alert(
+    "Creator verification submitted successfully."
   );
-}
 
-alert(
-  "Creator Verification Successful"
-);
-        closePaymentModal();
-      },
-
+  closePaymentModal();
+},
       onClose: () => {
         setLoading(false);
       },
