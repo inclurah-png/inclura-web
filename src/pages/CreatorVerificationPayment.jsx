@@ -68,12 +68,44 @@ const config = {
     setLoading(true);
 
     handleFlutterPayment({
-      callback: (
-        response
-      ) => {
-        console.log(response);
+      callback: async (
+  response
+) => {
+  console.log(response);
 
-        const user = auth.currentUser;
+  const user =
+    auth.currentUser;
+
+  if (
+  response.status === "successful" &&
+  user
+) {
+  await updateDoc(
+    doc(
+      db,
+      "users",
+      user.uid
+    ),
+    {
+      verified: true,
+      badgeType: "creator",
+      creatorVerified: true,
+      creatorVerifiedAt:
+        serverTimestamp(),
+      paymentReference:
+        response.tx_ref,
+      transactionId:
+        response.transaction_id,
+    }
+  );
+}
+
+  alert(
+    "Creator verification submitted successfully. Awaiting admin review."
+  );
+
+  closePaymentModal();
+},
 
 if (user) {
   await updateDoc(
