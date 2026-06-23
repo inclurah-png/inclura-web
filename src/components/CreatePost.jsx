@@ -1,262 +1,373 @@
-import { useState } from "react";
+      import { useState, useRef } from "react";
 
 import {
-collection,
-addDoc,
-serverTimestamp,
-doc,
-getDoc,
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  getDoc,
 } from "firebase/firestore";
 
 import {
-db,
-auth,
+  db,
+  auth,
 } from "../firebase";
 
 function CreatePost() {
-const [postText, setPostText] =
-useState("");
+  const [postText, setPostText] =
+    useState("");
 
-const [category, setCategory] =
-useState("General");
+  const [category, setCategory] =
+    useState("General");
 
-const [loading, setLoading] =
-useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-async function handlePost() {
-if (!postText.trim()) {
-alert("Write something first.");
-return;
-}
+  const [imageFile, setImageFile] =
+    useState(null);
 
-try {
-  setLoading(true);
+  const [videoFile, setVideoFile] =
+    useState(null);
 
-  const user =
-    auth.currentUser;
+  const imageInputRef =
+    useRef(null);
 
-  if (!user) {
-    alert(
-      "Please login again."
-    );
-    return;
-  }
+  const videoInputRef =
+    useRef(null);
 
-  const userRef = doc(
-    db,
-    "users",
-    user.uid
-  );
-
-  const userSnap =
-    await getDoc(userRef);
-
-  const profile =
-    userSnap.data();
-
-  await addDoc(
-  collection(db, "posts"),
-  {
-    text: postText,
-
-    category,
-
-    userId: user.uid,
-
-    userName:
-      profile?.fullName ||
-      user.displayName ||
-      "Inclura User",
-
-    profilePhoto:
-      profile?.profilePhoto || "",
-
-    role:
-      profile?.role ||
-      "user",
-
-    accessibilityNeeds:
-      profile?.accessibilityNeeds || [],
-
-    verified:
-      profile?.verified ||
-      false,
-
-    badgeType:
-      profile?.badgeType ||
-      "",
-
-    premium:
-      profile?.premium ||
-      false,
-
-    premiumTier:
-      profile?.premiumTier ||
-      "",
-
-    likes: [],
-
-    comments: [],
-
-    createdAt:
-      serverTimestamp(),
-  }
-);
-
-  setPostText("");
-
-  alert(
-    "Post created successfully!"
-  );
-} catch (error) {
-  console.log(error);
-  alert(error.message);
-} finally {
-  setLoading(false);
-}
-
-}
-
-return (
-<div
-style={{
-background: "#0f172a",
-padding: "20px",
-borderRadius: "20px",
-marginBottom: "24px",
-color: "white",
-}}
->
-<h3
-style={{
-marginBottom: "16px",
-}}
->
-✍ Create Post
-</h3>
-
-  <textarea
-    value={postText}
-    onChange={(e) =>
-      setPostText(
-        e.target.value
-      )
+  async function handlePost() {
+    if (
+      !postText.trim() &&
+      !imageFile &&
+      !videoFile
+    ) {
+      alert(
+        "Add text, image or video first."
+      );
+      return;
     }
-    placeholder="Share something with the Inclura community..."
-    style={{
-      width: "100%",
-      minHeight: "120px",
-      borderRadius: "14px",
-      border:
-        "1px solid #334155",
-      background: "#1e293b",
-      color: "white",
-      padding: "14px",
-      resize: "vertical",
-      boxSizing:
-        "border-box",
-    }}
-  />
 
-  <div
-    style={{
-      display: "flex",
-      gap: "10px",
-      marginTop: "14px",
-      flexWrap: "wrap",
-    }}
-  >
-    <select
-      value={category}
-      onChange={(e) =>
-        setCategory(
-          e.target.value
-        )
+    try {
+      setLoading(true);
+
+      const user =
+        auth.currentUser;
+
+      if (!user) {
+        alert(
+          "Please login again."
+        );
+        return;
       }
+
+      const userRef = doc(
+        db,
+        "users",
+        user.uid
+      );
+
+      const userSnap =
+        await getDoc(userRef);
+
+      const profile =
+        userSnap.data();
+
+      /*
+      FUTURE STORAGE INTEGRATION
+
+      let imageUrl = "";
+      let videoUrl = "";
+
+      Upload image/video to Firebase Storage here
+      and assign download URLs.
+      */
+
+      await addDoc(
+        collection(db, "posts"),
+        {
+          text: postText,
+
+          category,
+
+          userId: user.uid,
+
+          userName:
+            profile?.fullName ||
+            user.displayName ||
+            "Inclura User",
+
+          profilePhoto:
+            profile?.profilePhoto ||
+            "",
+
+          role:
+            profile?.role ||
+            "user",
+
+          accessibilityNeeds:
+            profile?.accessibilityNeeds ||
+            [],
+
+          verified:
+            profile?.verified ||
+            false,
+
+          badgeType:
+            profile?.badgeType ||
+            "",
+
+          premium:
+            profile?.premium ||
+            false,
+
+          premiumTier:
+            profile?.premiumTier ||
+            "",
+
+          imageUrl: "",
+
+          videoUrl: "",
+
+          likes: [],
+
+          comments: [],
+
+          createdAt:
+            serverTimestamp(),
+        }
+      );
+
+      setPostText("");
+      setImageFile(null);
+      setVideoFile(null);
+
+      alert(
+        "Post created successfully!"
+      );
+    } catch (error) {
+      console.log(error);
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleImageSelect(
+    e
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    setImageFile(file);
+  }
+
+  function handleVideoSelect(
+    e
+  ) {
+    const file =
+      e.target.files?.[0];
+
+    if (!file) return;
+
+    setVideoFile(file);
+  }
+
+  return (
+    <div
       style={{
-        padding: "10px",
-        borderRadius: "12px",
-        border: "none",
+        background: "#0f172a",
+        padding: "20px",
+        borderRadius: "20px",
+        marginBottom: "24px",
+        color: "white",
       }}
     >
-      <option>
-        General
-      </option>
+      <h3
+        style={{
+          marginBottom: "16px",
+        }}
+      >
+        ✍ Create Post
+      </h3>
 
-      <option>
-        Accessibility
-      </option>
+      <textarea
+        value={postText}
+        onChange={(e) =>
+          setPostText(
+            e.target.value
+          )
+        }
+        placeholder="Share something with the Inclura community..."
+        style={{
+          width: "100%",
+          minHeight: "120px",
+          borderRadius: "14px",
+          border:
+            "1px solid #334155",
+          background:
+            "#1e293b",
+          color: "white",
+          padding: "14px",
+          resize: "vertical",
+          boxSizing:
+            "border-box",
+        }}
+      />
 
-      <option>
-        Care-Gig
-      </option>
+      {imageFile && (
+        <div
+          style={{
+            marginTop: "14px",
+            color: "#38bdf8",
+          }}
+        >
+          📷 {imageFile.name}
+        </div>
+      )}
 
-      <option>
-        Opportunity
-      </option>
+      {videoFile && (
+        <div
+          style={{
+            marginTop: "10px",
+            color: "#38bdf8",
+          }}
+        >
+          🎥 {videoFile.name}
+        </div>
+      )}
 
-      <option>
-        Mentorship
-      </option>
+      <div
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginTop: "14px",
+          flexWrap: "wrap",
+        }}
+      >
+        <select
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value
+            )
+          }
+          style={{
+            padding: "10px",
+            borderRadius:
+              "12px",
+            border: "none",
+          }}
+        >
+          <option>
+            General
+          </option>
 
-      <option>
-        Marketplace
-      </option>
-    </select>
+          <option>
+            Accessibility
+          </option>
 
-    <button
-      style={actionBtn}
-    >
-      📷 Photo
-    </button>
+          <option>
+            Care-Gig
+          </option>
 
-    <button
-      style={actionBtn}
-    >
-      🎥 Video
-    </button>
+          <option>
+            Opportunity
+          </option>
 
-    <button
-      style={actionBtn}
-    >
-      ♿ Accessibility
-    </button>
-  </div>
+          <option>
+            Mentorship
+          </option>
 
-  <button
-    onClick={handlePost}
-    disabled={loading}
-    style={{
-      marginTop: "16px",
-      background: "#38bdf8",
-      border: "none",
-      color: "white",
-      padding:
-        "12px 18px",
-      borderRadius:
-        "12px",
-      cursor: "pointer",
-      fontWeight:
-        "bold",
-    }}
-  >
-    {loading
-      ? "Posting..."
-      : "Post"}
-  </button>
-</div>
+          <option>
+            Marketplace
+          </option>
+        </select>
 
-);
+        <button
+          style={actionBtn}
+          onClick={() =>
+            imageInputRef.current?.click()
+          }
+        >
+          📷 Photo
+        </button>
+
+        <button
+          style={actionBtn}
+          onClick={() =>
+            videoInputRef.current?.click()
+          }
+        >
+          🎥 Video
+        </button>
+
+        <button
+          style={actionBtn}
+        >
+          ♿ Accessibility
+        </button>
+      </div>
+
+      <input
+        type="file"
+        accept="image/*"
+        ref={imageInputRef}
+        onChange={
+          handleImageSelect
+        }
+        style={{
+          display: "none",
+        }}
+      />
+
+      <input
+        type="file"
+        accept="video/*"
+        ref={videoInputRef}
+        onChange={
+          handleVideoSelect
+        }
+        style={{
+          display: "none",
+        }}
+      />
+
+      <button
+        onClick={handlePost}
+        disabled={loading}
+        style={{
+          marginTop: "16px",
+          background:
+            "#38bdf8",
+          border: "none",
+          color: "white",
+          padding:
+            "12px 18px",
+          borderRadius:
+            "12px",
+          cursor: "pointer",
+          fontWeight:
+            "bold",
+        }}
+      >
+        {loading
+          ? "Posting..."
+          : "Post"}
+      </button>
+    </div>
+  );
 }
 
 const actionBtn = {
-background: "#1e293b",
-border:
-"1px solid #334155",
-color: "white",
-padding: "10px 14px",
-borderRadius: "12px",
-cursor: "pointer",
+  background: "#1e293b",
+  border:
+    "1px solid #334155",
+  color: "white",
+  padding: "10px 14px",
+  borderRadius: "12px",
+  cursor: "pointer",
 };
 
 export default CreatePost;
