@@ -59,19 +59,28 @@ color: "white",
 }}
 >
 <div
-style={{
-display: "flex",
-gap: "20px",
-alignItems: "center",
-flexWrap: "wrap",
-}}
+  style={{
+    display: "flex",
+    gap: "20px",
+    alignItems: "center",
+    flexWrap: "wrap",
+  }}
 >
-<img
 <img
   src={
     profile?.profilePhoto ||
     "https://via.placeholder.com/120"
   }
+  alt="Profile"
+  style={{
+    width: "120px",
+    height: "120px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border:
+      "4px solid #38bdf8",
+  }}
+/>
   alt="Profile"
   style={{
     width: "120px",
