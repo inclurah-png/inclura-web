@@ -87,29 +87,47 @@ const user =
 userCredential.user;
 
 await setDoc(
-doc(db, "users", user.uid),
-{
-uid: user.uid,
+  doc(db, "users", user.uid),
+  {
+    uid: user.uid,
 
-fullName,
+    fullName,
 
-email,
-  
-category,
-  
-createdAt:
-serverTimestamp(),
+    email,
 
-verified: false,
+    category,
 
-role: "user",
+    createdAt:
+      serverTimestamp(),
 
-walletBalance: 0,
+    verified: false,
 
-resumeCompleted: false,
+    badgeType: "",
 
-accessibilityNeeds,
-}
+    creatorVerified: false,
+
+    creatorVerifiedAt: null,
+
+    premium: false,
+
+    premiumTier: "",
+
+    role: "user",
+
+    walletBalance: 0,
+
+    resumeCompleted: false,
+
+    accessibilityNeeds,
+
+    followers: [],
+
+    following: [],
+
+    savedPosts: [],
+
+    profilePhoto: "",
+  }
 );
 
 alert(
@@ -140,32 +158,50 @@ const user =
 result.user;
 
 await setDoc(
-doc(db, "users", user.uid),
-{
-uid: user.uid,
+  doc(db, "users", user.uid),
+  {
+    uid: user.uid,
 
-fullName:
-user.displayName || "",
+    fullName:
+      user.displayName || "",
 
-email:
-user.email || "",
+    email:
+      user.email || "",
 
-createdAt:
-serverTimestamp(),
+    createdAt:
+      serverTimestamp(),
 
-verified: false,
+    verified: false,
 
-role: "user",
+    badgeType: "",
 
-walletBalance: 0,
+    creatorVerified: false,
 
-resumeCompleted: false,
+    creatorVerifiedAt: null,
 
-accessibilityNeeds: [],
-},
-{ merge: true }
+    premium: false,
+
+    premiumTier: "",
+
+    role: "user",
+
+    walletBalance: 0,
+
+    resumeCompleted: false,
+
+    accessibilityNeeds: [],
+
+    followers: [],
+
+    following: [],
+
+    savedPosts: [],
+
+    profilePhoto:
+      user.photoURL || "",
+  },
+  { merge: true }
 );
-
 navigate("/onboarding");
 
 } catch (error) {
