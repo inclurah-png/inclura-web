@@ -1,6 +1,27 @@
 function ProfileHeader({ profile }) {
-const getBadge = () => {
-if (!profile?.verified) return null;
+const getPremiumBadge = () => {
+  if (!profile?.premium)
+    return null;
+
+  switch (
+    profile?.premiumTier
+  ) {
+    case "silver":
+      return "🥈 Silver";
+
+    case "gold":
+      return "🥇 Gold";
+
+    case "platinum":
+      return "💎 Platinum";
+
+    case "enterprise":
+      return "🏆 Enterprise";
+
+    default:
+      return "⭐ Premium";
+  }
+};
 
 switch (profile?.badgeType) {
   case "creator":
@@ -47,8 +68,9 @@ flexWrap: "wrap",
 >
 <img
 src={
-profile?.photoURL ||
+profile?.profilePhoto ||
 "https://via.placeholder.com/120"
+}
 }
 alt="Profile"
 style={{
@@ -67,28 +89,54 @@ border:
           "Inclura User"}
       </h2>
 
-      {profile?.verified && (
-        <div
-          style={{
-            display: "inline-block",
-            background:
-              "#16a34a",
-            color: "white",
-            padding:
-              "6px 12px",
-            borderRadius:
-              "999px",
-            fontSize:
-              "13px",
-            fontWeight:
-              "700",
-            marginBottom:
-              "10px",
-          }}
-        >
-          {getBadge()}
-        </div>
-      )}
+      <div
+  style={{
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    marginBottom: "10px",
+  }}
+>
+  {profile?.verified && (
+    <div
+      style={{
+        background:
+          "#16a34a",
+        color: "white",
+        padding:
+          "6px 12px",
+        borderRadius:
+          "999px",
+        fontSize:
+          "13px",
+        fontWeight:
+          "700",
+      }}
+    >
+      {getBadge()}
+    </div>
+  )}
+
+  {profile?.premium && (
+    <div
+      style={{
+        background:
+          "#f59e0b",
+        color: "white",
+        padding:
+          "6px 12px",
+        borderRadius:
+          "999px",
+        fontSize:
+          "13px",
+        fontWeight:
+          "700",
+      }}
+    >
+      {getPremiumBadge()}
+    </div>
+  )}
+</div>
 
       <p
         style={{
