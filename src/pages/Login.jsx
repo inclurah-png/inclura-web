@@ -46,21 +46,22 @@ function Login() {
   }
 
   async function handleGoogleLogin() {
-    try {
-      await signInWithPopup(
-        auth,
-        googleProvider
-      );
-      
-      navigate("/profile");
-  } catch (error) {
-  console.log("Google Login Error:", error);
-  console.log("Code:", error.code);
-  console.log("Message:", error.message);
+  try {
+    await signInWithPopup(
+      auth,
+      googleProvider
+    );
 
-  alert(
-    `${error.code}\n${error.message}`
-  );
+    navigate("/profile");
+  } catch (error) {
+    console.log("Google Login Error:", error);
+    console.log("Code:", error.code);
+    console.log("Message:", error.message);
+
+    alert(
+      `${error.code}\n${error.message}`
+    );
+  }
 }
 
   return (
