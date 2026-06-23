@@ -66,6 +66,7 @@ color: "white",
     flexWrap: "wrap",
   }}
 >
+  
 <img
   src={
     profile?.profilePhoto ||
