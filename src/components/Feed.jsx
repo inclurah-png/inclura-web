@@ -329,19 +329,31 @@ function Feed() {
                 </p>
 
                 {post.imageUrl && (
-                  <img
-                    src={
-                      post.imageUrl
-                    }
-                    alt="Post"
-                    style={{
-                      width:
-                        "100%",
-                      borderRadius:
-                        "16px",
-                    }}
-                  />
-                )}
+  <img
+    src={post.imageUrl}
+    alt="Post"
+    style={{
+      width: "100%",
+      borderRadius: "16px",
+    }}
+  />
+)}
+
+{post.videoUrl && (
+  <video
+    controls
+    style={{
+      width: "100%",
+      borderRadius: "16px",
+      marginTop: "12px",
+    }}
+  >
+    <source
+      src={post.videoUrl}
+      type="video/mp4"
+    />
+  </video>
+)}
 
                 <div
                   style={{
