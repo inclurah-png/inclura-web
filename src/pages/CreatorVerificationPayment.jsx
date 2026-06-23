@@ -1,3 +1,14 @@
+import {
+  doc,
+  updateDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import {
+  db,
+  auth,
+} from "../firebase";
+
 import { useState } from "react";
 
 import {
@@ -16,7 +27,11 @@ function CreatorVerificationPayment() {
     tx_ref:
       Date.now().toString(),
 
-    amount: 5000,
+    const VERIFICATION_FEE = 5000;
+
+const config = {
+  amount: VERIFICATION_FEE,
+};
 
     currency: "NGN",
 
@@ -58,10 +73,24 @@ function CreatorVerificationPayment() {
       ) => {
         console.log(response);
 
-        alert(
-          "Payment Successful"
-        );
+        const user = auth.currentUser;
 
+if (user) {
+  await updateDoc(
+    doc(db, "users", user.uid),
+    {
+      verified: true,
+      badgeType: "creator",
+      creatorVerified: true,
+      verificationDate:
+        serverTimestamp(),
+    }
+  );
+}
+
+alert(
+  "Creator Verification Successful"
+);
         closePaymentModal();
       },
 
