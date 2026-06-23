@@ -17,49 +17,48 @@ import {
 } from "flutterwave-react-v3";
 
 function CreatorVerificationPayment() {
-  const [loading, setLoading] =
-    useState(false);
+const [loading, setLoading] =
+  useState(false);
 
-  const config = {
-    public_key:
-      "FLWPUBK_TEST-1ee584892828ffa6942ef2e45a970768-X",
-
-    tx_ref:
-      Date.now().toString(),
-
-    const VERIFICATION_FEE = 5000;
+const VERIFICATION_FEE =
+  5000;
 
 const config = {
-  amount: VERIFICATION_FEE,
+  public_key:
+    "FLWPUBK_TEST-...",
+
+  tx_ref:
+    Date.now().toString(),
+
+  amount:
+    VERIFICATION_FEE,
+
+  currency: "NGN",
+
+  payment_options:
+    "card,banktransfer,ussd",
+
+  customer: {
+    email:
+      "test@inclura.com",
+
+    phone_number:
+      "08000000000",
+
+    name:
+      "Inclura User",
+  },
+
+  customizations: {
+    title:
+      "Creator Verification",
+
+    description:
+      "Pay for Creator Verification",
+
+    logo: "",
+  },
 };
-
-    currency: "NGN",
-
-    payment_options:
-      "card,banktransfer,ussd",
-
-    customer: {
-      email:
-        "test@inclura.com",
-
-      phone_number:
-        "08000000000",
-
-      name:
-        "Inclura User",
-    },
-
-    customizations: {
-      title:
-        "Creator Verification",
-
-      description:
-        "Pay for Creator Verification",
-
-      logo:
-        "",
-    },
-  };
 
   const handleFlutterPayment =
     useFlutterwave(config);
