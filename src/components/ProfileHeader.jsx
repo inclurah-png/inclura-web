@@ -185,9 +185,9 @@ color: "white",
     </div>
   </div>
 </div>
+  
 );
 }
-
 const tag = {
 background: "#1e293b",
 padding: "8px 12px",
