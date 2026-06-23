@@ -67,20 +67,20 @@ flexWrap: "wrap",
 }}
 >
 <img
-src={
-profile?.profilePhoto ||
-"https://via.placeholder.com/120"
-}
-}
-alt="Profile"
-style={{
-width: "120px",
-height: "120px",
-borderRadius: "50%",
-objectFit: "cover",
-border:
-"4px solid #38bdf8",
-}}
+<img
+  src={
+    profile?.profilePhoto ||
+    "https://via.placeholder.com/120"
+  }
+  alt="Profile"
+  style={{
+    width: "120px",
+    height: "120px",
+    borderRadius: "50%",
+    objectFit: "cover",
+    border:
+      "4px solid #38bdf8",
+  }}
 />
 
     <div>
