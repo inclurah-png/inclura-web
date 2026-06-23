@@ -129,25 +129,28 @@ callback: async (
         verified: true,
         badgeType:
           "creator",
+
         creatorVerified:
           true,
+
         creatorVerifiedAt:
           serverTimestamp(),
+
         paymentReference:
           response.tx_ref,
+
         transactionId:
           response.transaction_id,
       }
     );
-  }
 
-  alert(
-    "Creator verification submitted successfully."
-  );
+    alert(
+      "Creator Verification Successful"
+    );
+  }
 
   closePaymentModal();
 },
-      onClose: () => {
         setLoading(false);
       },
     });
