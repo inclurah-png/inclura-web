@@ -64,33 +64,45 @@ function PremiumPayment() {
         response
       ) => {
         if (
-          response.status ===
-          "successful"
-        ) {
-          await updateDoc(
-            doc(
-              db,
-              "users",
-              user.uid
-            ),
-            {
-              premium: true,
+  response.status ===
+  "successful"
+) {
+  const expiry =
+    new Date();
 
-              premiumTier:
-                tier,
+  expiry.setMonth(
+    expiry.getMonth() + 1
+  );
 
-              premiumStartedAt:
-                serverTimestamp(),
+  await updateDoc(
+    doc(
+      db,
+      "users",
+      user.uid
+    ),
+    {
+      premium: true,
 
-              premiumReference:
-                response.tx_ref,
+      premiumActive: true,
 
-              premiumTransactionId:
-                String(
-                  response.transaction_id
-                ),
-            }
-          );
+      premiumTier:
+        tier,
+
+      premiumStartedAt:
+        serverTimestamp(),
+
+      premiumExpiryDate:
+        expiry,
+
+      premiumReference:
+        response.tx_ref,
+
+      premiumTransactionId:
+        String(
+          response.transaction_id
+        ),
+    }
+  );
 
           alert(
             `${tier.toUpperCase()} activated successfully`
