@@ -1,7 +1,45 @@
+import { useEffect, useState } from "react";
+
+import {
+  collection,
+  getDocs,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
 import DashboardLayout from "../components/DashboardLayout";
 import { useNavigate } from "react-router-dom";
 
 function PremiumDashboard() {
+  const [prices, setPrices] =
+  useState({});
+
+useEffect(() => {
+  loadPrices();
+}, []);
+
+async function loadPrices() {
+  try {
+    const snapshot =
+      await getDocs(
+        collection(
+          db,
+          "pricing"
+        )
+      );
+
+    const data = {};
+
+    snapshot.forEach((doc) => {
+      data[doc.id] =
+        doc.data();
+    });
+
+    setPrices(data);
+  } catch (error) {
+    console.log(error);
+  }
+}
   const navigate = useNavigate();
 
   return (
@@ -28,7 +66,13 @@ function PremiumDashboard() {
         <div style={card}>
           <h2>🥈 Silver Badge</h2>
 
-          <h3>₦49,000 / month</h3>
+          <h3>
+  ₦
+  {prices.SilverBadge?.price?.toLocaleString() ||
+    "0"}
+  {" "}
+  / month
+</h3>
 
           <ul>
             <li>Priority profile</li>
@@ -52,7 +96,13 @@ function PremiumDashboard() {
         <div style={card}>
           <h2>🥇 Gold Badge</h2>
 
-          <h3>₦69,000 / month</h3>
+          <h3>
+  ₦
+  {prices.GoldBadge?.price?.toLocaleString() ||
+    "0"}
+  {" "}
+  / month
+</h3>
 
           <ul>
             <li>Creator analytics</li>
@@ -76,7 +126,13 @@ function PremiumDashboard() {
         <div style={card}>
           <h2>💎 Platinum Badge</h2>
 
-          <h3>₦138,000 / month</h3>
+          <h3>
+  ₦
+  {prices.PlatinumBadge?.price?.toLocaleString() ||
+    "0"}
+  {" "}
+  / month
+</h3>
 
           <ul>
             <li>Unlimited boosts</li>
@@ -101,7 +157,13 @@ function PremiumDashboard() {
         <div style={card}>
           <h2>🏆 Enterprise Badge</h2>
 
-          <h3>₦1,373,000 / month</h3>
+          <h3>
+  ₦
+  {prices.EnterpriseBadge?.price?.toLocaleString() ||
+    "0"}
+  {" "}
+  / month
+</h3>
 
           <ul>
             <li>Organization branding</li>
