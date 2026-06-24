@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { sendNotification } from "../utils/notificationHelper";
 import DashboardLayout from "../components/DashboardLayout";
 import ProfileHeader from "../components/ProfileHeader";
 import DashboardStats from "../components/DashboardStats";
@@ -38,7 +39,38 @@ function Profile() {
 if (snap.exists()) {
   const data =
     snap.data();
+if (
+  data?.premiumExpiryDate
+) {
+  const daysLeft =
+    Math.ceil(
+      (
+        data.premiumExpiryDate.toDate() -
+        new Date()
+      ) /
+        (1000 *
+          60 *
+          60 *
+          24)
+    );
 
+  if (
+    daysLeft <= 7 &&
+    daysLeft > 0
+  ) {
+    await sendNotification({
+      receiverId:
+        user.uid,
+      senderId: "system",
+      type: "premium",
+      text:
+        "Your premium subscription expires in " +
+        daysLeft +
+        " days",
+    });
+  }
+}
+  
   if (
     data?.premiumExpiryDate &&
     data.premiumExpiryDate.toDate() <
