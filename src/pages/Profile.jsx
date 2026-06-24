@@ -1,6 +1,4 @@
 import { useEffect, useState } from "react";
-
-
 import { sendNotification } from "../utils/notificationHelper";
 import DashboardLayout from "../components/DashboardLayout";
 import ProfileHeader from "../components/ProfileHeader";
