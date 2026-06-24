@@ -1,197 +1,214 @@
 function ProfileHeader({ profile }) {
-const getPremiumBadge = () => {
-  if (!profile?.premium)
-    return null;
+  const getBadge = () => {
+    if (!profile?.verified)
+      return null;
 
-  switch (
-    profile?.premiumTier
-  ) {
-    case "silver":
-      return "🥈 Silver";
+    switch (
+      profile?.badgeType
+    ) {
+      case "creator":
+        return "🎥 Verified Creator";
 
-    case "gold":
-      return "🥇 Gold";
+      case "organization":
+        return "🏢 Verified Organization";
 
-    case "platinum":
-      return "💎 Platinum";
+      case "ngo":
+        return "🤝 Verified NGO";
 
-    case "enterprise":
-      return "🏆 Enterprise";
+      case "hospital":
+        return "🏥 Verified Hospital";
 
-    default:
-      return "⭐ Premium";
-  }
-};
+      case "university":
+        return "🎓 Verified University";
 
-switch (profile?.badgeType) {
-  case "creator":
-    return "🎥 Verified Creator";
+      case "government":
+        return "🏛 Verified Government";
 
-  case "organization":
-    return "🏢 Verified Organization";
+      default:
+        return "✅ Verified User";
+    }
+  };
 
-  case "ngo":
-    return "🤝 Verified NGO";
+  const getPremiumBadge =
+    () => {
+      if (
+        !profile?.premium
+      )
+        return null;
 
-  case "hospital":
-    return "🏥 Verified Hospital";
+      switch (
+        profile?.premiumTier
+      ) {
+        case "silver":
+          return "🥈 Silver";
 
-  case "university":
-    return "🎓 Verified University";
+        case "gold":
+          return "🥇 Gold";
 
-  case "government":
-    return "🏛 Verified Government";
+        case "platinum":
+          return "💎 Platinum";
 
-  default:
-    return "✅ Verified User";
-}
+        case "enterprise":
+          return "🏆 Enterprise";
 
-};
+        default:
+          return "⭐ Premium";
+      }
+    };
 
-return (
-<div
-style={{
-background: "#0f172a",
-borderRadius: "24px",
-padding: "24px",
-marginBottom: "24px",
-color: "white",
-}}
->
-<div
-  style={{
-    display: "flex",
-    gap: "20px",
-    alignItems: "center",
-    flexWrap: "wrap",
-  }}
->
-  
-<img
-  src={
-    profile?.profilePhoto ||
-    "https://via.placeholder.com/120"
-  }
-  alt="Profile"
-  style={{
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border:
-      "4px solid #38bdf8",
-  }}
-/>
-  alt="Profile"
-  style={{
-    width: "120px",
-    height: "120px",
-    borderRadius: "50%",
-    objectFit: "cover",
-    border:
-      "4px solid #38bdf8",
-  }}
-/>
-
-    <div>
-      <h2>
-        {profile?.fullName ||
-          "Inclura User"}
-      </h2>
-
-      <div
-  style={{
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-    marginBottom: "10px",
-  }}
->
-  {profile?.verified && (
+  return (
     <div
       style={{
         background:
-          "#16a34a",
-        color: "white",
-        padding:
-          "6px 12px",
+          "#0f172a",
         borderRadius:
-          "999px",
-        fontSize:
-          "13px",
-        fontWeight:
-          "700",
+          "24px",
+        padding: "24px",
+        marginBottom:
+          "24px",
+        color: "white",
       }}
     >
-      {getBadge()}
-    </div>
-  )}
-
-  {profile?.premium && (
-    <div
-      style={{
-        background:
-          "#f59e0b",
-        color: "white",
-        padding:
-          "6px 12px",
-        borderRadius:
-          "999px",
-        fontSize:
-          "13px",
-        fontWeight:
-          "700",
-      }}
-    >
-      {getPremiumBadge()}
-    </div>
-  )}
-</div>
-
-      <p
-        style={{
-          color: "#94a3b8",
-        }}
-      >
-        {profile?.bio ||
-          "No bio yet"}
-      </p>
-
       <div
         style={{
           display: "flex",
-          gap: "10px",
+          gap: "20px",
+          alignItems:
+            "center",
           flexWrap: "wrap",
-          marginTop: "10px",
         }}
       >
-        <span style={tag}>
-          🏷️
-          {profile?.category ||
-            "Member"}
-        </span>
+        <img
+          src={
+            profile?.profilePhoto ||
+            "https://via.placeholder.com/120"
+          }
+          alt="Profile"
+          style={{
+            width: "120px",
+            height: "120px",
+            borderRadius:
+              "50%",
+            objectFit:
+              "cover",
+            border:
+              "4px solid #38bdf8",
+          }}
+        />
 
-        <span style={tag}>
-          📍
-          {profile?.location ||
-            "Unknown"}
-        </span>
+        <div>
+          <h2>
+            {profile?.fullName ||
+              "Inclura User"}
+          </h2>
 
-        <span style={tag}>
-          ⭐ XP:
-          {profile?.xp || 0}
-        </span>
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap:
+                "wrap",
+              marginBottom:
+                "10px",
+            }}
+          >
+            {profile?.verified && (
+              <div
+                style={{
+                  background:
+                    "#16a34a",
+                  color:
+                    "white",
+                  padding:
+                    "6px 12px",
+                  borderRadius:
+                    "999px",
+                  fontSize:
+                    "13px",
+                  fontWeight:
+                    "700",
+                }}
+              >
+                {getBadge()}
+              </div>
+            )}
+
+            {profile?.premium && (
+              <div
+                style={{
+                  background:
+                    "#f59e0b",
+                  color:
+                    "white",
+                  padding:
+                    "6px 12px",
+                  borderRadius:
+                    "999px",
+                  fontSize:
+                    "13px",
+                  fontWeight:
+                    "700",
+                }}
+              >
+                {getPremiumBadge()}
+              </div>
+            )}
+          </div>
+
+          <p
+            style={{
+              color:
+                "#94a3b8",
+            }}
+          >
+            {profile?.bio ||
+              "No bio yet"}
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              gap: "10px",
+              flexWrap:
+                "wrap",
+              marginTop:
+                "10px",
+            }}
+          >
+            <span
+              style={tag}
+            >
+              🏷️{" "}
+              {profile?.category ||
+                "Member"}
+            </span>
+
+            <span
+              style={tag}
+            >
+              📍{" "}
+              {profile?.location ||
+                "Unknown"}
+            </span>
+
+            <span
+              style={tag}
+            >
+              ⭐ XP:{" "}
+              {profile?.xp ||
+                0}
+            </span>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
-  
-);
+  );
 }
+
 const tag = {
-background: "#1e293b",
-padding: "8px 12px",
-borderRadius: "999px",
+  background: "#1e293b",
+  padding: "8px 12px",
+  borderRadius: "999px",
 };
 
 export default ProfileHeader;
