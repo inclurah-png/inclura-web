@@ -1,4 +1,28 @@
 function ProfileHeader({ profile }) {
+  const getDaysLeft = () => {
+  if (
+    !profile?.premiumExpiryDate
+  )
+    return null;
+
+  const expiry =
+    profile.premiumExpiryDate.toDate();
+
+  const diff =
+    expiry -
+    new Date();
+
+  return Math.max(
+    0,
+    Math.ceil(
+      diff /
+        (1000 *
+          60 *
+          60 *
+          24)
+    )
+  );
+};
   const getBadge = () => {
     if (!profile?.verified)
       return null;
@@ -134,27 +158,36 @@ function ProfileHeader({ profile }) {
             )}
 
             {profile?.premium && (
-              <div
-                style={{
-                  background:
-                    "#f59e0b",
-                  color:
-                    "white",
-                  padding:
-                    "6px 12px",
-                  borderRadius:
-                    "999px",
-                  fontSize:
-                    "13px",
-                  fontWeight:
-                    "700",
-                }}
-              >
-                {getPremiumBadge()}
-              </div>
-            )}
-          </div>
+  <>
+    <div
+      style={{
+        background:
+          "#f59e0b",
+        color: "white",
+        padding:
+          "6px 12px",
+        borderRadius:
+          "999px",
+      }}
+    >
+      {getPremiumBadge()}
+    </div>
 
+    <div
+      style={{
+        background:
+          "#334155",
+        color: "white",
+        padding:
+          "6px 12px",
+        borderRadius:
+          "999px",
+      }}
+    >
+      ⏳ {getDaysLeft()} days left
+    </div>
+  </>
+)}
           <p
             style={{
               color:
