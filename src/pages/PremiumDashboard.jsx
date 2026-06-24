@@ -3,47 +3,68 @@ import DashboardLayout from "../components/DashboardLayout";
 function PremiumDashboard() {
   return (
     <DashboardLayout>
-      <div style={{ color: "white" }}>
+      <div
+        style={{
+          color: "white",
+          maxWidth: "1000px",
+        }}
+      >
         <h1>⭐ Premium Dashboard</h1>
 
+        <p
+          style={{
+            color: "#94a3b8",
+            marginBottom: "24px",
+          }}
+        >
+          Upgrade your Inclura experience with premium plans.
+        </p>
+
         <div style={card}>
-          ⭐ Inclura Plus
+          <h2>🥈 Silver Badge</h2>
+          <h3>₦49,000 / month</h3>
+
+          <ul>
+            <li>Priority profile</li>
+            <li>5 boosted posts monthly</li>
+            <li>Premium support</li>
+          </ul>
         </div>
 
         <div style={card}>
-          📊 Analytics Pro
+          <h2>🥇 Gold Badge</h2>
+          <h3>₦69,000 / month</h3>
+
+          <ul>
+            <li>Creator analytics</li>
+            <li>20 boosted posts monthly</li>
+            <li>Priority support</li>
+          </ul>
         </div>
 
         <div style={card}>
-          🎨 Canva Pro Add-On
+          <h2>💎 Platinum Badge</h2>
+          <h3>₦138,000 / month</h3>
+
+          <ul>
+            <li>Unlimited boosts</li>
+            <li>Advanced creator analytics</li>
+            <li>Premium visibility</li>
+            <li>Higher search ranking</li>
+          </ul>
         </div>
 
         <div style={card}>
-          🤝 HubSpot Integration
-        </div>
+          <h2>🏆 Enterprise Badge</h2>
+          <h3>₦1,373,000 / month</h3>
 
-        <div style={card}>
-          📦 HubSpot + Canva Bundle
-        </div>
-
-        <div style={card}>
-          🛠 Business Tools Suite
-        </div>
-
-        <div style={card}>
-          🎥 Creator Plus
-        </div>
-
-        <div style={card}>
-          🏢 Enterprise Plus
-        </div>
-
-        <div style={card}>
-          ⚡ Early Access Features
-        </div>
-
-        <div style={card}>
-          🎯 Premium Support
+          <ul>
+            <li>Organization branding</li>
+            <li>Advertising tools</li>
+            <li>Team accounts</li>
+            <li>Enterprise analytics</li>
+            <li>Dedicated support</li>
+          </ul>
         </div>
       </div>
     </DashboardLayout>
@@ -55,7 +76,7 @@ const card = {
   padding: "24px",
   borderRadius: "20px",
   marginBottom: "20px",
-  fontWeight: "600",
+  border: "1px solid #1e293b",
 };
 
 export default PremiumDashboard;
