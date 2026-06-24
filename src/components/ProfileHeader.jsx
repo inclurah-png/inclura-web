@@ -188,6 +188,9 @@ function ProfileHeader({ profile }) {
     </div>
   </>
 )}
+   
+</div>
+          
           <p
             style={{
               color:
