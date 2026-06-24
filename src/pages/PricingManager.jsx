@@ -825,6 +825,94 @@ function PricingManager() {
     )
   }
 />
+          
+          <EditableCard
+  title="Silver Badge"
+  value={
+    pricing.SilverBadge?.price || 49000
+  }
+  enabled={
+    pricing.SilverBadge?.enabled ?? true
+  }
+  onPriceChange={(value) =>
+    updatePrice(
+      "SilverBadge",
+      value
+    )
+  }
+  onToggle={() =>
+    updateEnabled(
+      "SilverBadge",
+      !pricing.SilverBadge?.enabled
+    )
+  }
+/>
+
+<EditableCard
+  title="Gold Badge"
+  value={
+    pricing.GoldBadge?.price || 69000
+  }
+  enabled={
+    pricing.GoldBadge?.enabled ?? true
+  }
+  onPriceChange={(value) =>
+    updatePrice(
+      "GoldBadge",
+      value
+    )
+  }
+  onToggle={() =>
+    updateEnabled(
+      "GoldBadge",
+      !pricing.GoldBadge?.enabled
+    )
+  }
+/>
+
+<EditableCard
+  title="Platinum Badge"
+  value={
+    pricing.PlatinumBadge?.price || 138000
+  }
+  enabled={
+    pricing.PlatinumBadge?.enabled ?? true
+  }
+  onPriceChange={(value) =>
+    updatePrice(
+      "PlatinumBadge",
+      value
+    )
+  }
+  onToggle={() =>
+    updateEnabled(
+      "PlatinumBadge",
+      !pricing.PlatinumBadge?.enabled
+    )
+  }
+/>
+
+<EditableCard
+  title="Enterprise Badge"
+  value={
+    pricing.EnterpriseBadge?.price || 1373000
+  }
+  enabled={
+    pricing.EnterpriseBadge?.enabled ?? true
+  }
+  onPriceChange={(value) =>
+    updatePrice(
+      "EnterpriseBadge",
+      value
+    )
+  }
+  onToggle={() =>
+    updateEnabled(
+      "EnterpriseBadge",
+      !pricing.EnterpriseBadge?.enabled
+    )
+  }
+/>
         </Section>
 
       </div>
