@@ -41,7 +41,6 @@ import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import EnterpriseAnalytics from "./pages/EnterpriseAnalytics";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
 import PremiumPayment from "./pages/PremiumPayment";
-import PremiumDashboard from "./pages/PremiumDashboard";
 import PricingManager from "./pages/PricingManager";
 import PayTopup from "./pages/PayTopup";
 import Withdraw from "./pages/Withdraw";
@@ -346,15 +345,6 @@ return (
   }
 />
 
-  <Route
-  path="/premium-payment"
-  element={
-    <ProtectedRoute>
-      <PremiumPayment />
-    </ProtectedRoute>
-  }
-/>
-  
   <Route
   path="/premium-dashboard"
   element={
