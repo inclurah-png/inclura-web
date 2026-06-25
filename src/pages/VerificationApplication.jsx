@@ -1,4 +1,17 @@
 import { useState } from "react";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import {
+  db,
+  auth,
+} from "../firebase";
+
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 
 function VerificationApplication() {
@@ -25,6 +38,7 @@ useState("");
 
 const [documentFile, setDocumentFile] =
 useState(null);
+const navigate = useNavigate();
 
 const fees = {
   creator: 3000,
@@ -36,42 +50,97 @@ const fees = {
 };
 
 async function handleContinue() {
-if (!fullName) {
-alert("Enter full name");
-return;
-}
+  const user = auth.currentUser;
 
-if (!email) {  
-  alert("Enter email");  
-  return;  
-}  
+  if (!user) {
+    alert("Please login first.");
+    return;
+  }
 
-if (!phone) {  
-  alert("Enter phone number");  
-  return;  
-}  
+  if (!fullName.trim()) {
+    alert("Enter your full name.");
+    return;
+  }
 
-if (!documentFile) {  
-  alert("Upload required document");  
-  return;  
-}  
+  if (!email.trim()) {
+    alert("Enter your email.");
+    return;
+  }
 
-console.log({  
-  type,  
-  fullName,  
-  email,  
-  phone,  
-  socialLink1,  
-  socialLink2,  
-  officialEmail,  
-  documentFile,  
-  amount: fees[type],  
-});  
+  if (!phone.trim()) {
+    alert("Enter your phone number.");
+    return;
+  }
 
-alert(  
-  "Verification form completed. Next step is payment integration."  
-);
+  try {
+    await addDoc(
+      collection(
+        db,
+        "verificationRequests"
+      ),
+      {
+        userId: user.uid,
 
+        accountType: type,
+
+        fullName,
+
+        email,
+
+        phone,
+
+        socialLink1,
+
+        socialLink2,
+
+        officialEmail,
+
+        paymentAmount:
+          fees[type],
+
+        paymentStatus:
+          type === "government"
+            ? "free"
+            : "pending",
+
+        status: "pending",
+
+        documentName:
+          documentFile
+            ? documentFile.name
+            : "",
+
+        documentUrl: "",
+
+        note:
+          "Identity verification request",
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    if (type === "government") {
+      alert(
+        "Government verification request submitted successfully."
+      );
+
+      navigate("/profile");
+
+      return;
+    }
+
+    navigate(
+      "/creator-verification-payment"
+    );
+  } catch (error) {
+    console.error(error);
+
+    alert(
+      "Unable to submit verification request."
+    );
+  }
+  
 }
 
 const inputStyle = {
@@ -100,9 +169,9 @@ maxWidth: "800px",
 Verification Application
 </h1>
 
-<p>  
-      Apply for identity verification.  
-    </p>  
+<p>
+  Identity Verification Review Fee
+</p>
 
     {/* Verification Type */}  
     <label>  
@@ -270,9 +339,9 @@ Verification Application
 )}
 
     {/* Document Upload */}  
-    <label>  
-      Upload Document  
-    </label>  
+    <label>
+  Upload Supporting Document
+</label>
 
     <input  
       type="file"  
@@ -331,8 +400,9 @@ Verification Application
         cursor:  
           "pointer",  
       }}  
-    >  
-      Continue To Payment  
+    >  {type === "government"
+    ? "Submit Verification Request"
+    : "Continue To Payment"}
     </button>  
   </div>  
 </DashboardLayout>
