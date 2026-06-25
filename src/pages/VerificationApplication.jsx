@@ -1,218 +1,343 @@
 import { useState } from "react";
-
 import DashboardLayout from "../components/DashboardLayout";
 
 function VerificationApplication() {
-  const [type, setType] =
-    useState("creator");
+const [type, setType] =
+useState("creator");
 
-  const fees = {
-    creator: 5000,
-    ngo: 20000,
-    hospital: 25000,
-    university: 35000,
-    organization: 30000,
-    government: 100000,
-  };
+const [fullName, setFullName] =
+useState("");
 
-  return (
-    <DashboardLayout>
-      <div
-        style={{
-          background: "#0f172a",
-          padding: "24px",
-          borderRadius: "20px",
-          color: "white",
-        }}
-      >
-        <h1>
-          Verification Application
-        </h1>
+const [email, setEmail] =
+useState("");
 
-        <p>
-          Apply for identity verification.
-        </p>
+const [phone, setPhone] =
+useState("");
 
-        <div
-          style={{
-            marginTop: "20px",
-          }}
-        >
-          <label>
-            Verification Type
-          </label>
+const [socialLink1, setSocialLink1] =
+useState("");
 
-          <select
-            value={type}
-            onChange={(e) =>
-              setType(
-                e.target.value
-              )
-            }
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginTop: "8px",
-              borderRadius: "12px",
-            }}
-          >
-            <option value="creator">
-              Creator
-            </option>
+const [socialLink2, setSocialLink2] =
+useState("");
 
-            <option value="ngo">
-              NGO
-            </option>
+const [officialEmail, setOfficialEmail] =
+useState("");
 
-            <option value="hospital">
-              Hospital
-            </option>
+const [documentFile, setDocumentFile] =
+useState(null);
 
-            <option value="university">
-              University
-            </option>
+const fees = {
+  creator: 3000,
+  ngo: 5000,
+  hospital: 10000,
+  university: 15000,
+  organization: 20000,
+  government: 0,
+};
 
-            <option value="organization">
-              Organization
-            </option>
+async function handleContinue() {
+if (!fullName) {
+alert("Enter full name");
+return;
+}
 
-            <option value="government">
-              Government
-            </option>
-          </select>
-        </div>
+if (!email) {  
+  alert("Enter email");  
+  return;  
+}  
 
-        <div
-          style={{
-            marginTop: "20px",
-          }}
-        >
-          <h3>
-            Verification Fee
-          </h3>
+if (!phone) {  
+  alert("Enter phone number");  
+  return;  
+}  
 
-          <p>
-            ₦
-            {fees[
-              type
-            ].toLocaleString()}
-          </p>
-        </div>
+if (!documentFile) {  
+  alert("Upload required document");  
+  return;  
+}  
 
-        <div
-          style={{
-            marginTop: "20px",
-          }}
-        >
-          <h3>
-            Required Documents
-          </h3>
+console.log({  
+  type,  
+  fullName,  
+  email,  
+  phone,  
+  socialLink1,  
+  socialLink2,  
+  officialEmail,  
+  documentFile,  
+  amount: fees[type],  
+});  
 
-          {type ===
-            "creator" && (
-            <ul>
-              <li>
-                National ID
-              </li>
-              <li>
-                Passport
-              </li>
-              <li>
-                Social Profile
-              </li>
-            </ul>
-          )}
+alert(  
+  "Verification form completed. Next step is payment integration."  
+);
 
-          {type ===
-            "ngo" && (
-            <ul>
-              <li>
-                Registration
-                Certificate
-              </li>
-              <li>
-                Official
-                Email
-              </li>
-            </ul>
-          )}
+}
 
-          {type ===
-            "hospital" && (
-            <ul>
-              <li>
-                Hospital
-                License
-              </li>
-              <li>
-                Registration
-                Documents
-              </li>
-            </ul>
-          )}
+const inputStyle = {
+width: "100%",
+padding: "12px",
+marginTop: "8px",
+marginBottom: "16px",
+borderRadius: "12px",
+border: "1px solid #334155",
+background: "#1e293b",
+color: "white",
+};
 
-          {type ===
-            "university" && (
-            <ul>
-              <li>
-                Accreditation
-              </li>
-              <li>
-                Official
-                Domain
-              </li>
-            </ul>
-          )}
+return (
+<DashboardLayout>
+<div
+style={{
+background: "#0f172a",
+padding: "24px",
+borderRadius: "20px",
+color: "white",
+maxWidth: "800px",
+}}
+>
+<h1>
+Verification Application
+</h1>
 
-          {type ===
-            "organization" && (
-            <ul>
-              <li>
-                CAC
-                Certificate
-              </li>
-              <li>
-                Website
-              </li>
-            </ul>
-          )}
+<p>  
+      Apply for identity verification.  
+    </p>  
 
-          {type ===
-            "government" && (
-            <ul>
-              <li>
-                Official
-                Government
-                Email
-              </li>
-              <li>
-                Appointment
-                Letter
-              </li>
-            </ul>
-          )}
-        </div>
+    {/* Verification Type */}  
+    <label>  
+      Verification Type  
+    </label>  
 
-        <button
-          style={{
-            marginTop: "24px",
-            padding:
-              "14px 24px",
-            borderRadius:
-              "12px",
-            border: "none",
-            background:
-              "#38bdf8",
-            color: "white",
-            fontWeight:
-              "700",
-          }}
-        >
-          Continue To Payment
-        </button>
-      </div>
-    </DashboardLayout>
-  );
+    <select  
+      value={type}  
+      onChange={(e) =>  
+        setType(  
+          e.target.value  
+        )  
+      }  
+      style={inputStyle}  
+    >  
+      <option value="creator">  
+        Creator  
+      </option>  
+
+      <option value="ngo">  
+        NGO  
+      </option>  
+
+      <option value="hospital">  
+        Hospital  
+      </option>  
+
+      <option value="university">  
+        University  
+      </option>  
+
+      <option value="organization">  
+        Organization  
+      </option>  
+
+      <option value="government">  
+        Government  
+      </option>  
+    </select>  
+
+    {/* Full Name */}  
+    <label>  
+      Full Name  
+    </label>  
+
+    <input  
+      type="text"  
+      value={fullName}  
+      onChange={(e) =>  
+        setFullName(  
+          e.target.value  
+        )  
+      }  
+      style={inputStyle}  
+    />  
+
+    {/* Email */}  
+    <label>Email</label>  
+
+    <input  
+      type="email"  
+      value={email}  
+      onChange={(e) =>  
+        setEmail(  
+          e.target.value  
+        )  
+      }  
+      style={inputStyle}  
+    />  
+
+    {/* Phone */}  
+    <label>  
+      Phone Number  
+    </label>  
+
+    <input  
+      type="text"  
+      value={phone}  
+      onChange={(e) =>  
+        setPhone(  
+          e.target.value  
+        )  
+      }  
+      style={inputStyle}  
+    />  
+
+    {/* Creator Fields */}  
+    {type ===  
+      "creator" && (  
+      <>  
+        <label>  
+          Social Link 1  
+        </label>  
+
+        <input  
+          type="text"  
+          value={  
+            socialLink1  
+          }  
+          onChange={(e) =>  
+            setSocialLink1(  
+              e.target.value  
+            )  
+          }  
+          style={  
+            inputStyle  
+          }  
+        />  
+
+        <label>  
+          Social Link 2  
+        </label>  
+
+        <input  
+          type="text"  
+          value={  
+            socialLink2  
+          }  
+          onChange={(e) =>  
+            setSocialLink2(  
+              e.target.value  
+            )  
+          }  
+          style={  
+            inputStyle  
+          }  
+        />  
+      </>  
+    )}  
+
+    {/* Government */}  
+{type === "government" && (
+  <>
+    <div
+      style={{
+        background: "#16a34a",
+        color: "white",
+        padding: "14px",
+        borderRadius: "12px",
+        marginBottom: "16px",
+        fontWeight: "600",
+      }}
+    >
+      🏛 Government verification is FREE.
+      <br />
+      Applications are manually reviewed before approval.
+    </div>
+
+    <label>
+      Official Government Email
+    </label>
+
+    <input
+      type="email"
+      value={officialEmail}
+      onChange={(e) =>
+        setOfficialEmail(
+          e.target.value
+        )
+      }
+      style={inputStyle}
+      placeholder="example@agency.gov.ng"
+    />
+  </>
+)}
+
+    {/* Document Upload */}  
+    <label>  
+      Upload Document  
+    </label>  
+
+    <input  
+      type="file"  
+      onChange={(e) =>  
+        setDocumentFile(  
+          e.target.files[0]  
+        )  
+      }  
+      style={{  
+        marginTop: "10px",  
+        marginBottom:  
+          "20px",  
+      }}  
+    />  
+
+    {/* Fee */}  
+    <div  
+      style={{  
+        background:  
+          "#1e293b",  
+        padding: "16px",  
+        borderRadius:  
+          "12px",  
+        marginBottom:  
+          "20px",  
+      }}  
+    >  
+      <h3>  
+        Apply for identity verification.
+      </h3>  
+
+      <p>  
+        ₦  
+        {fees[  
+          type  
+        ].toLocaleString()}  
+      </p>  
+    </div>  
+
+    {/* Submit */}  
+    <button  
+      onClick={  
+        handleContinue  
+      }  
+      style={{  
+        padding:  
+          "14px 24px",  
+        borderRadius:  
+          "12px",  
+        border: "none",  
+        background:  
+          "#38bdf8",  
+        color: "white",  
+        fontWeight:  
+          "700",  
+        cursor:  
+          "pointer",  
+      }}  
+    >  
+      Continue To Payment  
+    </button>  
+  </div>  
+</DashboardLayout>
+
+);
 }
 
 export default VerificationApplication;
