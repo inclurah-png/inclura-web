@@ -13,6 +13,7 @@ import { auth, db } from "../firebase";
 import {
   doc,
   getDoc,
+  updateDoc,
 } from "firebase/firestore";
 
 function Profile() {
