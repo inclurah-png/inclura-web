@@ -40,6 +40,7 @@ import CreatorAnalytics from "./pages/CreatorAnalytics";
 import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
 import EnterpriseAnalytics from "./pages/EnterpriseAnalytics";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
+import PremiumDashboard from "./pages/PremiumDashboard";
 import PremiumPayment from "./pages/PremiumPayment";
 import PricingManager from "./pages/PricingManager";
 import PayTopup from "./pages/PayTopup";
