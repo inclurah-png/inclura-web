@@ -31,6 +31,7 @@ import Notifications from "./pages/Notifications";
 import AccessibilityHub from "./pages/AccessibilityHub";
 import OpportunitiesHub from "./pages/OpportunitiesHub";
 import CareGigs from "./pages/CareGigs";
+import CreatorRoute from "./components/CreatorRoute";
 import CreatorEarnings from "./pages/CreatorEarnings";
 import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
@@ -252,9 +253,9 @@ return (
   <Route
   path="/creator-earnings"
   element={
-    <ProtectedRoute>
+    <CreatorRoute>
       <CreatorEarnings />
-    </ProtectedRoute>
+    </CreatorRoute>
   }
 />
   
@@ -304,21 +305,21 @@ return (
   }
 />
   
-  <Route
+<Route
   path="/creator-monetization"
   element={
-    <ProtectedRoute>
+    <CreatorRoute>
       <CreatorMonetization />
-    </ProtectedRoute>
+    </CreatorRoute>
   }
 />
 
-  <Route
+<Route
   path="/creator-analytics"
   element={
-    <ProtectedRoute>
+    <CreatorRoute>
       <CreatorAnalytics />
-    </ProtectedRoute>
+    </CreatorRoute>
   }
 />
   
