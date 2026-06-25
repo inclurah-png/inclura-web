@@ -138,57 +138,57 @@ return (
   }
 />
 
-  <Route
+<Route
   path="/verification-requests"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <VerificationRequestsManager />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
   
-  <Route
+<Route
   path="/verification-manager"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <VerificationManager />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
-  <Route
+<Route
   path="/ad-approval"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <AdApprovalQueue />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
-  <Route
+<Route
   path="/wallet-monitoring"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <WalletMonitoring />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
-  <Route
+<Route
   path="/users-management"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <UsersManagement />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
-  <Route
+<Route
   path="/reports-violations"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <ReportsAndViolations />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
   
@@ -338,12 +338,12 @@ return (
   }
 />
   
-  <Route
+<Route
   path="/platform-analytics"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <PlatformAnalytics />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
@@ -368,9 +368,9 @@ return (
   <Route
   path="/pricing-manager"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <PricingManager />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
   
