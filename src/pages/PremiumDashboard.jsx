@@ -83,10 +83,8 @@ async function loadPrices() {
           <button
             style={button}
             onClick={() =>
-              navigate(
-                "/pricing-manager?tier=silver"
-              )
-            }
+  navigate("/premium-payment?tier=silver")
+}
           >
             Upgrade to Silver
           </button>
@@ -113,10 +111,8 @@ async function loadPrices() {
           <button
             style={button}
             onClick={() =>
-              navigate(
-                "/pricing-manager?tier=gold"
-              )
-            }
+  navigate("/premium-payment?tier=gold")
+}
           >
             Upgrade to Gold
           </button>
@@ -144,10 +140,8 @@ async function loadPrices() {
           <button
             style={button}
             onClick={() =>
-              navigate(
-                "/pricing-manager?tier=platinum"
-              )
-            }
+  navigate("/premium-payment?tier=platinum")
+}
           >
             Upgrade to Platinum
           </button>
@@ -176,10 +170,8 @@ async function loadPrices() {
           <button
             style={button}
             onClick={() =>
-              navigate(
-                "/pricing-manager?tier=enterprise"
-              )
-            }
+  navigate("/premium-payment?tier=enterprise")
+}
           >
             Upgrade to Enterprise
           </button>
