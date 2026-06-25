@@ -354,6 +354,15 @@ return (
     </ProtectedRoute>
   }
 />
+
+  <Route
+  path="/premium-payment"
+  element={
+    <ProtectedRoute>
+      <PremiumPayment />
+    </ProtectedRoute>
+  }
+/>
   
   <Route
   path="/pricing-manager"
