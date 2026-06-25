@@ -15,6 +15,7 @@ import CreatorVerificationPayment from "./pages/CreatorVerificationPayment";
 import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
 import EnterpriseAds from "./pages/EnterpriseAds";
+import AdminRoute from "./components/AdminRoute";
 import AdminPanel from "./pages/AdminPanel";
 import VerificationRequestsManager from "./pages/VerificationRequestsManager";
 import VerificationManager from "./pages/VerificationManager";
@@ -128,12 +129,12 @@ return (
   }
 />
 
-  <Route
+<Route
   path="/admin"
   element={
-    <ProtectedRoute>
+    <AdminRoute>
       <AdminPanel />
-    </ProtectedRoute>
+    </AdminRoute>
   }
 />
 
