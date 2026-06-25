@@ -14,6 +14,7 @@ import VerificationCenter from "./pages/VerificationCenter";
 import CreatorVerificationPayment from "./pages/CreatorVerificationPayment";
 import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
+import EnterpriseRoute from "./components/EnterpriseRoute";
 import EnterpriseAds from "./pages/EnterpriseAds";
 import AdminRoute from "./components/AdminRoute";
 import AdminPanel from "./pages/AdminPanel";
@@ -35,6 +36,7 @@ import MentorHub from "./pages/MentorHub";
 import Marketplace from "./pages/Marketplace";
 import Wallet from "./pages/Wallet";
 import ReelsSystem from "./pages/ReelsSystem";
+import AdvertiserRoute from "./components/AdvertiserRoute";
 import AdvertiserDashboard from "./pages/AdvertiserDashboard";
 import CreatorMonetization from "./pages/CreatorMonetization";
 import CreatorAnalytics from "./pages/CreatorAnalytics";
@@ -111,21 +113,21 @@ return (
     }
   />
 
-  <Route
+<Route
   path="/ad-manager"
   element={
-    <ProtectedRoute>
+    <AdvertiserRoute>
       <AdManager />
-    </ProtectedRoute>
+    </AdvertiserRoute>
   }
 />
-
-  <Route
+  
+<Route
   path="/enterprise-ads"
   element={
-    <ProtectedRoute>
+    <EnterpriseRoute>
       <EnterpriseAds />
-    </ProtectedRoute>
+    </EnterpriseRoute>
   }
 />
 
@@ -292,16 +294,16 @@ return (
     </ProtectedRoute>
   }
 />
-  
+
   <Route
   path="/advertiser-dashboard"
   element={
-    <ProtectedRoute>
+    <AdvertiserRoute>
       <AdvertiserDashboard />
-    </ProtectedRoute>
+    </AdvertiserRoute>
   }
 />
-
+  
   <Route
   path="/creator-monetization"
   element={
@@ -320,21 +322,21 @@ return (
   }
 />
   
-  <Route
+<Route
   path="/enterprise-campaigns"
   element={
-    <ProtectedRoute>
-      <EnterpriseCampaignManager />
-    </ProtectedRoute>
+    <EnterpriseRoute>
+      <EnterpriseCampaigns />
+    </EnterpriseRoute>
   }
 />
 
-  <Route
+<Route
   path="/enterprise-analytics"
   element={
-    <ProtectedRoute>
+    <EnterpriseRoute>
       <EnterpriseAnalytics />
-    </ProtectedRoute>
+    </EnterpriseRoute>
   }
 />
   
@@ -412,13 +414,13 @@ return (
   
   {/* ENTERPRISE */}
   <Route
-    path="/enterprise"
-    element={
-      <ProtectedRoute>
-        <Enterprise />
-      </ProtectedRoute>
-    }
-  />
+  path="/enterprise"
+  element={
+    <EnterpriseRoute>
+      <Enterprise />
+    </EnterpriseRoute>
+  }
+/>
 
   {/* SOS */}
   <Route
