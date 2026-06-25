@@ -1,9 +1,34 @@
+import { useEffect, useState } from "react";
+import { doc, getDoc } from "firebase/firestore";
+import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
+  const user = auth.currentUser;
+
+const [role, setRole] = useState("");
+
+useEffect(() => {
+  async function loadRole() {
+    if (!user) return;
+
+    const snap = await getDoc(
+      doc(db, "users", user.uid)
+    );
+
+    if (snap.exists()) {
+      setRole(snap.data().role || "creator");
+    }
+  }
+
+  loadRole();
+}, [user]);
+const isCreator = role === "creator";
+const isAdvertiser = role === "advertiser";
+const isEnterprise = role === "enterprise";
+const isAdmin = role === "admin";
 
   async function handleLogout() {
     try {
@@ -159,176 +184,183 @@ function DashboardSidebar() {
         🎥 Reels
       </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/creator-earnings")
-        }
-      >
-        💵 Creator Earnings
-      </div>
+      {isCreator && (
+  <>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/creator-earnings")
+      }
+    >
+      💵 Creator Earnings
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/creator-monetization")
-        }
-      >
-        💵 Creator Monetization
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/creator-monetization")
+      }
+    >
+      💵 Creator Monetization
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/creator-analytics")
-        }
-      >
-        📈 Creator Analytics
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/creator-analytics")
+      }
+    >
+      📈 Creator Analytics
+    </div>
+  </>
+)}
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/advertiser-dashboard")
-        }
-      >
-        📢 Advertiser Dashboard
-      </div>
+{isAdvertiser && (
+  <>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/advertiser-dashboard")
+      }
+    >
+      📢 Advertiser Dashboard
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/ad-manager")
-        }
-      >
-        📢 Ad Manager
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/ad-manager")
+      }
+    >
+      📢 Ad Manager
+    </div>
+  </>
+)}
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/enterprise")
-        }
-      >
-        🏢 Enterprise
-      </div>
+{isEnterprise && (
+  <>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/enterprise")
+      }
+    >
+      🏢 Enterprise
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/enterprise-ads")
-        }
-      >
-        🏢 Enterprise Ads
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/enterprise-ads")
+      }
+    >
+      🏢 Enterprise Ads
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/enterprise-campaigns")
-        }
-      >
-        🏢 Enterprise Campaigns
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/enterprise-campaigns")
+      }
+    >
+      🏢 Enterprise Campaigns
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/enterprise-analytics")
-        }
-      >
-        🏢 Enterprise Analytics
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/enterprise-analytics")
+      }
+    >
+      🏢 Enterprise Analytics
+    </div>
+  </>
+)}
+      
+{isAdmin && (
+  <>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/platform-analytics")
+      }
+    >
+      📊 Platform Analytics
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/platform-analytics")
-        }
-      >
-        📊 Platform Analytics
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/pricing-manager")
+      }
+    >
+      💲 Pricing Manager
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/premium-dashboard")
-        }
-      >
-        ⭐ Premium Dashboard
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/users-management")
+      }
+    >
+      👥 Users Management
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/pricing-manager")
-        }
-      >
-        💲 Pricing Manager
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/reports-violations")
+      }
+    >
+      🚨 Reports & Violations
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/users-management")
-        }
-      >
-        👥 Users Management
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/verification-requests")
+      }
+    >
+      📋 Verification Requests
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/reports-violations")
-        }
-      >
-        🚨 Reports & Violations
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/verification-manager")
+      }
+    >
+      ✅ Verification Manager
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/verification-requests")
-        }
-      >
-        📋 Verification Requests
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/wallet-monitoring")
+      }
+    >
+      💰 Wallet Monitoring
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/verification-manager")
-        }
-      >
-        ✅ Verification Manager
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/ad-approval")
+      }
+    >
+      📋 Ad Approval Queue
+    </div>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/wallet-monitoring")
-        }
-      >
-        💰 Wallet Monitoring
-      </div>
-
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/ad-approval")
-        }
-      >
-        📋 Ad Approval Queue
-      </div>
-
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/admin")
-        }
-      >
-        👨‍💼 Admin Panel
-      </div>
+    <div
+      style={itemStyle}
+      onClick={() =>
+        navigate("/admin")
+      }
+    >
+      👨‍💼 Admin Panel
+    </div>
+  </>
+)}
 
       <div
         style={itemStyle}
