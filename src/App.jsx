@@ -327,7 +327,7 @@ return (
   path="/enterprise-campaigns"
   element={
     <EnterpriseRoute>
-      <EnterpriseCampaigns />
+      <EnterpriseCampaignManager />
     </EnterpriseRoute>
   }
 />
