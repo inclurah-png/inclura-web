@@ -12,7 +12,6 @@ import "./index.css";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AccessibilityProvider } from "./context/AccessibilityProvider";
-
 ReactDOM.createRoot(
   document.getElementById("root")
 ).render(
