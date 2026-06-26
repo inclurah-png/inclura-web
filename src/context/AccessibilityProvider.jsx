@@ -96,4 +96,3 @@ export function useAccessibility() {
 
   return context;
 }
-export function AccessibilityProvider;
