@@ -538,4 +538,4 @@ function RecruiterSubscription() {
   );
 }
 
-export default Recruiter
+export default RecruiterSubscription;
