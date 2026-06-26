@@ -118,15 +118,25 @@ await setDoc(
 
     resumeCompleted: false,
 
-    accessibilityNeeds,
+accessibilityNeeds,
 
-    followers: [],
+accessibility: {
+  deaf: accessibilityNeeds.includes("🦻 Deaf/HoH"),
+  blindLowVision: accessibilityNeeds.includes("👁 Blind/Low Vision"),
+  wheelchair: accessibilityNeeds.includes("♿ Wheelchair"),
+  nonVerbal: accessibilityNeeds.includes("🗣 Non-verbal"),
+  motorImpaired: accessibilityNeeds.includes("🤲 Motor Impaired"),
+  neurodivergent: accessibilityNeeds.includes("🧠 Neurodivergent"),
+  noDisability: accessibilityNeeds.includes("💪 No disability"),
+},
 
-    following: [],
+followers: [],
 
-    savedPosts: [],
+following: [],
 
-    profilePhoto: "",
+savedPosts: [],
+
+profilePhoto: "",
   }
 );
 
@@ -189,16 +199,26 @@ await setDoc(
 
     resumeCompleted: false,
 
-    accessibilityNeeds: [],
+accessibilityNeeds: [],
 
-    followers: [],
+accessibility: {
+  deaf: false,
+  blindLowVision: false,
+  wheelchair: false,
+  nonVerbal: false,
+  motorImpaired: false,
+  neurodivergent: false,
+  noDisability: false,
+},
 
-    following: [],
+followers: [],
 
-    savedPosts: [],
+following: [],
 
-    profilePhoto:
-      user.photoURL || "",
+savedPosts: [],
+
+profilePhoto:
+  user.photoURL || "",
   },
   { merge: true }
 );
