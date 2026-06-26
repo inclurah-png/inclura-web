@@ -1,3 +1,4 @@
+import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
 
 import { signOut } from "firebase/auth";
@@ -60,6 +61,8 @@ function DashboardLayout({ children }) {
         </div>
 
         {children}
+
+        <AccessibilityButton />
       </div>
     </div>
   );
