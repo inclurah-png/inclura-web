@@ -1,167 +1,225 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
-function OpportunityCard({
-  id,
-  title,
-  company,
-  location,
-  type,
-  category,
-  salary,
-  deadline,
-  featured,
-}) {
-  const navigate = useNavigate();
+function OpportunityCard({ opportunity }) {
+  const cardStyle = {
+    background: "#0f172a",
+    borderRadius: "20px",
+    padding: "24px",
+    marginBottom: "20px",
+    color: "white",
+    transition: "0.3s",
+    border: "1px solid #1e293b",
+  };
+
+  const badgeStyle = {
+    padding: "6px 12px",
+    borderRadius: "999px",
+    fontSize: "12px",
+    fontWeight: "700",
+    display: "inline-block",
+    marginRight: "8px",
+    marginBottom: "8px",
+  };
 
   return (
-    <div
-      style={{
-        background: "#0f172a",
-        borderRadius: "20px",
-        padding: "22px",
-        marginBottom: "18px",
-        border:
-          featured
-            ? "2px solid #38bdf8"
-            : "1px solid #1e293b",
-      }}
-    >
-      {featured && (
-        <div
-          style={{
-            display: "inline-block",
-            background: "#38bdf8",
-            color: "white",
-            padding: "4px 12px",
-            borderRadius: "999px",
-            fontSize: "12px",
-            fontWeight: "700",
-            marginBottom: "12px",
-          }}
-        >
-          ⭐ Featured
-        </div>
-      )}
-
-      <h2
-        style={{
-          color: "white",
-          marginBottom: "10px",
-        }}
-      >
-        {title}
-      </h2>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          marginBottom: "8px",
-        }}
-      >
-        🏢 {company}
-      </p>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          marginBottom: "8px",
-        }}
-      >
-        📍 {location}
-      </p>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          marginBottom: "8px",
-        }}
-      >
-        💼 {type}
-      </p>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          marginBottom: "8px",
-        }}
-      >
-        🗂 {category}
-      </p>
-
-      {salary && (
-        <p
-          style={{
-            color: "#22c55e",
-            fontWeight: "700",
-            marginBottom: "8px",
-          }}
-        >
-          💰 {salary}
-        </p>
-      )}
-
-      {deadline && (
-        <p
-          style={{
-            color: "#facc15",
-            marginBottom: "18px",
-          }}
-        >
-          ⏳ Deadline: {deadline}
-        </p>
-      )}
+    <div style={cardStyle}>
+      {/* Top Row */}
 
       <div
         style={{
           display: "flex",
-          gap: "12px",
+          justifyContent:
+            "space-between",
+          alignItems: "center",
           flexWrap: "wrap",
         }}
       >
-        <button
-          onClick={() =>
-            navigate(`/opportunity/${id}`)
-          }
-          style={{
-            padding: "12px 18px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#38bdf8",
-            color: "white",
-            cursor: "pointer",
-            fontWeight: "700",
-          }}
-        >
-          View Details
-        </button>
+        <div>
+          <h2
+            style={{
+              margin: 0,
+            }}
+          >
+            {opportunity.title}
+          </h2>
 
-        <button
-          style={{
-            padding: "12px 18px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#1e293b",
-            color: "white",
-            cursor: "pointer",
-            fontWeight: "700",
-          }}
-        >
-          ❤️ Save
-        </button>
+          <p
+            style={{
+              color: "#94a3b8",
+              marginTop: "8px",
+            }}
+          >
+            {opportunity.company}
+          </p>
+        </div>
 
-        <button
+        <div>
+          {opportunity.featured && (
+            <span
+              style={{
+                ...badgeStyle,
+                background:
+                  "#f59e0b",
+                color: "white",
+              }}
+            >
+              ⭐ Featured
+            </span>
+          )}
+
+          {opportunity.recruiterPlan ===
+            "business" && (
+            <span
+              style={{
+                ...badgeStyle,
+                background:
+                  "#10b981",
+                color: "white",
+              }}
+            >
+              Business Recruiter
+            </span>
+          )}
+
+          {opportunity.recruiterPlan ===
+            "enterprise" && (
+            <span
+              style={{
+                ...badgeStyle,
+                background:
+                  "#7c3aed",
+                color: "white",
+              }}
+            >
+              Enterprise Hiring
+            </span>
+          )}
+        </div>
+      </div>
+{/* Details */}
+
+      <div
+        style={{
+          marginTop: "20px",
+          color: "#cbd5e1",
+          lineHeight: "1.8",
+        }}
+      >
+        <p>
+          📍 <strong>Location:</strong>{" "}
+          {opportunity.location}
+        </p>
+
+        <p>
+          💼 <strong>Employment:</strong>{" "}
+          {opportunity.employmentType}
+        </p>
+
+        <p>
+          💰 <strong>Salary:</strong>{" "}
+          {opportunity.salary}
+        </p>
+
+        <p>
+          📅 <strong>Deadline:</strong>{" "}
+          {opportunity.deadline}
+        </p>
+
+        <p>
+          👥 <strong>Applications:</strong>{" "}
+          {opportunity.applications || 0}
+        </p>
+
+        <p>
+          🟢 <strong>Status:</strong>{" "}
+          {opportunity.status}
+        </p>
+      </div>
+
+      {/* Description Preview */}
+
+      <div
+        style={{
+          marginTop: "18px",
+          color: "#94a3b8",
+        }}
+      >
+        {opportunity.description
+          ?.substring(0, 180)}
+        {opportunity.description
+          ?.length > 180
+          ? "..."
+          : ""}
+      </div>
+
+      {/* Bottom Row */}
+
+      <div
+        style={{
+          marginTop: "24px",
+          display: "flex",
+          justifyContent:
+            "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+        }}
+      >
+        <span
           style={{
-            padding: "12px 18px",
-            border: "none",
-            borderRadius: "12px",
-            background: "#16a34a",
-            color: "white",
-            cursor: "pointer",
+            color: "#38bdf8",
             fontWeight: "700",
           }}
         >
-          Apply
-        </button>
+          Recruiter Plan:{" "}
+          {opportunity.recruiterPlan}
+        </span>
+        <Link
+          to={`/opportunity/${opportunity.id}`}
+          style={{
+            textDecoration: "none",
+          }}
+        >
+          <button
+            style={{
+              padding: "12px 22px",
+              border: "none",
+              borderRadius: "12px",
+              background: "#38bdf8",
+              color: "white",
+              fontWeight: "700",
+              cursor: "pointer",
+              fontSize: "15px",
+            }}
+          >
+            View Opportunity
+          </button>
+        </Link>
+      </div>
+
+      {/* Footer */}
+
+      <div
+        style={{
+          marginTop: "20px",
+          paddingTop: "16px",
+          borderTop: "1px solid #1e293b",
+          color: "#64748b",
+          fontSize: "13px",
+        }}
+      >
+        Posted by{" "}
+        <strong>
+          {opportunity.company}
+        </strong>
+
+        {" • "}
+
+        {opportunity.createdAt?.seconds
+          ? new Date(
+              opportunity.createdAt.seconds *
+                1000
+            ).toLocaleDateString()
+          : "Recently"}
       </div>
     </div>
   );
