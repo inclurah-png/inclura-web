@@ -6,7 +6,9 @@ import {
   SUPPORTED_LANGUAGES,
 } from "../config/languages";
 
-function LanguageSelector() {
+function LanguageSelector({
+  onLanguageChange,
+}) {
 
   const { i18n } =
     useTranslation();
