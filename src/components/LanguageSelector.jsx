@@ -24,13 +24,29 @@ function LanguageSelector({
     ) ||
     SUPPORTED_LANGUAGES[0];
   function changeLanguage(code) {
+async function changeLanguage(
+  code
+) {
 
-  i18n.changeLanguage(code);
+  await i18n.changeLanguage(
+    code
+  );
 
   localStorage.setItem(
     "inclura-language",
     code
   );
+
+  if (
+    typeof onLanguageChange ===
+    "function"
+  ) {
+
+    await onLanguageChange(
+      code
+    );
+
+  }
 
   setOpen(false);
 
