@@ -1,4 +1,8 @@
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
+import { useAuth } from "../context/AuthContext";
 import { useTranslation } from "react-i18next";
 import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
@@ -8,7 +12,7 @@ import { signOut } from "firebase/auth";
 function DashboardSidebar() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const user = auth.currentUser;
+  const { user } = useAuth();
   
 
 const [role, setRole] = useState("");
