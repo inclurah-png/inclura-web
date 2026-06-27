@@ -8,6 +8,7 @@ import {
 import App from "./App";
 
 import "./index.css";
+import "./i18n";
 
 import { AuthProvider } from "./context/AuthContext";
 import { AccessibilityProvider } from "./context/AccessibilityProvider";
