@@ -1,11 +1,9 @@
 import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
 import LanguageSelector from "./LanguageSelector";
-
 import {
   signOut,
 } from "firebase/auth";
-
 import {
   auth,
   db,
