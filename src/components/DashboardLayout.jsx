@@ -1,10 +1,28 @@
 import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
+import LanguageSelector from "./LanguageSelector";
 
-import { signOut } from "firebase/auth";
-import { auth } from "../firebase";
+import {
+  signOut,
+} from "firebase/auth";
 
-import { useNavigate } from "react-router-dom";
+import {
+  auth,
+  db,
+} from "../firebase";
+
+import {
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import {
+  useNavigate,
+} from "react-router-dom";
+
+import {
+  useAuth,
+} from "../context/AuthContext";
 
 function DashboardLayout({ children }) {
   const navigate = useNavigate();
