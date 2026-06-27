@@ -1,7 +1,9 @@
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
 
 function Home() {
+  const { t } = useTranslation();
   return (
     <div
       style={{
@@ -43,7 +45,7 @@ function Home() {
                 fontWeight: "600",
               }}
             >
-              Login
+              {t("login")}
             </button>
           </Link>
 
@@ -59,7 +61,7 @@ function Home() {
                 fontWeight: "600",
               }}
             >
-              Sign Up
+              {t("signup")}
             </button>
           </Link>
         </div>
@@ -79,7 +81,7 @@ function Home() {
             marginBottom: "20px",
           }}
         >
-          Welcome to Inclura
+          {t("welcome")}
         </h1>
 
         <p
@@ -91,11 +93,7 @@ function Home() {
             lineHeight: "1.7",
           }}
         >
-          The inclusive social ecosystem for
-          accessibility, careers, mentorship,
-          creators, marketplaces, emergency
-          support, opportunities and global
-          community connection.
+          {t("slogan")}
         </p>
 
         <div
@@ -119,7 +117,7 @@ function Home() {
                 fontWeight: "700",
               }}
             >
-              Get Started
+              {t("createAccount")}
             </button>
           </Link>
 
@@ -135,7 +133,7 @@ function Home() {
               fontWeight: "700",
             }}
           >
-            Learn More
+            {t("learnMore")}
           </button>
         </div>
       </section>
@@ -159,38 +157,38 @@ function Home() {
         >
           <FeatureCard
             icon="♿"
-            title="Accessibility"
-            description="Inclusive tools, support and community."
+            title={t("accessibilityHub")}
+description={t("featureAccessibility")}
           />
 
           <FeatureCard
             icon="💼"
-            title="Jobs"
-            description="Find opportunities and inclusive employers."
+            title={t("jobs")}
+description={t("featureJobs")}
           />
 
           <FeatureCard
             icon="🎓"
-            title="Mentorship"
-            description="Connect with mentors and grow."
+            title={t("mentorHub")}
+description={t("featureMentorship")}
           />
 
           <FeatureCard
             icon="🛒"
-            title="Marketplace"
-            description="Buy, sell and discover services."
+            title={t("marketplace")}
+description={t("featureMarketplace")}
           />
 
           <FeatureCard
             icon="🚨"
-            title="SOS Support"
-            description="Emergency assistance and alerts."
+            title={t("sos")}
+description={t("featureSOS")}
           />
 
           <FeatureCard
             icon="🌍"
-            title="Community"
-            description="Build meaningful connections globally."
+            title={t("community")}
+description={t("featureCommunity")}
           />
         </div>
       </section>
@@ -206,8 +204,7 @@ function Home() {
           color: "#94a3b8",
         }}
       >
-        © 2026 Inclura. Building a more
-        inclusive world together.
+© 2026 Inclura. {t("footerText")}
       </footer>
     </div>
   );
