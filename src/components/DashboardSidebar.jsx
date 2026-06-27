@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,9 @@ import { signOut } from "firebase/auth";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const user = auth.currentUser;
+  
 
 const [role, setRole] = useState("");
 
@@ -63,41 +66,41 @@ const isAdmin = role === "admin";
         flexShrink: 0,
       }}
     >
-      <h2
-        style={{
-          marginBottom: "24px",
-          color: "white",
-        }}
-      >
-        Inclura
-      </h2>
+<h2
+  style={{
+    marginBottom: "24px",
+    color: "white",
+  }}
+>
+  {t("appName")}
+</h2>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/profile")}
       >
-        🏠 Dashboard
+        🏠 {t("dashboard")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/notifications")}
       >
-        🔔 Notifications
+        🔔 {t("notifications")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/messages")}
       >
-        💬 Messages
+        💬 {t("messages")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/wallet")}
       >
-        💰 Wallet
+        💰 {t("wallet")}
       </div>
 
       <div
@@ -379,7 +382,7 @@ const isAdmin = role === "admin";
           marginTop: "20px",
         }}
       >
-        🚪 Logout
+        🚪 {t("logout")}
       </div>
     </div>
   );
