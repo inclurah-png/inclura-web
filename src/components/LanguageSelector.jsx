@@ -23,8 +23,7 @@ function LanguageSelector({
         i18n.language
     ) ||
     SUPPORTED_LANGUAGES[0];
-  function changeLanguage(code) {
-async function changeLanguage(
+  async function changeLanguage(
   code
 ) {
 
