@@ -7,6 +7,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
 import Onboarding from "./pages/Onboarding";
+import PostPage from "./pages/PostPage";
+import CrossPost from "./pages/CrossPost";
 
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
@@ -71,6 +73,16 @@ return (
     path="/onboarding"
     element={<Onboarding />}
   />
+
+  <Route
+  path="/post/:id"
+  element={<PostPage />}
+/>
+
+<Route
+  path="/crosspost/:id"
+  element={<CrossPost />}
+/>
 
   {/* MAIN DASHBOARD */}
   <Route
