@@ -1,13 +1,10 @@
-
-import { useState, useEffect } from "react";
-
 import {
-collection,
-addDoc,
-serverTimestamp,
-query,
-orderBy,
-onSnapshot,
+  addDoc,
+  collection,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  increment,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -46,6 +43,16 @@ createdAt:
 serverTimestamp(),
 }
 );
+  const postRef = doc(
+  db,
+  "posts",
+  postId
+);
+
+await updateDoc(postRef, {
+  commentCount: increment(1),
+  creatorScore: increment(3),
+});
 
 setComment("");
 
