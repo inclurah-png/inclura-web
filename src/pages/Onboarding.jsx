@@ -1,4 +1,60 @@
-   function Onboarding() {
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+
+import {
+  auth,
+  db,
+} from "../firebase";
+
+import {
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+function Onboarding() {
+  const navigate = useNavigate();
+
+  const [bio, setBio] =
+    useState("");
+
+  const [location, setLocation] =
+    useState("");
+
+  const [language, setLanguage] =
+    useState("English");
+
+  const [interests, setInterests] =
+    useState([]);
+
+  async function finishOnboarding() {
+    try {
+      const user =
+        auth.currentUser;
+
+      if (!user) return;
+
+      await updateDoc(
+        doc(
+          db,
+          "users",
+          user.uid
+        ),
+        {
+          bio,
+          location,
+          language,
+          interests,
+          onboardingCompleted:
+            true,
+        }
+      );
+
+      navigate("/profile");
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+
   return (
     <div
       style={{
