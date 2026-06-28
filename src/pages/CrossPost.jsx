@@ -197,8 +197,8 @@ function CrossPost() {
           <StatCard
             title="Total Cross-Posts"
             value="0"
-          />
-
+          /
+          
           <StatCard
             title="XP From Sharing"
             value="0"
