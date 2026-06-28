@@ -172,22 +172,34 @@ function ProfileHeader({
           flexWrap: "wrap",
         }}
       >
-        <img
-          src={
-            profile?.profilePhoto ||
-            "https://via.placeholder.com/120"
-          }
-          
-          <div
+        <div
   style={{
-    marginTop: "10px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
   }}
 >
+  <img
+    src={
+      profile?.profilePhoto ||
+      "https://via.placeholder.com/120"
+    }
+    alt="Profile"
+    style={{
+      width: "120px",
+      height: "120px",
+      borderRadius: "50%",
+      objectFit: "cover",
+      border: "4px solid #38bdf8",
+    }}
+  />
+
   <button
     onClick={() =>
       fileInputRef.current?.click()
     }
     style={{
+      marginTop: "10px",
       padding: "8px 14px",
       borderRadius: "12px",
       border: "none",
@@ -203,27 +215,12 @@ function ProfileHeader({
     type="file"
     accept="image/*"
     ref={fileInputRef}
-    onChange={
-      uploadPhoto
-    }
+    onChange={uploadPhoto}
     style={{
       display: "none",
     }}
   />
 </div>
-        
-          alt="Profile"
-          style={{
-            width: "120px",
-            height: "120px",
-            borderRadius:
-              "50%",
-            objectFit:
-              "cover",
-            border:
-              "4px solid #38bdf8",
-          }}
-        />
 
         <div>
           <h2>
