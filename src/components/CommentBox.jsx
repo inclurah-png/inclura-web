@@ -31,27 +31,21 @@ const user =
 auth.currentUser;
 
 await addDoc(
-collection(
-db,
-"posts",
-postId,
-"comments"
-),
-{
-{
- 
-  text: comment,
-
-  language: "auto",
-
-  translatedText: {},
-userId: user.uid,
-userName:
-user.displayName ||
-"Inclura User",
-createdAt:
-serverTimestamp(),
-}
+  collection(
+    db,
+    "posts",
+    postId,
+    "comments"
+  ),
+  {
+    text: comment,
+    userId: user.uid,
+    userName:
+      user.displayName ||
+      "Inclura User",
+    createdAt:
+      serverTimestamp(),
+  }
 );
   
   const postRef = doc(
