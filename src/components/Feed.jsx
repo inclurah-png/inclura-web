@@ -3,14 +3,13 @@ import { useEffect, useState } from "react";
 
 import {
   collection,
-  query,
-  orderBy,
-  onSnapshot,
-  doc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  getDoc,
+ query,
+ orderBy,
+ onSnapshot,
+ doc,
+ updateDoc,
+ getDoc,
+  increment,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -99,38 +98,29 @@ function Feed() {
     }
   }
 
-  async function toggleLike(
-    postId,
-    likes = []
-  ) {
-    const user =
-      auth.currentUser;
+  async function reactToPost(postId, emoji) {
+  const user = auth.currentUser;
 
-    if (!user) return;
+  if (!user) return;
 
-    const postRef = doc(
-      db,
-      "posts",
-      postId
-    );
+  const postRef = doc(db, "posts", postId);
 
-    const alreadyLiked =
-      likes.includes(user.uid);
+  const scoreMap = {
+    "❤️": 4,
+    "👏": 3,
+    "😊": 3,
+    "👍": 2,
+    "😂": 2,
+    "😮": 2,
+    "😢": 2,
+    "👎": -3,
+  };
 
-    if (alreadyLiked) {
-      await updateDoc(postRef, {
-        likes: arrayRemove(
-          user.uid
-        ),
-      });
-    } else {
-      await updateDoc(postRef, {
-        likes: arrayUnion(
-          user.uid
-        ),
-      });
-    }
-  }
+  await updateDoc(postRef, {
+    [`reactions.${emoji}`]: increment(1),
+    creatorScore: increment(scoreMap[emoji]),
+  });
+}
 
   function handleShare(postId) {
     const url =
@@ -356,6 +346,44 @@ function Feed() {
 )}
 
                 <div
+  style={{
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "16px",
+  }}
+>
+  {[
+    "👍",
+    "❤️",
+    "😂",
+    "😊",
+    "😮",
+    "😢",
+    "👏",
+    "👎",
+  ].map((emoji) => (
+    <button
+      key={emoji}
+      onClick={() =>
+        reactToPost(
+          post.id,
+          emoji
+        )
+      }
+      style={{
+        padding: "8px 12px",
+        borderRadius: "20px",
+        cursor: "pointer",
+      }}
+    >
+      {emoji}{" "}
+      {post.reactions?.[emoji] || 0}
+    </button>
+  ))}
+</div>
+                
+                <div
                   style={{
                     display:
                       "flex",
@@ -365,39 +393,32 @@ function Feed() {
                   }}
                 >
                   <button
-                    onClick={() =>
-                      toggleLike(
-                        post.id,
-                        post.likes ||
-                          []
-                      )
-                    }
-                  >
-                    ❤️{" "}
-                    {post.likes
-                      ?.length ||
-                      0}
-                  </button>
+  onClick={() =>
+    navigate(
+      `/post/${post.id}`
+    )
+  }
+>
+  💬 Comment
+</button>
 
-                  <button
-                    onClick={() =>
-                      handleShare(
-                        post.id
-                      )
-                    }
-                  >
-                    🔁 Share
-                  </button>
+<button
+  onClick={() =>
+    navigate(
+      `/crosspost/${post.id}`
+    )
+  }
+>
+  🔀 Cross-post
+</button>
 
-                  <button
-                    onClick={() =>
-                      savePost(
-                        post
-                      )
-                    }
-                  >
-                    🔖 Save
-                  </button>
+<button
+  onClick={() =>
+    savePost(post)
+  }
+>
+  📌 Save
+</button>
                 </div>
 
                 <CommentBox
