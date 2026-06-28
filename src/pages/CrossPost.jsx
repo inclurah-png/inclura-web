@@ -197,7 +197,7 @@ function CrossPost() {
           <StatCard
             title="Total Cross-Posts"
             value="0"
-          /
+          />
           
           <StatCard
             title="XP From Sharing"
@@ -219,10 +219,7 @@ function CrossPost() {
   );
 }
 
-function StatCard({
-  title,
-  value,
-}) {
+function StatCard({ title, value }) {
   return (
     <div
       style={{
@@ -232,7 +229,6 @@ function StatCard({
       }}
     >
       <h3>{value}</h3>
-
       <p>{title}</p>
     </div>
   );
