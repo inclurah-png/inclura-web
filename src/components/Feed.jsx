@@ -129,6 +129,8 @@ userSnap.exists()
     (post.creatorScore || 0)
     + scoreMap[emoji],
 });
+    
+  } 
 
   function handleShare(postId) {
     const url =
