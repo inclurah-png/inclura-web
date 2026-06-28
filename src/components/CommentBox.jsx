@@ -48,6 +48,7 @@ createdAt:
 serverTimestamp(),
 }
 );
+  
   const postRef = doc(
   db,
   "posts",
