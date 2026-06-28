@@ -3,13 +3,15 @@ import { useEffect, useState } from "react";
 
 import {
   collection,
- query,
- orderBy,
- onSnapshot,
- doc,
- updateDoc,
- getDoc,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc,
+  getDoc,
   increment,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -65,8 +67,9 @@ function Feed() {
         await getDoc(userRef);
 
       const savedPosts =
-        userSnap.data()
-          ?.savedPosts || [];
+userSnap.exists()
+  ? userSnap.data().savedPosts || []
+  : [];
 
       if (
         savedPosts.includes(
@@ -116,11 +119,16 @@ function Feed() {
     "👎": -3,
   };
 
-  await updateDoc(postRef, {
-    [`reactions.${emoji}`]: increment(1),
-    creatorScore: increment(scoreMap[emoji]),
-  });
-}
+  await updateDoc(postRef,{
+  reactions: {
+    ...(post.reactions || {}),
+    [emoji]:
+      (post.reactions?.[emoji] || 0)+1,
+  },
+  creatorScore:
+    (post.creatorScore || 0)
+    + scoreMap[emoji],
+});
 
   function handleShare(postId) {
     const url =
