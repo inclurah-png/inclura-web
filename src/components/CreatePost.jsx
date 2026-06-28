@@ -1,4 +1,4 @@
-      import { useState, useRef } from "react";
+import { useState, useRef } from "react";
 
 import {
   collection,
@@ -132,6 +132,25 @@ function CreatePost() {
 
           comments: [],
 
+              reactions: {
+  "👍": 0,
+  "❤️": 0,
+  "😂": 0,
+  "😊": 0,
+  "😮": 0,
+  "😢": 0,
+  "👏": 0,
+  "👎": 0,
+},
+
+creatorScore: 0,
+
+commentCount: 0,
+
+crossPosts: 0,
+
+saveCount: 0,
+              
           createdAt:
             serverTimestamp(),
         }
