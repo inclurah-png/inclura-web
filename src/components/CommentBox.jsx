@@ -39,7 +39,12 @@ postId,
 "comments"
 ),
 {
-text: comment,
+{
+  text: comment,
+
+  language: "auto",
+
+  translatedText: {},
 userId: user.uid,
 userName:
 user.displayName ||
