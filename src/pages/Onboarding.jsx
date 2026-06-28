@@ -116,6 +116,44 @@ function Onboarding() {
           Accessibility Preferences
         </h2>
 
+        <input
+  type="text"
+  placeholder="Tell everyone about yourself..."
+  value={bio}
+  onChange={(e) =>
+    setBio(e.target.value)
+  }
+  style={inputStyle}
+/>
+
+<input
+  type="text"
+  placeholder="City / Country"
+  value={location}
+  onChange={(e) =>
+    setLocation(e.target.value)
+  }
+  style={inputStyle}
+/>
+
+<select
+  value={language}
+  onChange={(e) =>
+    setLanguage(e.target.value)
+  }
+  style={inputStyle}
+>
+  <option>English</option>
+  <option>French</option>
+  <option>Spanish</option>
+  <option>Arabic</option>
+  <option>Portuguese</option>
+  <option>Swahili</option>
+  <option>Yorùbá</option>
+  <option>Igbo</option>
+  <option>Hausa</option>
+</select>
+        
         <div
           style={{
             display: "flex",
@@ -131,9 +169,7 @@ function Onboarding() {
       </div>
 
       <button
-onClick={() => {
-window.location.href = "/profile";
-}}
+onClick={finishOnboarding}
 style={{
 width: "100%",
 padding: "18px",
@@ -154,6 +190,17 @@ Continue →
     </div>
   );
 }
+
+const inputStyle = {
+  width: "100%",
+  padding: "16px",
+  marginBottom: "16px",
+  borderRadius: "14px",
+  border: "1px solid #334155",
+  background: "#1e293b",
+  color: "white",
+  boxSizing: "border-box",
+};
 
 const tagStyle = {
   padding: "14px 20px",
