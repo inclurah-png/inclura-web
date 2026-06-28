@@ -57,8 +57,49 @@ function DashboardStats({ profile }) {
             "User"}
         </h2>
       </div>
-    </div>
-  );
+      <div style={card}>
+  <h3>⭐ Creator Score</h3>
+  <h2>
+    {profile?.creatorScore || 0}
+  </h2>
+</div>
+
+<div style={card}>
+  <h3>📌 Saved Posts</h3>
+  <h2>
+    {profile?.savedPosts?.length || 0}
+  </h2>
+</div>
+
+<div style={card}>
+  <h3>📤 Cross-Posts</h3>
+  <h2>
+    {profile?.crossPostCount || 0}
+  </h2>
+</div>
+
+<div style={card}>
+  <h3>👥 Referrals</h3>
+  <h2>
+    {profile?.referralCount || 0}
+  </h2>
+</div>
+
+<div style={card}>
+  <h3>📈 XP</h3>
+  <h2>
+    {profile?.xp || 0}
+  </h2>
+</div>
+
+<div style={card}>
+  <h3>🌍 Languages</h3>
+  <h2>
+    {profile?.languagesTranslated || 0}
+  </h2>
+</div>
+</div>
+);
 }
 
 const card = {
