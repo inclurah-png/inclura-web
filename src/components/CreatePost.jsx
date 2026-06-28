@@ -83,13 +83,17 @@ function CreatePost() {
       */
 
       await addDoc(
-        collection(db, "posts"),
-        {
-          text: postText,
+  collection(db, "posts"),
+  {
+    text: postText,
 
-          category,
+    language: "auto",
 
-          userId: user.uid,
+    translatedText: {},
+
+    category,
+
+    userId: user.uid,
 
           userName:
             profile?.fullName ||
