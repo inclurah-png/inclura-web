@@ -1,3 +1,11 @@
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import { storage } from "../firebase";
+
 import { useState, useRef } from "react";
 
 import {
@@ -72,15 +80,30 @@ function CreatePost() {
       const profile =
         userSnap.data();
 
-      /*
-      FUTURE STORAGE INTEGRATION
+let imageUrl = "";
+let videoUrl = "";
 
-      let imageUrl = "";
-      let videoUrl = "";
+if (imageFile) {
+  const imageRef = ref(
+    storage,
+    `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
+  );
 
-      Upload image/video to Firebase Storage here
-      and assign download URLs.
-      */
+  await uploadBytes(imageRef, imageFile);
+
+  imageUrl = await getDownloadURL(imageRef);
+}
+
+if (videoFile) {
+  const videoRef = ref(
+    storage,
+    `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
+  );
+
+  await uploadBytes(videoRef, videoFile);
+
+  videoUrl = await getDownloadURL(videoRef);
+}
 
       await addDoc(
   collection(db, "posts"),
@@ -128,9 +151,9 @@ function CreatePost() {
             profile?.premiumTier ||
             "",
 
-          imageUrl: "",
+          imageUrl,
 
-          videoUrl: "",
+          videoUrl,
 
           likes: [],
 
@@ -146,6 +169,8 @@ function CreatePost() {
   "👏": 0,
   "👎": 0,
 },
+
+userReactions: {},
 
 creatorScore: 0,
 
