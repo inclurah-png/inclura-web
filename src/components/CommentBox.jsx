@@ -27,7 +27,6 @@ async function handleComment() {
 if (!comment.trim()) return;
 
 try {
-
 const user =
 auth.currentUser;
 
@@ -40,6 +39,7 @@ postId,
 ),
 {
 {
+ 
   text: comment,
 
   language: "auto",
