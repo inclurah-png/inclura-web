@@ -1,4 +1,74 @@
-function ProfileHeader({ profile }) {
+import { useRef } from "react";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import {
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import {
+  auth,
+  db,
+  storage,
+} from "../firebase";
+
+function ProfileHeader({
+  profile,
+}) {
+  const fileInputRef =
+    useRef(null);
+
+  async function uploadPhoto(
+    e
+  ) {
+    try {
+      const file =
+        e.target.files?.[0];
+
+      if (!file) return;
+
+      const user =
+        auth.currentUser;
+
+      if (!user) return;
+
+      const storageRef = ref(
+        storage,
+        `profiles/${user.uid}`
+      );
+
+      await uploadBytes(
+        storageRef,
+        file
+      );
+
+      const url =
+        await getDownloadURL(
+          storageRef
+        );
+
+      await updateDoc(
+        doc(
+          db,
+          "users",
+          user.uid
+        ),
+        {
+          profilePhoto: url,
+        }
+      );
+
+      window.location.reload();
+    } catch (error) {
+      alert(error.message);
+    }
+  }
+  
   const getDaysLeft = () => {
   if (
     !profile?.premiumExpiryDate
@@ -107,6 +177,41 @@ function ProfileHeader({ profile }) {
             profile?.profilePhoto ||
             "https://via.placeholder.com/120"
           }
+          
+          <div
+  style={{
+    marginTop: "10px",
+  }}
+>
+  <button
+    onClick={() =>
+      fileInputRef.current?.click()
+    }
+    style={{
+      padding: "8px 14px",
+      borderRadius: "12px",
+      border: "none",
+      background: "#38bdf8",
+      color: "white",
+      cursor: "pointer",
+    }}
+  >
+    📷 Change Photo
+  </button>
+
+  <input
+    type="file"
+    accept="image/*"
+    ref={fileInputRef}
+    onChange={
+      uploadPhoto
+    }
+    style={{
+      display: "none",
+    }}
+  />
+</div>
+        
           alt="Profile"
           style={{
             width: "120px",
