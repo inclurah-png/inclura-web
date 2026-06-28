@@ -108,6 +108,12 @@ userSnap.exists()
 
   const postRef = doc(db, "posts", postId);
 
+  const postSnap = await getDoc(postRef);
+
+  if (!postSnap.exists()) return;
+
+  const post = postSnap.data();
+
   const scoreMap = {
     "❤️": 4,
     "👏": 3,
@@ -119,18 +125,44 @@ userSnap.exists()
     "👎": -3,
   };
 
-  await updateDoc(postRef,{
-  reactions: {
+  const previousReaction =
+    post.userReactions?.[user.uid];
+
+  let reactions = {
     ...(post.reactions || {}),
-    [emoji]:
-      (post.reactions?.[emoji] || 0)+1,
-  },
-  creatorScore:
-    (post.creatorScore || 0)
-    + scoreMap[emoji],
-});
-    
-  } 
+  };
+
+  let creatorScore =
+    post.creatorScore || 0;
+
+  // Remove old reaction if user already reacted
+  if (previousReaction) {
+    reactions[previousReaction] =
+      Math.max(
+        0,
+        (reactions[previousReaction] || 1) - 1
+      );
+
+    creatorScore -=
+      scoreMap[previousReaction] || 0;
+  }
+
+  // Add new reaction
+  reactions[emoji] =
+    (reactions[emoji] || 0) + 1;
+
+  creatorScore +=
+    scoreMap[emoji] || 0;
+
+  await updateDoc(postRef, {
+    reactions,
+    creatorScore,
+    userReactions: {
+      ...(post.userReactions || {}),
+      [user.uid]: emoji,
+    },
+  });
+}
 
   function handleShare(postId) {
     const url =
