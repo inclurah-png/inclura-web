@@ -149,8 +149,15 @@ userSnap.exists()
     post.userReactions?.[user.uid];
 
   let reactions = {
-    ...(post.reactions || {}),
-  };
+  "👍": post.reactions?.["👍"] || 0,
+  "❤️": post.reactions?.["❤️"] || 0,
+  "😂": post.reactions?.["😂"] || 0,
+  "😊": post.reactions?.["😊"] || 0,
+  "😮": post.reactions?.["😮"] || 0,
+  "😢": post.reactions?.["😢"] || 0,
+  "👏": post.reactions?.["👏"] || 0,
+  "👎": post.reactions?.["👎"] || 0,
+};
 
   let creatorScore =
     post.creatorScore || 0;
@@ -183,6 +190,45 @@ userSnap.exists()
     },
   });
 }
+  async function translatePost(post) {
+  try {
+    // If the post is already translated into the user's language,
+    // do nothing.
+    if (
+      post.translatedText &&
+      post.translatedText[userLanguage]
+    ) {
+      return;
+    }
+
+    // Temporary translation until the real translation API
+    // is connected.
+    const translatedText = {
+      ...(post.translatedText || {}),
+      [userLanguage]: post.text,
+    };
+
+    await updateDoc(
+      doc(db, "posts", post.id),
+      {
+        translatedText,
+      }
+    );
+  } catch (error) {
+    console.log(error);
+    alert("Translation failed.");
+  }
+  }
+  
+  const creatorRef = doc(
+  db,
+  "users",
+  post.userId
+);
+
+await updateDoc(creatorRef, {
+  creatorScore,
+});
   
   function handleShare(postId) {
     const url =
@@ -452,6 +498,7 @@ userSnap.exists()
           emoji
         )
       }
+      
       style={{
         padding: "8px 12px",
         borderRadius: "20px",
