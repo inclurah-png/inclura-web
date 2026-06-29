@@ -189,6 +189,16 @@ userSnap.exists()
       [user.uid]: emoji,
     },
   });
+
+  const creatorRef = doc(
+  db,
+  "users",
+  post.userId
+);
+
+await updateDoc(creatorRef, {
+  creatorScore,
+});
 }
   async function translatePost(post) {
   try {
