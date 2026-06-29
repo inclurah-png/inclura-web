@@ -120,7 +120,7 @@ if (
 
       <CreatePost />
 
-      <Feed />
+      <Feed profile={profile} />
     </DashboardLayout>
   );
 }
