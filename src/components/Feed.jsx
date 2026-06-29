@@ -181,6 +181,7 @@ userSnap.exists()
   creatorScore +=
     scoreMap[emoji] || 0;
 
+  // Save the reaction on the post
   await updateDoc(postRef, {
     reactions,
     creatorScore,
@@ -190,20 +191,20 @@ userSnap.exists()
     },
   });
 
+  // Update the creator's total score
   const creatorRef = doc(
-  db,
-  "users",
-  post.userId
-);
+    db,
+    "users",
+    post.userId
+  );
 
-await updateDoc(creatorRef, {
-  creatorScore,
-});
+  await updateDoc(creatorRef, {
+    creatorScore,
+  });
 }
+
   async function translatePost(post) {
   try {
-    // If the post is already translated into the user's language,
-    // do nothing.
     if (
       post.translatedText &&
       post.translatedText[userLanguage]
@@ -211,8 +212,6 @@ await updateDoc(creatorRef, {
       return;
     }
 
-    // Temporary translation until the real translation API
-    // is connected.
     const translatedText = {
       ...(post.translatedText || {}),
       [userLanguage]: post.text,
@@ -228,28 +227,16 @@ await updateDoc(creatorRef, {
     console.log(error);
     alert("Translation failed.");
   }
-  }
-  
-  const creatorRef = doc(
-  db,
-  "users",
-  post.userId
-);
+}
 
-await updateDoc(creatorRef, {
-  creatorScore,
-});
-  
-  function handleShare(postId) {
-    const url =
-      `${window.location.origin}/post/${postId}`;
+function handleShare(postId) {
+  const url =
+    `${window.location.origin}/post/${postId}`;
 
-    navigator.clipboard.writeText(
-      url
-    );
+  navigator.clipboard.writeText(url);
 
-    alert("Post link copied!");
-  }
+  alert("Post link copied!");
+}
 
   function getBadge(post) {
     if (!post.verified)
