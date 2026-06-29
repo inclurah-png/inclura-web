@@ -144,23 +144,6 @@ userSnap.exists()
     "😢": 2,
     "👎": -3,
   };
-async function translatePost(post) {
-  if (
-    userLanguage ===
-    (post.language || "en")
-  ) {
-    alert(
-      "This post is already in your language."
-    );
-    return;
-  }
-
-  alert(
-    `Translation from ${
-      post.language || "auto"
-    } to ${userLanguage} will be connected in the next update.`
-  );
-}
     
   const previousReaction =
     post.userReactions?.[user.uid];
@@ -200,11 +183,6 @@ async function translatePost(post) {
     },
   });
 }
-async function translatePost(post) {
-  alert(
-    "Translation service will be connected in the next update."
-  );
-}
   
   function handleShare(postId) {
     const url =
@@ -217,14 +195,6 @@ async function translatePost(post) {
     alert("Post link copied!");
   }
 
-  <button
-  onClick={() =>
-    handleShare(post.id)
-  }
->
-  🔗 Share
-</button>
-  
   function getBadge(post) {
     if (!post.verified)
       return null;
@@ -412,7 +382,6 @@ async function translatePost(post) {
   ] || post.text}
 </p>
 
-                <button
   <button
   onClick={() =>
     translatePost(post)
