@@ -163,7 +163,12 @@ userSnap.exists()
     },
   });
 }
-
+async function translatePost(post) {
+  alert(
+    "Translation service will be connected in the next update."
+  );
+}
+  
   function handleShare(postId) {
     const url =
       `${window.location.origin}/post/${postId}`;
@@ -175,6 +180,14 @@ userSnap.exists()
     alert("Post link copied!");
   }
 
+  <button
+  onClick={() =>
+    handleShare(post.id)
+  }
+>
+  🔗 Share
+</button>
+  
   function getBadge(post) {
     if (!post.verified)
       return null;
@@ -360,6 +373,21 @@ userSnap.exists()
                   {post.text}
                 </p>
 
+                <button
+  onClick={() => translatePost(post)}
+  style={{
+    marginTop: "10px",
+    padding: "8px 14px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#334155",
+    color: "white",
+    cursor: "pointer",
+  }}
+>
+  🌍 Translate
+</button>
+                
                 {post.imageUrl && (
   <img
     src={post.imageUrl}
