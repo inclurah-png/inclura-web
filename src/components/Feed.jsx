@@ -45,7 +45,8 @@ function Feed() {
       );
     }
   }
-  loadLanguage();
+  
+    loadLanguage();
 
   const q = query(
     collection(db, "posts"),
