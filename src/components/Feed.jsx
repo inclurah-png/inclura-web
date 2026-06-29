@@ -9,7 +9,6 @@ import {
   doc,
   updateDoc,
   getDoc,
-  increment,
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
@@ -24,14 +23,35 @@ function Feed() {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] =
     useState([]);
+  const [userLanguage, setUserLanguage] =
+  useState("en");
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const q = query(
-      collection(db, "posts"),
-      orderBy("createdAt", "desc")
+  async function loadLanguage() {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    const userSnap = await getDoc(
+      doc(db, "users", user.uid)
     );
+
+    if (userSnap.exists()) {
+      setUserLanguage(
+        userSnap.data()
+          .preferredLanguage || "en"
+      );
+    }
+  }
+
+  loadLanguage();
+
+  const q = query(
+    collection(db, "posts"),
+    orderBy("createdAt", "desc")
+  );
 
     const unsubscribe =
       onSnapshot(q, (snapshot) => {
@@ -124,7 +144,24 @@ userSnap.exists()
     "😢": 2,
     "👎": -3,
   };
+async function translatePost(post) {
+  if (
+    userLanguage ===
+    (post.language || "en")
+  ) {
+    alert(
+      "This post is already in your language."
+    );
+    return;
+  }
 
+  alert(
+    `Translation from ${
+      post.language || "auto"
+    } to ${userLanguage} will be connected in the next update.`
+  );
+}
+    
   const previousReaction =
     post.userReactions?.[user.uid];
 
@@ -370,11 +407,16 @@ async function translatePost(post) {
                 </div>
 
                 <p>
-                  {post.text}
-                </p>
+  {post.translatedText?.[
+    userLanguage
+  ] || post.text}
+</p>
 
                 <button
-  onClick={() => translatePost(post)}
+  <button
+  onClick={() =>
+    translatePost(post)
+  }
   style={{
     marginTop: "10px",
     padding: "8px 14px",
@@ -489,8 +531,16 @@ async function translatePost(post) {
 >
   📌 Save
 </button>
+                  
+                    <button
+  onClick={() =>
+    handleShare(post.id)
+  }
+>
+  🔗 Share
+</button>
+                  
                 </div>
-
                 <CommentBox
                   postId={
                     post.id
