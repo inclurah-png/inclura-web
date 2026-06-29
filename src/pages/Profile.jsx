@@ -119,10 +119,8 @@ if (
       <StoriesSection />
 
       <CreatePost />
-
-function Feed({
-  profile,
-}) 
+      
+<Feed profile={profile} />
       
     </DashboardLayout>
   );
