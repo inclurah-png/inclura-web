@@ -45,7 +45,6 @@ function Feed() {
       );
     }
   }
-
   loadLanguage();
 
   const q = query(
