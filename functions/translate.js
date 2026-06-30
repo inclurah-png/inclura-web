@@ -8,6 +8,7 @@ export async function onRequestPost(context) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify({
           q: text,
@@ -18,18 +19,15 @@ export async function onRequestPost(context) {
       }
     );
 
-    const data = await response.json();
+    const raw = await response.text();
 
-    return new Response(
-      JSON.stringify({
-        translatedText: data.translatedText,
-      }),
-      {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    return new Response(raw, {
+      status: response.status,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
   } catch (err) {
     return new Response(
       JSON.stringify({
