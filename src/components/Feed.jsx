@@ -205,16 +205,38 @@ userSnap.exists()
 
   async function translatePost(post) {
   try {
+    // Don't translate if we already have it
     if (
-      post.translatedText &&
-      post.translatedText[userLanguage]
+      post.translatedText?.[userLanguage]
     ) {
+      return;
+    }
+
+    const response = await fetch(
+      "/api/translate",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: post.text,
+          target: userLanguage,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.error) {
+      alert(data.error);
       return;
     }
 
     const translatedText = {
       ...(post.translatedText || {}),
-      [userLanguage]: post.text,
+      [userLanguage]:
+        data.translatedText,
     };
 
     await updateDoc(
@@ -223,8 +245,20 @@ userSnap.exists()
         translatedText,
       }
     );
-  } catch (error) {
-    console.log(error);
+
+    // Update immediately without refreshing
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              translatedText,
+            }
+          : p
+      )
+    );
+  } catch (err) {
+    console.log(err);
     alert("Translation failed.");
   }
 }
