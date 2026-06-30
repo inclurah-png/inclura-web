@@ -203,40 +203,34 @@ userSnap.exists()
   });
 }
 
-  async function translatePost(post) {
+async function translatePost(post) {
   try {
-    // Don't translate if we already have it
-    if (
-      post.translatedText?.[userLanguage]
-    ) {
+    // Don't translate if already translated
+    if (post.translatedText?.[userLanguage]) {
       return;
     }
 
-    const response = await fetch(
-      "/api/translate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          text: post.text,
-          target: userLanguage,
-        }),
-      }
-    );
+    const response = await fetch("/translate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: post.text,
+        target: userLanguage,
+      }),
+    });
 
     const data = await response.json();
 
-    if (data.error) {
-      alert(data.error);
+    if (!response.ok || data.error) {
+      alert(data.error || "Translation failed.");
       return;
     }
 
     const translatedText = {
       ...(post.translatedText || {}),
-      [userLanguage]:
-        data.translatedText,
+      [userLanguage]: data.translatedText,
     };
 
     await updateDoc(
@@ -246,7 +240,7 @@ userSnap.exists()
       }
     );
 
-    // Update immediately without refreshing
+    // Update Feed immediately
     setPosts((prev) =>
       prev.map((p) =>
         p.id === post.id
@@ -257,8 +251,19 @@ userSnap.exists()
           : p
       )
     );
+
+    setFilteredPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              translatedText,
+            }
+          : p
+      )
+    );
   } catch (err) {
-    console.log(err);
+    console.error(err);
     alert("Translation failed.");
   }
 }
