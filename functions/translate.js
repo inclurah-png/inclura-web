@@ -21,6 +21,9 @@ export async function onRequestPost(context) {
 
     const raw = await response.text();
 
+    console.log("Status:", response.status);
+    console.log("Response:", raw);
+
     return new Response(raw, {
       status: response.status,
       headers: {
@@ -29,6 +32,8 @@ export async function onRequestPost(context) {
     });
 
   } catch (err) {
+    console.log("Cloudflare Error:", err);
+
     return new Response(
       JSON.stringify({
         error: err.message,
