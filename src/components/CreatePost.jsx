@@ -1,5 +1,3 @@
-import { storage } from "../firebase";
-
 import {
   addVideoPost,
   addTextPost,
