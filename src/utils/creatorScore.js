@@ -6,11 +6,16 @@ import {
 
 import { db } from "../firebase";
 
+// NEW IMPORT
+import { checkCreatorQualification } from "./creatorQualification";
+
 export async function addVideoPost(uid) {
   await updateDoc(doc(db, "users", uid), {
     "creatorEconomy.monthlyVideoPosts": increment(1),
     "creatorEconomy.creatorScore": increment(4),
   });
+
+  await checkCreatorQualification(uid);
 }
 
 export async function addTextPost(uid) {
@@ -18,6 +23,8 @@ export async function addTextPost(uid) {
     "creatorEconomy.monthlyTextPosts": increment(1),
     "creatorEconomy.creatorScore": increment(2),
   });
+
+  await checkCreatorQualification(uid);
 }
 
 export async function addCrossPost(uid) {
@@ -25,10 +32,14 @@ export async function addCrossPost(uid) {
     "creatorEconomy.monthlyCrossPosts": increment(1),
     "creatorEconomy.creatorScore": increment(5),
   });
+
+  await checkCreatorQualification(uid);
 }
 
 export async function addComment(uid) {
   await updateDoc(doc(db, "users", uid), {
     "creatorEconomy.communityTrust": increment(2),
   });
+
+  await checkCreatorQualification(uid);
 }
