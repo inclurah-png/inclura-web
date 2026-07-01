@@ -116,8 +116,7 @@ userSnap.exists()
 
         alert("Post saved");
       }
-    } 
-    catch (err) {
+    } catch (err) {
   console.error(err);
 
   alert(
