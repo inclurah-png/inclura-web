@@ -208,7 +208,9 @@ userSnap.exists()
 }
 
 async function translatePost(post) {
- console.log("Translate button clicked");
+ console.log("🌍 Translate button clicked");
+console.log("Language:", userLanguage);
+console.log("Text:", post.text);
   
   try {
     // Don't translate if already translated
@@ -216,6 +218,7 @@ async function translatePost(post) {
       return;
     }
 
+    console.log("Calling /translate...");
     const response = await fetch("/translate", {
       method: "POST",
       headers: {
@@ -228,7 +231,9 @@ async function translatePost(post) {
     });
 
     const data = await response.json();
-
+    console.log("Response status:", response.status);
+    console.log("Response data:", data);
+    
     if (!response.ok || data.error) {
       alert(data.error || "Translation failed.");
       return;
