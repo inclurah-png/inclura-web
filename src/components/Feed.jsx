@@ -124,7 +124,7 @@ userSnap.exists()
     err.message
   );
 }
-
+  }
   async function reactToPost(postId, emoji) {
   const user = auth.currentUser;
 
