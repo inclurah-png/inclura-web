@@ -3,37 +3,30 @@ export async function onRequestPost(context) {
     const { text, target } = await context.request.json();
 
     const response = await fetch(
-      "https://libretranslate.de/translate",
+      "https://de.libretranslate.com/translate",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json",
         },
         body: JSON.stringify({
           q: text,
           source: "auto",
-          target: target,
+          target,
           format: "text",
         }),
       }
     );
 
-    const raw = await response.text();
+    const data = await response.json();
 
-    console.log("Status:", response.status);
-    console.log("Response:", raw);
-
-    return new Response(raw, {
-      status: response.status,
+    return new Response(JSON.stringify(data), {
       headers: {
         "Content-Type": "application/json",
       },
     });
 
   } catch (err) {
-    console.log("Cloudflare Error:", err);
-
     return new Response(
       JSON.stringify({
         error: err.message,
