@@ -1,3 +1,5 @@
+import { checkCreatorQualification } from "../utils/creatorQualification";
+
 import { useEffect, useState } from "react";
 
 import {
@@ -119,7 +121,8 @@ try {
           ),
       }
     );
-
+await checkCreatorQualification(targetUserId);
+    
     await updateDoc(
       targetUserRef,
       {
