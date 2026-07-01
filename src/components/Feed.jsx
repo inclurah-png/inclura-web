@@ -116,10 +116,15 @@ userSnap.exists()
 
         alert("Post saved");
       }
-    } catch (error) {
-      alert(error.message);
-    }
-  }
+    } 
+    catch (err) {
+  console.error(err);
+
+  alert(
+    "Translation failed:\n" +
+    err.message
+  );
+}
 
   async function reactToPost(postId, emoji) {
   const user = auth.currentUser;
