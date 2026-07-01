@@ -1,4 +1,9 @@
 import {
+  addVideoPost,
+  addTextPost,
+} from "../utils/creatorScore";
+
+import {
   ref,
   uploadBytes,
   getDownloadURL,
@@ -184,6 +189,16 @@ saveCount: 0,
             serverTimestamp(),
         }
       );
+      
+      // ---------------------------
+// Update Creator Economy
+// ---------------------------
+
+if (videoFile) {
+  await addVideoPost(user.uid);
+} else {
+  await addTextPost(user.uid);
+}
 
       setPostText("");
       setImageFile(null);
