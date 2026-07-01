@@ -18,7 +18,15 @@ export async function onRequestPost(context) {
       }
     );
 
-    const data = await response.json();
+    const text = await response.text();
+
+console.log(text);
+
+return new Response(text, {
+  headers: {
+    "Content-Type": "text/plain",
+  },
+});
 
     return new Response(JSON.stringify(data), {
       headers: {
