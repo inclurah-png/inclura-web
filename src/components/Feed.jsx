@@ -204,6 +204,8 @@ userSnap.exists()
 }
 
 async function translatePost(post) {
+ console.log("Translate button clicked");
+  
   try {
     // Don't translate if already translated
     if (post.translatedText?.[userLanguage]) {
