@@ -1,3 +1,5 @@
+import { storage } from "../firebase";
+
 import {
   addVideoPost,
   addTextPost,
@@ -199,7 +201,14 @@ if (videoFile) {
 } else {
   await addTextPost(user.uid);
 }
+      
+if (videoFile) {
+  await addVideoPost(user.uid);
+}
 
+if (!videoFile) {
+  await addTextPost(user.uid);
+}
       setPostText("");
       setImageFile(null);
       setVideoFile(null);
