@@ -32,9 +32,3 @@ export async function addComment(uid) {
     "creatorEconomy.communityTrust": increment(2),
   });
 }
-export async function addCrossPost(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    "creatorEconomy.monthlyCrossPosts": increment(1),
-    "creatorEconomy.creatorScore": increment(5),
-  });
-}
