@@ -17,7 +17,6 @@ export async function addVideoPost(uid) {
 
   await checkCreatorQualification(uid);
 }
-
 export async function addTextPost(uid) {
   await updateDoc(doc(db, "users", uid), {
     "creatorEconomy.monthlyTextPosts": increment(1),
@@ -26,7 +25,6 @@ export async function addTextPost(uid) {
 
   await checkCreatorQualification(uid);
 }
-
 export async function addCrossPost(uid) {
   await updateDoc(doc(db, "users", uid), {
     "creatorEconomy.monthlyCrossPosts": increment(1),
