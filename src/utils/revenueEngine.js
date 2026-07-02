@@ -1,3 +1,5 @@
+import { getDoc } from "firebase/firestore";
+
 import {
   doc,
   updateDoc,
@@ -81,28 +83,38 @@ export async function distributeRevenue(
   source,
   description
 ) {
-  const creatorShare = totalRevenue * 0.55;
+  const creatorPoolContribution = totalRevenue * 0.55;
   const platformShare = totalRevenue * 0.45;
+  const userSnap = await getDoc(doc(db, "users", uid));
 
-  // Credit creator wallet
-  await creditCreatorWallet(uid, creatorShare);
+if (!userSnap.exists()) return;
 
-  // Save transaction
-  await recordTransaction(
-    uid,
-    creatorShare,
-    source,
-    description
-  );
+const user = userSnap.data();
 
-  // Update revenue pool
+const creator = user.creatorEconomy || {};
+
+const eligible =
+  user.creatorVerified === true &&
+  creator.premiumQualified === true &&
+  creator.premiumTier;
+
+if (!eligible) {
+  // Creator receives nothing
   await updateDoc(doc(db, "revenuePool", "current"), {
-    creatorPoolShare: increment(creatorShare),
-    platformPoolShare: increment(platformShare),
+    platformPoolShare: increment(totalRevenue),
   });
 
+  return;
+}
+
+  // Update revenue pool
+await updateDoc(doc(db, "revenuePool", "current"), {
+  creatorPoolShare: increment(creatorPoolContribution),
+  platformPoolShare: increment(platformShare),
+});
+
   return {
-    creatorShare,
-    platformShare,
-  };
-    }
+  creatorPoolContribution,
+  platformShare,
+};
+}
