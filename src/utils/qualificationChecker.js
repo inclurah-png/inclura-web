@@ -18,9 +18,21 @@ export async function checkCreatorQualification(uid) {
 
   const economy = data.creatorEconomy || {};
 
+  const today = new Date().toISOString().split("T")[0];
+ 
+  const lastActive = economy.lastActiveDate || "";
+
+if (lastActive !== today) {
+  await updateDoc(userRef, {
+    "creatorEconomy.activeDays": (economy.activeDays || 0) + 1,
+    "creatorEconomy.lastActiveDate": today,
+  });
+
+  economy.activeDays = (economy.activeDays || 0) + 1;
+}
   const qualified =
     (data.followers?.length || 0) >= 4000 &&
-    (economy.activeDaysLast30 || 0) >= 16 &&
+    (economy.activeDays || 0) >= 20 &&
     (economy.monthlyVideoPosts || 0) >= 30 &&
     (economy.monthlyTextPosts || 0) >= 30 &&
     (economy.monthlyCrossPosts || 0) >= 60 &&
