@@ -11,75 +11,190 @@ import {
 
 import { db } from "../firebase";
 
-export async function runMonthlyPayout() {
-  const poolRef = doc(db, "system", "creatorRevenuePool");
+import { calculateCreatorWeights } from "./creatorWeight";
 
+export async function runMonthlyPayout() {
+  // Revenue Pool
+  const poolRef = doc(db, "revenuePool", "current");
   const poolSnap = await getDoc(poolRef);
 
   if (!poolSnap.exists()) return;
 
   const pool = poolSnap.data();
 
-  if (pool.payoutProcessed) return;
-
   const creatorPool =
-    pool.totalCreatorPool || 0;
+    pool.creatorContentRevenue || 0;
 
   if (creatorPool <= 0) return;
 
-  const users = await getDocs(
-    collection(db, "users")
+  // Revenue Policy
+  const policySnap = await getDoc(
+    doc(db, "system", "creatorRevenuePolicy")
   );
 
-  const qualifiedCreators = [];
+  if (!policySnap.exists()) return;
 
-  users.forEach((userDoc) => {
-    const user = userDoc.data();
+  const policy = policySnap.data();
 
-    const economy = user.creatorEconomy || {};
+  // Qualified Creators + Weights
+  const result = await calculateCreatorWeights();
 
-    if (
-      user.creatorVerified === true &&
-      economy.premiumQualified === true &&
-      economy.premiumTier
-    ) {
-      qualifiedCreators.push({
-        uid: userDoc.id,
-      });
-    }
-  });
+  const creators = result.creators;
 
-  if (qualifiedCreators.length === 0) return;
+  const totalWeight = result.totalWeight;
 
-  const payout =
-    creatorPool / qualifiedCreators.length;
+  const qualifiedCreators =
+    creators.length;
 
-  for (const creator of qualifiedCreators) {
+  if (
+    qualifiedCreators === 0 ||
+    totalWeight === 0
+  )
+    return;
+
+  // Determine Release %
+  let releasedPercent = 0;
+
+  if (
+    qualifiedCreators >=
+    policy.tier10MinCreators
+  )
+    releasedPercent =
+      policy.tier10Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier9MinCreators
+  )
+    releasedPercent =
+      policy.tier9Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier8MinCreators
+  )
+    releasedPercent =
+      policy.tier8Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier7MinCreators
+  )
+    releasedPercent =
+      policy.tier7Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier6MinCreators
+  )
+    releasedPercent =
+      policy.tier6Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier5MinCreators
+  )
+    releasedPercent =
+      policy.tier5Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier4MinCreators
+  )
+    releasedPercent =
+      policy.tier4Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier3MinCreators
+  )
+    releasedPercent =
+      policy.tier3Release;
+  else if (
+    qualifiedCreators >=
+    policy.tier2MinCreators
+  )
+    releasedPercent =
+      policy.tier2Release;
+  else
+    releasedPercent =
+      policy.tier1Release;
+
+  // Hidden Platform Growth Reserve
+  let growthReserve = 0;
+
+  if (
+    qualifiedCreators <
+    policy.tier10MinCreators
+  ) {
+    growthReserve =
+      policy.growthReserveDefault;
+  }
+
+  // Money Calculations
+  const releasedAmount =
+    creatorPool *
+    (releasedPercent / 55);
+
+  const growthReserveAmount =
+    creatorPool *
+    (growthReserve / 55);
+
+  const creatorReserveAmount =
+    creatorPool -
+    releasedAmount -
+    growthReserveAmount;
+
+  // Pay Creators by Weight
+  for (const creator of creators) {
+    const payout =
+      (creator.weight / totalWeight) *
+      releasedAmount;
+
     await updateDoc(
-      doc(db, "creatorWallets", creator.uid),
+      doc(
+        db,
+        "creatorWallets",
+        creator.uid
+      ),
       {
-        availableBalance: increment(payout),
-        lifetimeEarnings: increment(payout),
-        lastUpdated: serverTimestamp(),
+        availableBalance:
+          increment(payout),
+        lifetimeEarnings:
+          increment(payout),
+        lastUpdated:
+          serverTimestamp(),
       }
     );
 
     await addDoc(
-      collection(db, "creatorTransactions"),
+      collection(
+        db,
+        "creatorTransactions"
+      ),
       {
         uid: creator.uid,
         amount: payout,
-        source: "Monthly Creator Revenue Share",
+        source:
+          "Monthly Creator Revenue Share",
         status: "completed",
-        createdAt: serverTimestamp(),
+        createdAt:
+          serverTimestamp(),
       }
     );
   }
 
+  // Update Pool (Admin Only)
   await updateDoc(poolRef, {
-    totalCreatorPool: 0,
+    creatorContentRevenue: 0,
+
+    creatorReserve:
+      increment(
+        creatorReserveAmount
+      ),
+
+    platformGrowthReserve:
+      increment(
+        growthReserveAmount
+      ),
+
     totalQualifiedCreators:
-      qualifiedCreators.length,
-    payoutProcessed: true,
+      qualifiedCreators,
+
+    lastMonthlyPayout:
+      serverTimestamp(),
   });
-        }
+}
