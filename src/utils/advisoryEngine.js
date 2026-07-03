@@ -1,3 +1,5 @@
+import { getCreatorEconomyInsights } from "./creatorEconomyInsights";
+
 import {
   collection,
   getDocs,
@@ -12,38 +14,29 @@ export async function runAdvisoryEngine() {
     collection(db, "users")
   );
 
-  let qualifiedCreators = 0;
-  let totalCreatorScore = 0;
-  let totalWatchMinutes = 0;
-  let totalEngagement = 0;
-  let totalReferralQuality = 0;
+  const insights =
+  await getCreatorEconomyInsights();
 
-  usersSnapshot.forEach((docSnap) => {
-    const user = docSnap.data();
+const qualifiedCreators =
+  insights.qualifiedCreators;
 
-    const economy =
-      user.creatorEconomy || {};
+const averageCreatorScore =
+  insights.averageCreatorScore;
 
-    if (
-      user.creatorVerified === true &&
-      economy.premiumQualified === true &&
-      economy.premiumTier
-    ) {
-      qualifiedCreators++;
+const averageWatchMinutes =
+  insights.averageWatchMinutes;
 
-      totalCreatorScore +=
-        economy.creatorScore || 0;
+const averageEngagement =
+  insights.averageEngagement;
 
-      totalWatchMinutes +=
-        economy.totalWatchMinutes || 0;
+const averageReferralQuality =
+  insights.averageReferralQuality;
 
-      totalEngagement +=
-        economy.engagementScore || 0;
+const averageCommunityTrust =
+  insights.averageCommunityTrust;
 
-      totalReferralQuality +=
-        user.referralQualityScore || 0;
-    }
-  });
+const creatorHealth =
+  insights.creatorHealth;
 
   if (qualifiedCreators === 0) return;
 
