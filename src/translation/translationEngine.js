@@ -11,6 +11,10 @@ import {
   isSupportedLanguage,
 } from "./languageDetector";
 
+import {
+  getCachedTranslation,
+} from "./translationCache";
+
 /**
  * Placeholder translator.
  * This will later call SeamlessM4T.
@@ -43,6 +47,22 @@ export async function translateContent({
 
   const originalLanguage =
     detected.code;
+
+  // Check whether this translation already exists
+const cached =
+  await getCachedTranslation(
+    sourceId,
+    targetLanguage
+  );
+
+if (cached) {
+  return {
+    originalLanguage: cached.originalLanguage,
+    targetLanguage: cached.targetLanguage,
+    translatedText: cached.translatedText,
+    confidence: cached.confidence,
+  };
+}
 
   // Unsupported target
   if (
