@@ -6,6 +6,8 @@ import { runCommunityScheduler } from "./communityScheduler";
 
 import { runTranslationScheduler } from "../translation/translationScheduler";
 
+import { updateModerationInsights } from "./moderationInsights";
+
 /**
  * Inclura Master AI Scheduler
  *
@@ -29,6 +31,8 @@ export async function runAIScheduler() {
 
     // Community Intelligence
     await runCommunityScheduler();
+
+    await updateModerationInsights();
 
     console.log(
       "✅ Inclura AI Scheduler Finished."
