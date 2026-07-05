@@ -1,0 +1,78 @@
+/**
+ * SeamlessM4T Provider
+ *
+ * Handles:
+ * - Text → Text
+ * - Speech → Text
+ * - Speech → Speech
+ */
+
+const BASE_URL =
+  import.meta.env.VITE_SEAMLESS_API;
+
+export async function translateText({
+  text,
+  sourceLanguage,
+  targetLanguage,
+}) {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/translate`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          text,
+          sourceLanguage,
+          targetLanguage,
+        }),
+      }
+    );
+
+    return await response.json();
+  } catch (error) {
+    console.error(
+      "SeamlessM4T Error:",
+      error
+    );
+
+    throw error;
+  }
+}
+
+export async function translateAudio(
+  audioUrl,
+  sourceLanguage,
+  targetLanguage
+) {
+  try {
+    const response = await fetch(
+      `${BASE_URL}/speech`,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "application/json",
+        },
+
+        body: JSON.stringify({
+          audioUrl,
+          sourceLanguage,
+          targetLanguage,
+        }),
+      }
+    );
+
+    return await response.json();
+  } catch (error) {
+    console.error(error);
+
+    throw error;
+  }
+}

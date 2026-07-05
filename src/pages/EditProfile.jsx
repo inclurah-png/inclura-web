@@ -31,6 +31,11 @@ function EditProfile() {
 
   const [category, setCategory] =
     useState("");
+  
+  const [
+  preferredLanguage,
+  setPreferredLanguage,
+] = useState("en");
 
   const [photoURL, setPhotoURL] =
     useState("");
@@ -85,6 +90,10 @@ function EditProfile() {
         setCategory(
           data.category || ""
         );
+
+        setPreferredLanguage(
+  data.preferredLanguage || "en"
+);
 
         setPhotoURL(
           data.photoURL || ""
@@ -147,21 +156,22 @@ function EditProfile() {
       if (!user) return;
 
       await updateDoc(
-        doc(
-          db,
-          "users",
-          user.uid
-        ),
-        {
-          fullName,
-          location,
-          phoneNumber,
-          bio,
-          category,
-          accessibilityNeeds,
-          photoURL,
-        }
-      );
+  doc(
+    db,
+    "users",
+    user.uid
+  ),
+  {
+    fullName,
+    location,
+    phoneNumber,
+    bio,
+    category,
+    preferredLanguage,
+    accessibilityNeeds,
+    photoURL,
+  }
+);
 
       alert(
         "Profile updated successfully"
@@ -377,6 +387,35 @@ function EditProfile() {
             Advocate
           </option>
         </select>
+
+        <select
+  value={preferredLanguage}
+  onChange={(e) =>
+    setPreferredLanguage(
+      e.target.value
+    )
+  }
+  style={{
+    width: "100%",
+    padding: "16px",
+    marginBottom: "16px",
+    borderRadius: "14px",
+    border: "1px solid #334155",
+    background: "#ffffff",
+    color: "#000000",
+    boxSizing: "border-box",
+  }}
+>
+  <option value="en">English</option>
+  <option value="fr">French</option>
+  <option value="es">Spanish</option>
+  <option value="pt">Portuguese</option>
+  <option value="ar">Arabic</option>
+  <option value="sw">Swahili</option>
+  <option value="ha">Hausa</option>
+  <option value="yo">Yoruba</option>
+  <option value="ig">Igbo</option>
+</select>
 
         <div
           style={{

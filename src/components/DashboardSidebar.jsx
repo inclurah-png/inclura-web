@@ -1,4 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useState,
+  useEffect,
+} from "react";
+import { useAuth } from "../context/AuthContext";
+import { useTranslation } from "react-i18next";
 import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +11,9 @@ import { signOut } from "firebase/auth";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
-  const user = auth.currentUser;
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  
 
 const [role, setRole] = useState("");
 
@@ -63,62 +70,62 @@ const isAdmin = role === "admin";
         flexShrink: 0,
       }}
     >
-      <h2
-        style={{
-          marginBottom: "24px",
-          color: "white",
-        }}
-      >
-        Inclura
-      </h2>
+<h2
+  style={{
+    marginBottom: "24px",
+    color: "white",
+  }}
+>
+  {t("appName")}
+</h2>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/profile")}
       >
-        🏠 Dashboard
+        🏠 {t("dashboard")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/notifications")}
       >
-        🔔 Notifications
+        🔔 {t("notifications")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/messages")}
       >
-        💬 Messages
+        💬 {t("messages")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/wallet")}
       >
-        💰 Wallet
+        💰 {t("wallet")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/saved-posts")}
       >
-        🔖 Saved Posts
+        🔖 {t("savedPosts")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/search")}
       >
-        🔍 Search
+        🔍 {t("search")}
       </div>
 
       <div
         style={itemStyle}
         onClick={() => navigate("/edit-profile")}
       >
-        ⚙ Edit Profile
+        ⚙ {t("editProfile")}
       </div>
 
       <div
@@ -127,7 +134,7 @@ const isAdmin = role === "admin";
           navigate("/verification-center")
         }
       >
-        🔐 Verification Center
+        🔐 {t("verificationCenter")}
       </div>
 
       <div
@@ -136,7 +143,7 @@ const isAdmin = role === "admin";
           navigate("/accessibility")
         }
       >
-        ♿ Accessibility Hub
+        ♿ {t("accessibilityHub")}
       </div>
 
       <div
@@ -145,7 +152,7 @@ const isAdmin = role === "admin";
           navigate("/opportunities")
         }
       >
-        💼 Opportunities Hub
+        💼 {t("opportunitiesHub")}
       </div>
 
       <div
@@ -154,7 +161,7 @@ const isAdmin = role === "admin";
           navigate("/care-gigs")
         }
       >
-        🤝 Care-Gigs
+        🤝 {t("careGigs")}
       </div>
 
       <div
@@ -163,7 +170,7 @@ const isAdmin = role === "admin";
           navigate("/mentor-hub")
         }
       >
-        🎓 Mentor Hub
+        🎓 {t("mentorHub")}
       </div>
 
       <div
@@ -172,7 +179,7 @@ const isAdmin = role === "admin";
           navigate("/marketplace")
         }
       >
-        🛒 Marketplace
+        🛒 {t("marketplace")}
       </div>
 
       <div
@@ -181,7 +188,7 @@ const isAdmin = role === "admin";
           navigate("/reels-system")
         }
       >
-        🎥 Reels
+        🎥 {t("reels")}
       </div>
 
       {isCreator && (
@@ -192,7 +199,7 @@ const isAdmin = role === "admin";
         navigate("/creator-earnings")
       }
     >
-      💵 Creator Earnings
+      💵 {t("creatorEarnings")}
     </div>
 
     <div
@@ -201,7 +208,7 @@ const isAdmin = role === "admin";
         navigate("/creator-monetization")
       }
     >
-      💵 Creator Monetization
+      💵 {t("creatorMonetization")}
     </div>
 
     <div
@@ -210,7 +217,7 @@ const isAdmin = role === "admin";
         navigate("/creator-analytics")
       }
     >
-      📈 Creator Analytics
+    📈 {t("creatorAnalytics")}
     </div>
   </>
 )}
@@ -223,7 +230,7 @@ const isAdmin = role === "admin";
         navigate("/advertiser-dashboard")
       }
     >
-      📢 Advertiser Dashboard
+      📢 {t("advertiserDashboard")}
     </div>
 
     <div
@@ -232,7 +239,7 @@ const isAdmin = role === "admin";
         navigate("/ad-manager")
       }
     >
-      📢 Ad Manager
+      📢 {t("adManager")}
     </div>
   </>
 )}
@@ -245,7 +252,7 @@ const isAdmin = role === "admin";
         navigate("/enterprise")
       }
     >
-      🏢 Enterprise
+      🏢 {t("enterprise")}
     </div>
 
     <div
@@ -254,7 +261,7 @@ const isAdmin = role === "admin";
         navigate("/enterprise-ads")
       }
     >
-      🏢 Enterprise Ads
+      🏢 {t("enterpriseAds")}
     </div>
 
     <div
@@ -263,7 +270,7 @@ const isAdmin = role === "admin";
         navigate("/enterprise-campaigns")
       }
     >
-      🏢 Enterprise Campaigns
+      🏢 {t("enterpriseCampaigns")}
     </div>
 
     <div
@@ -272,7 +279,7 @@ const isAdmin = role === "admin";
         navigate("/enterprise-analytics")
       }
     >
-      🏢 Enterprise Analytics
+      🏢 {t("enterpriseAnalytics")}
     </div>
   </>
 )}
@@ -285,7 +292,7 @@ const isAdmin = role === "admin";
         navigate("/platform-analytics")
       }
     >
-      📊 Platform Analytics
+      📊 {t("platformAnalytics")}
     </div>
 
     <div
@@ -294,7 +301,7 @@ const isAdmin = role === "admin";
         navigate("/pricing-manager")
       }
     >
-      💲 Pricing Manager
+      💲 {t("pricingManager")}
     </div>
 
     <div
@@ -303,7 +310,7 @@ const isAdmin = role === "admin";
         navigate("/users-management")
       }
     >
-      👥 Users Management
+      👥 {t("usersManagement")}
     </div>
 
     <div
@@ -312,7 +319,7 @@ const isAdmin = role === "admin";
         navigate("/reports-violations")
       }
     >
-      🚨 Reports & Violations
+      🚨 {t("reportsViolations")}
     </div>
 
     <div
@@ -321,7 +328,7 @@ const isAdmin = role === "admin";
         navigate("/verification-requests")
       }
     >
-      📋 Verification Requests
+      📋 {t("verificationRequests")}
     </div>
 
     <div
@@ -330,7 +337,7 @@ const isAdmin = role === "admin";
         navigate("/verification-manager")
       }
     >
-      ✅ Verification Manager
+      ✅ {t("verificationManager")}
     </div>
 
     <div
@@ -339,7 +346,7 @@ const isAdmin = role === "admin";
         navigate("/wallet-monitoring")
       }
     >
-      💰 Wallet Monitoring
+      💰 {t("walletMonitoring")}
     </div>
 
     <div
@@ -348,7 +355,7 @@ const isAdmin = role === "admin";
         navigate("/ad-approval")
       }
     >
-      📋 Ad Approval Queue
+      📋 {t("adApprovalQueue")}
     </div>
 
     <div
@@ -357,7 +364,7 @@ const isAdmin = role === "admin";
         navigate("/admin")
       }
     >
-      👨‍💼 Admin Panel
+      👨‍💼 {t("adminPanel")}
     </div>
   </>
 )}
@@ -368,7 +375,7 @@ const isAdmin = role === "admin";
           navigate("/sos")
         }
       >
-        🚨 SOS
+        🚨 {t("sos")}
       </div>
 
       <div
@@ -379,7 +386,7 @@ const isAdmin = role === "admin";
           marginTop: "20px",
         }}
       >
-        🚪 Logout
+        🚪 {t("logout")}
       </div>
     </div>
   );

@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from "react";
 
 import {
-collection,
-addDoc,
-serverTimestamp,
-query,
-orderBy,
-onSnapshot,
+  addDoc,
+  collection,
+  serverTimestamp,
+  doc,
+  updateDoc,
+  increment,
+  query,
+  orderBy,
+  onSnapshot,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -22,38 +24,57 @@ useState([]);
 
 async function handleComment() {
 
-if (!comment.trim()) return;
+  if (!comment.trim()) return;
 
-try {
+  try {
 
-const user =
-auth.currentUser;
+    const user = auth.currentUser;
 
-await addDoc(
-collection(
-db,
-"posts",
-postId,
-"comments"
-),
-{
-text: comment,
-userId: user.uid,
-userName:
-user.displayName ||
-"Inclura User",
-createdAt:
-serverTimestamp(),
-}
-);
+    await addDoc(
 
-setComment("");
+      collection(
+        db,
+        "posts",
+        postId,
+        "comments"
+      ),
 
-} catch (error) {
+      {
+        text: comment,
+        userId: user.uid,
+        userName:
+          user.displayName ||
+          "Inclura User",
 
-alert(error.message);
+        createdAt:
+          serverTimestamp(),
+      }
 
-}
+    );
+
+    // Update post comment count
+
+    const postRef = doc(
+      db,
+      "posts",
+      postId
+    );
+
+    await updateDoc(postRef, {
+      commentCount: increment(1),
+    });
+
+    // Update creator economy
+
+    await addComment(user.uid);
+
+    setComment("");
+
+  } catch (error) {
+
+    alert(error.message);
+
+  }
 
 }
 

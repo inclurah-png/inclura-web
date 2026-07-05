@@ -8,9 +8,9 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  getDoc,
   arrayUnion,
   arrayRemove,
-  getDoc,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -23,14 +23,35 @@ function Feed() {
   const [posts, setPosts] = useState([]);
   const [filteredPosts, setFilteredPosts] =
     useState([]);
+  const [userLanguage, setUserLanguage] =
+  useState("en");
 
   const navigate = useNavigate();
 
   useEffect(() => {
-    const q = query(
-      collection(db, "posts"),
-      orderBy("createdAt", "desc")
+  async function loadLanguage() {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    const userSnap = await getDoc(
+      doc(db, "users", user.uid)
     );
+
+    if (userSnap.exists()) {
+      setUserLanguage(
+        userSnap.data()
+          .preferredLanguage || "en"
+      );
+    }
+  }
+  
+    loadLanguage();
+
+  const q = query(
+    collection(db, "posts"),
+    orderBy("createdAt", "desc")
+  );
 
     const unsubscribe =
       onSnapshot(q, (snapshot) => {
@@ -66,8 +87,9 @@ function Feed() {
         await getDoc(userRef);
 
       const savedPosts =
-        userSnap.data()
-          ?.savedPosts || [];
+userSnap.exists()
+  ? userSnap.data().savedPosts || []
+  : [];
 
       if (
         savedPosts.includes(
@@ -94,54 +116,177 @@ function Feed() {
 
         alert("Post saved");
       }
-    } catch (error) {
-      alert(error.message);
-    }
+    } catch (err) {
+  console.error(err);
+
+  alert(
+    "Translation failed:\n" +
+    err.message
+  );
+}
+  }
+  async function reactToPost(postId, emoji) {
+  const user = auth.currentUser;
+
+  if (!user) return;
+
+  const postRef = doc(db, "posts", postId);
+
+  const postSnap = await getDoc(postRef);
+
+  if (!postSnap.exists()) return;
+
+  const post = postSnap.data();
+
+  const scoreMap = {
+    "❤️": 4,
+    "👏": 3,
+    "😊": 3,
+    "👍": 2,
+    "😂": 2,
+    "😮": 2,
+    "😢": 2,
+    "👎": -3,
+  };
+    
+  const previousReaction =
+    post.userReactions?.[user.uid];
+
+  let reactions = {
+  "👍": post.reactions?.["👍"] || 0,
+  "❤️": post.reactions?.["❤️"] || 0,
+  "😂": post.reactions?.["😂"] || 0,
+  "😊": post.reactions?.["😊"] || 0,
+  "😮": post.reactions?.["😮"] || 0,
+  "😢": post.reactions?.["😢"] || 0,
+  "👏": post.reactions?.["👏"] || 0,
+  "👎": post.reactions?.["👎"] || 0,
+};
+
+  let creatorScore =
+    post.creatorScore || 0;
+
+  // Remove old reaction if user already reacted
+  if (previousReaction) {
+    reactions[previousReaction] =
+      Math.max(
+        0,
+        (reactions[previousReaction] || 1) - 1
+      );
+
+    creatorScore -=
+      scoreMap[previousReaction] || 0;
   }
 
-  async function toggleLike(
-    postId,
-    likes = []
-  ) {
-    const user =
-      auth.currentUser;
+  // Add new reaction
+  reactions[emoji] =
+    (reactions[emoji] || 0) + 1;
 
-    if (!user) return;
+  creatorScore +=
+    scoreMap[emoji] || 0;
 
-    const postRef = doc(
-      db,
-      "posts",
-      postId
+  // Save the reaction on the post
+  await updateDoc(postRef, {
+    reactions,
+    creatorScore,
+    userReactions: {
+      ...(post.userReactions || {}),
+      [user.uid]: emoji,
+    },
+  });
+
+  // Update the creator's total score
+  const creatorRef = doc(
+    db,
+    "users",
+    post.userId
+  );
+
+  await updateDoc(creatorRef, {
+    creatorScore,
+  });
+}
+
+async function translatePost(post) {
+ console.log("🌍 Translate button clicked");
+console.log("Language:", userLanguage);
+console.log("Text:", post.text);
+  
+  try {
+    // Don't translate if already translated
+    if (post.translatedText?.[userLanguage]) {
+      return;
+    }
+
+    console.log("Calling /translate...");
+    const response = await fetch("/translate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: post.text,
+        target: userLanguage,
+      }),
+    });
+
+    const data = await response.json();
+    console.log("Response status:", response.status);
+    console.log("Response data:", data);
+    
+    if (!response.ok || data.error) {
+      alert(data.error || "Translation failed.");
+      return;
+    }
+
+    const translatedText = {
+      ...(post.translatedText || {}),
+      [userLanguage]: data.translatedText,
+    };
+
+    await updateDoc(
+      doc(db, "posts", post.id),
+      {
+        translatedText,
+      }
     );
 
-    const alreadyLiked =
-      likes.includes(user.uid);
-
-    if (alreadyLiked) {
-      await updateDoc(postRef, {
-        likes: arrayRemove(
-          user.uid
-        ),
-      });
-    } else {
-      await updateDoc(postRef, {
-        likes: arrayUnion(
-          user.uid
-        ),
-      });
-    }
-  }
-
-  function handleShare(postId) {
-    const url =
-      `${window.location.origin}/post/${postId}`;
-
-    navigator.clipboard.writeText(
-      url
+    // Update Feed immediately
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              translatedText,
+            }
+          : p
+      )
     );
 
-    alert("Post link copied!");
+    setFilteredPosts((prev) =>
+      prev.map((p) =>
+        p.id === post.id
+          ? {
+              ...p,
+              translatedText,
+            }
+          : p
+      )
+    );
+  } catch (err) {
+    console.error(err);
+    alert("Translation failed.");
   }
+}
+
+function handleShare(postId) {
+  const url =
+    `${window.location.origin}/post/${postId}`;
+
+  navigator.clipboard.writeText(url);
+
+  alert("Post link copied!");
+}
 
   function getBadge(post) {
     if (!post.verified)
@@ -325,9 +470,28 @@ function Feed() {
                 </div>
 
                 <p>
-                  {post.text}
-                </p>
+  {post.translatedText?.[
+    userLanguage
+  ] || post.text}
+</p>
 
+  <button
+  onClick={() =>
+    translatePost(post)
+  }
+  style={{
+    marginTop: "10px",
+    padding: "8px 14px",
+    borderRadius: "12px",
+    border: "none",
+    background: "#334155",
+    color: "white",
+    cursor: "pointer",
+  }}
+>
+  🌍 Translate
+</button>
+                
                 {post.imageUrl && (
   <img
     src={post.imageUrl}
@@ -356,6 +520,45 @@ function Feed() {
 )}
 
                 <div
+  style={{
+    display: "flex",
+    gap: "10px",
+    flexWrap: "wrap",
+    marginTop: "16px",
+  }}
+>
+  {[
+    "👍",
+    "❤️",
+    "😂",
+    "😊",
+    "😮",
+    "😢",
+    "👏",
+    "👎",
+  ].map((emoji) => (
+    <button
+      key={emoji}
+      onClick={() =>
+        reactToPost(
+          post.id,
+          emoji
+        )
+      }
+      
+      style={{
+        padding: "8px 12px",
+        borderRadius: "20px",
+        cursor: "pointer",
+      }}
+    >
+      {emoji}{" "}
+      {post.reactions?.[emoji] || 0}
+    </button>
+  ))}
+</div>
+                
+                <div
                   style={{
                     display:
                       "flex",
@@ -365,41 +568,42 @@ function Feed() {
                   }}
                 >
                   <button
-                    onClick={() =>
-                      toggleLike(
-                        post.id,
-                        post.likes ||
-                          []
-                      )
-                    }
-                  >
-                    ❤️{" "}
-                    {post.likes
-                      ?.length ||
-                      0}
-                  </button>
+  onClick={() =>
+    navigate(
+      `/post/${post.id}`
+    )
+  }
+>
+  💬 Comment
+</button>
 
-                  <button
-                    onClick={() =>
-                      handleShare(
-                        post.id
-                      )
-                    }
-                  >
-                    🔁 Share
-                  </button>
+<button
+  onClick={() =>
+    navigate(
+      `/crosspost/${post.id}`
+    )
+  }
+>
+  🔀 Cross-post
+</button>
 
-                  <button
-                    onClick={() =>
-                      savePost(
-                        post
-                      )
-                    }
-                  >
-                    🔖 Save
-                  </button>
+<button
+  onClick={() =>
+    savePost(post)
+  }
+>
+  📌 Save
+</button>
+                  
+                    <button
+  onClick={() =>
+    handleShare(post.id)
+  }
+>
+  🔗 Share
+</button>
+                  
                 </div>
-
                 <CommentBox
                   postId={
                     post.id
