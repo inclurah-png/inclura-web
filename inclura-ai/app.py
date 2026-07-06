@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from routes.translation import router as translation_router
+from routes.speech import router as speech_router
+from routes.tts import router as tts_router
 
 app = FastAPI(
     title="Inclura AI API",
@@ -14,6 +17,22 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Register AI routes
+app.include_router(
+    translation_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    speech_router,
+    prefix="/api/v1"
+)
+
+app.include_router(
+    tts_router,
+    prefix="/api/v1"
 )
 
 @app.get("/")
