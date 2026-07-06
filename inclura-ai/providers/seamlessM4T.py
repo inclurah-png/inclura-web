@@ -1,17 +1,28 @@
-from seamless_communication.models.inference import Translator
+const BASE_URL =
+  import.meta.env.VITE_AI_BACKEND;
 
-translator = Translator(
-    model_name_or_card="seamlessM4T_large",
-    vocoder_name_or_card="vocoder_v2",
-    device="cpu"
-)
+export async function translateText({
+  text,
+  sourceLanguage,
+  targetLanguage,
+}) {
+  const response = await fetch(
+    `${BASE_URL}/api/v1/translate`,
+    {
+      method: "POST",
 
-def translate_text(text, source_lang, target_lang):
-    result = translator.predict(
-        text=text,
-        task_str="T2TT",
-        src_lang=source_lang,
-        tgt_lang=target_lang,
-    )
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
 
-    return result
+      body: JSON.stringify({
+        text,
+        sourceLanguage,
+        targetLanguage,
+      }),
+    }
+  );
+
+  return await response.json();
+}
