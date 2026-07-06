@@ -7,3 +7,7 @@ torchvision
 torchaudio
 openai-whisper
 piper-tts
+julius
+num2words
+inflect
+git+https://github.com/facebookresearch/seamless_communication.git
