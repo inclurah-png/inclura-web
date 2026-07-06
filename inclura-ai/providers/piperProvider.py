@@ -1,16 +1,26 @@
-import subprocess
+const BASE_URL =
+  import.meta.env.VITE_AI_BACKEND;
 
-def text_to_speech(
-    text,
-    model_path,
-    output_file
-):
-    subprocess.run([
-        "piper",
-        "--model",
-        model_path,
-        "--output_file",
-        output_file
-    ], input=text.encode("utf-8"))
+export async function textToSpeech({
+  text,
+  language,
+}) {
+  const response = await fetch(
+    `${BASE_URL}/api/v1/tts`,
+    {
+      method: "POST",
 
-    return output_file
+      headers: {
+        "Content-Type":
+          "application/json",
+      },
+
+      body: JSON.stringify({
+        text,
+        language,
+      }),
+    }
+  );
+
+  return await response.json();
+}
