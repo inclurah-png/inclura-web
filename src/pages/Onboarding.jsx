@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 import {
@@ -9,13 +9,38 @@ import {
 import {
   doc,
   updateDoc,
+  getDoc,
 } from "firebase/firestore";
 
 function Onboarding() {
   const navigate = useNavigate();
 
+  useEffect(() => {
+  loadUser();
+}, []);
+  
   const [bio, setBio] =
     useState("");
+
+  const [
+  accountType,
+  setAccountType,
+] = useState("");
+
+const [
+  groupName,
+  setGroupName,
+] = useState("");
+
+const [
+  groupDescription,
+  setGroupDescription,
+] = useState("");
+
+const [
+  groupCategory,
+  setGroupCategory,
+] = useState("Community");
 
   const [location, setLocation] =
     useState("");
@@ -25,6 +50,40 @@ function Onboarding() {
 
   const [interests, setInterests] =
     useState([]);
+
+  async function loadUser() {
+  const user = auth.currentUser;
+
+  if (!user) return;
+
+  const snap = await getDoc(
+    doc(
+      db,
+      "users",
+      user.uid
+    )
+  );
+
+  if (snap.exists()) {
+    const data = snap.data();
+
+    setAccountType(
+      data.accountType || "individual"
+    );
+
+    setGroupName(
+      data.groupName || ""
+    );
+
+    setGroupDescription(
+      data.groupDescription || ""
+    );
+
+    setGroupCategory(
+      data.groupCategory || "Community"
+    );
+  }
+  }
 
   async function finishOnboarding() {
     try {
@@ -40,13 +99,17 @@ function Onboarding() {
           user.uid
         ),
         {
-          bio,
-          location,
-          language,
-          interests,
-          onboardingCompleted:
-            true,
-        }
+  bio,
+  location,
+  language,
+  interests,
+
+  groupName,
+  groupDescription,
+  groupCategory,
+
+  onboardingCompleted: true,
+}
       );
 
       navigate("/profile");
@@ -153,6 +216,161 @@ function Onboarding() {
   <option>Igbo</option>
   <option>Hausa</option>
 </select>
+
+        {
+  accountType === "group" && (
+    <div
+      style={{
+        marginBottom: "24px",
+      }}
+    >
+      <h2
+        style={{
+          marginBottom: "18px",
+        }}
+      >
+        Group Information
+      </h2>
+
+      <input
+        type="text"
+        placeholder="Group Name"
+        value={groupName}
+        onChange={(e) =>
+          setGroupName(
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      />
+
+      <textarea
+        placeholder="Describe your group"
+        value={groupDescription}
+        onChange={(e) =>
+          setGroupDescription(
+            e.target.value
+          )
+        }
+        style={{
+          ...inputStyle,
+          height: "120px",
+        }}
+      />
+
+      <select
+        value={groupCategory}
+        onChange={(e) =>
+          setGroupCategory(
+            e.target.value
+          )
+        }
+        style={inputStyle}
+      >
+        <option>Community</option>
+        <option>Fan Club</option>
+        <option>Gaming</option>
+        <option>Religious</option>
+        <option>Sports</option>
+        <option>Neighborhood</option>
+        <option>Professional</option>
+        <option>Student Association</option>
+        <option>Other</option>
+      </select>
+    </div>
+  )
+        }
+        
+        {
+accountType === "group" && (
+
+<div
+style={{
+marginBottom:"24px"
+}}
+>
+
+<h2>
+Group Information
+</h2>
+
+<input
+placeholder="Group Name"
+value={groupName}
+onChange={(e)=>
+setGroupName(
+e.target.value
+)
+}
+style={inputStyle}
+/>
+
+<textarea
+placeholder="Group Description"
+value={groupDescription}
+onChange={(e)=>
+setGroupDescription(
+e.target.value
+)
+}
+style={{
+...inputStyle,
+height:"120px",
+}}
+/>
+
+<select
+value={groupCategory}
+onChange={(e)=>
+setGroupCategory(
+e.target.value
+)
+}
+style={inputStyle}
+>
+
+<option>
+Community
+</option>
+
+<option>
+Fan Club
+</option>
+
+<option>
+Gaming
+</option>
+
+<option>
+Religious
+</option>
+
+<option>
+Sports
+</option>
+
+<option>
+Neighborhood
+</option>
+
+<option>
+Professional
+</option>
+
+<option>
+Student Association
+</option>
+
+<option>
+Other
+</option>
+
+</select>
+
+</div>
+
+)
+        }
         
         <div
           style={{
