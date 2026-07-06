@@ -1,8 +1,23 @@
-import whisper
+const BASE_URL =
+  import.meta.env.VITE_AI_BACKEND;
 
-model = whisper.load_model("base")
+export async function speechToText(
+  audioFile
+) {
+  const form = new FormData();
 
-def speech_to_text(audio_path):
-    result = model.transcribe(audio_path)
+  form.append(
+    "audio",
+    audioFile
+  );
 
-    return result["text"]
+  const response = await fetch(
+    `${BASE_URL}/api/v1/speech`,
+    {
+      method: "POST",
+      body: form,
+    }
+  );
+
+  return await response.json();
+}
