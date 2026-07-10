@@ -16,7 +16,7 @@ import { auth, db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 import {
-  ENTERPRISE_PARTNERSHIP,
+  PARTNERSHIP_PLANS,
 } from "../config/pricing";
 
 const REQUEST_STATUS = {
@@ -136,11 +136,11 @@ function EnterprisePartnership() {
     useState("");
 
   const partnershipFee =
-    useMemo(() => {
+  useMemo(() => {
 
-      return ENTERPRISE_PARTNERSHIP;
+    return PARTNERSHIP_PLANS.enterprise;
 
-    }, []);
+  }, []);
 
   const [acceptedTerms,
     setAcceptedTerms] =
@@ -1162,24 +1162,21 @@ function EnterprisePartnership() {
 
               </strong>{" "}
 
-              {partnershipFee.pricingModel}
+              {{partnershipFee.pricing}}
 
             </p>
 
             <p>
 
-              <strong>
+  <strong>
 
-                Estimated Annual Fee:
+    Enterprise Pricing:
 
-              </strong>{" "}
+  </strong>{" "}
 
-              {partnershipFee.yearlyUSD
-                ? `$${partnershipFee.yearlyUSD.toLocaleString()}`
-                : "Negotiation Based"}
+  {partnershipFee.pricing}
 
-            </p>
-
+</p>
             <p>
 
               <strong>
