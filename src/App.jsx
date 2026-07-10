@@ -1,3 +1,11 @@
+import EnterprisePartnership from "./pages/EnterprisePartnership";
+import CorporatePartnership from "./pages/CorporatePartnership";
+import GovernmentPartnership from "./pages/GovernmentPartnership";
+
+import VerificationDocuments from "./pages/VerificationDocuments";
+import VerificationPaymentEngine from "./pages/VerificationPaymentEngine";
+import VerificationStatus from "./pages/VerificationStatus";
+
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -13,7 +21,6 @@ import CrossPost from "./pages/CrossPost";
 import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import VerificationCenter from "./pages/VerificationCenter";
-import CreatorVerificationPayment from "./pages/CreatorVerificationPayment";
 import Messages from "./pages/Messages";
 import AdManager from "./pages/AdManager";
 import EnterpriseRoute from "./components/EnterpriseRoute";
@@ -111,10 +118,35 @@ return (
     </ProtectedRoute>
   }
 />
-
+  
   <Route
-  path="/creator-verification-payment"
-  element={<CreatorVerificationPayment />}
+  path="/enterprise-partnership"
+  element={<EnterprisePartnership />}
+/>
+
+<Route
+  path="/corporate-partnership"
+  element={<CorporatePartnership />}
+/>
+
+<Route
+  path="/government-partnership"
+  element={<GovernmentPartnership />}
+/>
+
+<Route
+  path="/verification-documents"
+  element={<VerificationDocuments />}
+/>
+
+<Route
+  path="/verification-payment"
+  element={<VerificationPaymentEngine />}
+/>
+
+<Route
+  path="/verification-status"
+  element={<VerificationStatus />}
 />
   
   <Route
