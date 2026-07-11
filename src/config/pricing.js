@@ -246,12 +246,7 @@ export const VERIFICATION_PLANS = {
         monthlyUSD: 35,
 
       },
-
-    ],
-
-  },
-
-};
+],
 
 },
 
