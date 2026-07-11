@@ -1155,17 +1155,9 @@ function EnterprisePartnership() {
             </h2>
 
             <p>
-
-              <strong>
-
-                Pricing Model:
-
-              </strong>{" "}
-
-              {{partnershipFee.pricing}
-
-            </p>
-
+  <strong>Pricing:</strong>{" "}
+  {partnershipFee.pricing}
+</p>
             <p>
 
   <strong>
