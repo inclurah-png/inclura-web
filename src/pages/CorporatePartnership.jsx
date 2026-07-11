@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -528,16 +527,24 @@ function CorporatePartnership() {
 
               reviewProgress,
 
-              timeline,
+timeline,
 
-              userId:
-                currentUser.uid,
+userId:
+  currentUser.uid,
 
-              createdAt:
-                serverTimestamp(),
+createdAt:
+  serverTimestamp(),
 
-              updatedAt:
-                serverTimestamp(),
+updatedAt:
+  serverTimestamp(),
+
+riskScore:
+  corporateRiskScore,
+
+threatLevel,
+
+requestStatus:
+  REQUEST_STATUS.SUBMITTED,
             }
           );
 
@@ -1319,7 +1326,7 @@ function CorporatePartnership() {
             <button
               type="button"
               onClick={() =>
-                navigate("/home")
+                navigate("/verification-center")
               }
             >
 
