@@ -276,7 +276,6 @@ group: {
     ifseProtection: true,
 
   },
-
   premiumPlans: [
 
     {
