@@ -297,7 +297,6 @@ group: {
 
 },
 
-};
 organization: {
 
   title: "Organization Verification",
@@ -961,8 +960,11 @@ organization: {
     "Accessibility Compliance Review",
     "WCAG Audit",
     "Accessible PDF & Document Review",
-  ],
-},
+],
+  }
+
+],
+   
     advertising: [
 
   {
