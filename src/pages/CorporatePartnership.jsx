@@ -542,9 +542,6 @@ riskScore:
   corporateRiskScore,
 
 threatLevel,
-
-requestStatus:
-  REQUEST_STATUS.SUBMITTED,
             }
           );
 
