@@ -1162,7 +1162,7 @@ function EnterprisePartnership() {
 
               </strong>{" "}
 
-              {{partnershipFee.pricing}}
+              {{partnershipFee.pricing}
 
             </p>
 
