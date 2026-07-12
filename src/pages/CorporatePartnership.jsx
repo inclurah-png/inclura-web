@@ -18,6 +18,13 @@ import { partnerships } from "../config";
 
 const CORPORATE_PARTNERSHIP = partnerships.corporate;
 
+const REQUEST_STATUS = {
+  SUBMITTED: "submitted",
+  UNDER_REVIEW: "under_review",
+  APPROVED: "approved",
+  REJECTED: "rejected",
+  ACTIVE: "active",
+};
   SUBMITTED: "submitted",
 
   UNDER_REVIEW: "under_review",
@@ -97,9 +104,7 @@ function CorporatePartnership() {
     setCountry] =
     useState("");
 
-  const [state,
-    setState] =
-    useState("");
+  const [province, setProvince] = useState("");
 
   const [city,
     setCity] =
