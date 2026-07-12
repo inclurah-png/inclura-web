@@ -1,4 +1,4 @@
-const religious = {
+export const RELIGIOUS_PRICING = {
   title: "Religious Organization Verification",
 
   verificationTypes: [
@@ -36,5 +36,3 @@ const religious = {
 
   ifseProtection: true,
 };
-
-export default religious;
