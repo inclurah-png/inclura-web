@@ -1,67 +1,79 @@
-const accessibility = {
-  title: "Accessibility Certification",
+const partnerships = {
+  enterprise: {
+    title: "Enterprise Partnership",
+    pricing: "Private Enterprise Negotiation",
+    renewal: "Annual Enterprise Contract",
+    badge: "Enterprise Partner",
+    enterprise: true,
+    ifseProtection: true,
 
-  certification: [
-    {
-      id: "bronze",
-      name: "Bronze Certified",
-      yearlyUSD: 1500,
-      badge: "Bronze Certified",
-      renewal: "Annual",
-    },
+    designedFor: [
+      "Multinational Corporations",
+      "Global Brands",
+      "Manufacturers",
+      "Telecommunications Providers",
+      "Financial Institutions",
+      "Airlines",
+      "Pharmaceutical Companies",
+      "Consumer Goods Companies",
+      "Technology Companies",
+      "Sports Brands",
+      "Automobile Manufacturers",
+      "Energy Companies",
+      "Betting Companies",
+      "Fashion Companies",
+      "Luxury Brands",
+      "Beverage Companies",
+      "Media Conglomerates",
+      "Logistics Companies",
+      "Insurance Providers",
+      "Industrial Companies",
+      "Retail Chains",
+      "Shopping Mall Operators",
+      "Supermarket Chains",
+      "Hospitality Groups",
+      "Healthcare Networks",
+      "Educational Networks",
+      "Construction Companies",
+      "Mining Companies",
+      "Agricultural Companies",
+      "Real Estate Developers",
+      "Transportation Companies",
+      "Aviation Companies",
+      "Shipping Companies",
+      "Entertainment Companies",
+      "Tourism Companies",
+      "Sports Organizations",
+      "International NGOs",
+      "Research Organizations",
+      "Artificial Intelligence Companies",
+      "Cloud Computing Providers",
+      "Cybersecurity Companies",
+      "Data Center Operators",
+      "Payment Service Providers",
+      "FinTech Companies",
+      "Blockchain Companies",
+      "Other eligible enterprises worldwide"
+    ]
+  },
 
-    {
-      id: "silver",
-      name: "Silver Certified",
-      yearlyUSD: 2000,
-      badge: "Silver Certified",
-      renewal: "Annual",
-    },
+  corporate: {
+    title: "Corporate Partnership",
+    pricing: "Private Enterprise Negotiation",
+    renewal: "Annual Enterprise Contract",
+    badge: "Corporate Partner",
+    enterprise: true,
+    ifseProtection: true
+  },
 
-    {
-      id: "gold",
-      name: "Gold Certified",
-      yearlyUSD: 2500,
-      badge: "Gold Certified",
-      renewal: "Annual",
-    },
-
-    {
-      id: "platinum",
-      name: "Platinum Certified",
-      pricing: "Enterprise Negotiation",
-      badge: "Platinum Certified",
-      renewal: "Negotiated",
-      enterprise: true,
-    },
-  ],
-
-  accessibilityAudit: true,
-
-  ifseProtection: true,
-
-  standards: [
-    "WCAG 2.2 AA",
-    "Screen Reader Compatibility",
-    "Keyboard Navigation",
-    "High Contrast Support",
-    "Alt Text Validation",
-    "Caption Verification",
-    "Accessible Forms",
-    "Accessible Documents",
-  ],
-
-  services: [
-    "Accessibility Audit",
-    "Video Auto Captioning",
-    "Manual Caption Review",
-    "Audio Transcription",
-    "Alt Text Generation",
-    "Screen Reader Optimization",
-    "Keyboard Navigation Review",
-    "Accessibility Compliance Review",
-    "Accessible PDF Review",
-  ],
+  government: {
+    title: "Government Partnership",
+    pricing: "Private Negotiation",
+    renewal: "Enterprise Contract",
+    badge: "Government Partner",
+    enterprise: true,
+    ifseProtection: true
+  }
 };
 
-export default accessibility;
+export default partnerships;
