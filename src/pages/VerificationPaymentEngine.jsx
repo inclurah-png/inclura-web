@@ -17,12 +17,9 @@ import { auth, db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 import {
+  IFSE_CONFIG,
+} from "../config";
 
-VERIFICATION_PLANS,
-
-IFSE_CONFIG,
-
-} from "../config/pricing";
 function VerificationPaymentEngine() {
 
 const navigate = useNavigate();
