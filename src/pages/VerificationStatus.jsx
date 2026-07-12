@@ -20,7 +20,7 @@ import { auth, db } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import { IFSE_CONFIG } from "../config/pricing";
+import { IFSE_CONFIG } from "../config";
 
 function VerificationStatus() {
 
