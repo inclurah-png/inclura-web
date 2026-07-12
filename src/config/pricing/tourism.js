@@ -1,4 +1,4 @@
-export const TOURISM_PRICING = {
+const tourism = {
   title: "Tourism Verification",
 
   verificationTypes: [
@@ -12,3 +12,5 @@ export const TOURISM_PRICING = {
 
   ifseProtection: true,
 };
+
+export default tourism;
