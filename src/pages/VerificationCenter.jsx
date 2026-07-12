@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import { VERIFICATION_PLANS } from "../config/pricing";
+import { VERIFICATION_PLANS } from "../config";
 function VerificationCenter() {
 
 const navigate = useNavigate();
