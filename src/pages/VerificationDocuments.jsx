@@ -53,9 +53,19 @@ const VERIFICATION_TYPES = [
 
 "Institution",
 
+"Religious",
+
 "Healthcare",
 
+"Museum",
+
+"Tourism",
+
+"Entertainment",
+
 "Media",
+
+"Accessibility",
 
 "Corporate",
 
@@ -151,6 +161,11 @@ const DOCUMENT_REQUIREMENTS = useMemo(() => ({
     "Principal / Vice Chancellor ID",
   ],
 
+  Religious: [
+  "Religious Registration Certificate",
+  "Leader Identification",
+],
+  
   Healthcare: [
     "Medical License",
     "Hospital Registration",
@@ -158,6 +173,29 @@ const DOCUMENT_REQUIREMENTS = useMemo(() => ({
     "Medical Director ID",
   ],
 
+  Museum: [
+  "Museum Registration",
+  "Operating License",
+  "Curator Identification",
+],
+
+Tourism: [
+  "Tourism Registration",
+  "Operating License",
+  "Business Registration",
+],
+
+Entertainment: [
+  "Business Registration",
+  "Venue Operating License",
+  "Management Identification",
+],
+
+Accessibility: [
+  "Accessibility Audit Request",
+  "Organization Registration",
+],
+  
   Media: [
     "Media License",
     "Broadcast / Publishing Registration",
@@ -233,7 +271,41 @@ useState({});
   ) {
     score += 15;
   }
+    
+if (
+  verificationType === "Religious" &&
+  !organizationName.trim()
+) {
+  score += 10;
+}
 
+if (
+  verificationType === "Museum" &&
+  !organizationName.trim()
+) {
+  score += 10;
+}
+
+if (
+  verificationType === "Tourism" &&
+  !organizationName.trim()
+) {
+  score += 10;
+}
+
+if (
+  verificationType === "Entertainment" &&
+  !organizationName.trim()
+) {
+  score += 10;
+}
+
+if (
+  verificationType === "Accessibility" &&
+  !organizationName.trim()
+) {
+  score += 10;
+}
   return Math.min(score, 100);
 
 };
