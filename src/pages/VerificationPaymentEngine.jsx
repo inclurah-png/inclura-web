@@ -1,3 +1,9 @@
+import {
+  IFSE_CONFIG,
+  VERIFICATION_PLANS,
+  partnerships,
+} from "../config";
+
 import { useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
@@ -168,14 +174,13 @@ case "Media":
 return VERIFICATION_PLANS.media;
 
 case "Corporate":
-return VERIFICATION_PLANS.corporate;
+  return partnerships.corporate;
 
 case "Government":
-return VERIFICATION_PLANS.government;
+  return partnerships.government;
 
 case "Enterprise":
-return VERIFICATION_PLANS.enterprise;
-
+  return partnerships.enterprise;
 default:
 return null;
 
