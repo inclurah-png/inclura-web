@@ -1,4 +1,4 @@
-export const creator = {
+const creator = {
   title: "Creator Verification",
 
   verification: {
