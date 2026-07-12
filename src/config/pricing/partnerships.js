@@ -53,7 +53,7 @@ const partnerships = {
       "Payment Service Providers",
       "FinTech Companies",
       "Blockchain Companies",
-      "Other eligible enterprises worldwide"
+      "and other eligible enterprises worldwide."
     ]
   },
 
