@@ -73,6 +73,7 @@ const verificationCategories = useMemo(
   ],
   []
 );
+  
   const partnershipCategories = useMemo(
   () => [
     {
