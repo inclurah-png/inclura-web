@@ -1,4 +1,4 @@
-export const ENTERTAINMENT_PRICING = {
+const entertainment = {
   title: "Entertainment Venue Verification",
 
   verificationTypes: [
@@ -56,3 +56,5 @@ export const ENTERTAINMENT_PRICING = {
 
   ifseProtection: true,
 };
+
+export default entertainment;
