@@ -168,6 +168,20 @@ return VERIFICATION_PLANS.healthcare;
 
 case "Media":
 return VERIFICATION_PLANS.media;
+    case "Religious":
+  return VERIFICATION_PLANS.religious;
+
+case "Museum":
+  return VERIFICATION_PLANS.museum;
+
+case "Tourism":
+  return VERIFICATION_PLANS.tourism;
+
+case "Entertainment":
+  return VERIFICATION_PLANS.entertainment;
+
+case "Accessibility":
+  return VERIFICATION_PLANS.accessibility;
 
 case "Corporate":
   return partnerships.corporate;
