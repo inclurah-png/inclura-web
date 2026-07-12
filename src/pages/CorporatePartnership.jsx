@@ -14,13 +14,9 @@ import { auth, db } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import {
-  CORPORATE_PARTNERSHIP,
-} from "../config/pricing";
+import { partnerships } from "../config";
 
-const REQUEST_STATUS = {
-
-  DRAFT: "draft",
+const CORPORATE_PARTNERSHIP = partnerships.corporate;
 
   SUBMITTED: "submitted",
 
