@@ -1,4 +1,4 @@
-export const MUSEUM_PRICING = {
+const museum = {
   title: "Museum Verification",
 
   verificationTypes: [
@@ -12,3 +12,5 @@ export const MUSEUM_PRICING = {
 
   ifseProtection: true,
 };
+
+export default museum;
