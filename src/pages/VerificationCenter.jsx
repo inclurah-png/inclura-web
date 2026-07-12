@@ -8,39 +8,88 @@ function VerificationCenter() {
 
 const navigate = useNavigate();
 
-const verificationCategories = useMemo(() => [
-
-"Creator",
-
-"Group",
-
-"Organization",
-
-"NGO",
-
-"Institution",
-
-"Religious",
-
-"Healthcare",
-
-"Museum",
-
-"Tourism",
-
-"Entertainment",
-
-"Media",
-
-"Accessibility",
-
-"Corporate",
-
-"Government",
-
-"Enterprise",
-
-], []);
+const verificationCategories = useMemo(
+  () => [
+    {
+      key: "creator",
+      title: "Creator",
+      route: "/creator-verification",
+    },
+    {
+      key: "group",
+      title: "Group",
+      route: "/group-verification",
+    },
+    {
+      key: "organization",
+      title: "Organization",
+      route: "/organization-verification",
+    },
+    {
+      key: "ngo",
+      title: "NGO",
+      route: "/ngo-verification",
+    },
+    {
+      key: "institution",
+      title: "Institution",
+      route: "/institution-verification",
+    },
+    {
+      key: "religious",
+      title: "Religious",
+      route: "/religious-verification",
+    },
+    {
+      key: "healthcare",
+      title: "Healthcare",
+      route: "/healthcare-verification",
+    },
+    {
+      key: "museum",
+      title: "Museum",
+      route: "/museum-verification",
+    },
+    {
+      key: "tourism",
+      title: "Tourism",
+      route: "/tourism-verification",
+    },
+    {
+      key: "entertainment",
+      title: "Entertainment",
+      route: "/entertainment-verification",
+    },
+    {
+      key: "media",
+      title: "Media",
+      route: "/media-verification",
+    },
+    {
+      key: "accessibility",
+      title: "Accessibility",
+      route: "/accessibility-verification",
+    },
+  ],
+  []
+);
+  const partnershipCategories = useMemo(
+  () => [
+    {
+      title: "Corporate Partnership",
+      route: "/corporate-partnership",
+    },
+    {
+      title: "Government Partnership",
+      route: "/government-partnership",
+    },
+    {
+      title: "Enterprise Partnership",
+      route: "/enterprise-partnership",
+    },
+  ],
+  []
+);
 
 const ifseLayers = [
 
@@ -124,29 +173,23 @@ Choose Verification Type
 
 {
 
-verificationCategories.map(category=>(
+verificationCategories.map(item => (
 
 <div
 
-key={category}
+key={item.key}
 
 className="verification-card"
 
 >
 
-<h3>
-
-{category}
-
-</h3>
+<h3>{item.title}</h3>
 
 <p>
 
 {
 
-VERIFICATION_PLANS?.[category.toLowerCase()]?.title ||
-
-category
+VERIFICATION_PLANS?.[item.key]?.title || item.title
 
 }
 
@@ -156,21 +199,7 @@ category
 
 onClick={()=>
 
-navigate(
-
-"/verification-documents",
-
-{
-
-state:{
-
-verificationType:category
-
-}
-
-}
-
-)
+navigate(item.route)
 
 }
 
@@ -325,57 +354,42 @@ plans are added.
 
 <section className="partnership-shortcuts">
 
-<h2>
+  <h2>
 
-Enterprise & Partnership Verification
+    Enterprise & Partnership Verification
 
-</h2>
+  </h2>
 
-<div className="partnership-grid">
+  <div className="verification-grid">
 
-<button
+    {partnershipCategories.map((item) => (
 
-onClick={()=>
+      <div
+        key={item.title}
+        className="verification-card"
+      >
 
-navigate("/enterprise-partnership")
+        <h3>{item.title}</h3>
 
-}
+        <p>
 
->
+          Enterprise-grade verification secured by IFSE.
 
-Enterprise Partnership
+        </p>
 
-</button>
+        <button
+          onClick={() => navigate(item.route)}
+        >
 
-<button
+          Open
 
-onClick={()=>
+        </button>
 
-navigate("/corporate-partnership")
+      </div>
 
-}
+    ))}
 
->
-
-Corporate Partnership
-
-</button>
-
-<button
-
-onClick={()=>
-
-navigate("/government-partnership")
-
-}
-
->
-
-Government Partnership
-
-</button>
-
-</div>
+  </div>
 
 </section>
 
