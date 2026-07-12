@@ -14,7 +14,7 @@ import { auth, db } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import { PARTNERSHIP_PLANS } from "../config/pricing";
+import { partnerships as PARTNERSHIP_PLANS } from "../config";
 
 const REQUEST_STATUS = {
   DRAFT: "draft",
