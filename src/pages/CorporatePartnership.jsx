@@ -25,30 +25,13 @@ const REQUEST_STATUS = {
   REJECTED: "rejected",
   ACTIVE: "active",
 };
-  SUBMITTED: "submitted",
-
-  UNDER_REVIEW: "under_review",
-
-  APPROVED: "approved",
-
-  REJECTED: "rejected",
-
-  ACTIVE: "active",
-
-};
 
 const CONTRACT_TYPES = [
-
   "Annual",
-
   "Two-Year",
-
   "Three-Year",
-
   "Custom",
-
 ];
-
 function CorporatePartnership() {
 
   const navigate =
