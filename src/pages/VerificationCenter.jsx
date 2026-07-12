@@ -20,17 +20,25 @@ const verificationCategories = useMemo(() => [
 
 "Institution",
 
+"Religious",
+
 "Healthcare",
 
+"Museum",
+
+"Tourism",
+
+"Entertainment",
+
 "Media",
+
+"Accessibility",
 
 "Corporate",
 
 "Government",
 
 "Enterprise",
-
-"Accessibility Certification",
 
 ], []);
 
@@ -307,12 +315,9 @@ Verification Pricing
 Every verification category uses the official
 
 pricing configured in
-
-<strong> pricing.js</strong>.
-
-Pricing automatically updates when new plans
-
-are added.
+<strong> src/config/pricing/</strong>.
+Pricing automatically updates when new verification
+plans are added.
 
 </p>
 
