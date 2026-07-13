@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 import {
   collection,
@@ -6,7 +6,10 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { db, auth } from "../firebase";
+import {
+  auth,
+  db,
+} from "../firebase";
 
 import { useNavigate } from "react-router-dom";
 
@@ -15,6 +18,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import { VERIFICATION_PLANS } from "../config";
 
 function VerificationApplication() {
+
   const navigate = useNavigate();
 
   const categories = useMemo(
@@ -22,9 +26,8 @@ function VerificationApplication() {
     []
   );
 
-  const [category, setCategory] = useState(
-    categories[0]
-  );
+  const [category, setCategory] =
+    useState(categories[0]);
 
   const [verificationType, setVerificationType] =
     useState("");
@@ -38,6 +41,12 @@ function VerificationApplication() {
   const [phone, setPhone] =
     useState("");
 
+  const [organizationName, setOrganizationName] =
+    useState("");
+
+  const [website, setWebsite] =
+    useState("");
+
   const [socialLink1, setSocialLink1] =
     useState("");
 
@@ -49,372 +58,445 @@ function VerificationApplication() {
 
   const [documentFile, setDocumentFile] =
     useState(null);
+
   const selectedCategory =
-  VERIFICATION_PLANS[category];
+    VERIFICATION_PLANS[category];
 
-const verificationTypes =
-  selectedCategory?.verificationTypes || [];
+  const verificationTypes =
+    selectedCategory?.verificationTypes || [];
 
-useEffect(() => {
-  if (verificationTypes.length > 0) {
-    setVerificationType(
-      verificationTypes[0].id
+  useEffect(() => {
+    if (verificationTypes.length > 0) {
+      setVerificationType(
+        verificationTypes[0].id
+      );
+    }
+  }, [category]);
+
+  const selectedVerification =
+    verificationTypes.find(
+      (item) =>
+        item.id === verificationType
     );
-  }
-}, [category, verificationTypes]);
 
-const selectedVerification =
-  verificationTypes.find(
-    (item) =>
-      item.id === verificationType
-  );
+  const paymentAmount =
+    selectedVerification?.yearlyUSD ??
+    selectedVerification?.monthlyUSD ??
+    0;
 
-const paymentAmount =
-  selectedVerification?.yearlyUSD ??
-  selectedVerification?.monthlyUSD ??
-  0;
+  const isEnterprise =
+    selectedVerification?.enterprise === true;
+    async function handleContinue() {
+    const user = auth.currentUser;
 
-const showSocialLinks =
-  category === "creator";
+    if (!user) {
+      alert("Please login first.");
+      return;
+    }
 
-const showOfficialEmail =
-  category === "government";
+    if (!fullName.trim()) {
+      alert("Enter your full name.");
+      return;
+    }
 
-const isEnterprise =
-  selectedVerification?.enterprise === true;
+    if (!email.trim()) {
+      alert("Enter your email.");
+      return;
+    }
 
-const submitButtonText =
-  isEnterprise
-    ? "Submit Partnership Request"
-    : paymentAmount > 0
-    ? "Continue To Payment"
-    : "Submit Verification Request";
-  async function handleContinue() {
-  const user = auth.currentUser;
+    if (!phone.trim()) {
+      alert("Enter your phone number.");
+      return;
+    }
 
-  if (!user) {
-    alert("Please login first.");
-    return;
-  }
+    try {
+      await addDoc(
+        collection(
+          db,
+          "verificationRequests"
+        ),
+        {
+          userId: user.uid,
 
-  if (!fullName.trim()) {
-    alert("Please enter your full name.");
-    return;
-  }
+          category,
 
-  if (!email.trim()) {
-    alert("Please enter your email.");
-    return;
-  }
+          verificationType,
 
-  if (!phone.trim()) {
-    alert("Please enter your phone number.");
-    return;
-  }
+          accountType: category,
 
-  try {
-    await addDoc(
-      collection(db, "verificationRequests"),
-      {
-        userId: user.uid,
+          fullName,
 
-        category,
+          email,
 
-        verificationType,
+          phone,
 
-        verificationTitle:
-          selectedVerification?.name || "",
+          organizationName,
 
-        badge:
-          selectedVerification?.badge || "",
+          website,
 
-        fullName,
+          socialLink1,
 
-        email,
+          socialLink2,
 
-        phone,
+          officialEmail,
 
-        socialLink1,
+          paymentAmount,
 
-        socialLink2,
+          paymentStatus:
+            paymentAmount > 0
+              ? "pending"
+              : "free",
 
-        officialEmail,
+          status: "pending",
 
-        paymentAmount,
+          enterprise:
+            isEnterprise,
 
-        enterprise: isEnterprise,
+          documentName:
+            documentFile
+              ? documentFile.name
+              : "",
 
-        paymentStatus:
-          paymentAmount > 0
-            ? "pending"
-            : "free",
+          documentUrl: "",
 
-        status: "pending",
+          note:
+            "Verification request submitted from Inclura Verification Center.",
 
-        documentName:
-          documentFile
-            ? documentFile.name
-            : "",
+          createdAt:
+            serverTimestamp(),
+        }
+      );
 
-        documentUrl: "",
-
-        createdAt: serverTimestamp(),
+      if (
+        isEnterprise
+      ) {
+        navigate(
+          "/enterprise-partnership"
+        );
+        return;
       }
-    );
 
-    if (isEnterprise) {
-      navigate("/enterprise-partnership");
-      return;
+      if (
+        paymentAmount > 0
+      ) {
+        navigate(
+          "/creator-verification-payment"
+        );
+        return;
+      }
+
+      alert(
+        "Verification request submitted successfully."
+      );
+
+      navigate(
+        "/verification-status"
+      );
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        "Unable to submit verification request."
+      );
     }
-
-    if (paymentAmount > 0) {
-      navigate("/verification-payment");
-      return;
-    }
-
-    alert("Verification request submitted successfully.");
-
-    navigate("/verification-status");
-  } catch (error) {
-    console.error(error);
-    alert("Unable to submit verification request.");
   }
-  }
+
   const inputStyle = {
-  width: "100%",
-  padding: "12px",
-  marginTop: "8px",
-  marginBottom: "16px",
-  borderRadius: "12px",
-  border: "1px solid #334155",
-  background: "#1e293b",
-  color: "white",
-};
-
-return (
-  <DashboardLayout>
-    <div
-      style={{
-        background: "#0f172a",
-        padding: "24px",
-        borderRadius: "20px",
-        color: "white",
-        maxWidth: "900px",
-        margin: "0 auto",
-      }}
-    >
-      <h1>Verification Application</h1>
-
-      <p>
-        Complete the form below to apply for
-        verification.
-      </p>
-
-      <label>
-        Verification Category
-      </label>
-
-      <select
-        value={category}
-        onChange={(e) =>
-          setCategory(e.target.value)
-        }
-        style={inputStyle}
-      >
-        {categories.map((key) => (
-          <option
-            key={key}
-            value={key}
-          >
-            {VERIFICATION_PLANS[key].title}
-          </option>
-        ))}
-      </select>
-
-      <label>
-        Verification Type
-      </label>
-
-      <select
-        value={verificationType}
-        onChange={(e) =>
-          setVerificationType(
-            e.target.value
-          )
-        }
-        style={inputStyle}
-      >
-        {verificationTypes.map((item) => (
-          <option
-            key={item.id}
-            value={item.id}
-          >
-            {item.name}
-          </option>
-        ))}
-      </select>
-
-      <label>
-        Full Name
-      </label>
-
-      <input
-        type="text"
-        value={fullName}
-        onChange={(e) =>
-          setFullName(e.target.value)
-        }
-        style={inputStyle}
-      />
-
-      <label>
-        Email
-      </label>
-
-      <input
-        type="email"
-        value={email}
-        onChange={(e) =>
-          setEmail(e.target.value)
-        }
-        style={inputStyle}
-      />
-
-      <label>
-        Phone Number
-      </label>
-
-      <input
-        type="text"
-        value={phone}
-        onChange={(e) =>
-          setPhone(e.target.value)
-        }
-        style={inputStyle}
-      />
-      {showSocialLinks && (
-  <>
-    <label>
-      Social Link 1
-    </label>
-
-    <input
-      type="text"
-      value={socialLink1}
-      onChange={(e) =>
-        setSocialLink1(e.target.value)
-      }
-      style={inputStyle}
-      placeholder="https://..."
-    />
-
-    <label>
-      Social Link 2
-    </label>
-
-    <input
-      type="text"
-      value={socialLink2}
-      onChange={(e) =>
-        setSocialLink2(e.target.value)
-      }
-      style={inputStyle}
-      placeholder="https://..."
-    />
-  </>
-)}
-
-{showOfficialEmail && (
-  <>
-    <label>
-      Official Government Email
-    </label>
-
-    <input
-      type="email"
-      value={officialEmail}
-      onChange={(e) =>
-        setOfficialEmail(
-          e.target.value
-        )
-      }
-      style={inputStyle}
-      placeholder="example@gov.ng"
-    />
-  </>
-)}
-
-<label>
-  Upload Supporting Document
-</label>
-
-<input
-  type="file"
-  onChange={(e) =>
-    setDocumentFile(
-      e.target.files[0]
-    )
-  }
-  style={{
-    marginTop: "10px",
-    marginBottom: "20px",
-  }}
-/>
-
-<div
-  style={{
-    background: "#1e293b",
-    padding: "18px",
-    borderRadius: "12px",
-    marginBottom: "20px",
-  }}
->
-  <h3>
-    Selected Verification
-  </h3>
-
-  <p>
-    <strong>
-      {selectedVerification?.name}
-    </strong>
-  </p>
-
-  <p>
-    Badge:
-    {" "}
-    {selectedVerification?.badge}
-  </p>
-
-  <p>
-    Price:
-    {" "}
-    {isEnterprise
-      ? "Enterprise Negotiation"
-      : `$${paymentAmount.toLocaleString()}`}
-  </p>
-</div>
-
-<button
-  onClick={handleContinue}
-  style={{
     width: "100%",
-    padding: "15px",
-    border: "none",
+    padding: "12px",
+    marginTop: "8px",
+    marginBottom: "16px",
     borderRadius: "12px",
-    background: "#38bdf8",
-    color: "#fff",
-    fontWeight: "700",
-    cursor: "pointer",
-  }}
->
-  {submitButtonText}
-</button>
+    border: "1px solid #334155",
+    background: "#1e293b",
+    color: "white",
+  };
 
-</div>
+  return (
+    <DashboardLayout>
+      <div
+        style={{
+          background: "#0f172a",
+          padding: "24px",
+          borderRadius: "20px",
+          color: "white",
+          maxWidth: "900px",
+          margin: "0 auto",
+        }}
+      >
+        <h1>
+          Verification Application
+        </h1>
 
-</DashboardLayout>
-);
+        <p>
+          Complete the form below to apply for verification.
+        </p>
+                <label>
+          Verification Category
+        </label>
 
+        <select
+          value={category}
+          onChange={(e) =>
+            setCategory(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        >
+          {categories.map((key) => (
+            <option
+              key={key}
+              value={key}
+            >
+              {
+                VERIFICATION_PLANS[key]
+                  ?.title
+              }
+            </option>
+          ))}
+        </select>
+
+        <label>
+          Verification Type
+        </label>
+
+        <select
+          value={verificationType}
+          onChange={(e) =>
+            setVerificationType(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        >
+          {verificationTypes.map(
+            (item) => (
+              <option
+                key={item.id}
+                value={item.id}
+              >
+                {item.name}
+              </option>
+            )
+          )}
+        </select>
+
+        <label>
+          Full Name
+        </label>
+
+        <input
+          type="text"
+          value={fullName}
+          onChange={(e) =>
+            setFullName(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <label>
+          Email Address
+        </label>
+
+        <input
+          type="email"
+          value={email}
+          onChange={(e) =>
+            setEmail(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <label>
+          Phone Number
+        </label>
+
+        <input
+          type="text"
+          value={phone}
+          onChange={(e) =>
+            setPhone(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <label>
+          Organization / Brand Name
+        </label>
+
+        <input
+          type="text"
+          value={organizationName}
+          onChange={(e) =>
+            setOrganizationName(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+
+        <label>
+          Official Website
+        </label>
+
+        <input
+          type="text"
+          value={website}
+          onChange={(e) =>
+            setWebsite(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
+                {category === "creator" && (
+          <>
+            <label>
+              Primary Social Link
+            </label>
+
+            <input
+              type="text"
+              value={socialLink1}
+              onChange={(e) =>
+                setSocialLink1(
+                  e.target.value
+                )
+              }
+              style={inputStyle}
+              placeholder="https://..."
+            />
+
+            <label>
+              Secondary Social Link
+            </label>
+
+            <input
+              type="text"
+              value={socialLink2}
+              onChange={(e) =>
+                setSocialLink2(
+                  e.target.value
+                )
+              }
+              style={inputStyle}
+              placeholder="https://..."
+            />
+          </>
+        )}
+
+        {category === "government" && (
+          <>
+            <div
+              style={{
+                background: "#14532d",
+                color: "white",
+                padding: "14px",
+                borderRadius: "12px",
+                marginBottom: "18px",
+                fontWeight: "600",
+              }}
+            >
+              🏛 Government verification is reviewed
+              manually by Inclura and does not require
+              online payment.
+            </div>
+
+            <label>
+              Official Government Email
+            </label>
+
+            <input
+              type="email"
+              value={officialEmail}
+              onChange={(e) =>
+                setOfficialEmail(
+                  e.target.value
+                )
+              }
+              style={inputStyle}
+              placeholder="agency@gov.ng"
+            />
+          </>
+        )}
+
+        <label>
+          Upload Supporting Document
+        </label>
+
+        <input
+          type="file"
+          onChange={(e) =>
+            setDocumentFile(
+              e.target.files[0]
+            )
+          }
+          style={{
+            marginTop: "10px",
+            marginBottom: "24px",
+            color: "white",
+          }}
+        />
+
+        <div
+          style={{
+            background: "#1e293b",
+            padding: "18px",
+            borderRadius: "14px",
+            marginBottom: "24px",
+          }}
+        >
+          <h3>
+            Verification Fee
+          </h3>
+
+          {isEnterprise ? (
+            <p>
+              Enterprise Pricing
+              <br />
+              Contact Inclura for a customized quotation.
+            </p>
+          ) : (
+            <p
+              style={{
+                fontSize: "22px",
+                fontWeight: "700",
+              }}
+            >
+              ${paymentAmount.toLocaleString()}
+            </p>
+          )}
+        </div>
+                <button
+          onClick={handleContinue}
+          style={{
+            width: "100%",
+            padding: "16px",
+            borderRadius: "14px",
+            border: "none",
+            background: "#38bdf8",
+            color: "white",
+            fontSize: "18px",
+            fontWeight: "700",
+            cursor: "pointer",
+          }}
+        >
+          {isEnterprise
+            ? "Submit Partnership Request"
+            : paymentAmount > 0
+            ? "Continue To Payment"
+            : "Submit Verification Request"}
+        </button>
+      </div>
+    </DashboardLayout>
+  );
 }
 
 export default VerificationApplication;
