@@ -1,487 +1,301 @@
 import { useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+
+import { useNavigate } from "react-router-dom";
 
 import DashboardLayout from "../components/DashboardLayout";
 
 import { VERIFICATION_PLANS } from "../config";
+
 function VerificationCenter() {
 
-const navigate = useNavigate();
-
-const verificationCategories = useMemo(
-  () => [
-    {
-      key: "creator",
-      title: "Creator",
-      route: "/creator-verification",
-    },
-    {
-      key: "group",
-      title: "Group",
-      route: "/group-verification",
-    },
-    {
-      key: "organization",
-      title: "Organization",
-      route: "/organization-verification",
-    },
-    {
-      key: "ngo",
-      title: "NGO",
-      route: "/ngo-verification",
-    },
-    {
-      key: "institution",
-      title: "Institution",
-      route: "/institution-verification",
-    },
-    {
-      key: "religious",
-      title: "Religious",
-      route: "/religious-verification",
-    },
-    {
-      key: "healthcare",
-      title: "Healthcare",
-      route: "/healthcare-verification",
-    },
-    {
-      key: "museum",
-      title: "Museum",
-      route: "/museum-verification",
-    },
-    {
-      key: "tourism",
-      title: "Tourism",
-      route: "/tourism-verification",
-    },
-    {
-      key: "entertainment",
-      title: "Entertainment",
-      route: "/entertainment-verification",
-    },
-    {
-      key: "media",
-      title: "Media",
-      route: "/media-verification",
-    },
-    {
-      key: "accessibility",
-      title: "Accessibility",
-      route: "/accessibility-verification",
-    },
-  ],
-  []
-);
-  
-  const partnershipCategories = useMemo(
-  () => [
-    {
-      title: "Corporate Partnership",
-      route: "/corporate-partnership",
-    },
-    {
-      title: "Government Partnership",
-      route: "/government-partnership",
-    },
-    {
-      title: "Enterprise Partnership",
-      route: "/enterprise-partnership",
-    },
-  ],
-  []
-);
-
-const ifseLayers = [
-
-"Identity Verification",
-
-"Document Authentication",
-
-"AI Fraud Detection",
-
-"OCR Verification",
-
-"Forgery Detection",
-
-"Duplicate Detection",
-
-"Payment Fraud Protection",
-
-"Accessibility Compliance",
-
-"Executive Review",
-
-"Continuous Monitoring",
-
-];
-
-const verificationBenefits = [
-
-"Official Verification Badge",
-
-"Higher Trust & Credibility",
-
-"Search Priority",
-
-"Protection Against Impersonation",
-
-"Eligibility for Premium Features",
-
-"Priority Support",
-
-"Business & Partnership Opportunities",
-
-"IFSE Continuous Protection",
-
-];
-
-return (
-
-<DashboardLayout>
-
-<div className="verification-center">
-
-<header className="verification-header">
-
-<h1>
-
-Verification Center
-
-</h1>
-
-<p>
-
-Welcome to the Inclura Verification Center.
-
-Every verification is protected by the
-
-<strong> Inclura Fortress Security Engine (IFSE)</strong>.
-
-</p>
-
-</header>
-
-<section className="verification-categories">
-
-<h2>
-
-Choose Verification Type
-
-</h2>
-
-<div className="verification-grid">
-
-{
-
-verificationCategories.map(item => (
-
-<div
-
-key={item.key}
-
-className="verification-card"
-
->
-
-<h3>{item.title}</h3>
-
-<p>
-
-{
-
-VERIFICATION_PLANS?.[item.key]?.title || item.title
-
-}
-
-</p>
-
-<button
-
-onClick={()=>
-
-navigate(item.route)
-
-}
-
->
-
-Start Verification
-
-</button>
-
-</div>
-
-))
-
-}
-
-</div>
-
-</section>
-
-<section className="ifse-security">
-
-<h2>
-
-IFSE Security Protection
-
-</h2>
-
-<ul>
-
-{
-
-ifseLayers.map(layer=>(
-
-<li key={layer}>
-
-✅ {layer}
-
-</li>
-
-))
-
-}
-
-</ul>
-
-</section>
-
-<section className="verification-benefits">
-
-<h2>
-
-Benefits of Verification
-
-</h2>
-
-<ul>
-
-{
-
-verificationBenefits.map(benefit=>(
-
-<li key={benefit}>
-
-⭐ {benefit}
-
-</li>
-
-))
-
-}
-
-</ul>
-
-</section>
-
-<section className="verification-workflow">
-
-<h2>
-
-Verification Process
-
-</h2>
-
-<ol>
-
-<li>
-
-Choose Verification Type
-
-</li>
-
-<li>
-
-Upload Documents
-
-</li>
-
-<li>
-
-Complete Secure Payment
-
-</li>
-
-<li>
-
-IFSE Security Review
-
-</li>
-
-<li>
-
-Accessibility Review
-
-</li>
-
-<li>
-
-Executive Approval (if required)
-
-</li>
-
-<li>
-
-Badge & Certificate Issued
-
-</li>
-
-</ol>
-
-</section>
-
-<section className="verification-pricing">
-
-<h2>
-
-Verification Pricing
-
-</h2>
-
-<p>
-
-Every verification category uses the official
-
-pricing configured in
-<strong> src/config/pricing/</strong>.
-Pricing automatically updates when new verification
-plans are added.
-
-</p>
-
-</section>
-
-<section className="partnership-shortcuts">
-
-  <h2>
-
-    Enterprise & Partnership Verification
-
-  </h2>
-
-  <div className="verification-grid">
-
-    {partnershipCategories.map((item) => (
-
+  const navigate = useNavigate();
+
+  const categories = useMemo(
+    () => Object.keys(VERIFICATION_PLANS),
+    []
+  );
+
+  const ifseLayers = [
+    "Identity Verification",
+    "Document Authentication",
+    "AI Fraud Detection",
+    "Forgery Detection",
+    "Duplicate Detection",
+    "Payment Protection",
+    "Accessibility Compliance",
+    "Executive Review",
+    "Continuous Monitoring",
+  ];
+
+  const verificationBenefits = [
+    "Official Verified Badge",
+    "Higher Trust",
+    "Search Priority",
+    "Protection Against Impersonation",
+    "Premium Features",
+    "Priority Support",
+    "Business Opportunities",
+    "Continuous IFSE Protection",
+  ];
+
+  return (
+    <DashboardLayout>
       <div
-        key={item.title}
-        className="verification-card"
+        style={{
+          maxWidth: "1200px",
+          margin: "0 auto",
+          color: "white",
+          padding: "24px",
+        }}
       >
-
-        <h3>{item.title}</h3>
+        <h1>
+          Inclura Verification Center
+        </h1>
 
         <p>
-
-          Enterprise-grade verification secured by IFSE.
-
+          Secure your identity, organization,
+          institution or business using the
+          Inclura Fortress Security Engine
+          (IFSE).
         </p>
 
-        <button
-          onClick={() => navigate(item.route)}
+        <h2
+          style={{
+            marginTop: "32px",
+            marginBottom: "20px",
+          }}
         >
+          Choose Verification Category
+        </h2>
 
-          Open
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns:
+              "repeat(auto-fit,minmax(260px,1fr))",
+            gap: "20px",
+          }}
+        >
+                    {categories.map((key) => {
 
-        </button>
+            const plan =
+              VERIFICATION_PLANS[key];
 
+            return (
+              <div
+                key={key}
+                style={{
+                  background: "#0f172a",
+                  border: "1px solid #334155",
+                  borderRadius: "18px",
+                  padding: "20px",
+                }}
+              >
+                <h3>
+                  {plan.title}
+                </h3>
+
+                <p
+                  style={{
+                    color: "#94a3b8",
+                    minHeight: "48px",
+                  }}
+                >
+                  {plan.description ||
+                    "Secure verification powered by IFSE."}
+                </p>
+
+                <p>
+                  <strong>
+                    Available Types:
+                  </strong>
+                </p>
+
+                <ul
+                  style={{
+                    paddingLeft: "20px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  {plan.verificationTypes
+                    ?.slice(0, 4)
+                    .map((item) => (
+                      <li key={item.id}>
+                        {item.name}
+                      </li>
+                    ))}
+
+                  {plan.verificationTypes
+                    ?.length > 4 && (
+                    <li>
+                      +
+                      {plan.verificationTypes.length - 4}
+                      {" "}more...
+                    </li>
+                  )}
+                </ul>
+
+                <button
+                  onClick={() =>
+                    navigate(
+                      "/verification-application"
+                    )
+                  }
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: "12px",
+                    border: "none",
+                    background: "#38bdf8",
+                    color: "white",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                  }}
+                >
+                  Start Verification
+                </button>
+              </div>
+            );
+          })}
+        </div>
+
+        <h2
+          style={{
+            marginTop: "40px",
+            marginBottom: "20px",
+          }}
+        >
+          IFSE Security Layers
+        </h2>
+
+        <ul>
+          {ifseLayers.map((item) => (
+            <li
+              key={item}
+              style={{
+                marginBottom: "10px",
+              }}
+            >
+              ✅ {item}
+            </li>
+          ))}
+        </ul>
+                <h2
+          style={{
+            marginTop: "40px",
+            marginBottom: "20px",
+          }}
+        >
+          Benefits of Verification
+        </h2>
+
+        <ul>
+          {verificationBenefits.map(
+            (benefit) => (
+              <li
+                key={benefit}
+                style={{
+                  marginBottom: "10px",
+                }}
+              >
+                ⭐ {benefit}
+              </li>
+            )
+          )}
+        </ul>
+
+        <h2
+          style={{
+            marginTop: "40px",
+            marginBottom: "20px",
+          }}
+        >
+          Verification Process
+        </h2>
+
+        <ol
+          style={{
+            lineHeight: "2",
+          }}
+        >
+          <li>
+            Choose your verification category.
+          </li>
+
+          <li>
+            Select the appropriate verification type.
+          </li>
+
+          <li>
+            Complete your application form.
+          </li>
+
+          <li>
+            Upload supporting documents.
+          </li>
+
+          <li>
+            Complete payment (if applicable).
+          </li>
+
+          <li>
+            IFSE performs identity, document and fraud verification.
+          </li>
+
+          <li>
+            Your application is reviewed.
+          </li>
+
+          <li>
+            Your verification badge is issued after approval.
+          </li>
+        </ol>
+
+        <div
+          style={{
+            marginTop: "50px",
+            background: "#0f172a",
+            border: "1px solid #334155",
+            borderRadius: "18px",
+            padding: "24px",
+          }}
+        >
+          <h2>
+            Inclura Fortress Security Engine (IFSE)
+          </h2>
+
+          <p
+            style={{
+              color: "#cbd5e1",
+              lineHeight: "1.8",
+            }}
+          >
+            Every verification request submitted through
+            Inclura is protected by IFSE. The system
+            performs identity verification, document
+            authentication, AI fraud detection,
+            accessibility compliance, payment protection,
+            continuous monitoring and executive review to
+            ensure trusted verification across the
+            platform.
+          </p>
+        </div>
+
+        <footer
+          style={{
+            marginTop: "40px",
+            textAlign: "center",
+            color: "#94a3b8",
+          }}
+        >
+          © Inclura Verification Center
+          <br />
+          Powered by the Inclura Fortress Security Engine
+          (IFSE)
+        </footer>
       </div>
-
-    ))}
-
-  </div>
-
-</section>
-
-<section className="accessibility-certification">
-
-<h2>
-
-Accessibility Certification
-
-</h2>
-
-<p>
-
-Organizations can apply for:
-
-</p>
-
-<ul>
-
-<li>Bronze Certified</li>
-
-<li>Silver Certified</li>
-
-<li>Gold Certified</li>
-
-<li>Platinum Certified (Enterprise Negotiation)</li>
-
-</ul>
-
-</section>
-
-<section className="ifse-notice">
-
-<h2>
-
-IFSE Notice
-
-</h2>
-
-<p>
-
-Every verification submitted through Inclura
-
-is protected by the
-
-<strong>
-
-Inclura Fortress Security Engine (IFSE)
-
-</strong>.
-
-</p>
-
-<p>
-
-IFSE performs identity verification,
-
-document authentication,
-
-AI fraud detection,
-
-payment protection,
-
-accessibility compliance,
-
-continuous monitoring,
-
-and enterprise-grade security reviews.
-
-</p>
-
-</section>
-
-<footer className="verification-footer">
-
-<p>
-
-© Inclura Verification Center
-
-Powered by the Inclura Fortress Security Engine (IFSE).
-
-</p>
-
-</footer>
-
-</div>
-
-</DashboardLayout>
-
-);
-
+    </DashboardLayout>
+  );
 }
 
 export default VerificationCenter;
