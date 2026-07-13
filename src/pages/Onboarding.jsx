@@ -1,46 +1,47 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  auth,
-  db,
-} from "../firebase";
+import DashboardLayout from "../components/DashboardLayout";
+
+import { auth, db } from "../firebase";
 
 import {
   doc,
-  updateDoc,
   getDoc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
+
+import { VERIFICATION_PLANS } from "../config";
 
 function Onboarding() {
   const navigate = useNavigate();
 
-  useEffect(() => {
-  loadUser();
-}, []);
-  
+  const categories = useMemo(
+    () => Object.keys(VERIFICATION_PLANS),
+    []
+  );
+
+  const availableAccessibilityNeeds = [
+    "Screen Reader",
+    "Braille",
+    "Large Text",
+    "High Contrast",
+    "Voice Navigation",
+    "Keyboard Navigation",
+    "Captions",
+    "Sign Language",
+    "Color Blind Support",
+  ];
+
+  const [accountType, setAccountType] =
+    useState("individual");
+
+  const [verificationCategory, setVerificationCategory] =
+    useState(categories[0]);
+
   const [bio, setBio] =
     useState("");
-
-  const [
-  accountType,
-  setAccountType,
-] = useState("");
-
-const [
-  groupName,
-  setGroupName,
-] = useState("");
-
-const [
-  groupDescription,
-  setGroupDescription,
-] = useState("");
-
-const [
-  groupCategory,
-  setGroupCategory,
-] = useState("Community");
 
   const [location, setLocation] =
     useState("");
@@ -51,38 +52,122 @@ const [
   const [interests, setInterests] =
     useState([]);
 
-  async function loadUser() {
-  const user = auth.currentUser;
+  const [organizationName, setOrganizationName] =
+    useState("");
 
-  if (!user) return;
+  const [website, setWebsite] =
+    useState("");
 
-  const snap = await getDoc(
-    doc(
-      db,
-      "users",
-      user.uid
-    )
-  );
+  const [phoneNumber, setPhoneNumber] =
+    useState("");
 
-  if (snap.exists()) {
-    const data = snap.data();
+  const [groupName, setGroupName] =
+    useState("");
 
-    setAccountType(
-      data.accountType || "individual"
-    );
+  const [groupDescription, setGroupDescription] =
+    useState("");
 
-    setGroupName(
-      data.groupName || ""
-    );
+  const [groupCategory, setGroupCategory] =
+    useState("Community");
 
-    setGroupDescription(
-      data.groupDescription || ""
-    );
+  const [
+    accessibilityNeeds,
+    setAccessibilityNeeds,
+  ] = useState([]);
 
-    setGroupCategory(
-      data.groupCategory || "Community"
-    );
+  useEffect(() => {
+    loadUser();
+  }, []);
+    async function loadUser() {
+    const user = auth.currentUser;
+
+    if (!user) return;
+
+    try {
+      const snap = await getDoc(
+        doc(db, "users", user.uid)
+      );
+
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+
+      setAccountType(
+        data.accountType || "individual"
+      );
+
+      setVerificationCategory(
+        data.verificationCategory ||
+          categories[0]
+      );
+
+      setBio(data.bio || "");
+
+      setLocation(
+        data.location || ""
+      );
+
+      setLanguage(
+        data.language || "English"
+      );
+
+      setInterests(
+        data.interests || []
+      );
+
+      setOrganizationName(
+        data.organizationName || ""
+      );
+
+      setWebsite(
+        data.website || ""
+      );
+
+      setPhoneNumber(
+        data.phoneNumber || ""
+      );
+
+      setGroupName(
+        data.groupName || ""
+      );
+
+      setGroupDescription(
+        data.groupDescription || ""
+      );
+
+      setGroupCategory(
+        data.groupCategory ||
+          "Community"
+      );
+
+      setAccessibilityNeeds(
+        data.accessibilityNeeds || []
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
+
+  function toggleAccessibilityNeed(
+    need
+  ) {
+    setAccessibilityNeeds(
+      (previous) => {
+        if (
+          previous.includes(need)
+        ) {
+          return previous.filter(
+            (item) =>
+              item !== need
+          );
+        }
+
+        return [
+          ...previous,
+          need,
+        ];
+      }
+    );
   }
 
   async function finishOnboarding() {
@@ -99,313 +184,310 @@ const [
           user.uid
         ),
         {
-  bio,
-  location,
-  language,
-  interests,
-
-  groupName,
-  groupDescription,
-  groupCategory,
-
-  onboardingCompleted: true,
-}
+          accountType,
+          verificationCategory,
+          bio,
+          location,
+          language,
+          interests,
+          organizationName,
+          website,
+          phoneNumber,
+          groupName,
+          groupDescription,
+          groupCategory,
+          accessibilityNeeds,
+          onboardingCompleted: true,
+          updatedAt:
+            serverTimestamp(),
+        }
       );
 
       navigate("/profile");
     } catch (error) {
+      console.error(error);
       alert(error.message);
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        background: "#020617",
-        color: "white",
-        padding: "24px",
-        fontFamily: "Arial, sans-serif",
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "42px",
-          marginBottom: "12px",
-        }}
-      >
-        Welcome to Inclura 👋
-      </h1>
-
-      <p
-        style={{
-          color: "#94a3b8",
-          marginBottom: "30px",
-          lineHeight: "1.6",
-        }}
-      >
-        Personalize your experience.
-      </p>
-
+    <DashboardLayout>
       <div
         style={{
-          display: "flex",
-          flexWrap: "wrap",
-          gap: "12px",
-          marginBottom: "40px",
-        }}
-      >
-        <button style={tagStyle}>Accessibility</button>
-        <button style={tagStyle}>Creators</button>
-        <button style={tagStyle}>Technology</button>
-        <button style={tagStyle}>Education</button>
-        <button style={tagStyle}>Business</button>
-        <button style={tagStyle}>Community</button>
-      </div>
-
-      <div
-        style={{
-          background: "#0f172a",
+          minHeight: "100vh",
+          background: "#020617",
+          color: "white",
           padding: "24px",
-          borderRadius: "24px",
-          marginBottom: "32px",
         }}
       >
-        <h2
+                <h1
           style={{
-            marginBottom: "18px",
+            fontSize: "40px",
+            marginBottom: "12px",
           }}
         >
-          Accessibility Preferences
+          Welcome to Inclura 👋
+        </h1>
+
+        <p
+          style={{
+            color: "#94a3b8",
+            marginBottom: "30px",
+          }}
+        >
+          Complete your profile to personalize
+          your Inclura experience.
+        </p>
+
+        <h2
+          style={{
+            marginBottom: "16px",
+          }}
+        >
+          Account Verification Category
         </h2>
 
+        <select
+          value={verificationCategory}
+          onChange={(e) =>
+            setVerificationCategory(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        >
+          {categories.map((key) => (
+            <option
+              key={key}
+              value={key}
+            >
+              {
+                VERIFICATION_PLANS[key]
+                  ?.title
+              }
+            </option>
+          ))}
+        </select>
+
         <input
-  type="text"
-  placeholder="Tell everyone about yourself..."
-  value={bio}
-  onChange={(e) =>
-    setBio(e.target.value)
-  }
-  style={inputStyle}
-/>
+          type="text"
+          placeholder="Organization / Brand / Group Name"
+          value={organizationName}
+          onChange={(e) =>
+            setOrganizationName(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
 
-<input
-  type="text"
-  placeholder="City / Country"
-  value={location}
-  onChange={(e) =>
-    setLocation(e.target.value)
-  }
-  style={inputStyle}
-/>
+        <input
+          type="text"
+          placeholder="Official Website"
+          value={website}
+          onChange={(e) =>
+            setWebsite(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
 
-<select
-  value={language}
-  onChange={(e) =>
-    setLanguage(e.target.value)
-  }
-  style={inputStyle}
->
-  <option>English</option>
-  <option>French</option>
-  <option>Spanish</option>
-  <option>Arabic</option>
-  <option>Portuguese</option>
-  <option>Swahili</option>
-  <option>Yorùbá</option>
-  <option>Igbo</option>
-  <option>Hausa</option>
-</select>
+        <input
+          type="text"
+          placeholder="Business / Contact Phone"
+          value={phoneNumber}
+          onChange={(e) =>
+            setPhoneNumber(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
 
-        {
-  accountType === "group" && (
-    <div
-      style={{
-        marginBottom: "24px",
-      }}
-    >
-      <h2
-        style={{
-          marginBottom: "18px",
-        }}
-      >
-        Group Information
-      </h2>
+        <textarea
+          placeholder="Tell people about yourself or your organization..."
+          value={bio}
+          onChange={(e) =>
+            setBio(
+              e.target.value
+            )
+          }
+          style={{
+            ...inputStyle,
+            height: "120px",
+          }}
+        />
 
-      <input
-        type="text"
-        placeholder="Group Name"
-        value={groupName}
-        onChange={(e) =>
-          setGroupName(
-            e.target.value
-          )
-        }
-        style={inputStyle}
-      />
+        <input
+          type="text"
+          placeholder="City / Country"
+          value={location}
+          onChange={(e) =>
+            setLocation(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        />
 
-      <textarea
-        placeholder="Describe your group"
-        value={groupDescription}
-        onChange={(e) =>
-          setGroupDescription(
-            e.target.value
-          )
-        }
-        style={{
-          ...inputStyle,
-          height: "120px",
-        }}
-      />
+        <select
+          value={language}
+          onChange={(e) =>
+            setLanguage(
+              e.target.value
+            )
+          }
+          style={inputStyle}
+        >
+          <option>English</option>
+          <option>French</option>
+          <option>Spanish</option>
+          <option>Arabic</option>
+          <option>Portuguese</option>
+          <option>Swahili</option>
+          <option>Yorùbá</option>
+          <option>Igbo</option>
+          <option>Hausa</option>
+        </select>
+                {verificationCategory ===
+          "creator" && (
+          <>
+            <h2
+              style={{
+                marginTop: "30px",
+                marginBottom: "16px",
+              }}
+            >
+              Creator Information
+            </h2>
 
-      <select
-        value={groupCategory}
-        onChange={(e) =>
-          setGroupCategory(
-            e.target.value
-          )
-        }
-        style={inputStyle}
-      >
-        <option>Community</option>
-        <option>Fan Club</option>
-        <option>Gaming</option>
-        <option>Religious</option>
-        <option>Sports</option>
-        <option>Neighborhood</option>
-        <option>Professional</option>
-        <option>Student Association</option>
-        <option>Other</option>
-      </select>
-    </div>
-  )
-        }
-        
-        {
-accountType === "group" && (
+            <input
+              type="text"
+              placeholder="Primary Social Link"
+              value={groupName}
+              onChange={(e) =>
+                setGroupName(
+                  e.target.value
+                )
+              }
+              style={inputStyle}
+            />
 
-<div
-style={{
-marginBottom:"24px"
-}}
->
+            <textarea
+              placeholder="Tell us about your content"
+              value={groupDescription}
+              onChange={(e) =>
+                setGroupDescription(
+                  e.target.value
+                )
+              }
+              style={{
+                ...inputStyle,
+                height: "120px",
+              }}
+            />
+          </>
+        )}
 
-<h2>
-Group Information
-</h2>
+        {verificationCategory !==
+          "creator" && (
+          <>
+            <h2
+              style={{
+                marginTop: "30px",
+                marginBottom: "16px",
+              }}
+            >
+              Additional Information
+            </h2>
 
-<input
-placeholder="Group Name"
-value={groupName}
-onChange={(e)=>
-setGroupName(
-e.target.value
-)
-}
-style={inputStyle}
-/>
+            <textarea
+              placeholder="Describe your organization, institution, ministry, company, healthcare facility, media house, museum, tourism centre, NGO or religious body."
+              value={groupDescription}
+              onChange={(e) =>
+                setGroupDescription(
+                  e.target.value
+                )
+              }
+              style={{
+                ...inputStyle,
+                height: "120px",
+              }}
+            />
+          </>
+        )}
 
-<textarea
-placeholder="Group Description"
-value={groupDescription}
-onChange={(e)=>
-setGroupDescription(
-e.target.value
-)
-}
-style={{
-...inputStyle,
-height:"120px",
-}}
-/>
+        <h2
+          style={{
+            marginTop: "30px",
+            marginBottom: "16px",
+          }}
+        >
+          Accessibility Needs
+        </h2>
 
-<select
-value={groupCategory}
-onChange={(e)=>
-setGroupCategory(
-e.target.value
-)
-}
-style={inputStyle}
->
-
-<option>
-Community
-</option>
-
-<option>
-Fan Club
-</option>
-
-<option>
-Gaming
-</option>
-
-<option>
-Religious
-</option>
-
-<option>
-Sports
-</option>
-
-<option>
-Neighborhood
-</option>
-
-<option>
-Professional
-</option>
-
-<option>
-Student Association
-</option>
-
-<option>
-Other
-</option>
-
-</select>
-
-</div>
-
-)
-        }
-        
         <div
           style={{
             display: "flex",
             flexWrap: "wrap",
-            gap: "12px",
+            gap: "10px",
+            marginBottom: "24px",
           }}
         >
-          <button style={prefStyle}>🔊 Audio</button>
-          <button style={prefStyle}>🤟 Sign</button>
-          <button style={prefStyle}>🔠 Large Text</button>
-          <button style={prefStyle}>🌗 Contrast</button>
+          {availableAccessibilityNeeds.map(
+            (need) => (
+              <button
+                key={need}
+                type="button"
+                onClick={() =>
+                  toggleAccessibilityNeed(
+                    need
+                  )
+                }
+                style={{
+                  padding: "12px 18px",
+                  borderRadius: "30px",
+                  border:
+                    accessibilityNeeds.includes(
+                      need
+                    )
+                      ? "2px solid #22c55e"
+                      : "1px solid #334155",
+                  background:
+                    accessibilityNeeds.includes(
+                      need
+                    )
+                      ? "#14532d"
+                      : "#1e293b",
+                  color: "white",
+                  cursor: "pointer",
+                }}
+              >
+                {need}
+              </button>
+            )
+          )}
         </div>
+                <button
+          onClick={finishOnboarding}
+          style={{
+            width: "100%",
+            padding: "18px",
+            borderRadius: "18px",
+            border: "none",
+            background: "#38bdf8",
+            color: "white",
+            fontSize: "18px",
+            fontWeight: "700",
+            cursor: "pointer",
+            marginTop: "20px",
+          }}
+        >
+          Complete Onboarding
+        </button>
       </div>
-
-      <button
-onClick={finishOnboarding}
-style={{
-width: "100%",
-padding: "18px",
-borderRadius: "18px",
-border: "none",
-background: "#38bdf8",
-color: "white",
-fontSize: "18px",
-fontWeight: "700",
-cursor: "pointer",
-}}
-
->
-
-Continue → 
-
-      </button>
-    </div>
+    </DashboardLayout>
   );
 }
 
@@ -420,22 +502,4 @@ const inputStyle = {
   boxSizing: "border-box",
 };
 
-const tagStyle = {
-  padding: "14px 20px",
-  borderRadius: "40px",
-  border: "1px solid #334155",
-  background: "#0f172a",
-  color: "white",
-  fontSize: "15px",
-};
-
-const prefStyle = {
-  padding: "14px 18px",
-  borderRadius: "18px",
-  border: "1px solid #2563eb",
-  background: "#1e3a8a",
-  color: "white",
-  fontSize: "15px",
-};
-
-export default Onboarding;   
+export default Onboarding;
