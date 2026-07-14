@@ -130,8 +130,7 @@ const verificationQuery = query(
 
 collection(db, "verificationRequests"),
 
-where("submittedBy", "==", currentUser.uid)
-
+where("userId", "==", currentUser.uid)
 );
 
 const verificationSnapshot =
@@ -140,15 +139,15 @@ await getDocs(verificationQuery);
 
 if (!verificationSnapshot.empty) {
 
-const doc = verificationSnapshot.docs[0];
+  const doc = verificationSnapshot.docs[0];
 
-setVerification({
+  console.log("Verification document:");
+  console.log(doc.data());
 
-id: doc.id,
-
-...doc.data(),
-
-});
+  setVerification({
+    id: doc.id,
+    ...doc.data(),
+  });
 
 }
 
