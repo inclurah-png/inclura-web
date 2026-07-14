@@ -465,17 +465,27 @@ if (isEnterprise) {
           </h3>
 
           {requiresContract ? (
-            <p>
-  Contract Required
-  <br />
-  Pricing is determined after IFSE due diligence and partnership review.
-</p>
-        ) : isEnterprise ? (
-            <p
-              style={{
-                fontSize: "22px",
-                fontWeight: "700",
-              }}
+  <p>
+    Contract Required
+    <br />
+    Pricing is determined after IFSE due diligence and partnership review.
+  </p>
+) : isEnterprise ? (
+  <p>
+    Enterprise Pricing
+    <br />
+    Contact Inclura for a customized quotation.
+  </p>
+) : (
+  <p
+    style={{
+      fontSize: "22px",
+      fontWeight: "700",
+    }}
+  >
+    ${paymentAmount.toLocaleString()}
+  </p>
+)}
             >
               ${paymentAmount.toLocaleString()}
             </p>
