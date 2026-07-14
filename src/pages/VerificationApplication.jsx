@@ -452,40 +452,39 @@ if (isEnterprise) {
           }}
         />
 
-        <div
-          style={{
-            background: "#1e293b",
-            padding: "18px",
-            borderRadius: "14px",
-            marginBottom: "24px",
-          }}
-        >
-          <h3>
-            Verification Fee
-          </h3>
+<div
+  style={{
+    background: "#1e293b",
+    padding: "18px",
+    borderRadius: "14px",
+    marginBottom: "24px",
+  }}
+>
+  <h3>Verification Fee</h3>
 
-          {requiresContract ? (
-  <p>
-    Contract Required
-    <br />
-    Pricing is determined after IFSE due diligence and partnership review.
-  </p>
-) : isEnterprise ? (
-  <p>
-    Enterprise Pricing
-    <br />
-    Contact Inclura for a customized quotation.
-  </p>
-) : (
-  <p
-    style={{
-      fontSize: "22px",
-      fontWeight: "700",
-    }}
-  >
-    ${paymentAmount.toLocaleString()}
-  </p>
-)}
+  {requiresContract ? (
+    <p>
+      <strong>Contract Required</strong>
+      <br />
+      Pricing will be determined after IFSE due diligence and partnership review.
+    </p>
+  ) : isEnterprise ? (
+    <p>
+      <strong>Enterprise Pricing</strong>
+      <br />
+      Contact Inclura for a customized quotation.
+    </p>
+  ) : (
+    <p
+      style={{
+        fontSize: "22px",
+        fontWeight: "700",
+      }}
+    >
+      ${paymentAmount.toLocaleString()}
+    </p>
+  )}
+</div>
             >
               ${paymentAmount.toLocaleString()}
             </p>
