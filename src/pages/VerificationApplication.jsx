@@ -85,7 +85,13 @@ function VerificationApplication() {
     0;
 
   const isEnterprise =
-    selectedVerification?.enterprise === true;
+  selectedVerification?.enterprise === true;
+
+const requiresContract =
+  selectedVerification?.contractRequired === true;
+
+const contractRoute =
+  selectedVerification?.redirect || "";
     async function handleContinue() {
     const user = auth.currentUser;
 
@@ -167,14 +173,15 @@ function VerificationApplication() {
         }
       );
 
-      if (
-        isEnterprise
-      ) {
-        navigate(
-          "/enterprise-partnership"
-        );
-        return;
-      }
+      if (requiresContract) {
+  navigate(contractRoute);
+  return;
+}
+
+if (isEnterprise) {
+  navigate("/enterprise-partnership");
+  return;
+}
 
       if (
         paymentAmount > 0
@@ -457,13 +464,13 @@ function VerificationApplication() {
             Verification Fee
           </h3>
 
-          {isEnterprise ? (
+          {requiresContract ? (
             <p>
-              Enterprise Pricing
-              <br />
-              Contact Inclura for a customized quotation.
-            </p>
-          ) : (
+  Contract Required
+  <br />
+  Pricing is determined after IFSE due diligence and partnership review.
+</p>
+        ) : isEnterprise ? (
             <p
               style={{
                 fontSize: "22px",
@@ -488,11 +495,13 @@ function VerificationApplication() {
             cursor: "pointer",
           }}
         >
-          {isEnterprise
-            ? "Submit Partnership Request"
-            : paymentAmount > 0
-            ? "Continue To Payment"
-            : "Submit Verification Request"}
+{requiresContract
+  ? "Continue To Corporate Partnership"
+  : isEnterprise
+  ? "Submit Partnership Request"
+  : paymentAmount > 0
+  ? "Continue To Payment"
+  : "Submit Verification Request"}
         </button>
       </div>
     </DashboardLayout>
