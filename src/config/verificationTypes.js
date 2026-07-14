@@ -56,34 +56,77 @@ export const VERIFICATION_TYPES = {
 
   organization: [
 
-    {
-      id: "startup",
-      title: "Startup",
-      premium: true,
-      ifseProtected: true,
-    },
+  {
+    id: "business_name",
+    title: "Business Name",
+    premium: true,
+    ifseProtected: true,
+  },
 
-    {
-      id: "business",
-      title: "Registered Business",
-      premium: true,
-      ifseProtected: true,
-    },
+  {
+    id: "startup",
+    title: "Startup",
+    premium: true,
+    ifseProtected: true,
+  },
 
-    {
-      id: "limited_company",
-      title: "Limited Company",
-      premium: true,
-      ifseProtected: true,
-    },
+  {
+    id: "cooperative",
+    title: "Cooperative Society",
+    premium: true,
+    ifseProtected: true,
+  },
 
-    {
-      id: "plc",
-      title: "Public Limited Company",
-      premium: true,
-      ifseProtected: true,
-    },
+  {
+    id: "charity",
+    title: "Charity",
+    premium: true,
+    ifseProtected: true,
+  },
 
-  ],
+  {
+    id: "nonprofit",
+    title: "Nonprofit Organization",
+    premium: true,
+    ifseProtected: true,
+  },
 
-};
+  {
+    id: "social_enterprise",
+    title: "Social Enterprise",
+    premium: true,
+    ifseProtected: true,
+  },
+
+  {
+    id: "small_limited_company",
+    title: "Small Limited Liability Company",
+    premium: true,
+    ifseProtected: true,
+  },
+
+  {
+    id: "medium_limited_company",
+    title: "Medium Limited Liability Company",
+    premium: true,
+    ifseProtected: true,
+    contractRequired: true,
+  },
+
+  {
+    id: "large_limited_company",
+    title: "Large Limited Liability Company",
+    premium: true,
+    ifseProtected: true,
+    contractRequired: true,
+  },
+
+  {
+    id: "plc",
+    title: "Public Limited Company (PLC)",
+    premium: true,
+    ifseProtected: true,
+    contractRequired: true,
+  },
+
+],
