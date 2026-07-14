@@ -485,11 +485,6 @@ if (isEnterprise) {
     </p>
   )}
 </div>
-            >
-              ${paymentAmount.toLocaleString()}
-            </p>
-          )}
-        </div>
                 <button
           onClick={handleContinue}
           style={{
