@@ -760,6 +760,44 @@ threatLevel,
             </div>
 
           </section>
+            <div className="form-group">
+
+  <label>
+
+    Company Classification *
+
+  </label>
+
+  <select
+    value={contractType}
+    onChange={(e) =>
+      setContractType(
+        e.target.value
+      )
+    }
+  >
+    <option value="Startup">
+      Startup
+    </option>
+
+    <option value="Small Business">
+      Small Business
+    </option>
+
+    <option value="Incorporated Trustee">
+      Incorporated Trustee
+    </option>
+
+    <option value="Limited Company">
+      Limited Company (Contract)
+    </option>
+
+    <option value="PLC">
+      Public Limited Company (Contract)
+    </option>
+  </select>
+
+</div>
 
           <section className="corporate-contact">
 
@@ -885,11 +923,11 @@ threatLevel,
               <input
                 type="text"
                 value={state}
-                onChange={(e) =>
-                  setState(
-                    e.target.value
-                  )
-                }
+                value={province}
+
+onChange={(e) =>
+  setProvince(e.target.value)
+}
                 required
               />
 
@@ -1023,6 +1061,34 @@ threatLevel,
             </div>
 
           </section>
+
+            <section className="corporate-documents">
+
+  <h2>
+
+    Required Corporate Documents
+
+  </h2>
+
+  <ul>
+
+    <li>Certificate of Registration</li>
+
+    <li>Memorandum & Articles of Association</li>
+
+    <li>Tax Identification Number (TIN)</li>
+
+    <li>Proof of Business Address</li>
+
+    <li>Director Identification</li>
+
+    <li>Corporate Bank Verification</li>
+
+    <li>Accessibility Compliance Declaration</li>
+
+  </ul>
+
+</section>
 
           <section className="corporate-summary">
 
