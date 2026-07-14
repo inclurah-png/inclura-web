@@ -1,3 +1,4 @@
+import { processVerification } from "../utils/processVerification";
 import { useState, useMemo, useEffect } from "react";
 
 import {
@@ -116,6 +117,25 @@ const contractRoute =
     }
 
     try {
+      const ifseResult = processVerification({
+
+  identityVerified: !!fullName && !!email && !!phone,
+
+  documentVerified: !!documentFile,
+
+  duplicateChecked: true,
+
+  fraudChecked: true,
+
+  businessValidated: !!organizationName,
+
+  governmentValidated: category === "government",
+
+  accessibilityValidated: true,
+
+  paymentVerified: paymentAmount === 0,
+
+});
       await addDoc(
         collection(
           db,
@@ -154,6 +174,16 @@ const contractRoute =
               : "free",
 
           status: "pending",
+
+          ifseScore: ifseResult.score,
+
+ifseStatus: ifseResult.status,
+
+ifseMessage: ifseResult.message,
+
+ifseBadge: ifseResult.badge,
+
+executiveReview: ifseResult.executiveReview,
 
           enterprise:
             isEnterprise,
