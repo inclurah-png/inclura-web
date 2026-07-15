@@ -918,18 +918,14 @@ threatLevel,
 
                 State / Province *
 
-              </label>
-
               <input
-                type="text"
-                value={state}
-                value={province}
-
-onChange={(e) =>
-  setProvince(e.target.value)
-}
-                required
-              />
+  type="text"
+  value={province}
+  onChange={(e) =>
+    setProvince(e.target.value)
+  }
+  required
+/>
 
             </div>
 
