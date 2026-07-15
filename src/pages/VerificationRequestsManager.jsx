@@ -47,9 +47,51 @@ db,
     setLoading(false);
   }
 };
+function calculateIFSERisk(request) {
 
+  let score = 0;
+
+  // Identity
+  if (request.fullName) score += 10;
+  if (request.email) score += 10;
+  if (request.phone) score += 10;
+
+  // Organization
+  if (request.organizationName) score += 10;
+  if (request.website) score += 10;
+
+  // Documents
+  if (request.documentName) score += 15;
+
+  // Payment
+  if (request.paymentStatus === "paid")
+    score += 15;
+
+  // Official Email
+  if (request.officialEmail)
+    score += 10;
+
+  // Accessibility
+  score += 10;
+
+  let decision = "Executive Review";
+
+  if (score >= 80)
+    decision = "Auto Approve";
+  else if (score >= 50)
+    decision = "Manual Review";
+
+  return {
+    score,
+    decision,
+  };
+
+}
 const approveRequest =
 async (request) => {
+
+const ifseDecision =
+  calculateIFSERisk(request);
 try {
 await updateDoc(
 doc(
@@ -58,7 +100,17 @@ db,
 request.id
 ),
 {
-  status: "approved",
+  status:
+  ifseDecision.decision === "Auto Approve"
+    ? "approved"
+    : "manual_review",
+
+ifseDecision:
+  ifseDecision.decision,
+
+ifseFinalScore:
+  ifseDecision.score,
+  
   verificationActive: true,
   approvedAt: new Date(),
   approvedBy: auth.currentUser?.uid || "admin",
