@@ -136,12 +136,12 @@ const contractRoute =
   paymentVerified: paymentAmount === 0,
 
 });
-      await addDoc(
-        collection(
-          db,
-          "verificationRequests"
-        ),
-        {
+      const verificationRef = await addDoc(
+  collection(
+    db,
+    "verificationRequests"
+  ),
+  {
           userId: user.uid,
 
           category,
@@ -202,6 +202,39 @@ executiveReview: ifseResult.executiveReview,
             serverTimestamp(),
         }
       );
+      await addDoc(
+  collection(db, "verificationTimeline"),
+  {
+    verificationId: verificationRef.id,
+    title: "Application Submitted",
+    status: "Completed",
+    description: "Verification application successfully submitted.",
+    createdBy: user.uid,
+    createdAt: serverTimestamp(),
+  }
+);
+
+await addDoc(
+  collection(db, "verificationAuditLogs"),
+  {
+    verificationId: verificationRef.id,
+    action: "Verification application submitted",
+    performedBy: user.uid,
+    createdAt: serverTimestamp(),
+  }
+);
+
+await addDoc(
+  collection(db, "ifseSecurityEvents"),
+  {
+    verificationId: verificationRef.id,
+    eventType: "Application Received",
+    threatLevel: "Low",
+    riskScore: 0,
+    resolved: true,
+    createdAt: serverTimestamp(),
+  }
+);
 
       if (requiresContract) {
   navigate(contractRoute);
