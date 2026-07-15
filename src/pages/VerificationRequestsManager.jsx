@@ -1,11 +1,10 @@
-
-import { useEffect, useState } from "react";
-
 import {
-collection,
-getDocs,
-doc,
-updateDoc,
+  collection,
+  getDocs,
+  addDoc,
+  doc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -33,7 +32,6 @@ db,
 "verificationRequests"
 )
 );
-
     const data =
       snapshot.docs.map(
         (item) => ({
@@ -60,10 +58,70 @@ db,
 request.id
 ),
 {
-status: "approved",
+  status: "approved",
+  verificationActive: true,
+  approvedAt: new Date(),
+  approvedBy: auth.currentUser?.uid || "admin",
 }
 );
+await addDoc(
+  collection(db, "verificationTimeline"),
+  {
+    verificationId: request.id,
+    title: "Executive Approval",
+    status: "Completed",
+    description:
+      "Verification approved by administrator.",
+    createdBy: auth.currentUser?.uid || "admin",
+    createdAt: serverTimestamp(),
+  }
+);
 
+await addDoc(
+  collection(db, "verificationAuditLogs"),
+  {
+    verificationId: request.id,
+    action: "Verification Approved",
+    performedBy: auth.currentUser?.uid || "admin",
+    createdAt: serverTimestamp(),
+  }
+);
+
+await addDoc(
+  collection(db, "ifseSecurityEvents"),
+  {
+    verificationId: request.id,
+    eventType: "Verification Approved",
+    threatLevel: "None",
+    riskScore: request.ifseScore || 0,
+    resolved: true,
+    createdAt: serverTimestamp(),
+  }
+);
+    const badgeRef = await addDoc(
+  collection(db, "verificationBadges"),
+  {
+    verificationId: request.id,
+    userId: request.userId,
+    badgeType: request.accountType,
+    verificationType: request.verificationType,
+    category: request.category,
+    issuedAt: serverTimestamp(),
+    active: true,
+  }
+);
+
+const certificateRef = await addDoc(
+  collection(db, "verificationCertificates"),
+  {
+    verificationId: request.id,
+    userId: request.userId,
+    certificateNumber:
+      "INC-" + Date.now(),
+    issuedAt: serverTimestamp(),
+    status: "active",
+  }
+);
     if (request.userId) {
       await updateDoc(
         doc(
@@ -72,11 +130,45 @@ status: "approved",
           request.userId
         ),
         {
-          verified: true,
+  verified: true,
 
-          badgeType:
-            request.accountType,
-        }
+  verificationStatus: "approved",
+
+  verificationActive: true,
+
+  verificationCategory:
+    request.category,
+
+  verificationType:
+    request.verificationType,
+
+  badgeType:
+    request.accountType,
+            
+verificationBadgeId:
+  badgeRef.id,
+
+verificationCertificateId:
+  certificateRef.id,
+
+  ifseStatus:
+    request.ifseStatus,
+
+  ifseScore:
+    request.ifseScore,
+
+  ifseBadge:
+    request.ifseBadge,
+
+  executiveReview:
+    request.executiveReview,
+
+  verifiedAt:
+    serverTimestamp(),
+
+  lastVerificationUpdate:
+    serverTimestamp(),
+}
       );
     }
 
@@ -146,40 +238,51 @@ color: "white",
             key={request.id}
             style={card}
           >
-            <h3>
-              Request ID
-            </h3>
+            <h3>Verification Request</h3>
 
-            <p>
-              {request.id}
-            </p>
+<p><strong>Request ID:</strong> {request.id}</p>
 
-            <p>
-              <strong>
-                User ID:
-              </strong>{" "}
-              {
-                request.userId
-              }
-            </p>
+<p><strong>Applicant:</strong> {request.fullName}</p>
 
-            <p>
-              <strong>
-                Account Type:
-              </strong>{" "}
-              {
-                request.accountType
-              }
-            </p>
+<p><strong>Email:</strong> {request.email}</p>
 
-            <p>
-              <strong>
-                Status:
-              </strong>{" "}
-              {
-                request.status
-              }
-            </p>
+<p><strong>User ID:</strong> {request.userId}</p>
+
+<p><strong>Category:</strong> {request.category}</p>
+
+<p><strong>Verification Type:</strong> {request.verificationType}</p>
+
+<p><strong>Account Type:</strong> {request.accountType}</p>
+
+<p><strong>Organization:</strong> {request.organizationName || "N/A"}</p>
+
+<p><strong>Website:</strong> {request.website || "N/A"}</p>
+
+<p><strong>Official Email:</strong> {request.officialEmail || "N/A"}</p>
+
+<p><strong>Phone:</strong> {request.phone}</p>
+
+<p><strong>Payment Amount:</strong> ${request.paymentAmount || 0}</p>
+
+<p><strong>Payment Status:</strong> {request.paymentStatus}</p>
+
+<p><strong>Status:</strong> {request.status}</p>
+
+<p><strong>IFSE Score:</strong> {request.ifseScore}</p>
+
+<p><strong>IFSE Status:</strong> {request.ifseStatus}</p>
+
+<p><strong>IFSE Badge:</strong> {request.ifseBadge}</p>
+
+<p>
+  <strong>Executive Review:</strong>{" "}
+  {request.executiveReview ? "Required" : "Not Required"}
+</p>
+
+<p>
+  <strong>Submitted:</strong>{" "}
+  {request.createdAt?.toDate?.().toLocaleString?.() || "Pending"}
+</p>
 
             <div
               style={{
