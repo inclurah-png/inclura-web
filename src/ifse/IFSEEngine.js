@@ -1,6 +1,6 @@
-import { evaluateFraud } from "./FraudEngine";
-import { evaluateDocuments } from "./DocumentEngine";
 import { evaluateIdentity } from "./IdentityEngine";
+import { evaluateDocuments } from "./DocumentEngine";
+import { evaluateFraud } from "./FraudEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -69,10 +69,15 @@ export function evaluateVerification(request) {
 
   const documents = evaluateDocuments(request);
 
-  const score =
-    Math.round(
-      (identity.score + documents.score) / 2
-    );
+  const fraud = evaluateFraud(request);
+
+  const score = Math.round(
+    (
+      identity.score +
+      documents.score +
+      fraud.score
+    ) / 3
+  );
 
   const result = generateDecision(score);
 
@@ -81,6 +86,8 @@ export function evaluateVerification(request) {
     identity,
 
     documents,
+
+    fraud,
 
     score,
 
