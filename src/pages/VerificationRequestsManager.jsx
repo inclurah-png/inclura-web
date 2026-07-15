@@ -14,6 +14,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import { evaluateVerification } from "../ifse/IFSEEngine";
 
 function VerificationRequestsManager() {
+  
 const [requests, setRequests] =
 useState([]);
 
