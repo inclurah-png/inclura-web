@@ -1,3 +1,4 @@
+import { evaluateIdentity } from "./IdentityEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -62,16 +63,18 @@ export function generateDecision(score) {
 
 export function evaluateVerification(request) {
 
-  const score = calculateRisk(request);
+  const identity = evaluateIdentity(request);
 
+const score = identity.score;
+  
   const result = generateDecision(score);
 
   return {
 
-    score,
+  identity,
 
-    ...result,
+  score,
 
-  };
+  ...result,
 
-}
+};
