@@ -82,7 +82,7 @@ export function evaluateVerification(request) {
       duplicates.score
     ) / 4
   );
-
+  
   const result = generateDecision(score);
 
   return {
