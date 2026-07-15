@@ -78,3 +78,5 @@ const score = identity.score;
   ...result,
 
 };
+
+}
