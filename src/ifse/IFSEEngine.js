@@ -2,6 +2,8 @@ import { evaluateIdentity } from "./IdentityEngine";
 import { evaluateDocuments } from "./DocumentEngine";
 import { evaluateFraud } from "./FraudEngine";
 import { evaluateDuplicates } from "./DuplicateDetectionEngine";
+import { evaluatePayment } from "./PaymentEngine";
+import { evaluateAccessibility } from "./AccessibilityEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -74,16 +76,33 @@ export function evaluateVerification(request) {
 
   const duplicates = evaluateDuplicates(request);
 
+  const payment = evaluatePayment(request);
+
+  const accessibility =
+    evaluateAccessibility(request);
+
   const score = Math.round(
+
     (
+
       identity.score +
+
       documents.score +
+
       fraud.score +
-      duplicates.score
-    ) / 4
+
+      duplicates.score +
+
+      payment.score +
+
+      accessibility.score
+
+    ) / 6
+
   );
-  
-  const result = generateDecision(score);
+
+  const result =
+    generateDecision(score);
 
   return {
 
@@ -94,6 +113,10 @@ export function evaluateVerification(request) {
     fraud,
 
     duplicates,
+
+    payment,
+
+    accessibility,
 
     score,
 
