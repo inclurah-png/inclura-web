@@ -912,22 +912,22 @@ threatLevel,
 
             </div>
 
-            <div className="form-group">
+<div className="form-group">
 
-              <label>
+  <label>
+    State / Province *
+  </label>
 
-                State / Province *
+  <input
+    type="text"
+    value={province}
+    onChange={(e) =>
+      setProvince(e.target.value)
+    }
+    required
+  />
 
-              <input
-  type="text"
-  value={province}
-  onChange={(e) =>
-    setProvince(e.target.value)
-  }
-  required
-/>
-
-            </div>
+</div>
 
             <div className="form-group">
 
