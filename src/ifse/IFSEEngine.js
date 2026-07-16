@@ -9,6 +9,7 @@ import { evaluateMonitoring } from "./MonitoringEngine";
 import { generateBadge } from "./BadgeEngine";
 import { generateCertificate } from "./CertificateEngine";
 import { evaluateCompliance } from "./ComplianceEngine";
+import { evaluateApproval } from "./ApprovalEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -94,20 +95,22 @@ const monitoring =
 
  const compliance =
   evaluateCompliance(request);
+
+const approval =
+  evaluateApproval(request);
   
   const score = Math.round(
-
   (
-  identity.score +
-  documents.score +
-  fraud.score +
-  duplicates.score +
-  payment.score +
-  accessibility.score +
-  compliance.score +
-  risk.score
-) / 8
-
+    identity.score +
+    documents.score +
+    fraud.score +
+    duplicates.score +
+    payment.score +
+    accessibility.score +
+    compliance.score +
+    approval.score +
+    risk.score
+  ) / 9
   );
 
   const result =
@@ -138,9 +141,11 @@ const certificate =
   payment,
 
   accessibility,
-    
-compliance,
-    
+
+  compliance,
+
+  approval,
+
   risk,
 
   monitoring,
@@ -154,5 +159,3 @@ compliance,
   ...result,
 
 };
-
-}
