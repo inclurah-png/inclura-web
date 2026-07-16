@@ -128,34 +128,21 @@ const certificate =
     status: result.status,
   });
   
-  return {
+    return {
+    identity,
+    documents,
+    fraud,
+    duplicates,
+    payment,
+    accessibility,
+    compliance,
+    approval,
+    risk,
+    monitoring,
+    badge,
+    certificate,
+    score,
+    ...result,
+  };
 
-  identity,
-
-  documents,
-
-  fraud,
-
-  duplicates,
-
-  payment,
-
-  accessibility,
-
-  compliance,
-
-  approval,
-
-  risk,
-
-  monitoring,
-
-  badge,
-
-  certificate,
-
-  score,
-
-  ...result,
-
-};
+}
