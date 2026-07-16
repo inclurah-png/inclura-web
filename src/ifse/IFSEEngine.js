@@ -107,25 +107,43 @@ const monitoring =
 
   const result =
     generateDecision(score);
+  
+const badge =
+  generateBadge({
+    ...request,
+    status: result.status,
+  });
 
+const certificate =
+  generateCertificate({
+    ...request,
+    status: result.status,
+  });
+  
   return {
 
-    identity,
+  identity,
 
-    documents,
+  documents,
 
-    fraud,
+  fraud,
 
-    duplicates,
+  duplicates,
 
-    payment,
+  payment,
 
-    accessibility,
+  accessibility,
 
-    score,
+  risk,
 
-    ...result,
+  monitoring,
 
-  };
+  badge,
 
-}
+  certificate,
+
+  score,
+
+  ...result,
+
+};
