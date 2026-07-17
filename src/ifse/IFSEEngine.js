@@ -10,6 +10,7 @@ import { generateBadge } from "./BadgeEngine";
 import { generateCertificate } from "./CertificateEngine";
 import { evaluateCompliance } from "./ComplianceEngine";
 import { evaluateApproval } from "./ApprovalEngine";
+import { generateAuditLog } from "./AuditEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -127,22 +128,46 @@ const certificate =
     ...request,
     status: result.status,
   });
+
+  const audit =
+  generateAuditLog({
+    ...request,
+    status: result.status,
+    eventType: "verification",
+  });
   
     return {
-    identity,
-    documents,
-    fraud,
-    duplicates,
-    payment,
-    accessibility,
-    compliance,
-    approval,
-    risk,
-    monitoring,
-    badge,
-    certificate,
-    score,
-    ...result,
-  };
+
+  identity,
+
+  documents,
+
+  fraud,
+
+  duplicates,
+
+  payment,
+
+  accessibility,
+
+  compliance,
+
+  approval,
+
+  risk,
+
+  monitoring,
+
+  badge,
+
+  certificate,
+
+  audit,
+
+  score,
+
+  ...result,
+
+};
 
 }
