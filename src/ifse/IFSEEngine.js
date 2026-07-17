@@ -16,6 +16,7 @@ import { evaluateRenewal } from "./RenewalEngine";
 import { evaluateExpiry } from "./ExpiryEngine";
 import { evaluateAppeal } from "./AppealsEngine";
 import { evaluateRevocation } from "./RevocationEngine";
+import { evaluateLicense } from "./LicensingEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -167,6 +168,9 @@ const certificate =
 
   const revocation =
   evaluateRevocation(request);
+
+  const license =
+  evaluateLicense(request);
   
     return {
 
@@ -183,6 +187,8 @@ const certificate =
   accessibility,
 
   compliance,
+
+  license,
 
   approval,
 
