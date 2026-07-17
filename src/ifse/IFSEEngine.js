@@ -11,6 +11,7 @@ import { generateCertificate } from "./CertificateEngine";
 import { evaluateCompliance } from "./ComplianceEngine";
 import { evaluateApproval } from "./ApprovalEngine";
 import { generateAuditLog } from "./AuditEngine";
+import { generateNotification } from "./NotificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -135,6 +136,12 @@ const certificate =
     status: result.status,
     eventType: "verification",
   });
+
+  const notification =
+  generateNotification({
+    ...request,
+    status: result.status,
+  });
   
     return {
 
@@ -164,10 +171,12 @@ const certificate =
 
   audit,
 
+  notification,
+
   score,
 
   ...result,
 
 };
-
+  
 }
