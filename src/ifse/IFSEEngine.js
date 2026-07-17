@@ -23,6 +23,7 @@ import { evaluateGovernment } from "./GovernmentVerificationEngine";
 import { evaluateHealthcare } from "./HealthcareVerificationEngine";
 import { evaluateEducation } from "./EducationVerificationEngine";
 import { evaluateFinancial } from "./FinancialVerificationEngine";
+import { evaluateLegal } from "./LegalVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -195,6 +196,9 @@ const certificate =
 
   const financial =
   evaluateFinancial(request);
+
+  const legal =
+  evaluateLegal(request);
   
     return {
 
@@ -225,6 +229,8 @@ const certificate =
   education,
 
   financial,
+
+  legal,
       
   approval,
 
