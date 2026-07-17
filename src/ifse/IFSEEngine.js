@@ -14,6 +14,7 @@ import { generateAuditLog } from "./AuditEngine";
 import { generateNotification } from "./NotificationEngine";
 import { evaluateRenewal } from "./RenewalEngine";
 import { evaluateExpiry } from "./ExpiryEngine";
+import { evaluateAppeal } from "./AppealsEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -156,6 +157,12 @@ const certificate =
     ...request,
     status: result.status,
   });
+
+  const appeal =
+  evaluateAppeal({
+    ...request,
+    status: result.status,
+  });
   
     return {
 
@@ -190,6 +197,8 @@ const certificate =
   renewal,
 
   expiry,
+
+  appeal,
 
   score,
 
