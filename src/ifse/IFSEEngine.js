@@ -260,7 +260,7 @@ intellectualProperty,
 
   nonProfit,
 
-  religiousOrganization
+  religiousOrganization,
     
   approval,
 
