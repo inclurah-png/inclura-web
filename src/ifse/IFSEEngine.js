@@ -27,6 +27,7 @@ import { evaluateLegal } from "./LegalVerificationEngine";
 import { evaluateInsurance } from "./InsuranceVerificationEngine";
 import { evaluateTax } from "./TaxVerificationEngine";
 import { evaluateIntellectualProperty } from "./IntellectualPropertyVerificationEngine";
+import { evaluateNonProfit } from "./NonProfitVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -211,6 +212,9 @@ const certificate =
 
   const intellectualProperty =
   evaluateIntellectualProperty(request);
+
+  const nonProfit =
+  evaluateNonProfit(request);
   
     return {
 
@@ -249,6 +253,8 @@ const certificate =
   tax,
       
 intellectualProperty,
+
+  nonProfit,
       
   approval,
 
