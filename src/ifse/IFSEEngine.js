@@ -21,6 +21,7 @@ import { evaluateAccreditation } from "./AccreditationEngine";
 import { evaluatePartnership } from "./PartnershipEngine";
 import { evaluateGovernment } from "./GovernmentVerificationEngine";
 import { evaluateHealthcare } from "./HealthcareVerificationEngine";
+import { evaluateEducation } from "./EducationVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -187,6 +188,9 @@ const certificate =
 
   const healthcare =
   evaluateHealthcare(request);
+
+  const education =
+  evaluateEducation(request);
   
     return {
 
@@ -213,6 +217,8 @@ const certificate =
   government,
 
   healthcare,
+
+  education,
       
   approval,
 
