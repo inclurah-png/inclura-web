@@ -12,6 +12,7 @@ import { evaluateCompliance } from "./ComplianceEngine";
 import { evaluateApproval } from "./ApprovalEngine";
 import { generateAuditLog } from "./AuditEngine";
 import { generateNotification } from "./NotificationEngine";
+import { evaluateRenewal } from "./RenewalEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -142,6 +143,12 @@ const certificate =
     ...request,
     status: result.status,
   });
+
+  const renewal =
+  evaluateRenewal({
+    ...request,
+    status: result.status,
+  });
   
     return {
 
@@ -172,6 +179,8 @@ const certificate =
   audit,
 
   notification,
+
+  renewal,
 
   score,
 
