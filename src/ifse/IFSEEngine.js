@@ -18,6 +18,7 @@ import { evaluateAppeal } from "./AppealsEngine";
 import { evaluateRevocation } from "./RevocationEngine";
 import { evaluateLicense } from "./LicensingEngine";
 import { evaluateAccreditation } from "./AccreditationEngine";
+import { evaluatePartnership } from "./PartnershipEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -175,6 +176,9 @@ const certificate =
 
   const accreditation =
   evaluateAccreditation(request);
+
+  const partnership =
+  evaluatePartnership(request);
   
     return {
 
@@ -195,6 +199,8 @@ const certificate =
   license,
 
   accreditation,
+
+  partnership,
       
   approval,
 
