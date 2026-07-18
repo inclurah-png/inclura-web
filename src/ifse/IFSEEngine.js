@@ -44,6 +44,7 @@ import { evaluateAgriculture } from "./AgricultureVerificationEngine";
 import { evaluateMining } from "./MiningVerificationEngine";
 import { evaluateHospitality } from "./HospitalityVerificationEngine";
 import { evaluateTourism } from "./TourismVerificationEngine";
+import { evaluateSports } from "./SportsVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -279,6 +280,9 @@ const certificate =
 
   const tourism =
   evaluateTourism(request);
+
+  const sports =
+  evaluateSports(request);
   
     return {
 
@@ -351,6 +355,8 @@ const certificate =
   hospitality,
 
   tourism,
+
+  sports,
       
   approval,
 
