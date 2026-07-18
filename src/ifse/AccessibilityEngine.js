@@ -1,48 +1,79 @@
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
-// Accessibility Engine
+// Accessibility Engine (Master Controller)
 // =======================================================
 
 export function evaluateAccessibility(request) {
-
-  let score = 100;
-
-  const issues = [];
-
-  if (
-    request.accessibilityNeeds &&
-    request.accessibilityNeeds.length > 0
-  ) {
-
-    score = 100;
-
-  }
-
-  if (!request.language) {
-
-    issues.push(
-      "Preferred language not specified"
-    );
-
-  }
-
-  if (!request.timezone) {
-
-    issues.push(
-      "Timezone not specified"
-    );
-
-  }
 
   return {
 
     engine: "Accessibility Engine",
 
-    score,
+    enabled: true,
+
+    profile:
+      request.accessibilityProfile || "default",
+
+    preferredLanguage:
+      request.language || "en",
+
+    timezone:
+      request.timezone || null,
+
+    accessibilityNeeds:
+      request.accessibilityNeeds || [],
+
+    engines: {
+
+      visual: false,
+
+      blindSupport: false,
+
+      lowVision: false,
+
+      colorBlind: false,
+
+      hearing: false,
+
+      deafSupport: false,
+
+      speech: false,
+
+      cognitive: false,
+
+      dyslexia: false,
+
+      autism: false,
+
+      adhd: false,
+
+      motor: false,
+
+      keyboardNavigation: false,
+
+      voiceNavigation: false,
+
+      screenReader: false,
+
+      braille: false,
+
+      signLanguage: false,
+
+      captions: false,
+
+      liveTranscription: false,
+
+      simplifiedReading: false,
+
+      easyLanguage: false,
+
+    },
+
+    score: 100,
 
     passed: true,
 
-    issues,
+    issues: [],
 
   };
 
