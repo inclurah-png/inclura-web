@@ -39,6 +39,7 @@ import { evaluateGenericOrganization } from "./GenericOrganizationVerificationEn
 import { evaluateMaritime } from "./MaritimeVerificationEngine";
 import { evaluateLogistics } from "./LogisticsVerificationEngine";
 import { evaluateRealEstate } from "./RealEstateVerificationEngine";
+import { evaluateManufacturing } from "./ManufacturingVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -259,6 +260,9 @@ const certificate =
 
   const realEstate =
   evaluateRealEstate(request);
+
+  const manufacturing =
+  evaluateManufacturing(request);
   
     return {
 
@@ -321,6 +325,8 @@ const certificate =
   logistics,
 
   realEstate,
+
+  manufacturing,
       
   approval,
 
