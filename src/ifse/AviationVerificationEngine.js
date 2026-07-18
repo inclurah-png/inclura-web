@@ -33,4 +33,14 @@ export function evaluateAviation(request) {
     aviationLicense:
       request.aviationLicense || null,
 
-   
+    aviationAuthority:
+      request.aviationAuthority || null,
+
+    operatorType:
+      request.operatorType || null,
+
+    issues,
+
+  };
+
+}
