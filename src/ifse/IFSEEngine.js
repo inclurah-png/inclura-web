@@ -29,6 +29,7 @@ import { evaluateTax } from "./TaxVerificationEngine";
 import { evaluateIntellectualProperty } from "./IntellectualPropertyVerificationEngine";
 import { evaluateNonProfit } from "./NonProfitVerificationEngine";
 import { evaluateReligiousOrganization } from "./ReligiousOrganizationVerificationEngine";
+import { evaluateMediaOrganization } from "./MediaOrganizationVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -219,6 +220,10 @@ const certificate =
 
   const religiousOrganization =
   evaluateReligiousOrganization(request);
+
+  const mediaOrganization =
+  evaluateMediaOrganization(request);
+  
   
     return {
 
@@ -256,11 +261,13 @@ const certificate =
 
   tax,
       
-intellectualProperty,
+  intellectualProperty,
 
   nonProfit,
 
   religiousOrganization,
+
+  mediaOrganization,
     
   approval,
 
