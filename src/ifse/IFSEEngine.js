@@ -41,6 +41,7 @@ import { evaluateLogistics } from "./LogisticsVerificationEngine";
 import { evaluateRealEstate } from "./RealEstateVerificationEngine";
 import { evaluateManufacturing } from "./ManufacturingVerificationEngine";
 import { evaluateAgriculture } from "./AgricultureVerificationEngine";
+import { evaluateMining } from "./MiningVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -268,6 +269,9 @@ const certificate =
   const agriculture =
   evaluateAgriculture(request);
   
+  const mining =
+  evaluateMining(request);
+  
     return {
 
   identity,
@@ -333,6 +337,8 @@ const certificate =
   manufacturing,
 
   agriculture,
+
+  mining,
       
   approval,
 
