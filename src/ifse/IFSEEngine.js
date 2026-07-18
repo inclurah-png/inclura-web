@@ -35,6 +35,7 @@ import { evaluateEnergy } from "./EnergyVerificationEngine";
 import { evaluateUtilities } from "./UtilitiesVerificationEngine";
 import { evaluateTransportation } from "./TransportationVerificationEngine";
 import { evaluateAviation } from "./AviationVerificationEngine";
+import { evaluateGenericOrganization } from "./GenericOrganizationVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -243,6 +244,9 @@ const certificate =
 
   const aviation =
   evaluateAviation(request);
+
+  const genericOrganization =
+  evaluateGenericOrganization(request);
   
     return {
 
@@ -287,6 +291,8 @@ const certificate =
   religiousOrganization,
 
   mediaOrganization,
+
+  genericOrganization,
 
   telecommunications,
 
