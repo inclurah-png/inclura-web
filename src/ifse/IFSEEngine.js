@@ -50,6 +50,7 @@ import { evaluateResearchInstitution } from "./ResearchInstitutionVerificationEn
 import { evaluateInternationalOrganization } from "./InternationalOrganizationVerificationEngine";
 import { evaluateDiplomaticOrganization } from "./DiplomaticOrganizationVerificationEngine";
 import { evaluateCharityFoundation } from "./CharityFoundationVerificationEngine";
+import { evaluateCooperative } from "./CooperativeVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -303,6 +304,9 @@ const certificate =
 
   const charityFoundation =
   evaluateCharityFoundation(request);
+
+  const cooperative =
+  evaluateCooperative(request);
   
     return {
 
@@ -387,6 +391,8 @@ const certificate =
   diplomaticOrganization,
 
   charityFoundation,
+
+  cooperative,
       
   approval,
 
