@@ -37,6 +37,8 @@ import { evaluateTransportation } from "./TransportationVerificationEngine";
 import { evaluateAviation } from "./AviationVerificationEngine";
 import { evaluateGenericOrganization } from "./GenericOrganizationVerificationEngine";
 import { evaluateMaritime } from "./MaritimeVerificationEngine";
+import { evaluateLogistics } from "./LogisticsVerificationEngine";
+import { evaluateRealEstate } from "./RealEstateVerificationEngine";
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Core Security Engine
@@ -251,6 +253,12 @@ const certificate =
 
   const maritime =
   evaluateMaritime(request);
+
+  const logistics =
+  evaluateLogistics(request);
+
+  const realEstate =
+  evaluateRealEstate(request);
   
     return {
 
@@ -309,6 +317,10 @@ const certificate =
   aviation,
 
   maritime,
+
+  logistics,
+
+  realEstate,
       
   approval,
 
