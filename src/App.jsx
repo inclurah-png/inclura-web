@@ -73,6 +73,8 @@ import PricingManager from "./pages/PricingManager";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
 
 import SOS from "./pages/SOS";
+import BiometricsDemoPage from "./pages/BiometricsDemoPage";
+
 function App() {
   return (
     <Routes>
@@ -94,6 +96,11 @@ function App() {
       <Route
         path="/signup"
         element={<Signup />}
+      />
+
+      <Route
+        path="/biometrics-demo"
+        element={<BiometricsDemoPage />}
       />
 
       <Route
