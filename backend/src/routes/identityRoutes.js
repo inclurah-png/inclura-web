@@ -6,13 +6,21 @@
 import express from "express";
 
 import {
+
   health,
+
   registerPasskey,
+
   authenticationOptions,
+
   verifyAuthentication,
+
   verifyFace,
+
   verifyBiometric,
+
   verifyIdentity,
+
 } from "../controllers/IdentityController.js";
 
 const router = express.Router();
@@ -27,7 +35,10 @@ router.get("/", health);
 // Passkeys
 // =======================================================
 
-router.post("/passkeys/register", registerPasskey);
+router.post(
+  "/passkeys/register",
+  registerPasskey
+);
 
 router.get(
   "/passkeys/authentication-options",
@@ -43,18 +54,27 @@ router.post(
 // Face Verification
 // =======================================================
 
-router.post("/face/verify", verifyFace);
+router.post(
+  "/face/verify",
+  verifyFace
+);
 
 // =======================================================
 // Biometric Verification
 // =======================================================
 
-router.post("/biometric/verify", verifyBiometric);
+router.post(
+  "/biometric/verify",
+  verifyBiometric
+);
 
 // =======================================================
 // Identity Verification
 // =======================================================
 
-router.post("/verify", verifyIdentity);
+router.post(
+  "/verify",
+  verifyIdentity
+);
 
 export default router;
