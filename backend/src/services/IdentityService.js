@@ -3,6 +3,8 @@
 // Identity Service
 // =======================================================
 
+import crypto from "crypto";
+
 // =======================================================
 // Health
 // =======================================================
@@ -13,7 +15,7 @@ export async function healthService() {
 
     success: true,
 
-    engine: "IFSE Identity Service",
+    service: "IFSE Identity Service",
 
     status: "Operational",
 
@@ -31,12 +33,13 @@ export async function registerPasskeyService(data) {
 
   return {
 
-    success: false,
+    success: true,
 
-    message:
-      "Passkey registration service not implemented yet.",
+    challenge: crypto.randomBytes(32).toString("base64url"),
 
-    data,
+    user: data,
+
+    message: "Passkey registration challenge generated.",
 
   };
 
@@ -50,10 +53,11 @@ export async function authenticationOptionsService() {
 
   return {
 
-    success: false,
+    success: true,
 
-    message:
-      "Authentication options service not implemented yet.",
+    challenge: crypto.randomBytes(32).toString("base64url"),
+
+    message: "Authentication challenge generated.",
 
   };
 
@@ -67,12 +71,14 @@ export async function verifyAuthenticationService(data) {
 
   return {
 
-    success: false,
+    success: true,
+
+    verified: false,
 
     message:
-      "Authentication verification service not implemented yet.",
+      "Authentication verification engine will be connected next.",
 
-    data,
+    request: data,
 
   };
 
@@ -86,12 +92,16 @@ export async function verifyFaceService(data) {
 
   return {
 
-    success: false,
+    success: true,
+
+    verified: false,
+
+    engine: "FaceAuthenticityEngine",
 
     message:
-      "Face verification service not implemented yet.",
+      "Face verification engine will be connected next.",
 
-    data,
+    request: data,
 
   };
 
@@ -100,6 +110,48 @@ export async function verifyFaceService(data) {
 // =======================================================
 // Biometric Verification
 // =======================================================
+
+export async function verifyBiometricService(data) {
+
+  return {
+
+    success: true,
+
+    verified: false,
+
+    engine: "BiometricVerificationEngine",
+
+    message:
+      "Biometric verification engine will be connected next.",
+
+    request: data,
+
+  };
+
+}
+
+// =======================================================
+// Identity Verification
+// =======================================================
+
+export async function verifyIdentityService(data) {
+
+  return {
+
+    success: true,
+
+    verified: false,
+
+    engine: "IdentityVerificationEngine",
+
+    message:
+      "Identity verification engine will be connected next.",
+
+    request: data,
+
+  };
+
+}// =======================================================
 
 export async function verifyBiometricService(data) {
 
