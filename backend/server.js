@@ -85,21 +85,10 @@ app.get("/api/status", (req, res) => {
 });
 
 // =======================================================
-// Identity API Placeholder
+// IFSE Identity Routes
 // =======================================================
 
-app.use("/api/identity", (req, res) => {
-
-  res.status(501).json({
-
-    success: false,
-
-    message:
-      "Identity API is not implemented yet.",
-
-  });
-
-});
+app.use("/api/identity", identityRoutes);
 
 // =======================================================
 // 404 Handler
