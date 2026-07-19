@@ -5,6 +5,9 @@
 // =======================================================
 
 import {
+  initializeFirebaseAdmin,
+} from "./src/config/firebaseAdmin.js";
+import {
   validateEnvironment,
   environment,
 } from "./src/config/environment.js";
@@ -14,6 +17,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 validateEnvironment();
+initializeFirebaseAdmin();
 
 const app = express();
 
