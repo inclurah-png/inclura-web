@@ -1,9 +1,9 @@
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
-// Voice Call Security Engine
+// Video Call Security Engine
 // =======================================================
 
-export function evaluateVoiceCallSecurity(request) {
+export function evaluateVideoCallSecurity(request) {
 
   const issues = [];
 
@@ -11,21 +11,25 @@ export function evaluateVoiceCallSecurity(request) {
     issues.push("Unauthorized participant detected");
   }
 
-  if (request.callHijackingDetected) {
-    issues.push("Possible call hijacking detected");
+  if (request.deepfakeDetected) {
+    issues.push("Possible deepfake video detected");
   }
 
-  if (request.voiceSpoofingDetected) {
-    issues.push("Possible AI voice spoofing detected");
+  if (request.faceSpoofingDetected) {
+    issues.push("Possible face spoofing detected");
   }
 
   if (request.recordingViolationDetected) {
     issues.push("Unauthorized recording detected");
   }
 
+  if (request.screenSharingViolationDetected) {
+    issues.push("Unauthorized screen sharing detected");
+  }
+
   return {
 
-    engine: "Voice Call Security Engine",
+    engine: "Video Call Security Engine",
 
     secure: issues.length === 0,
 
@@ -35,11 +39,13 @@ export function evaluateVoiceCallSecurity(request) {
 
       participantVerification: true,
 
-      encryptedVoiceCalls: true,
+      encryptedVideoCalls: true,
 
-      antiVoiceSpoofing: true,
+      deepfakeDetection: true,
 
-      secureSessionControl: true,
+      faceAuthenticityVerification: true,
+
+      secureScreenSharing: true,
 
       recordingProtection: true,
 
