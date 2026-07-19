@@ -4,11 +4,16 @@
 // Production Foundation
 // =======================================================
 
+import {
+  validateEnvironment,
+  environment,
+} from "./src/config/environment.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
 dotenv.config();
+validateEnvironment();
 
 const app = express();
 
