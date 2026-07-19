@@ -121,6 +121,22 @@ function Home() {
             </button>
           </Link>
 
+          <Link to="/biometrics-demo">
+            <button
+              style={{
+                padding: "14px 28px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "transparent",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: "700",
+              }}
+            >
+              Try biometrics demo
+            </button>
+          </Link>
+
           <button
             style={{
               padding: "14px 28px",

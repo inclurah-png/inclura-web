@@ -7,13 +7,6 @@ const MODEL_ASSET_URL =
 const WASM_URL =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm";
 
-function base64UrlEncode(value) {
-  return btoa(String.fromCharCode(...new Uint8Array(value)))
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
-}
-
 function base64UrlDecode(value) {
   const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
   const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
@@ -30,6 +23,42 @@ export default function BiometricsDemo() {
     "Passkeys are ready to be tested from this browser."
   );
   const [cameraReady, setCameraReady] = useState(false);
+  const [passkeySupported, setPasskeySupported] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function detectPasskeySupport() {
+      if (typeof window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+        if (!cancelled) {
+          setPasskeySupported(false);
+          setPasskeyStatus("This browser does not expose WebAuthn platform authenticator support.");
+        }
+        return;
+      }
+
+      try {
+        const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!cancelled) {
+          setPasskeySupported(Boolean(available));
+          if (!available) {
+            setPasskeyStatus("This device does not currently expose a platform authenticator for passkeys.");
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setPasskeySupported(false);
+          setPasskeyStatus(`Passkey support check failed: ${error.message}`);
+        }
+      }
+    }
+
+    detectPasskeySupport();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let animationFrameId = null;
@@ -46,7 +75,7 @@ export default function BiometricsDemo() {
         const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
           baseOptions: {
             modelAssetPath: MODEL_ASSET_URL,
-            delegate: "GPU",
+            delegate: "CPU",
           },
           outputFaceBlendshapes: true,
           runningMode: "VIDEO",
@@ -195,7 +224,7 @@ export default function BiometricsDemo() {
       <h1 style={{ marginBottom: "8px" }}>MediaPipe + Passkey Demo</h1>
       <p style={{ color: "#64748b", marginBottom: "24px" }}>
         This route demonstrates browser-based face landmarking and WebAuthn passkey creation.
-        For production deployments, verify the WebAuthn responses on your backend.
+        For production deployments, verify the WebAuthn responses on your backend and store the registration data securely.
       </p>
 
       <div
@@ -245,6 +274,9 @@ export default function BiometricsDemo() {
           <p style={{ color: cameraReady ? "#15803d" : "#64748b", marginTop: "12px" }}>
             {cameraReady ? "Camera streaming and landmark detection are running." : "Waiting for camera access..."}
           </p>
+          <p style={{ color: "#64748b", fontSize: "14px", marginTop: "8px" }}>
+            The face model runs with the CPU delegate for wider browser compatibility.
+          </p>
         </section>
 
         <section
@@ -260,25 +292,29 @@ export default function BiometricsDemo() {
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             <button
               onClick={handleRegisterPasskey}
+              disabled={!passkeySupported}
               style={{
                 padding: "12px 16px",
                 borderRadius: "10px",
                 border: "none",
-                background: "#2563eb",
+                background: passkeySupported ? "#2563eb" : "#94a3b8",
                 color: "white",
-                cursor: "pointer",
+                cursor: passkeySupported ? "pointer" : "not-allowed",
+                opacity: passkeySupported ? 1 : 0.8,
               }}
             >
               Register a passkey
             </button>
             <button
               onClick={handleAuthenticatePasskey}
+              disabled={!passkeySupported}
               style={{
                 padding: "12px 16px",
                 borderRadius: "10px",
                 border: "1px solid #cbd5e1",
                 background: "#f8fafc",
-                cursor: "pointer",
+                cursor: passkeySupported ? "pointer" : "not-allowed",
+                opacity: passkeySupported ? 1 : 0.8,
               }}
             >
               Sign in with the stored passkey
