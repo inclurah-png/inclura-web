@@ -3,13 +3,13 @@
 // Identity Routes
 // =======================================================
 
-import express from "express";
-
 import {
 
   health,
 
   registerPasskey,
+
+  verifyRegistration,
 
   authenticationOptions,
 
@@ -22,8 +22,6 @@ import {
   verifyIdentity,
 
 } from "../controllers/IdentityController.js";
-
-const router = express.Router();
 
 // =======================================================
 // Health
@@ -38,6 +36,11 @@ router.get("/", health);
 router.post(
   "/passkeys/register",
   registerPasskey
+);
+
+router.post(
+  "/passkeys/verify-registration",
+  verifyRegistration
 );
 
 router.get(
