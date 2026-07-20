@@ -103,28 +103,4 @@ export async function verifyIdentity(req, res) {
 
   return res.status(200).json(result);
 
-}    success: false,
-
-    message:
-      "Biometric verification service not implemented yet.",
-
-  });
-
-}
-
-// =======================================================
-// Identity Verification
-// =======================================================
-
-export async function verifyIdentity(req, res) {
-
-  return res.status(501).json({
-
-    success: false,
-
-    message:
-      "Identity verification service not implemented yet.",
-
-  });
-
-}
+}    
