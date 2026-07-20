@@ -27,16 +27,17 @@ export async function verifyPasskeyRegistrationService(data) {
 
   const verification = await verifyRegistrationResponse({
 
-    response: data.response,
+  response: data.response,
 
-    expectedChallenge: challenge.challenge,
+  expectedChallenge: challenge.challenge,
 
-    expectedOrigin: process.env.WEBAUTHN_ORIGIN,
+  expectedOrigin: process.env.WEBAUTHN_ORIGIN,
 
-expectedRPID: process.env.WEBAUTHN_RP_ID,
+  expectedRPID: process.env.WEBAUTHN_RP_ID,
 
-  });
+  requireUserVerification: true,
 
+});
   if (!verification.verified) {
 
     return {
@@ -51,6 +52,16 @@ expectedRPID: process.env.WEBAUTHN_RP_ID,
 
   const credential = verification.registrationInfo;
   if (!credential) {
+
+  return {
+
+    success: false,
+
+    message: "Credential information was not returned.",
+
+  };
+
+  }
 
   return {
 
