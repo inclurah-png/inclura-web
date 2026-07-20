@@ -43,9 +43,9 @@ export async function registerPasskeyService(data) {
 
     rpID: process.env.RP_ID,
 
-    userID: data.userId,
-
     userName: data.email,
+
+    userID: data.userId,
 
     userDisplayName: data.fullName,
 
@@ -60,6 +60,8 @@ export async function registerPasskeyService(data) {
       userVerification: "required",
 
     },
+
+    excludeCredentials: [],
 
   });
 
@@ -80,6 +82,8 @@ export async function registerPasskeyService(data) {
       userId: data.userId,
 
       email: data.email,
+
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
 
       expiresAt,
 
