@@ -130,24 +130,83 @@ export async function verifyAuthenticationService(data) {
 
     }
 
-    // ===================================================
-    // Load Registered Credential
-    // ===================================================
+// ===================================================
+// Load Authentication Challenge
+// ===================================================
 
-    const credentialDoc = await firestore()
+const challengeDoc = await firestore()
 
-      .collection("ifse_passkeys")
+  .collection("ifse_passkey_challenges")
 
-      .doc(data.userId)
+  .doc(data.challengeId)
 
-      .collection("credentials")
+  .get();
 
-      .doc(data.credentialId)
+if (!challengeDoc.exists) {
 
-      .get();
+  return {
 
-    if (!credentialDoc.exists) {
+    success: false,
 
+    authenticated: false,
+
+    message: "Authentication challenge not found.",
+
+  };
+
+}
+
+const challenge = challengeDoc.data();
+
+// ===================================================
+// Check Challenge Expiration
+// ===================================================
+
+if (Date.now() > challenge.expiresAt) {
+
+  return {
+
+    success: false,
+
+    authenticated: false,
+
+    message: "Authentication challenge expired.",
+
+  };
+
+}
+
+// ===================================================
+// Load Trusted Device
+// ===================================================
+
+const credentialDoc = await firestore()
+
+  .collection("ifse_passkeys")
+
+  .doc(data.userId)
+
+  .collection("credentials")
+
+  .doc(data.credentialId)
+
+  .get();
+
+if (!credentialDoc.exists) {
+
+  return {
+
+    success: false,
+
+    authenticated: false,
+
+    message: "Trusted device not found.",
+
+  };
+
+}
+
+const credential = credentialDoc.data();
       return {
 
         success: false,
