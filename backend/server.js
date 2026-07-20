@@ -4,6 +4,7 @@
 // Production Foundation
 // =======================================================
 
+import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 import {
   initializeFirebaseAdmin,
 } from "./src/config/firebaseAdmin.js";
