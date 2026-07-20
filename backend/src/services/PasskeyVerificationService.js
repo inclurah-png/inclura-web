@@ -50,6 +50,17 @@ expectedRPID: process.env.WEBAUTHN_RP_ID,
   }
 
   const credential = verification.registrationInfo;
+  if (!credential) {
+
+  return {
+
+    success: false,
+
+    message: "Credential information was not returned.",
+
+  };
+
+  }
 
   const credentialId = Buffer.from(
   credential.credentialID
@@ -88,6 +99,11 @@ await firestore()
     platform: data.platform || "Unknown",
 
     authenticatorType: "Passkey",
+    registeredFrom: process.env.WEBAUTHN_ORIGIN,
+
+registrationMethod: "PASSKEY",
+
+securityEngine: "IFSE",
 
   });
 
