@@ -12,29 +12,15 @@ dotenv.config();
 // =======================================================
 
 const REQUIRED_VARIABLES = [
-
-  "NODE_ENV",
-
-  "PORT",
-
   "FIREBASE_PROJECT_ID",
-
   "FIREBASE_CLIENT_EMAIL",
-
   "FIREBASE_PRIVATE_KEY",
-
   "WEBAUTHN_RP_NAME",
-
   "WEBAUTHN_RP_ID",
-
   "WEBAUTHN_ORIGIN",
-
   "JWT_SECRET",
-
   "SESSION_SECRET",
-
-  "ENCRYPTION_SECRET",
-
+  "ENCRYPTION_SECRET"
 ];
 
 // =======================================================
