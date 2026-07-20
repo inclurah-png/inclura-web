@@ -3,6 +3,7 @@
 // Identity Service
 // =======================================================
 
+import { generateRegistrationOptions } from "@simplewebauthn/server";
 import admin from "firebase-admin";
 import crypto from "crypto";
 import { randomUUID } from "crypto";
@@ -29,18 +30,38 @@ export async function healthService() {
 }
 
 // =======================================================
-// Passkey Registration
-// =======================================================
-
-// =======================================================
 // Production Passkey Registration
 // =======================================================
 
 export async function registerPasskeyService(data) {
 
-  const challenge = crypto.randomBytes(32).toString("base64url");
-
   const challengeId = randomUUID();
+
+  const options = await generateRegistrationOptions({
+
+    rpName: process.env.RP_NAME,
+
+    rpID: process.env.RP_ID,
+
+    userID: data.userId,
+
+    userName: data.email,
+
+    userDisplayName: data.fullName,
+
+    timeout: 60000,
+
+    attestationType: "none",
+
+    authenticatorSelection: {
+
+      residentKey: "preferred",
+
+      userVerification: "required",
+
+    },
+
+  });
 
   const expiresAt = Date.now() + (5 * 60 * 1000);
 
@@ -54,13 +75,11 @@ export async function registerPasskeyService(data) {
 
       challengeId,
 
-      challenge,
+      challenge: options.challenge,
 
       userId: data.userId,
 
       email: data.email,
-
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
 
       expiresAt,
 
@@ -74,23 +93,7 @@ export async function registerPasskeyService(data) {
 
     challengeId,
 
-    challenge,
-
-    expiresAt,
-
-    rpName: "Inclura",
-
-    rpID: process.env.RP_ID,
-
-    user: {
-
-      id: data.userId,
-
-      name: data.email,
-
-      displayName: data.fullName,
-
-    },
+    options,
 
   };
 
