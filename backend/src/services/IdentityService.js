@@ -127,18 +127,63 @@ export async function authenticationOptionsService() {
 
 export async function verifyAuthenticationService(data) {
 
-  return {
+  try {
 
-    success: true,
+    // ===================================================
+    // Validate Request
+    // ===================================================
 
-    verified: false,
+    if (!data) {
 
-    message:
-      "Authentication verification engine will be connected next.",
+      return {
 
-    request: data,
+        success: false,
 
-  };
+        authenticated: false,
+
+        message: "Authentication request is missing.",
+
+      };
+
+    }
+
+    // ===================================================
+    // TODO:
+    // 1. Load credential from Firestore
+    // 2. Verify passkey using @simplewebauthn/server
+    // 3. Update credential counter
+    // 4. Update last login
+    // 5. Return authenticated user
+    // ===================================================
+
+    return {
+
+      success: true,
+
+      authenticated: false,
+
+      message:
+        "IFSE authentication verification engine is ready for production integration.",
+
+      request: data,
+
+    };
+
+  } catch (error) {
+
+    console.error(error);
+
+    return {
+
+      success: false,
+
+      authenticated: false,
+
+      message: error.message,
+
+    };
+
+  }
 
 }
 
