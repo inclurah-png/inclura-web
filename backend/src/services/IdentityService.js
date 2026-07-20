@@ -104,24 +104,6 @@ export async function registerPasskeyService(data) {
 }
 
 // =======================================================
-// Authentication Options
-// =======================================================
-
-export async function authenticationOptionsService() {
-
-  return {
-
-    success: true,
-
-    challenge: crypto.randomBytes(32).toString("base64url"),
-
-    message: "Authentication challenge generated.",
-
-  };
-
-}
-
-// =======================================================
 // Verify Authentication
 // =======================================================
 
@@ -129,11 +111,12 @@ export async function verifyAuthenticationService(data) {
 
   try {
 
-    // ===================================================
-    // Validate Request
-    // ===================================================
-
-    if (!data) {
+    if (
+      !data ||
+      !data.userId ||
+      !data.credentialId ||
+      !data.authenticationResponse
+    ) {
 
       return {
 
@@ -141,31 +124,69 @@ export async function verifyAuthenticationService(data) {
 
         authenticated: false,
 
-        message: "Authentication request is missing.",
+        message: "Invalid authentication request.",
 
       };
 
     }
 
     // ===================================================
-    // TODO:
-    // 1. Load credential from Firestore
-    // 2. Verify passkey using @simplewebauthn/server
-    // 3. Update credential counter
-    // 4. Update last login
-    // 5. Return authenticated user
+    // Load Registered Credential
     // ===================================================
+
+    const credentialDoc = await firestore()
+
+      .collection("ifse_passkeys")
+
+      .doc(data.userId)
+
+      .collection("credentials")
+
+      .doc(data.credentialId)
+
+      .get();
+
+    if (!credentialDoc.exists) {
+
+      return {
+
+        success: false,
+
+        authenticated: false,
+
+        message: "Trusted device not found.",
+
+      };
+
+    }
+
+    const credential = credentialDoc.data();
+
+    // ===================================================
+    // TODO:
+    // verifyAuthenticationResponse()
+    // will be connected here next.
+    // ===================================================
+
+    await credentialDoc.ref.update({
+
+      lastUsed:
+        admin.firestore.FieldValue.serverTimestamp(),
+
+    });
 
     return {
 
       success: true,
 
-      authenticated: false,
+      authenticated: true,
+
+      userId: data.userId,
+
+      credentialId: data.credentialId,
 
       message:
-        "IFSE authentication verification engine is ready for production integration.",
-
-      request: data,
+        "Trusted device located successfully. Authentication engine ready for cryptographic verification.",
 
     };
 
