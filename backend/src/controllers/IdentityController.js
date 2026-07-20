@@ -21,6 +21,12 @@ import {
 
 } from "../services/IdentityService.js";
 
+import {
+
+  verifyPasskeyRegistrationService,
+
+} from "../services/PasskeyVerificationService.js";
+
 // =======================================================
 // Health
 // =======================================================
@@ -42,6 +48,34 @@ export async function registerPasskey(req, res) {
   const result = await registerPasskeyService(req.body);
 
   return res.status(200).json(result);
+
+}
+// =======================================================
+// Verify Passkey Registration
+// =======================================================
+
+export async function verifyRegistration(req, res) {
+
+  try {
+
+    const result =
+      await verifyPasskeyRegistrationService(req.body);
+
+    return res.status(200).json(result);
+
+  } catch (error) {
+
+    console.error(error);
+
+    return res.status(500).json({
+
+      success: false,
+
+      message: error.message,
+
+    });
+
+  }
 
 }
 
