@@ -3,7 +3,10 @@
 // Identity Service
 // =======================================================
 
-import { generateRegistrationOptions } from "@simplewebauthn/server";
+import {
+  generateRegistrationOptions,
+  verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
 import admin from "firebase-admin";
 import crypto from "crypto";
 import { randomUUID } from "crypto";
@@ -39,9 +42,9 @@ export async function registerPasskeyService(data) {
 
   const options = await generateRegistrationOptions({
 
-    rpName: process.env.RP_NAME,
+    rpName: process.env.WEBAUTHN_RP_NAME,
 
-    rpID: process.env.RP_ID,
+rpID: process.env.WEBAUTHN_RP_ID,
 
     userName: data.email,
 
@@ -205,19 +208,6 @@ if (!credentialDoc.exists) {
   };
 
 }
-
-const credential = credentialDoc.data();
-      return {
-
-        success: false,
-
-        authenticated: false,
-
-        message: "Trusted device not found.",
-
-      };
-
-    }
 
     const credential = credentialDoc.data();
 
