@@ -148,37 +148,57 @@ export default function BiometricsDemo() {
   const handleRegisterPasskey = async () => {
     try {
       setPasskeyStatus("Creating a passkey with your browser...");
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
-      const userId = new TextEncoder().encode("inclura-demo-user");
+      const response = await fetch(
+  "http://localhost:5000/api/identity/passkeys/register",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      userId: "inclura-demo-user",
+      email: "demo@inclura.com",
+      fullName: "Inclura Demo User",
+    }),
+  }
+);
 
-      const attestation = await startRegistration({
-        publicKey: {
-          challenge,
-          rp: { name: "Inclura", id: window.location.hostname },
-          user: {
-            id: userId,
-            name: "demo@inclura.com",
-            displayName: "Inclura Demo User",
-          },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required",
-          },
-          timeout: 60000,
-          attestation: "none",
-        },
-      });
+const backend = await response.json();
 
-      const credentialId = attestation.credential.id;
-      localStorage.setItem(
-        "inclura-passkey-demo",
-        JSON.stringify({ credentialId, createdAt: new Date().toISOString() })
-      );
+const options = backend.options;
+      const attestation = await startRegistration(
+  backend.options
+);
 
-      setPasskeyStatus(
-        `Passkey registered successfully. Credential ID: ${credentialId.slice(0, 20)}...`
-      );
+      const verifyResponse = await fetch(
+  "http://localhost:5000/api/identity/passkeys/verify-registration",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      challengeId: backend.challengeId,
+      response: attestation,
+      deviceName: navigator.userAgent,
+      platform: navigator.platform,
+    }),
+  }
+);
+
+const verification = await verifyResponse.json();
+
+if (!verification.success) {
+
+  throw new Error(
+    verification.message || "Passkey verification failed."
+  );
+
+}
+
+setPasskeyStatus(
+  "Passkey registered and verified successfully with IFSE."
+);
     } catch (error) {
       console.error(error);
       setPasskeyStatus(`Registration failed: ${error.message}`);
