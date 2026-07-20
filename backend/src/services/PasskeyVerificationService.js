@@ -31,9 +31,9 @@ export async function verifyPasskeyRegistrationService(data) {
 
     expectedChallenge: challenge.challenge,
 
-    expectedOrigin: process.env.EXPECTED_ORIGIN,
+    expectedOrigin: process.env.WEBAUTHN_ORIGIN,
 
-    expectedRPID: process.env.RP_ID,
+expectedRPID: process.env.WEBAUTHN_RP_ID,
 
   });
 
@@ -51,35 +51,45 @@ export async function verifyPasskeyRegistrationService(data) {
 
   const credential = verification.registrationInfo;
 
-  await firestore()
+  const credentialId = Buffer.from(
+  credential.credentialID
+).toString("base64");
 
-    .collection("ifse_passkeys")
+await firestore()
 
-    .doc(challenge.userId)
+  .collection("ifse_passkeys")
 
-    .set({
+  .doc(challenge.userId)
 
-      userId: challenge.userId,
+  .collection("credentials")
 
-      credentialID: Buffer.from(
-        credential.credentialID
-      ).toString("base64"),
+  .doc(credentialId)
 
-      credentialPublicKey: Buffer.from(
-        credential.credentialPublicKey
-      ).toString("base64"),
+  .set({
 
-      counter: credential.counter,
+    credentialId,
 
-      createdAt:
-        admin.firestore.FieldValue.serverTimestamp(),
+    credentialPublicKey: Buffer.from(
+      credential.credentialPublicKey
+    ).toString("base64"),
 
-      lastUsed:
-        admin.firestore.FieldValue.serverTimestamp(),
+    counter: credential.counter,
 
-      verified: true,
+    createdAt:
+      admin.firestore.FieldValue.serverTimestamp(),
 
-    });
+    lastUsed:
+      admin.firestore.FieldValue.serverTimestamp(),
+
+    verified: true,
+
+    deviceName: data.deviceName || "Unknown Device",
+
+    platform: data.platform || "Unknown",
+
+    authenticatorType: "Passkey",
+
+  });
 
   await firestore()
 
