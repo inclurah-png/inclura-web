@@ -89,7 +89,7 @@ app.get("/api/status", (req, res) => {
 // IFSE Identity Routes
 // =======================================================
 
-app.use("/api/identity", identityRoutes);
+app.use("/api/identity", passkeyRoutes);
 
 // =======================================================
 // 404 Handler
