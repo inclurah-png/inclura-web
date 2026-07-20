@@ -171,12 +171,13 @@ const options = backend.options;
 );
 
       const verifyResponse = await fetch(
-"https://inclura-ifse-backend.onrender.com/api/identity/passkeys/register"
+  "https://inclura-ifse-backend.onrender.com/api/identity/passkeys/register",
   {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
+    
     body: JSON.stringify({
       challengeId: backend.challengeId,
       response: attestation,
