@@ -3,7 +3,10 @@
 // Identity Service
 // =======================================================
 
+import admin from "firebase-admin";
 import crypto from "crypto";
+import { randomUUID } from "crypto";
+import { firestore } from "../config/firebaseAdmin.js";
 
 // =======================================================
 // Health
@@ -29,17 +32,65 @@ export async function healthService() {
 // Passkey Registration
 // =======================================================
 
+// =======================================================
+// Production Passkey Registration
+// =======================================================
+
 export async function registerPasskeyService(data) {
+
+  const challenge = crypto.randomBytes(32).toString("base64url");
+
+  const challengeId = randomUUID();
+
+  const expiresAt = Date.now() + (5 * 60 * 1000);
+
+  await firestore()
+
+    .collection("ifse_passkey_challenges")
+
+    .doc(challengeId)
+
+    .set({
+
+      challengeId,
+
+      challenge,
+
+      userId: data.userId,
+
+      email: data.email,
+
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+
+      expiresAt,
+
+      verified: false,
+
+    });
 
   return {
 
     success: true,
 
-    challenge: crypto.randomBytes(32).toString("base64url"),
+    challengeId,
 
-    user: data,
+    challenge,
 
-    message: "Passkey registration challenge generated.",
+    expiresAt,
+
+    rpName: "Inclura",
+
+    rpID: process.env.RP_ID,
+
+    user: {
+
+      id: data.userId,
+
+      name: data.email,
+
+      displayName: data.fullName,
+
+    },
 
   };
 
@@ -151,38 +202,5 @@ export async function verifyIdentityService(data) {
 
   };
 
-}// =======================================================
-
-export async function verifyBiometricService(data) {
-
-  return {
-
-    success: false,
-
-    message:
-      "Biometric verification service not implemented yet.",
-
-    data,
-
-  };
-
 }
 
-// =======================================================
-// Identity Verification
-// =======================================================
-
-export async function verifyIdentityService(data) {
-
-  return {
-
-    success: false,
-
-    message:
-      "Identity verification service not implemented yet.",
-
-    data,
-
-  };
-
-}
