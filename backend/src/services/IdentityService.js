@@ -48,7 +48,7 @@ rpID: process.env.WEBAUTHN_RP_ID,
 
     userName: data.email,
 
-    userID: data.userId,
+    userID: new TextEncoder().encode(data.userId),
 
     userDisplayName: data.fullName,
 
