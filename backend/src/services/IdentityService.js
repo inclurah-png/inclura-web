@@ -103,6 +103,8 @@ rpID: process.env.WEBAUTHN_RP_ID,
   optionsJSON: options,
 
 };
+
+}
 // =======================================================
 // Verify Authentication
 // =======================================================
