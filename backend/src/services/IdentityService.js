@@ -96,16 +96,13 @@ rpID: process.env.WEBAUTHN_RP_ID,
 
   return {
 
-    success: true,
+  success: true,
 
-    challengeId,
+  challengeId,
 
-    options,
+  optionsJSON: options,
 
-  };
-
-}
-
+};
 // =======================================================
 // Verify Authentication
 // =======================================================
