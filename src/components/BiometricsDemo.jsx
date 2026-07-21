@@ -149,7 +149,7 @@ export default function BiometricsDemo() {
     try {
       setPasskeyStatus("Creating a passkey with your browser...");
       const response = await fetch(
-  "https://inclura-ifse-backend.onrender.com/api/identity/passkeys/register",
+  "https://inclura-ifse-backend.onrender.com/api/identity/register/options",
   {
     method: "POST",
     headers: {
@@ -165,13 +165,12 @@ export default function BiometricsDemo() {
 
 const backend = await response.json();
 
-const options = backend.options;
       const attestation = await startRegistration(
   backend.options
 );
 
       const verifyResponse = await fetch(
-  "https://inclura-ifse-backend.onrender.com/api/identity/passkeys/register",
+  "https://inclura-ifse-backend.onrender.com/api/identity/register/verify",
   {
     method: "POST",
     headers: {
