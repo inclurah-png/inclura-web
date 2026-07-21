@@ -63,16 +63,6 @@ export async function verifyPasskeyRegistrationService(data) {
 
   }
 
-  return {
-
-    success: false,
-
-    message: "Credential information was not returned.",
-
-  };
-
-  }
-
   const credentialId = Buffer.from(
   credential.credentialID
 ).toString("base64");
