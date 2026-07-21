@@ -164,8 +164,13 @@ export default function BiometricsDemo() {
 );
 
 const backend = await response.json();
-console.log("Backend Response:", backend);
-      const attestation = await startRegistration({
+
+alert(JSON.stringify(backend, null, 2));
+
+return;
+
+// Temporarily stop here
+const attestation = await startRegistration({
   optionsJSON: backend.optionsJSON,
 });
       const verifyResponse = await fetch(
