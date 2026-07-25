@@ -377,8 +377,6 @@ export const PREMIUM_BADGES = {
 
   financial_pro: "💰",
 
-  emergency_services: "🚑",
-
   enterprise_partner: "🏆",
 
 };
