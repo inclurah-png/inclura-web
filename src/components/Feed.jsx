@@ -5,7 +5,9 @@ import {
   collection,
   query,
   orderBy,
-  onSnapshot,
+  limit,
+  startAfter,
+  getDocs,
   doc,
   updateDoc,
   getDoc,
@@ -21,13 +23,94 @@ import SearchBar from "./SearchBar";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
+  const [lastVisible, setLastVisible] = useState(null);
+
+const [loading, setLoading] = useState(false);
+
+const [hasMore, setHasMore] = useState(true);
+  
   const [filteredPosts, setFilteredPosts] =
     useState([]);
   const [userLanguage, setUserLanguage] =
   useState("en");
 
   const navigate = useNavigate();
+const POSTS_PER_PAGE = 15;
 
+async function loadPosts(loadMore = false) {
+  if (loading) return;
+
+  setLoading(true);
+
+  try {
+    let q;
+
+    if (loadMore && lastVisible) {
+      q = query(
+        collection(db, "posts"),
+        orderBy("createdAt", "desc"),
+        startAfter(lastVisible),
+        limit(POSTS_PER_PAGE)
+      );
+    } else {
+      q = query(
+        collection(db, "posts"),
+        orderBy("createdAt", "desc"),
+        limit(POSTS_PER_PAGE)
+      );
+    }
+
+    const snapshot = await getDocs(q);
+
+    const fetchedPosts = snapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    if (snapshot.docs.length > 0) {
+      setLastVisible(
+        snapshot.docs[snapshot.docs.length - 1]
+      );
+    }
+
+    if (snapshot.docs.length < POSTS_PER_PAGE) {
+      setHasMore(false);
+    }
+
+    if (loadMore) {
+  setPosts((prev) => {
+    const existingIds = new Set(prev.map((p) => p.id));
+
+    const newPosts = fetchedPosts.filter(
+      (p) => !existingIds.has(p.id)
+    );
+
+    return [...prev, ...newPosts];
+  });
+
+  setFilteredPosts((prev) => {
+    const existingIds = new Set(prev.map((p) => p.id));
+
+    const newPosts = fetchedPosts.filter(
+      (p) => !existingIds.has(p.id)
+    );
+
+    return [...prev, ...newPosts];
+  });
+
+} else {
+
+  setPosts(fetchedPosts);
+
+  setFilteredPosts(fetchedPosts);
+
+}
+} catch (error) {
+  console.error(error);
+} finally {
+  setLoading(false);
+}
+}
   useEffect(() => {
   async function loadLanguage() {
     const user = auth.currentUser;
@@ -48,26 +131,7 @@ function Feed() {
   
     loadLanguage();
 
-  const q = query(
-    collection(db, "posts"),
-    orderBy("createdAt", "desc")
-  );
-
-    const unsubscribe =
-      onSnapshot(q, (snapshot) => {
-        const fetchedPosts =
-          snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
-        setPosts(fetchedPosts);
-        setFilteredPosts(
-          fetchedPosts
-        );
-      });
-
-    return () => unsubscribe();
+  loadPosts(false);
   }, []);
 
   async function savePost(post) {
@@ -289,56 +353,80 @@ function handleShare(postId) {
 }
 
   function getBadge(post) {
-    if (!post.verified)
-      return null;
 
-    switch (
-      post.badgeType
-    ) {
-      case "creator":
-        return "🎥";
+  if (!post.verified) return null;
 
-      case "organization":
-        return "🏢";
+  switch (post.badgeType) {
 
-      case "ngo":
-        return "🤝";
+    case "creator":
+      return "🎥";
 
-      case "hospital":
-        return "🏥";
+    case "group":
+      return "👥";
 
-      case "government":
-        return "🏛️";
+    case "institution":
+      return "🎓";
 
-      default:
-        return "✅";
-    }
+    case "organization":
+      return "🏢";
+
+    case "ngo":
+      return "🤝";
+
+    case "healthcare":
+      return "🏥";
+
+    case "government":
+      return "🏛️";
+
+    case "media":
+      return "📰";
+
+    case "religious":
+      return "⛪";
+
+    case "financial":
+      return "🏦";
+
+    default:
+      return "✅";
+  }
+
   }
 
   function getPremium(post) {
-    if (!post.premium)
-      return null;
 
-    switch (
-      post.premiumTier
-    ) {
-      case "silver":
-        return "🥈";
+  if (!post.premium) return null;
 
-      case "gold":
-        return "🥇";
+  switch (post.premiumTier) {
 
-      case "platinum":
-        return "💎";
+    case "creator_pro":
+      return "🥈";
 
-      case "enterprise":
-        return "🏆";
+    case "creator_elite":
+      return "🥇";
 
-      default:
-        return "⭐";
-    }
+    case "verified_professional":
+      return "💎";
+
+    case "organization_pro":
+      return "🏢";
+
+    case "institution_pro":
+      return "🎓";
+
+    case "government_verified":
+      return "🏛️";
+
+    case "enterprise_partner":
+      return "🏆";
+
+    default:
+      return "⭐";
+
   }
 
+}
   return (
     <div
       style={{
@@ -613,6 +701,30 @@ function handleShare(postId) {
             )
           )
         )}
+        {hasMore && (
+  <div
+    style={{
+      textAlign: "center",
+      marginTop: "24px",
+      marginBottom: "20px",
+    }}
+  >
+    <button
+      onClick={() => loadPosts(true)}
+      disabled={loading}
+      style={{
+        padding: "12px 24px",
+        borderRadius: "14px",
+        border: "none",
+        background: "#2563eb",
+        color: "#fff",
+        cursor: loading ? "not-allowed" : "pointer",
+      }}
+    >
+      {loading ? "Loading..." : "Load More Posts"}
+    </button>
+  </div>
+)}
       </div>
     </div>
   );
