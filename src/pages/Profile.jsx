@@ -8,6 +8,16 @@ import StoriesSection from "../components/StoriesSection";
 import CreatePost from "../components/CreatePost";
 import Feed from "../components/Feed";
 
+import {
+  getVerificationBadge,
+  getPremiumBadge,
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
 import { auth, db } from "../firebase";
 
 import {
