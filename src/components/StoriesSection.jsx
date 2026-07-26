@@ -7,8 +7,18 @@ import {
 
 import { db } from "../firebase";
 
+import {
+  getVerificationBadge,
+  getPremiumBadge,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
 import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
+
 function StoriesSection() {
   const [stories, setStories] =
     useState([]);
@@ -67,56 +77,26 @@ function StoriesSection() {
   }
 
   function getBadge(story) {
-    if (!story?.verified)
-      return null;
+  if (!story?.verified) return null;
 
-    switch (
+  const migratedType =
+    migrateVerificationId(
       story.badgeType
-    ) {
-      case "creator":
-        return "🎥";
+    );
 
-      case "organization":
-        return "🏢";
-
-      case "ngo":
-        return "🤝";
-
-      case "hospital":
-        return "🏥";
-
-      case "government":
-        return "🏛️";
-
-      default:
-        return "✅";
-    }
-  }
+  return getVerificationBadge(
+    migratedType
+  );
+}
 
   function getPremium(story) {
-    if (!story?.premium)
-      return null;
+  if (!story?.premium)
+    return null;
 
-    switch (
-      story.premiumTier
-    ) {
-      case "silver":
-        return "🥈";
-
-      case "gold":
-        return "🥇";
-
-      case "platinum":
-        return "💎";
-
-      case "enterprise":
-        return "🏆";
-
-      default:
-        return "⭐";
-    }
-  }
-
+  return getPremiumBadge(
+    story.premiumTier
+  );
+}
   return (
     <>
       <div
