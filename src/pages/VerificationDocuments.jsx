@@ -7,7 +7,17 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { auth, db } from "../firebase";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import {
+  auth,
+  db,
+  storage,
+} from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -228,11 +238,21 @@ Accessibility: [
 useState({});
   const handleDocumentUpload = (documentName, file) => {
 
+  if (!file) return;
+
   setUploadedDocuments((previous) => ({
 
     ...previous,
 
-    [documentName]: file,
+    [documentName]: {
+
+      file,
+
+      uploaded: false,
+
+      uploadProgress: 0,
+
+    },
 
   }));
 
@@ -403,25 +423,59 @@ if (
     );
 
     const verificationId = requestRef.id;
-        await addDoc(
+        const uploadedFiles = {};
 
-      collection(db, "verificationDocuments"),
+for (const [documentName, documentInfo] of Object.entries(uploadedDocuments)) {
 
-      {
+  if (!documentInfo?.file) continue;
 
-        verificationId,
+  const storagePath =
+    `verificationDocuments/${verificationId}/${Date.now()}_${documentInfo.file.name}`;
 
-        verificationType,
+  const storageRef = ref(storage, storagePath);
 
-        uploadedDocuments,
+  await uploadBytes(storageRef, documentInfo.file);
 
-        submittedBy: currentUser.uid,
+  const downloadURL =
+    await getDownloadURL(storageRef);
 
-        createdAt: serverTimestamp(),
+  uploadedFiles[documentName] = {
 
-      }
+    fileName: documentInfo.file.name,
 
-    );
+    fileSize: documentInfo.file.size,
+
+    fileType: documentInfo.file.type,
+
+    storagePath,
+
+    downloadURL,
+
+    uploadedAt: new Date().toISOString(),
+
+  };
+
+}
+
+await addDoc(
+
+  collection(db, "verificationDocuments"),
+
+  {
+
+    verificationId,
+
+    verificationType,
+
+    uploadedDocuments: uploadedFiles,
+
+    submittedBy: currentUser.uid,
+
+    createdAt: serverTimestamp(),
+
+  }
+
+);
         await addDoc(
 
       collection(db, "verificationTimeline"),
