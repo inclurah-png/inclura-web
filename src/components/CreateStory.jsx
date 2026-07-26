@@ -16,6 +16,14 @@ db,
 auth,
 } from "../firebase";
 
+import {
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
 function CreateStory() {
 const [storyText, setStoryText] =
 useState("");
@@ -128,12 +136,22 @@ auth.currentUser;
       "",
 
     verified:
-      profile?.verified ||
-      false,
+  profile?.verified ||
+  false,
 
-    badgeType:
-      profile?.badgeType ||
-      "",
+badgeType:
+  migrateVerificationId(
+    profile?.badgeType
+  ),
+
+verificationMetadata:
+  profile?.verified
+    ? getVerificationMetadata(
+        migrateVerificationId(
+          profile?.badgeType
+        )
+      )
+    : null,
 
     role:
       profile?.role ||
