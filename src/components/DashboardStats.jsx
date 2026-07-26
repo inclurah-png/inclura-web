@@ -1,4 +1,19 @@
+import {
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
 function DashboardStats({ profile }) {
+  const verificationMeta =
+  profile?.verified
+    ? getVerificationMetadata(
+        migrateVerificationId(profile.badgeType)
+      )
+    : null;
+  
   return (
     <div
       style={{
@@ -42,13 +57,40 @@ function DashboardStats({ profile }) {
       </div>
 
       <div style={card}>
-        <h3>✔ Verified</h3>
-        <h2>
-          {profile?.verified
-            ? "Yes"
-            : "No"}
-        </h2>
+  <h3>🛡 Verification</h3>
+
+  <h2>
+    {profile?.verified
+      ? "Verified"
+      : "Not Verified"}
+  </h2>
+
+  {verificationMeta && (
+    <>
+      <div
+        style={{
+          marginTop: "8px",
+          fontSize: "14px",
+          color: "#38bdf8",
+        }}
+      >
+        Trust Level:
+        {" "}
+        {verificationMeta.trustLevel}
       </div>
+
+      <div
+        style={{
+          fontSize: "12px",
+          color: "#94a3b8",
+          marginTop: "4px",
+        }}
+      >
+        {verificationMeta.category}
+      </div>
+    </>
+  )}
+</div>
 
       <div style={card}>
         <h3>🏷 Role</h3>
