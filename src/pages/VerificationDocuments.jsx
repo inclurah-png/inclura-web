@@ -141,6 +141,20 @@ useState("");
 const [notes, setNotes] =
 useState("");
 
+const ALLOWED_FILE_TYPES = [
+
+  "application/pdf",
+
+  "image/jpeg",
+
+  "image/jpg",
+
+  "image/png",
+
+];
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
 const DOCUMENT_REQUIREMENTS = useMemo(() => ({
 
   Creator: [
@@ -234,11 +248,37 @@ Accessibility: [
   ],
 
 }), []);
+  
   const [uploadedDocuments, setUploadedDocuments] =
 useState({});
+  
   const handleDocumentUpload = (documentName, file) => {
 
   if (!file) return;
+
+  if (!ALLOWED_FILE_TYPES.includes(file.type)) {
+
+    alert(
+
+      "Only PDF, JPG, JPEG and PNG files are allowed."
+
+    );
+
+    return;
+
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+
+    alert(
+
+      "Document size must not exceed 10 MB."
+
+    );
+
+    return;
+
+  }
 
   setUploadedDocuments((previous) => ({
 
@@ -251,6 +291,14 @@ useState({});
       uploaded: false,
 
       uploadProgress: 0,
+
+      fileName: file.name,
+
+      fileType: file.type,
+
+      fileSize: file.size,
+
+      validated: true,
 
     },
 
@@ -787,6 +835,8 @@ className="document-upload"
 <input
 
 type="file"
+
+accept=".pdf,.jpg,.jpeg,.png"
 
 onChange={(e)=>
 
