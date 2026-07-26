@@ -4,6 +4,14 @@ import {
 } from "../utils/creatorScore";
 
 import {
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
+import {
   ref,
   uploadBytes,
   getDownloadURL,
@@ -141,20 +149,30 @@ if (videoFile) {
             [],
 
           verified:
-            profile?.verified ||
-            false,
+  profile?.verified ||
+  false,
 
-          badgeType:
-            profile?.badgeType ||
-            "",
+badgeType:
+  migrateVerificationId(
+    profile?.badgeType
+  ),
 
-          premium:
-            profile?.premium ||
-            false,
+verificationMetadata:
+  profile?.verified
+    ? getVerificationMetadata(
+        migrateVerificationId(
+          profile?.badgeType
+        )
+      )
+    : null,
 
-          premiumTier:
-            profile?.premiumTier ||
-            "",
+premium:
+  profile?.premium ||
+  false,
+
+premiumTier:
+  profile?.premiumTier ||
+  "",
 
           imageUrl,
 
@@ -199,15 +217,6 @@ if (videoFile) {
 } else {
   await addTextPost(user.uid);
 }
-      
-if (videoFile) {
-  await addVideoPost(user.uid);
-}
-
-if (!videoFile) {
-  await addTextPost(user.uid);
-}
-      setPostText("");
       setImageFile(null);
       setVideoFile(null);
 
