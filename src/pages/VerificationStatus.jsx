@@ -127,10 +127,8 @@ const loadVerification = async () => {
 try {
 
 const verificationQuery = query(
-
-collection(db, "verificationRequests"),
-
-where("userId", "==", currentUser.uid)
+  collection(db, "verificationRequests"),
+  where("submittedBy", "==", currentUser.uid)
 );
 
 const verificationSnapshot =
@@ -138,18 +136,32 @@ const verificationSnapshot =
 await getDocs(verificationQuery);
 
 if (!verificationSnapshot.empty) {
+else {
 
-  const doc = verificationSnapshot.docs[0];
+  setVerification(null);
 
-  console.log("Verification document:");
-  console.log(doc.data());
-
-  setVerification({
-    id: doc.id,
-    ...doc.data(),
-  });
+  setLoading(false);
 
 }
+
+  const documents = verificationSnapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .sort((a, b) => {
+
+      const aTime =
+        a.createdAt?.seconds || 0;
+
+      const bTime =
+        b.createdAt?.seconds || 0;
+
+      return bTime - aTime;
+
+    });
+
+  setVerification(documents[0]);
 
 }
 
@@ -169,6 +181,14 @@ setError(
 
 loadVerification();
 
+} else {
+
+  setVerification(null);
+
+  setLoading(false);
+
+}
+
 }, [currentUser]);
   useEffect(() => {
 
@@ -176,82 +196,94 @@ if (!verification) return;
 
 const loadTimeline = async () => {
 
-const timelineQuery = query(
+  try {
 
-collection(db, "verificationTimeline"),
+    const timelineQuery = query(
 
-where(
+      collection(db, "verificationTimeline"),
 
-"verificationId",
+      where(
+        "verificationId",
+        "==",
+        verification.id
+      ),
 
-"==",
+      orderBy("createdAt", "asc")
 
-verification.id
+    );
 
-),
+    const snapshot =
+      await getDocs(timelineQuery);
 
-orderBy("createdAt", "asc")
+    const items =
+      snapshot.docs.map((doc) => ({
 
-);
+        id: doc.id,
 
-const snapshot =
+        ...doc.data(),
 
-await getDocs(timelineQuery);
+      }));
 
-setTimeline(
+    setTimeline(items);
 
-snapshot.docs.map(doc=>({
+  }
 
-id: doc.id,
+  catch (err) {
 
-...doc.data(),
+    console.error(err);
 
-}))
+    setTimeline([]);
 
-);
+  }
 
 };
-
-loadTimeline();
+    loadTimeline();
 
 }, [verification]);
+
   useEffect(() => {
 
 if (!verification) return;
 
 const loadSecurity = async () => {
 
-const securityQuery = query(
+  try {
 
-collection(db, "ifseSecurityEvents"),
+    const securityQuery = query(
 
-where(
+      collection(db, "ifseSecurityEvents"),
 
-"verificationId",
+      where(
+        "verificationId",
+        "==",
+        verification.id
+      )
 
-"==",
+    );
 
-verification.id
+    const snapshot =
+      await getDocs(securityQuery);
 
-)
+    const events =
+      snapshot.docs.map((doc) => ({
 
-);
+        id: doc.id,
 
-const snapshot =
+        ...doc.data(),
 
-await getDocs(securityQuery);
+      }));
 
-setSecurityEvents(
+    setSecurityEvents(events);
 
-snapshot.docs.map(doc=>({
+  }
 
-id: doc.id,
+  catch (err) {
 
-...doc.data(),
+    console.error(err);
 
-}))
+    setSecurityEvents([]);
 
-);
+  }
 
 };
 
@@ -264,44 +296,53 @@ if (!verification) return;
 
 const loadAuditLogs = async () => {
 
-const auditQuery = query(
+  try {
 
-collection(db, "verificationAuditLogs"),
+    const auditQuery = query(
 
-where(
+      collection(db, "verificationAuditLogs"),
 
-"verificationId",
+      where(
+        "verificationId",
+        "==",
+        verification.id
+      ),
 
-"==",
+      orderBy("createdAt", "desc")
 
-verification.id
+    );
 
-),
+    const snapshot =
+      await getDocs(auditQuery);
 
-orderBy("createdAt", "desc")
+    const logs =
+      snapshot.docs.map((doc) => ({
 
-);
+        id: doc.id,
 
-const snapshot =
+        ...doc.data(),
 
-await getDocs(auditQuery);
+      }));
 
-setAuditLogs(
+    setAuditLogs(logs);
 
-snapshot.docs.map(doc=>({
+  }
 
-id: doc.id,
+  catch (err) {
 
-...doc.data(),
+    console.error(err);
 
-}))
+    setAuditLogs([]);
 
-);
+  }
 
-setLoading(false);
+  finally {
+
+    setLoading(false);
+
+  }
 
 };
-
 loadAuditLogs();
 
 }, [verification]);
@@ -335,126 +376,470 @@ Track your verification progress through the
 
   {verification && (
 
-<section>
+<section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
 
-<h2>Verification Summary</h2>
+  <h2>Verification Summary</h2>
 
-<p>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns:
+        "repeat(auto-fit,minmax(250px,1fr))",
+      gap: "18px",
+      marginTop: "18px",
+    }}
+  >
 
-<strong>Verification Type:</strong>
+    <div>
 
-{verification.verificationType}
+      <strong>Verification Type</strong>
 
-</p>
+      <p>{verification.verificationType}</p>
 
-<p>
+    </div>
 
-<strong>Status:</strong>
+    <div>
 
-{verification.status}
+      <strong>Status</strong>
 
-</p>
+      <p>{verification.status}</p>
 
-<p>
+    </div>
 
-<strong>Submitted:</strong>
+    <div>
 
-{verification.createdAt?.toDate?.().toLocaleString?.() || "Pending"}
+      <strong>Risk Score</strong>
 
-</p>
+      <p>{verification.riskScore}%</p>
+
+    </div>
+
+    <div>
+
+      <strong>Threat Level</strong>
+
+      <p>{verification.threatLevel}</p>
+
+    </div>
+
+    <div>
+
+      <strong>Executive Review</strong>
+
+      <p>
+        {verification.executiveReviewRequired
+          ? "Required"
+          : "Not Required"}
+      </p>
+
+    </div>
+
+    <div>
+
+      <strong>Submitted</strong>
+
+      <p>
+        {verification.createdAt?.toDate?.().toLocaleString?.() ||
+          "Pending"}
+      </p>
+
+    </div>
+
+  </div>
 
 </section>
 
 )}
-  <section>
+<section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
 
-<h2>IFSE Progress</h2>
+  <h2>IFSE Verification Progress</h2>
 
-<p>
+  <p
+    style={{
+      marginBottom: "16px",
+    }}
+  >
+    Overall Progress: <strong>{progress}%</strong>
+  </p>
 
-Progress: {progress}%
+  <div
+    style={{
+      width: "100%",
+      height: "14px",
+      background: "#334155",
+      borderRadius: "999px",
+      overflow: "hidden",
+      marginBottom: "24px",
+    }}
+  >
 
-</p>
+    <div
+      style={{
+        width: `${progress}%`,
+        height: "100%",
+        background:
+          progress === 100
+            ? "#22c55e"
+            : "#3b82f6",
+        transition: "0.4s",
+      }}
+    />
 
-<progress
+  </div>
 
-value={progress}
+  <div
+    style={{
+      display: "grid",
+      gap: "14px",
+    }}
+  >
 
-max="100"
+    {IFSE_PROGRESS.map((stage, index) => {
 
-/>
+      const completed =
+        index < timeline.length;
+
+      return (
+
+        <div
+          key={stage}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "12px",
+          }}
+        >
+
+          <div
+            style={{
+              width: "28px",
+              height: "28px",
+              borderRadius: "50%",
+              background: completed
+                ? "#22c55e"
+                : "#475569",
+              color: "#fff",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontWeight: "bold",
+            }}
+          >
+            {completed ? "✓" : index + 1}
+          </div>
+
+          <span>{stage}</span>
+
+        </div>
+
+      );
+
+    })}
+
+  </div>
 
 </section>
 
-  <section>
+  <section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
 
-<h2>Verification Timeline</h2>
+  <h2>Verification Timeline</h2>
 
-<ul>
+  {timeline.length === 0 ? (
 
-{timeline.map(item => (
+    <p>No verification events yet.</p>
 
-<li key={item.id}>
+  ) : (
 
-<strong>{item.title}</strong>
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        marginTop: "18px",
+      }}
+    >
 
-<br />
+      {timeline.map((item, index) => (
 
-{item.status}
+        <div
+          key={item.id}
+          style={{
+            display: "flex",
+            gap: "16px",
+            alignItems: "flex-start",
+          }}
+        >
 
-</li>
+          <div
+            style={{
+              width: "34px",
+              height: "34px",
+              borderRadius: "50%",
+              background: "#2563eb",
+              color: "#fff",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              fontWeight: "bold",
+              flexShrink: 0,
+            }}
+          >
+            {index + 1}
+          </div>
 
-))}
+          <div
+            style={{
+              flex: 1,
+              background: "#1e293b",
+              padding: "14px",
+              borderRadius: "10px",
+            }}
+          >
 
-</ul>
+            <strong>{item.title}</strong>
+
+            <br />
+
+            <span>{item.status}</span>
+
+            <br />
+
+            <small
+              style={{
+                color: "#94a3b8",
+              }}
+            >
+              {item.createdAt?.toDate?.().toLocaleString?.() ||
+                "Pending"}
+            </small>
+
+          </div>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  )}
 
 </section>
 
-  <section>
+  <section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
 
-<h2>IFSE Security Events</h2>
+  <h2>IFSE Security Events</h2>
 
-<ul>
+  {securityEvents.length === 0 ? (
 
-{securityEvents.map(event => (
+    <p>No IFSE security events recorded.</p>
 
-<li key={event.id}>
+  ) : (
 
-<strong>{event.eventType}</strong>
+    <div
+      style={{
+        display: "grid",
+        gap: "16px",
+        marginTop: "18px",
+      }}
+    >
 
-<br />
+      {securityEvents.map((event) => (
 
-Risk Score: {event.riskScore}
+        <div
+          key={event.id}
+          style={{
+            background: "#1e293b",
+            padding: "16px",
+            borderRadius: "10px",
+            border: "1px solid #334155",
+          }}
+        >
 
-<br />
+          <h3
+            style={{
+              marginBottom: "12px",
+            }}
+          >
+            {event.eventType}
+          </h3>
 
-Threat Level: {event.threatLevel}
+          <p>
 
-</li>
+            <strong>Risk Score:</strong>{" "}
 
-))}
+            {event.riskScore}%
 
-</ul>
+          </p>
+
+          <p>
+
+            <strong>Threat Level:</strong>{" "}
+
+            {event.threatLevel}
+
+          </p>
+
+          <p>
+
+            <strong>Executive Review:</strong>{" "}
+
+            {event.executiveReviewRequired
+              ? "Required"
+              : "Not Required"}
+
+          </p>
+
+          <p>
+
+            <strong>Reviewed:</strong>{" "}
+
+            {event.reviewed
+              ? "Yes"
+              : "Pending"}
+
+          </p>
+
+          <p>
+
+            <strong>Date:</strong>{" "}
+
+            {event.createdAt?.toDate?.().toLocaleString?.() ||
+              "Pending"}
+
+               </p>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  )}
 
 </section>
 
-  <section>
+<section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
 
-<h2>Audit Logs</h2>
+  <h2>IFSE Audit Logs</h2>
 
-<ul>
+  {auditLogs.length === 0 ? (
 
-{auditLogs.map(log => (
+    <p>No audit logs available.</p>
 
-<li key={log.id}>
+  ) : (
 
-{log.action}
+    <div
+      style={{
+        display: "grid",
+        gap: "14px",
+        marginTop: "18px",
+      }}
+    >
 
-</li>
+      {auditLogs.map((log) => (
 
-))}
+        <div
+          key={log.id}
+          style={{
+            background: "#1e293b",
+            border: "1px solid #334155",
+            borderRadius: "10px",
+            padding: "16px",
+          }}
+        >
 
-</ul>
+          <p>
+
+            <strong>Action</strong>
+
+          </p>
+
+          <p>
+
+            {log.action}
+
+          </p>
+
+          <p
+            style={{
+              marginTop: "10px",
+            }}
+          >
+
+            <strong>Actor</strong>
+
+          </p>
+
+          <p>
+
+            {log.actor || "System"}
+
+          </p>
+
+          <p
+            style={{
+              marginTop: "10px",
+            }}
+          >
+
+            <strong>Time</strong>
+
+          </p>
+
+          <p>
+
+            {log.createdAt?.toDate?.().toLocaleString?.() ||
+              "Pending"}
+
+          </p>
+
+        </div>
+
+      ))}
+
+    </div>
+
+  )}
 
 </section>
 
@@ -484,35 +869,115 @@ Threat Level: {event.threatLevel}
 
 </section>
 
-  <div className="verification-actions">
-
-<button
-
-type="button"
-
-onClick={() => navigate("/home")}
-
+<section
+  style={{
+    marginTop: "30px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
 >
 
-Return Home
+  <h2>IFSE Verification Centre</h2>
 
-</button>
+  <div
+    style={{
+      display: "grid",
+      gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))",
+      gap: "16px",
+      marginTop: "20px",
+    }}
+  >
 
-<button
+    <button
+      type="button"
+      onClick={() => navigate("/verification-center")}
+    >
+      Verification Centre
+    </button>
 
-type="button"
+    <button
+      type="button"
+      onClick={() => navigate("/verification-documents")}
+    >
+      Upload Additional Documents
+    </button>
 
-onClick={() => navigate("/verification-documents")}
+    <button
+      type="button"
+      onClick={() => navigate("/creator-verification-payment")}
+    >
+      Verification Payment
+    </button>
 
+    <button
+      type="button"
+      onClick={() => navigate("/home")}
+    >
+      Return Home
+    </button>
+
+  </div>
+
+</section>
+
+<footer
+  style={{
+    marginTop: "40px",
+    padding: "20px",
+    background: "#111827",
+    borderRadius: "12px",
+    textAlign: "center",
+  }}
 >
 
-Upload More Documents
+  <h3>Inclura Fortress Security Engine (IFSE)</h3>
 
-</button>
+  <p>
 
-</div>
+    Your verification is continuously protected through:
 
-  <footer>
+  </p>
+
+  <ul
+    style={{
+      listStyle: "none",
+      padding: 0,
+      lineHeight: "2",
+    }}
+  >
+
+    <li>✅ Identity Verification</li>
+
+    <li>✅ Document Authentication</li>
+
+    <li>✅ OCR Validation</li>
+
+    <li>✅ AI Fraud Detection</li>
+
+    <li>✅ Accessibility Compliance</li>
+
+    <li>✅ Executive Review</li>
+
+    <li>✅ Continuous Monitoring</li>
+
+    <li>✅ Audit Logging</li>
+
+  </ul>
+
+  <p
+    style={{
+      marginTop: "20px",
+      color: "#94a3b8",
+    }}
+  >
+
+    Powered by the Inclura Fortress Security Engine (IFSE).
+
+  </p>
+
+</footer>
 
 <p>
 
