@@ -1,6 +1,16 @@
 import { useRef } from "react";
 
 import {
+  getVerificationBadge,
+  getPremiumBadge,
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
+import {
   ref,
   uploadBytes,
   getDownloadURL,
@@ -70,86 +80,42 @@ function ProfileHeader({
   }
   
   const getDaysLeft = () => {
-  if (
-    !profile?.premiumExpiryDate
-  )
-    return null;
+  if (!profile?.premiumExpiryDate) return null;
 
-  const expiry =
-    profile.premiumExpiryDate.toDate();
-
-  const diff =
-    expiry -
-    new Date();
+  const expiry = profile.premiumExpiryDate.toDate();
+  const diff = expiry - new Date();
 
   return Math.max(
     0,
-    Math.ceil(
-      diff /
-        (1000 *
-          60 *
-          60 *
-          24)
-    )
+    Math.ceil(diff / (1000 * 60 * 60 * 24))
   );
 };
+
   const getBadge = () => {
-    if (!profile?.verified)
-      return null;
+  if (!profile?.verified) return null;
 
-    switch (
-      profile?.badgeType
-    ) {
-      case "creator":
-        return "🎥 Verified Creator";
+  const migratedType = migrateVerificationId(
+    profile.badgeType
+  );
 
-      case "organization":
-        return "🏢 Verified Organization";
+  return getVerificationBadge(migratedType);
+};
 
-      case "ngo":
-        return "🤝 Verified NGO";
+  const getPremium = () => {
+  if (!profile?.premium) return null;
 
-      case "hospital":
-        return "🏥 Verified Hospital";
+  return getPremiumBadge(profile.premiumTier);
+};
 
-      case "university":
-        return "🎓 Verified University";
-
-      case "government":
-        return "🏛 Verified Government";
-
-      default:
-        return "✅ Verified User";
-    }
-  };
-
-  const getPremiumBadge =
-    () => {
-      if (
-        !profile?.premium
+    const verificationMeta =
+  profile?.verified
+    ? getVerificationMetadata(
+        migrateVerificationId(
+          profile.badgeType
+        )
       )
-        return null;
-
-      switch (
-        profile?.premiumTier
-      ) {
-        case "silver":
-          return "🥈 Silver";
-
-        case "gold":
-          return "🥇 Gold";
-
-        case "platinum":
-          return "💎 Platinum";
-
-        case "enterprise":
-          return "🏆 Enterprise";
-
-        default:
-          return "⭐ Premium";
-      }
-    };
-
+    : null;
+    
   return (
     <div
       style={{
@@ -224,84 +190,99 @@ function ProfileHeader({
 
         <div>
           <h2>
-            {profile?.fullName ||
-              "Inclura User"}
-          </h2>
+  {profile?.fullName || "Inclura User"}
+</h2>
 
-          <div
-            style={{
-              display: "flex",
-              gap: "8px",
-              flexWrap:
-                "wrap",
-              marginBottom:
-                "10px",
-            }}
-          >
-            {profile?.verified && (
-              <div
-                style={{
-                  background:
-                    "#16a34a",
-                  color:
-                    "white",
-                  padding:
-                    "6px 12px",
-                  borderRadius:
-                    "999px",
-                  fontSize:
-                    "13px",
-                  fontWeight:
-                    "700",
-                }}
-              >
-                {getBadge()}
-              </div>
-            )}
+<div
+  style={{
+    display: "flex",
+    gap: "8px",
+    flexWrap: "wrap",
+    marginBottom: "10px",
+  }}
+>
+  {profile?.verified && (
+    <div
+      style={{
+        background: "#16a34a",
+        color: "white",
+        padding: "6px 12px",
+        borderRadius: "999px",
+        fontSize: "13px",
+        fontWeight: "700",
+      }}
+    >
+      {getBadge()}
+    </div>
+  )}
 
-            {profile?.premium && (
+  {verificationMeta && (
+    <div
+      style={{
+        background: "#1e293b",
+        color: "#38bdf8",
+        padding: "6px 12px",
+        borderRadius: "999px",
+        fontSize: "13px",
+        fontWeight: "700",
+      }}
+    >
+      🛡️ Trust Level {verificationMeta.trustLevel}
+    </div>
+  )}
+
+  {profile?.premium && (
   <>
     <div
       style={{
-        background:
-          "#f59e0b",
+        background: "#f59e0b",
         color: "white",
-        padding:
-          "6px 12px",
-        borderRadius:
-          "999px",
+        padding: "6px 12px",
+        borderRadius: "999px",
       }}
     >
-      {getPremiumBadge()}
+      {getPremium()}
     </div>
 
+    {getVerificationMetadata(profile.premiumTier)?.trustLevel && (
+      <div
+        style={{
+          background: "#78350f",
+          color: "#facc15",
+          padding: "6px 12px",
+          borderRadius: "999px",
+          fontSize: "13px",
+          fontWeight: "700",
+        }}
+      >
+        ⭐ Premium Trust Level{" "}
+        {getVerificationMetadata(profile.premiumTier).trustLevel}
+      </div>
+    )}
+  </>
+)}
+
+  {profile?.premium && (
     <div
       style={{
-        background:
-          "#334155",
+        background: "#334155",
         color: "white",
-        padding:
-          "6px 12px",
-        borderRadius:
-          "999px",
+        padding: "6px 12px",
+        borderRadius: "999px",
       }}
     >
       ⏳ {getDaysLeft()} days left
     </div>
-  </>
-)}
-   
+  )}
 </div>
-          
-          <p
-            style={{
-              color:
-                "#94a3b8",
-            }}
-          >
-            {profile?.bio ||
-              "No bio yet"}
-          </p>
+
+<p
+  style={{
+    color: "#94a3b8",
+  }}
+>
+  {profile?.bio || "No bio yet"}
+</p>
 
           <div
             style={{
