@@ -20,6 +20,10 @@ import { db, auth } from "../firebase";
 import FollowButton from "./FollowButton";
 import CommentBox from "./CommentBox";
 import SearchBar from "./SearchBar";
+import {
+  getVerificationBadge,
+  getPremiumBadge,
+} from "../config/verificationTypes";
 
 function Feed() {
   const [posts, setPosts] = useState([]);
@@ -353,80 +357,17 @@ function handleShare(postId) {
 }
 
   function getBadge(post) {
-
   if (!post.verified) return null;
 
-  switch (post.badgeType) {
-
-    case "creator":
-      return "🎥";
-
-    case "group":
-      return "👥";
-
-    case "institution":
-      return "🎓";
-
-    case "organization":
-      return "🏢";
-
-    case "ngo":
-      return "🤝";
-
-    case "healthcare":
-      return "🏥";
-
-    case "government":
-      return "🏛️";
-
-    case "media":
-      return "📰";
-
-    case "religious":
-      return "⛪";
-
-    case "financial":
-      return "🏦";
-
-    default:
-      return "✅";
-  }
-
+  return getVerificationBadge(post.badgeType);
   }
 
   function getPremium(post) {
-
   if (!post.premium) return null;
 
-  switch (post.premiumTier) {
-
-    case "creator_pro":
-      return "🥈";
-
-    case "creator_elite":
-      return "🥇";
-
-    case "verified_professional":
-      return "💎";
-
-    case "organization_pro":
-      return "🏢";
-
-    case "institution_pro":
-      return "🎓";
-
-    case "government_verified":
-      return "🏛️";
-
-    case "enterprise_partner":
-      return "🏆";
-
-    default:
-      return "⭐";
-
-  }
-
+  return getPremiumBadge(post.premiumTier);
 }
+
   return (
     <div
       style={{
