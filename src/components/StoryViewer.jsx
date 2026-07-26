@@ -1,5 +1,15 @@
 import { useEffect } from "react";
 
+import {
+  getVerificationBadge,
+  getPremiumBadge,
+  getVerificationMetadata,
+} from "../config/verificationTypes";
+
+import {
+  migrateVerificationId,
+} from "../config/verificationMigration";
+
 function StoryViewer({
 story,
 onClose,
@@ -26,18 +36,31 @@ return () =>
 
 if (!story) return null;
 
-const badgeMap = {
-creator: "🎥",
-organization: "🏢",
-ngo: "🤝",
-hospital: "🏥",
-government: "🏛",
-};
+const migratedType =
+  migrateVerificationId(
+    story.badgeType
+  );
 
 const badge =
-badgeMap[
-story.badgeType
-] || "✅";
+  story.verified
+    ? getVerificationBadge(
+        migratedType
+      )
+    : null;
+
+const premiumBadge =
+  story.premium
+    ? getPremiumBadge(
+        story.premiumTier
+      )
+    : null;
+
+const verificationMeta =
+  story.verified
+    ? getVerificationMetadata(
+        migratedType
+      )
+    : null;
 
 const isHighContrast =
 story.accessibility
@@ -94,73 +117,78 @@ marginBottom:
 "20px",
 }}
 >
-<div>
-<h3
-style={{
-margin: 0,
-}}
->
-{
-story.userName
-}
-</h3>
+  <div>
+  <h3
+    style={{
+      margin: 0,
+    }}
+  >
+    {story.userName}
+  </h3>
 
-        {story.verified && (
-          <span
-            style={{
-              background:
-                "#16a34a",
-              padding:
-                "4px 10px",
-              borderRadius:
-                "999px",
-              fontSize:
-                "12px",
-            }}
-          >
-            {badge}
-            {" "}
-            Verified
-          </span>
-        )}
-
-        {story.premium && (
-          <div
-            style={{
-              marginTop:
-                "8px",
-              color:
-                "#facc15",
-            }}
-          >
-            ⭐
-            {" "}
-            {
-              story.premiumTier
-            }
-          </div>
-        )}
-      </div>
-
-      <button
-        onClick={onClose}
+  {story.verified && (
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "6px",
+        marginTop: "8px",
+      }}
+    >
+      <span
         style={{
-          background:
-            "#38bdf8",
-          border: "none",
-          color:
-            "white",
-          padding:
-            "10px 16px",
-          borderRadius:
-            "12px",
-          cursor:
-            "pointer",
+          background: "#16a34a",
+          padding: "4px 10px",
+          borderRadius: "999px",
+          fontSize: "12px",
         }}
       >
-        Close
-      </button>
+        {badge}
+      </span>
+
+      {verificationMeta && (
+        <span
+          style={{
+            background: "#1e293b",
+            color: "#38bdf8",
+            padding: "4px 10px",
+            borderRadius: "999px",
+            fontSize: "12px",
+          }}
+        >
+          🛡️ Trust Level {verificationMeta.trustLevel}
+        </span>
+      )}
     </div>
+  )}
+
+  {story.premium && (
+    <div
+      style={{
+        marginTop: "8px",
+        color: "#facc15",
+      }}
+    >
+      {premiumBadge}
+    </div>
+  )}
+</div>
+
+<button
+  onClick={onClose}
+  style={{
+    background: "#38bdf8",
+    border: "none",
+    color: "white",
+    padding: "10px 16px",
+    borderRadius: "12px",
+    cursor: "pointer",
+  }}
+>
+  Close
+</button>
+  
+  </div>
 
     {story.storyType ===
       "text" && (
