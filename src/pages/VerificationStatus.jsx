@@ -17,16 +17,16 @@ where,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
-
-import { IFSE_CONFIG } from "../config";
 
 function VerificationStatus() {
 
 const navigate = useNavigate();
 
-const currentUser = auth.currentUser;
+// Track the currently signed-in user
+const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(true);
 
@@ -39,36 +39,6 @@ const [timeline, setTimeline] = useState([]);
 const [securityEvents, setSecurityEvents] = useState([]);
 
 const [auditLogs, setAuditLogs] = useState([]);
-
-const VERIFICATION_STATUS = {
-
-SUBMITTED: "Submitted",
-
-PAYMENT_PENDING: "Payment Pending",
-
-PAYMENT_COMPLETED: "Payment Completed",
-
-DOCUMENT_REVIEW: "Document Review",
-
-IDENTITY_VERIFICATION: "Identity Verification",
-
-SECURITY_SCAN: "IFSE Security Scan",
-
-ACCESSIBILITY_REVIEW: "Accessibility Review",
-
-EXECUTIVE_REVIEW: "Executive Review",
-
-APPROVED: "Approved",
-
-REJECTED: "Rejected",
-
-BADGE_ISSUED: "Badge Issued",
-
-CERTIFICATE_GENERATED: "Certificate Generated",
-
-ACTIVE: "Verification Active",
-
-};
 
 const IFSE_PROGRESS = [
 
@@ -112,94 +82,76 @@ IFSE_PROGRESS.length)
 
 }, [timeline]);
 
+// Listen for Firebase Authentication changes
 useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setCurrentUser(user);
+    } else {
+      setCurrentUser(null);
+    }
+  });
 
-if (!currentUser) {
+  return () => unsubscribe();
+}, []);
 
-setLoading(false);
+// Load the user's verification request
+useEffect(() => {
+  if (!currentUser) {
+    setVerification(null);
+    setLoading(false);
+    return;
+  }
 
-return;
+  const loadVerification = async () => {
+    try {
+      setLoading(true);
 
-}
+      const verificationQuery = query(
+        collection(db, "verificationRequests"),
+        where("submittedBy", "==", currentUser.uid)
+      );
 
-const loadVerification = async () => {
+      const verificationSnapshot = await getDocs(
+        verificationQuery
+      );
 
-try {
+      if (!verificationSnapshot.empty) {
+        const documents = verificationSnapshot.docs
+          .map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }))
+          .sort((a, b) => {
+            const aTime =
+              a.createdAt?.seconds || 0;
 
-const verificationQuery = query(
-  collection(db, "verificationRequests"),
-  where("submittedBy", "==", currentUser.uid)
-);
+            const bTime =
+              b.createdAt?.seconds || 0;
 
-const verificationSnapshot =
+            return bTime - aTime;
+          });
 
-await getDocs(verificationQuery);
+        setVerification(documents[0]);
+      } else {
+        setVerification(null);
+      }
+    } catch (err) {
+      console.error(err);
 
-const verificationSnapshot = await getDocs(verificationQuery);
+      setError(
+        "Unable to load verification."
+      );
 
-if (!verificationSnapshot.empty) {
-  const documents = verificationSnapshot.docs
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }))
-    .sort((a, b) => {
-      const aTime = a.createdAt?.seconds || 0;
-      const bTime = b.createdAt?.seconds || 0;
-      return bTime - aTime;
-    });
+      setVerification(null);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  setVerification(documents[0]);
-} else {
-  setVerification(null);
-}
-
-  const documents = verificationSnapshot.docs
-    .map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }))
-    .sort((a, b) => {
-
-      const aTime =
-        a.createdAt?.seconds || 0;
-
-      const bTime =
-        b.createdAt?.seconds || 0;
-
-      return bTime - aTime;
-
-    });
-
-  setVerification(documents[0]);
-
-}
-
-catch (err) {
-
-console.error(err);
-
-setError(
-
-"Unable to load verification."
-
-);
-
-}
-
-};
-
-loadVerification();
-
-} else {
-
-  setVerification(null);
-
-  setLoading(false);
-
-}
-
+  loadVerification();
 }, [currentUser]);
+  
   useEffect(() => {
 
 if (!verification) return;
