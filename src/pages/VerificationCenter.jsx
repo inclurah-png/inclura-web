@@ -19,14 +19,13 @@ import DashboardLayout from "../components/DashboardLayout";
 
 import {
   VERIFICATION_PLANS,
-  IFSE_CONFIG,
 } from "../config";
 
 function VerificationCenter() {
 
   const navigate = useNavigate();
 
-  const currentUser = auth.currentUser;
+  const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(true);
 
@@ -49,6 +48,18 @@ const [verificationStatistics, setVerificationStatistics] =
     []
   );
 
+  const IFSE_STAGES = [
+  "Identity Verification",
+  "Document Authentication",
+  "AI Fraud Detection",
+  "Forgery Detection",
+  "Duplicate Detection",
+  "Payment Protection",
+  "Accessibility Compliance",
+  "Executive Review",
+  "Continuous Monitoring",
+];
+  
   const ifseLayers = [
     "Identity Verification",
     "Document Authentication",
@@ -71,6 +82,15 @@ const [verificationStatistics, setVerificationStatistics] =
     "Business Opportunities",
     "Continuous IFSE Protection",
   ];
+
+  useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    setCurrentUser(user);
+  });
+
+  return () => unsubscribe();
+}, []);
+  
   useEffect(() => {
 
   if (!currentUser) {
@@ -269,19 +289,7 @@ const [verificationStatistics, setVerificationStatistics] =
   </div>
 
 </section>
-        {verification && (
 
-  <section
-    style={{
-      marginBottom: "30px",
-      background: "#0f172a",
-      border: "1px solid #334155",
-      borderRadius: "18px",
-      padding: "24px",
-    }}
-  >
-
-    <h2>Latest Verification</h2>
 {verification && (
 
 <section
@@ -603,7 +611,6 @@ const [verificationStatistics, setVerificationStatistics] =
     </div>
 
   </div>
-
 </section>
 
     <section
@@ -627,37 +634,25 @@ const [verificationStatistics, setVerificationStatistics] =
     Every verification passes through the complete
     Inclura Fortress Security Engine workflow.
   </p>
-
-  <ol
-    style={{
-      lineHeight: "2",
-      paddingLeft: "22px",
-    }}
-  >
-
-    {IFSE_STAGES.map((stage, index) => (
-
-      <li
-        key={stage}
-        style={{
-          marginBottom: "10px",
-        }}
-      >
-
-        <strong>
-          Step {index + 1}
-        </strong>
-
-        {" — "}
-
-        {stage}
-
-      </li>
-
-    ))}
-
-  </ol>
-
+<ol
+  style={{
+    lineHeight: "2",
+    paddingLeft: "22px",
+  }}
+>
+  {IFSE_STAGES.map((stage, index) => (
+    <li
+      key={stage}
+      style={{
+        marginBottom: "10px",
+      }}
+    >
+      <strong>Step {index + 1}</strong>
+      {" — "}
+      {stage}
+    </li>
+  ))}
+</ol>
 </section>
         <h2
           style={{
@@ -1168,20 +1163,9 @@ const [verificationStatistics, setVerificationStatistics] =
           : "🟢 Not Required"}
       </p>
     </div>
-
-  </div>
-
 </section>
+
     <section
-  style={{
-    marginTop: "45px",
-    background: "#0f172a",
-    border: "1px solid #334155",
-    borderRadius: "18px",
-    padding: "24px",
-  }}
->
-<section
   style={{
     marginTop: "40px",
     marginBottom: "35px",
@@ -1191,7 +1175,6 @@ const [verificationStatistics, setVerificationStatistics] =
     padding: "24px",
   }}
 >
-
   <h2>Verification Renewal Monitor</h2>
 
   <p
@@ -1256,8 +1239,17 @@ const [verificationStatistics, setVerificationStatistics] =
     </div>
 
   </div>
-
 </section>
+
+        <section
+  style={{
+    marginTop: "45px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "18px",
+    padding: "24px",
+  }}
+>
   <h2>IFSE Quick Actions</h2>
 
   <p
@@ -1319,8 +1311,8 @@ const [verificationStatistics, setVerificationStatistics] =
     </button>
 
   </div>
-
 </section>
+        
         <footer
           style={{
             marginTop: "40px",
