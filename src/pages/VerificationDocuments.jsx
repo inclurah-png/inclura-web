@@ -307,21 +307,20 @@ function VerificationDocuments() {
   };
 
   const riskScore = calculateRiskScore();
-  const selectedPlan =
-  VERIFICATION_PLANS?.[verificationType] || {};
 
-  const threatLevel =
-    riskScore >= 75
-      ? "High"
-      : riskScore >= 40
-      ? "Medium"
-      : "Low";
+const threatLevel =
+  riskScore >= 75
+    ? "High"
+    : riskScore >= 40
+    ? "Medium"
+    : "Low";
 
-  const executiveReviewRequired =
-    ["Enterprise", "Corporate", "Government"].includes(
-      verificationType
-    ) || riskScore >= 60;
-  const selectedPlan =
+const executiveReviewRequired =
+  ["Enterprise", "Corporate", "Government"].includes(
+    verificationType
+  ) || riskScore >= 60;
+
+const selectedPlan =
   VERIFICATION_PLANS?.[verificationType] || {
     monthlyUSD: 0,
     renewal: "Monthly",
