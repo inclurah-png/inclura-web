@@ -135,13 +135,23 @@ const verificationSnapshot =
 
 await getDocs(verificationQuery);
 
+const verificationSnapshot = await getDocs(verificationQuery);
+
 if (!verificationSnapshot.empty) {
-else {
+  const documents = verificationSnapshot.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }))
+    .sort((a, b) => {
+      const aTime = a.createdAt?.seconds || 0;
+      const bTime = b.createdAt?.seconds || 0;
+      return bTime - aTime;
+    });
 
+  setVerification(documents[0]);
+} else {
   setVerification(null);
-
-  setLoading(false);
-
 }
 
   const documents = verificationSnapshot.docs
@@ -992,8 +1002,6 @@ and verification progress are continuously
 monitored until verification is completed.
 
 </p>
-
-</footer>
 
 </div>
 
