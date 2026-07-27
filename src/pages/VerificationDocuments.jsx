@@ -207,32 +207,71 @@ function VerificationDocuments() {
   ],
 
 }));
-    const handleDocumentUpload = (documentName, file) => {
+    const handleDocumentUpload = (
+  documentName,
+  file
+) => {
 
-    if (!file) return;
+  if (!file) return;
 
-    if (!ALLOWED_FILE_TYPES.includes(file.type)) {
-      alert("Only PDF, JPG, JPEG and PNG files are allowed.");
-      return;
-    }
+  if (file.size === 0) {
 
-    if (file.size > MAX_FILE_SIZE) {
-      alert("Document size must not exceed 10 MB.");
-      return;
-    }
+    alert(
+      "The selected file is empty."
+    );
 
-    setUploadedDocuments((previous) => ({
-      ...previous,
-      [documentName]: {
-        file,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type,
-        uploaded: false,
-        validated: true,
-      },
-    }));
-  };
+    return;
+
+  }
+
+  if (
+    !ALLOWED_FILE_TYPES.includes(file.type)
+  ) {
+
+    alert(
+      "Only PDF, JPG, JPEG and PNG files are allowed."
+    );
+
+    return;
+
+  }
+
+  if (
+    file.size >
+    MAX_FILE_SIZE
+  ) {
+
+    alert(
+      "Document size must not exceed 10 MB."
+    );
+
+    return;
+
+  }
+
+  setUploadedDocuments((previous) => ({
+
+    ...previous,
+
+    [documentName]: {
+
+      file,
+
+      fileName: file.name,
+
+      fileSize: file.size,
+
+      fileType: file.type,
+
+      uploaded: false,
+
+      validated: true,
+
+    },
+
+  }));
+
+};
 
   const calculateRiskScore = () => {
 
@@ -268,6 +307,8 @@ function VerificationDocuments() {
   };
 
   const riskScore = calculateRiskScore();
+  const selectedPlan =
+  VERIFICATION_PLANS?.[verificationType] || {};
 
   const threatLevel =
     riskScore >= 75
@@ -280,8 +321,15 @@ function VerificationDocuments() {
     ["Enterprise", "Corporate", "Government"].includes(
       verificationType
     ) || riskScore >= 60;
+  const selectedPlan =
+  VERIFICATION_PLANS?.[verificationType] || {
+    monthlyUSD: 0,
+    renewal: "Monthly",
+    trustLevel: "Standard",
+    benefits: [],
+  };
+  
   const handleSubmit = async (e) => {
-
   e.preventDefault();
 
   setError("");
@@ -320,29 +368,112 @@ function VerificationDocuments() {
   }
 
   setLoading(true);
+const existingVerificationQuery = query(
 
+  collection(
+    db,
+    "verificationRequests"
+  ),
+
+  where(
+    "submittedBy",
+    "==",
+    currentUser.uid
+  )
+
+);
+
+const existingVerificationSnapshot =
+  await getDocs(
+    existingVerificationQuery
+  );
+
+const activeVerification =
+  existingVerificationSnapshot.docs.find(
+    (doc) => {
+
+      const status =
+        doc.data().status;
+
+      return [
+
+        "submitted",
+
+        "pending",
+
+        "under_review",
+
+        "payment_completed",
+
+      ].includes(status);
+
+    }
+  );
+
+if (activeVerification) {
+
+  setLoading(false);
+
+  setError(
+    "You already have an active verification request."
+  );
+
+  return;
+
+}
   try {
 
     const requestRef = await addDoc(
-      collection(db, "verificationRequests"),
-      {
-        verificationType,
-        organizationName,
-        contactName,
-        contactEmail,
-        country,
-        state,
-        city,
-        notes,
-        riskScore,
-        threatLevel,
-        executiveReviewRequired,
-        status: "submitted",
-        submittedBy: currentUser.uid,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }
-    );
+
+  collection(
+    db,
+    "verificationRequests"
+  ),
+
+  {
+
+    verificationType,
+
+    organizationName,
+
+    contactName,
+
+    contactEmail,
+
+    country,
+
+    state,
+
+    city,
+
+    notes,
+
+    riskScore,
+
+    threatLevel,
+
+    executiveReviewRequired,
+
+    uploadedDocuments: {},
+
+    paymentStatus:
+      "pending",
+
+    status:
+      "submitted",
+
+    submittedBy:
+      currentUser.uid,
+
+    createdAt:
+      serverTimestamp(),
+
+    updatedAt:
+      serverTimestamp(),
+
+  }
+
+);
 
     const verificationId = requestRef.id;
 
@@ -700,19 +831,55 @@ function VerificationDocuments() {
     }}
   >
     <h3>Document Progress</h3>
+<p>
 
-    <p>
-      Uploaded Documents:
-      {" "}
-      <strong>
-        {Object.keys(uploadedDocuments).length}
-      </strong>
-      {" / "}
-      <strong>
-        {DOCUMENT_REQUIREMENTS[verificationType].length}
-      </strong>
-    </p>
+Uploaded Documents
 
+</p>
+
+<p>
+
+<strong>
+
+{Object.keys(uploadedDocuments).length}
+
+</strong>
+
+of
+
+<strong>
+
+{DOCUMENT_REQUIREMENTS[verificationType].length}
+
+</strong>
+
+uploaded
+
+</p>
+
+<p>
+
+Completion:
+
+<strong>
+
+{" "}
+
+{Math.round(
+
+(
+Object.keys(uploadedDocuments).length /
+
+DOCUMENT_REQUIREMENTS[
+verificationType
+].length
+) * 100
+
+)}%
+
+</strong>
+
+</p>
     <progress
       value={Object.keys(uploadedDocuments).length}
       max={DOCUMENT_REQUIREMENTS[verificationType].length}
@@ -1003,18 +1170,59 @@ function VerificationDocuments() {
         borderColor: "#334155",
       }}
     />
+<h3
+  style={{
+    marginTop: "20px",
+    marginBottom: "15px",
+  }}
+>
+Verification Plan Details
+</h3>
 
-    <p
-      style={{
-        color: "#cbd5e1",
-      }}
-    >
-      The verification fee, renewal schedule,
-      privileges, IFSE permissions, and verification
-      benefits will automatically be loaded from
-      <strong> VERIFICATION_PLANS</strong> in your
-      configuration.
-    </p>
+<p>
+<strong>Verification Fee:</strong>
+{" "}
+${selectedPlan.monthlyUSD || 0}
+</p>
+
+<p>
+<strong>Renewal:</strong>
+{" "}
+{selectedPlan.renewal || "Monthly"}
+</p>
+
+<p>
+<strong>Trust Level:</strong>
+{" "}
+{selectedPlan.trustLevel || "Standard"}
+</p>
+
+{selectedPlan.benefits &&
+selectedPlan.benefits.length > 0 && (
+
+<div
+  style={{
+    marginTop: "15px",
+  }}
+>
+
+<strong>Benefits</strong>
+
+<ul>
+
+{selectedPlan.benefits.map((benefit) => (
+
+<li key={benefit}>
+{benefit}
+</li>
+
+))}
+
+</ul>
+
+</div>
+
+)}
 
   </div>
 
@@ -1081,26 +1289,50 @@ function VerificationDocuments() {
   }}
 >
 
-  <button
-    type="submit"
-    disabled={loading}
-    style={{
-      flex: 1,
-      padding: "14px",
-      borderRadius: "10px",
-      border: "none",
-      background: "#2563eb",
-      color: "#fff",
-      cursor: "pointer",
-      fontWeight: "bold",
-      fontSize: "16px",
-    }}
-  >
-    {loading
-      ? "Submitting Verification..."
-      : "Submit Verification"}
-  </button>
-
+<button
+  type="submit"
+  disabled={
+    loading ||
+    Object.keys(uploadedDocuments).length !==
+      DOCUMENT_REQUIREMENTS[verificationType].length
+  }
+  style={{
+    flex: 1,
+    padding: "14px",
+    borderRadius: "10px",
+    border: "none",
+    background:
+      loading ||
+      Object.keys(uploadedDocuments).length !==
+        DOCUMENT_REQUIREMENTS[verificationType].length
+        ? "#64748b"
+        : "#2563eb",
+    color: "#fff",
+    cursor:
+      loading ||
+      Object.keys(uploadedDocuments).length !==
+        DOCUMENT_REQUIREMENTS[verificationType].length
+        ? "not-allowed"
+        : "pointer",
+    opacity:
+      loading ||
+      Object.keys(uploadedDocuments).length !==
+        DOCUMENT_REQUIREMENTS[verificationType].length
+        ? 0.7
+        : 1,
+    fontWeight: "bold",
+    fontSize: "16px",
+    transition: "0.3s ease",
+  }}
+>
+  {loading
+    ? "Submitting Verification..."
+    : Object.keys(uploadedDocuments).length !==
+      DOCUMENT_REQUIREMENTS[verificationType].length
+    ? `Upload All Required Documents (${Object.keys(uploadedDocuments).length}/${DOCUMENT_REQUIREMENTS[verificationType].length})`
+    : "Submit Verification"}
+</button>
+  
   <button
     type="button"
     onClick={() => navigate("/verification-center")}
