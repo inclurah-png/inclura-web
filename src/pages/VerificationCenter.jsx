@@ -1068,10 +1068,8 @@ const [verificationStatistics, setVerificationStatistics] =
           ? `${100 - verification.riskScore}%`
           : "--"}
       </p>
-    </div>
-
   </div>
-
+  </div>
 </section>
 
     <section
@@ -1163,6 +1161,9 @@ const [verificationStatistics, setVerificationStatistics] =
           : "🟢 Not Required"}
       </p>
     </div>
+
+    </div>
+      
 </section>
 
     <section
