@@ -4,7 +4,7 @@ import {
   partnerships,
 } from "../config";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -19,6 +19,7 @@ serverTimestamp,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -26,7 +27,7 @@ function VerificationPaymentEngine() {
 
 const navigate = useNavigate();
 
-const currentUser = auth.currentUser;
+const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(false);
 
@@ -54,6 +55,22 @@ useState(false);
 
 const [acceptedSecurity, setAcceptedSecurity] =
 useState(false);
+  useEffect(() => {
+  const unsubscribe = onAuthStateChanged(
+    auth,
+    (user) => {
+      if (user) {
+        setCurrentUser(user);
+      } else {
+        setCurrentUser(null);
+      }
+    }
+  );
+
+  return () => unsubscribe();
+}, []);
+  const [verificationId, setVerificationId] =
+useState("");
 
 const PAYMENT_METHODS = [
 
@@ -320,8 +337,10 @@ collection(db, PAYMENT_COLLECTION),
 
 {
 
-transactionId,
+verificationId,
 
+transactionId,
+  
 verificationType,
 
 selectedTier,
@@ -513,23 +532,101 @@ Complete your verification payment securely through the
 </p>
 
 </section>
-  <section>
+  
+<section
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
+  <h2>Verification Pricing</h2>
 
-<h2>Pricing</h2>
+  {!selectedVerification ? (
 
-<pre>
+    <p>No pricing found.</p>
 
-{JSON.stringify(
+  ) : (
 
-selectedVerification,
+    <>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns:
+            "repeat(auto-fit,minmax(240px,1fr))",
+          gap: "18px",
+          marginTop: "18px",
+        }}
+      >
 
-null,
+        <div>
+          <strong>Monthly Fee</strong>
+          <p>
+            $
+            {selectedVerification.monthlyUSD ??
+              selectedVerification.monthlyFee ??
+              0}
+          </p>
+        </div>
 
-2
+        <div>
+          <strong>Renewal</strong>
+          <p>
+            {selectedVerification.renewal ??
+              "Monthly"}
+          </p>
+        </div>
 
-)}
+        <div>
+          <strong>Badge</strong>
+          <p>
+            {selectedVerification.badge ??
+              "Verified"}
+          </p>
+        </div>
 
-</pre>
+        <div>
+          <strong>Status</strong>
+          <p>
+            {selectedVerification.status ??
+              "Active"}
+          </p>
+        </div>
+
+      </div>
+
+      {selectedVerification.features && (
+
+        <div
+          style={{
+            marginTop: "24px",
+          }}
+        >
+
+          <h3>Benefits</h3>
+
+          <ul>
+
+            {selectedVerification.features.map(
+              (feature) => (
+
+                <li key={feature}>
+                  ✅ {feature}
+                </li>
+
+              )
+            )}
+
+          </ul>
+
+        </div>
+
+      )}
+    </>
+
+  )}
 
 </section>
   
