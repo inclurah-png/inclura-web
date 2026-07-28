@@ -997,8 +997,7 @@ const [verificationStatistics, setVerificationStatistics] =
             ensure trusted verification across the
             platform.
           </p>
-        </div>
-<section
+        </div
 
   <section
   style={{
