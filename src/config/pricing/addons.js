@@ -1,9 +1,9 @@
 const addons = [
-  {
-    id: "extra30days",
-    name: "Extra 30 Days Verification Extension",
-    priceUSD: 1000,
-  },
+{
+  id: "extra30days",
+  name: "Extra 30 Days Verification Extension",
+  oneTimeUSD: 1000,
+},
 
   {
     id: "additionalCountry",
@@ -17,11 +17,11 @@ const addons = [
     monthlyUSD: 6000,
   },
 
-  {
-    id: "fasttrack",
-    name: "Fast-track Verification",
-    priceUSD: 300,
-  },
+{
+  id: "fasttrack",
+  name: "Fast-track Verification",
+  oneTimeUSD: 300,
+},
 
   {
     id: "badgeReplacement",
@@ -36,23 +36,23 @@ const addons = [
     monthlyUSD: 250,
   },
 
-  {
-    id: "aiAudience",
-    name: "AI Audience Optimization",
-    priceUSD: 500,
-  },
+{
+  id: "aiAudience",
+  name: "AI Audience Optimization",
+  oneTimeUSD: 500,
+},
 
   {
-    id: "homepage",
-    name: "Homepage Featured Placement",
-    priceUSD: 57000,
-  },
+  id: "homepage",
+  name: "Homepage Featured Placement",
+  oneTimeUSD: 57000,
+},
 
   {
-    id: "creatorMarketplace",
-    name: "Creator Collaboration Marketplace",
-    priceUSD: 300,
-  },
+  id: "creatorMarketplace",
+  name: "Creator Collaboration Marketplace",
+  oneTimeUSD: 300,
+},
 
   {
     id: "accessibilityServices",
