@@ -54,17 +54,17 @@ const group = {
       premium: true,
       ifseProtection: true,
     },
-
-    {
-      id: "sports_club",
-      name: "Sports Club",
-      monthlyUSD: 100,
-      badge: "Verified Sports Club",
-      renewal: "Contract",
-      premium: true,
-      ifseProtection: true,
-      contractRequired: true,
-    },
+    
+{
+  id: "sports_club",
+  name: "Sports Club",
+  contractUSD: 100,
+  badge: "Verified Sports Club",
+  renewal: "Contract",
+  premium: true,
+  ifseProtection: true,
+  contractRequired: true,
+},
 
     {
       id: "religious_group",
