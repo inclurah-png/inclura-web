@@ -1,44 +1,55 @@
 const accessibility = {
   title: "Accessibility Certification",
 
+  description:
+    "Accessibility certification for organisations, businesses, platforms and institutions that comply with Inclura accessibility standards and IFSE accessibility protection.",
+
   certification: [
     {
       id: "bronze",
       name: "Bronze Certified",
-      yearlyUSD: 1500,
+      yearlyUSD: 2500,
       badge: "Bronze Certified",
-      renewal: "Annual",
+      renewal: "Yearly",
+      premium: true,
+      ifseProtection: true,
     },
 
     {
       id: "silver",
       name: "Silver Certified",
-      yearlyUSD: 2000,
+      yearlyUSD: 3500,
       badge: "Silver Certified",
-      renewal: "Annual",
+      renewal: "Yearly",
+      premium: true,
+      ifseProtection: true,
     },
 
     {
       id: "gold",
       name: "Gold Certified",
-      yearlyUSD: 2500,
+      yearlyUSD: 5000,
       badge: "Gold Certified",
-      renewal: "Annual",
+      renewal: "Yearly",
+      premium: true,
+      ifseProtection: true,
     },
 
     {
       id: "platinum",
       name: "Platinum Certified",
       pricing: "Enterprise Negotiation",
-      badge: "Platinum Certified",
-      renewal: "Negotiated",
       enterprise: true,
+      contractRequired: true,
+      renewal: "Contract",
+      badge: "Platinum Certified",
+      premium: true,
+      ifseProtection: true,
+      redirect: "/enterprise-partnership",
     },
   ],
 
   accessibilityAudit: true,
-
-  ifseProtection: true,
 
   standards: [
     "WCAG 2.2 AA",
