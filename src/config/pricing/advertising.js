@@ -37,7 +37,7 @@ const advertising = [
     duration: "6 Months",
     coverage: "4 Countries",
   },
-
+  
   {
     {
   id: "global",
