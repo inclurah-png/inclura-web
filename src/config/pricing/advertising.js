@@ -39,12 +39,16 @@ const advertising = [
   },
 
   {
-    id: "global",
-    name: "Global Campaign",
-    pricing: "Enterprise Negotiation",
-    suggestedBudgetUSD: 1000000000,
-    enterprise: true,
-  },
+    {
+  id: "global",
+  name: "Global Campaign",
+  pricing: "Enterprise Negotiation",
+  suggestedBudgetUSD: 1000000000,
+  enterprise: true,
+  contractRequired: true,
+  renewal: "Contract",
+  redirect: "/enterprise-partnership",
+},
 ];
 
 export default advertising;
