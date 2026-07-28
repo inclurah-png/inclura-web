@@ -999,6 +999,8 @@ const [verificationStatistics, setVerificationStatistics] =
           </p>
         </div>
 <section
+
+  <section
   style={{
     marginTop: "40px",
     marginBottom: "35px",
@@ -1035,6 +1037,7 @@ const [verificationStatistics, setVerificationStatistics] =
           ? "✅ Issued"
           : "⏳ Pending Approval"}
       </p>
+
     </div>
 
     <div
@@ -1051,6 +1054,7 @@ const [verificationStatistics, setVerificationStatistics] =
           ? "✅ Ready"
           : "Will be generated after approval"}
       </p>
+
     </div>
 
     <div
@@ -1067,11 +1071,15 @@ const [verificationStatistics, setVerificationStatistics] =
           ? `${100 - verification.riskScore}%`
           : "--"}
       </p>
+
+    </div>
+
   </div>
-  </div>
+
 </section>
 
-    <section
+
+<section
   style={{
     marginTop: "40px",
     marginBottom: "35px",
@@ -1115,6 +1123,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <p style={{ marginTop: "10px" }}>
         🟢 No suspicious activity detected
       </p>
+
     </div>
 
     <div
@@ -1129,6 +1138,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <p style={{ marginTop: "10px" }}>
         🟢 Documents remain valid
       </p>
+
     </div>
 
     <div
@@ -1143,6 +1153,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <p style={{ marginTop: "10px" }}>
         🟢 No fraud indicators found
       </p>
+
     </div>
 
     <div
@@ -1159,13 +1170,14 @@ const [verificationStatistics, setVerificationStatistics] =
           ? "🟡 Waiting for Executive Review"
           : "🟢 Not Required"}
       </p>
-    </div>
 
     </div>
-      
+
+  </div>
+
 </section>
-
-    <section
+        
+<section
   style={{
     marginTop: "40px",
     marginBottom: "35px",
@@ -1175,6 +1187,7 @@ const [verificationStatistics, setVerificationStatistics] =
     padding: "24px",
   }}
 >
+
   <h2>Verification Renewal Monitor</h2>
 
   <p
@@ -1183,13 +1196,15 @@ const [verificationStatistics, setVerificationStatistics] =
       marginBottom: "20px",
     }}
   >
-    IFSE continuously monitors your verification validity and renewal status.
+    IFSE continuously monitors your verification validity,
+    renewal schedule and verification lifecycle.
   </p>
 
   <div
     style={{
       display: "grid",
-      gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))",
+      gridTemplateColumns:
+        "repeat(auto-fit,minmax(240px,1fr))",
       gap: "20px",
     }}
   >
@@ -1201,6 +1216,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
+
       <strong>Current Status</strong>
 
       <p style={{ marginTop: "10px" }}>
@@ -1208,6 +1224,7 @@ const [verificationStatistics, setVerificationStatistics] =
           ? verification.status
           : "No Verification"}
       </p>
+
     </div>
 
     <div
@@ -1217,11 +1234,13 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Renewal</strong>
+
+      <strong>Renewal Monitoring</strong>
 
       <p style={{ marginTop: "10px" }}>
         Automatic Renewal Monitoring Enabled
       </p>
+
     </div>
 
     <div
@@ -1231,17 +1250,23 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Certificate</strong>
+
+      <strong>Certificate Status</strong>
 
       <p style={{ marginTop: "10px" }}>
-        Generated after approval
+        {verification?.status === "approved"
+          ? "Certificate Available"
+          : "Certificate Pending Approval"}
       </p>
+
     </div>
 
   </div>
+
 </section>
 
-        <section
+
+<section
   style={{
     marginTop: "45px",
     background: "#0f172a",
@@ -1250,6 +1275,7 @@ const [verificationStatistics, setVerificationStatistics] =
     padding: "24px",
   }}
 >
+
   <h2>IFSE Quick Actions</h2>
 
   <p
@@ -1258,7 +1284,7 @@ const [verificationStatistics, setVerificationStatistics] =
       marginBottom: "20px",
     }}
   >
-    Quickly continue any verification activity.
+    Continue your verification process using the options below.
   </p>
 
   <div
@@ -1311,23 +1337,29 @@ const [verificationStatistics, setVerificationStatistics] =
     </button>
 
   </div>
+
 </section>
-        
         <footer
-          style={{
-            marginTop: "40px",
-            textAlign: "center",
-            color: "#94a3b8",
-          }}
-        >
-          © Inclura Verification Center
-          <br />
-          Powered by the Inclura Fortress Security Engine
-          (IFSE)
-        </footer>
-      </div>
-    </DashboardLayout>
-  );
+  style={{
+    marginTop: "40px",
+    textAlign: "center",
+    color: "#94a3b8",
+  }}
+>
+  © Inclura Verification Center
+
+  <br />
+
+  Powered by the Inclura Fortress Security Engine (IFSE)
+
+</footer>
+
+</div>
+
+</DashboardLayout>
+
+);
+
 }
 
 export default VerificationCenter;
