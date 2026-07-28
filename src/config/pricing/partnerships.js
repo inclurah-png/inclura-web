@@ -6,6 +6,7 @@ const partnerships = {
     badge: "Enterprise Partner",
     enterprise: true,
     ifseProtection: true,
+    redirect: "/enterprise-partnership",
 
     designedFor: [
       "Multinational Corporations",
@@ -63,17 +64,19 @@ const partnerships = {
     renewal: "Annual Enterprise Contract",
     badge: "Corporate Partner",
     enterprise: true,
-    ifseProtection: true
+    ifseProtection: true,
+    redirect: "/corporate-partnership",
   },
 
   government: {
     title: "Government Partnership",
-    pricing: "Private Negotiation",
-    renewal: "Enterprise Contract",
+    pricing: "Private Government Negotiation",
+    renewal: "Government Partnership Contract",
     badge: "Government Partner",
     enterprise: true,
-    ifseProtection: true
-  }
+    ifseProtection: true,
+    redirect: "/government-partnership",
+  },
 };
 
 export default partnerships;
