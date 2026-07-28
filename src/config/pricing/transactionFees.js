@@ -1,21 +1,39 @@
 const transactionFees = {
-  eventTickets: 8,
+  eventTickets: {
+    percentage: 8,
+  },
 
-  marketplace: 7,
+  marketplace: {
+    percentage: 7,
+  },
 
-  digitalProducts: 10,
+  digitalProducts: {
+    percentage: 10,
+  },
 
-  courses: 8,
+  courses: {
+    percentage: 8,
+  },
 
-  donations: 2,
+  donations: {
+    percentage: 2,
+  },
 
-  grants: 3,
+  grants: {
+    percentage: 3,
+  },
 
-  communityMembership: 8,
+  communityMembership: {
+    percentage: 8,
+  },
 
-  sponsorship: 7,
+  sponsorship: {
+    percentage: 7,
+  },
 
-  mentorship: 7,
+  mentorship: {
+    percentage: 7,
+  },
 };
 
 export default transactionFees;
