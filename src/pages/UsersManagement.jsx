@@ -223,21 +223,48 @@ marginBottom: "24px",
 
 </div>
 
-    <div style={card}>
-      🛒 Marketplace Sellers
-    </div>
+<div style={card}>
 
-    <div style={card}>
-      📢 Advertisers
-    </div>
+  <h3>🛒 Marketplace Sellers</h3>
 
-    <div style={card}>
-      🚨 Reported Users
-    </div>
+  <h2>{statistics.marketplaceSellers}</h2>
 
-    <div style={card}>
-      📊 User Analytics
-    </div>
+</div>
+
+<div style={card}>
+
+  <h3>📢 Advertisers</h3>
+
+  <h2>{statistics.advertisers}</h2>
+
+</div>
+
+<div style={card}>
+
+  <h3>🚨 Reported Users</h3>
+
+  <h2>{statistics.reportedUsers}</h2>
+
+</div>
+
+<div style={card}>
+
+  <h3>📊 User Analytics</h3>
+
+  <p>Total Users</p>
+
+  <h2>{statistics.totalUsers}</h2>
+
+  <p
+    style={{
+      color: "#94a3b8",
+      marginTop: "12px",
+    }}
+  >
+    Analytics dashboard will be added in the next phase.
+  </p>
+
+</div>
   </div>
 </DashboardLayout>
 
