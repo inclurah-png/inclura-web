@@ -21,7 +21,6 @@ import {
 } from "../config";
 
 function VerificationCenter() {
-
   const navigate = useNavigate();
 
   const [currentUser, setCurrentUser] = useState(null);
