@@ -5,6 +5,9 @@ import {
   getDocs,
   query,
   orderBy,
+  doc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -45,6 +48,103 @@ const [statistics, setStatistics] = useState({
   loadUsers();
 }, []);
 
+const suspendUser = async (userId) => {
+
+  try {
+
+    await updateDoc(
+      doc(db, "users", userId),
+      {
+        status: "suspended",
+        suspendedAt: serverTimestamp(),
+      }
+    );
+
+    loadUsers();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Unable to suspend user.");
+
+  }
+
+};
+
+const banUser = async (userId) => {
+
+  try {
+
+    await updateDoc(
+      doc(db, "users", userId),
+      {
+        status: "banned",
+        bannedAt: serverTimestamp(),
+      }
+    );
+
+    loadUsers();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Unable to ban user.");
+
+  }
+
+};
+
+const restoreUser = async (userId) => {
+
+  try {
+
+    await updateDoc(
+      doc(db, "users", userId),
+      {
+        status: "active",
+        restoredAt: serverTimestamp(),
+      }
+    );
+
+    loadUsers();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Unable to restore user.");
+
+  }
+
+};
+
+const verifyUser = async (userId) => {
+
+  try {
+
+    await updateDoc(
+      doc(db, "users", userId),
+      {
+        verified: true,
+        verificationStatus: "approved",
+        verifiedAt: serverTimestamp(),
+      }
+    );
+
+    loadUsers();
+
+  } catch (error) {
+
+    console.error(error);
+
+    alert("Unable to verify user.");
+
+  }
+
+};
+  
 const loadUsers = async () => {
 
   try {
@@ -452,7 +552,70 @@ ${user.id}`
           View
 
         </button>
+        
+      <button
+  onClick={() => suspendUser(user.id)}
+  style={{
+    marginLeft: "6px",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#f59e0b",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }}
+>
+  Suspend
+</button>
 
+<button
+  onClick={() => banUser(user.id)}
+  style={{
+    marginLeft: "6px",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#dc2626",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }}
+>
+  Ban
+</button>
+
+<button
+  onClick={() => restoreUser(user.id)}
+  style={{
+    marginLeft: "6px",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#16a34a",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }}
+>
+  Restore
+</button>
+
+<button
+  onClick={() => verifyUser(user.id)}
+  style={{
+    marginLeft: "6px",
+    padding: "8px 14px",
+    border: "none",
+    borderRadius: "8px",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "bold",
+  }}
+>
+  Verify
+</button>
       </td>
 
     </tr>
