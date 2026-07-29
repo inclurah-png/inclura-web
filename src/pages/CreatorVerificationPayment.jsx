@@ -16,16 +16,21 @@ import {
   auth,
 } from "../firebase";
 
+import { VERIFICATION_PLANS } from "../config";
+
 function CreatorVerificationPayment() {
   const [loading, setLoading] =
     useState(false);
 
-  const VERIFICATION_FEE = 5000;
+const VERIFICATION_FEE =
+VERIFICATION_PLANS.creator.verificationTypes.find(
+(item)=>item.id==="verified_creator"
+)?.monthlyUSD || 0;
 
   const config = {
     public_key:
-      "FLWPUBK_TEST-1ee584892828ffa6942ef2e45a970768-X",
-
+import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
+    
     tx_ref:
       Date.now().toString(),
 
@@ -43,7 +48,9 @@ function CreatorVerificationPayment() {
         "user@inclura.com",
 
       phone_number:
-        "08000000000",
+verification.phone ||
+auth.currentUser?.phoneNumber ||
+""
 
       name:
         auth.currentUser?.displayName ||
@@ -77,48 +84,45 @@ function CreatorVerificationPayment() {
           auth.currentUser;
 
         if (
-          response.status ===
-            "successful" &&
-          user
-        ) {
-          try {
-            await updateDoc(
-              doc(
-                db,
-                "users",
-                user.uid
-              ),
-              {
-                verified: true,
+  response.status === "successful" &&
+  user
+) {
+  try {
+    await updateDoc(
+      doc(
+        db,
+        "users",
+        user.uid
+      ),
+      {
+        verified: true,
 
-                badgeType:
-                  "creator",
+        badgeType: "creator",
 
-                creatorVerified:
-                  true,
+        creatorVerified: true,
 
-                creatorVerifiedAt:
-                  serverTimestamp(),
+        creatorVerifiedAt:
+          serverTimestamp(),
 
-                paymentReference:
-                  response.tx_ref,
+        paymentReference:
+          response.tx_ref,
 
-                transactionId:
-                  response.transaction_id,
-              }
-            );
+        transactionId:
+          response.transaction_id,
+      }
+    );
 
-            alert(
-              "Creator Verification Successful"
-            );
-          } catch (error) {
-            console.error(error);
-            alert(
-              "Verification update failed."
-            );
-          }
-        }
+    alert(
+      "Creator Verification Successful"
+    );
+  } catch (error) {
+    console.error(error);
 
+    alert(
+      "Verification update failed."
+    );
+  }
+}
         setLoading(false);
 
         closePaymentModal();
