@@ -7,7 +7,7 @@ const partnerships = {
     enterprise: true,
     ifseProtection: true,
     redirect: "/enterprise-partnership",
-
+    
     designedFor: [
       "Multinational Corporations",
       "Global Brands",
