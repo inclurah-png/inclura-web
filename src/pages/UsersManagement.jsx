@@ -349,54 +349,118 @@ marginBottom: "24px",
 
     <thead>
 
-      <tr
-        style={{
-          background: "#1e293b",
-        }}
-      >
+<tr
+  style={{
+    background: "#1e293b",
+  }}
+>
 
-        <th>Name</th>
+  <th>Name</th>
 
-        <th>Email</th>
+  <th>Email</th>
 
-        <th>Account</th>
+  <th>Account</th>
 
-        <th>Status</th>
+  <th>Status</th>
 
-        <th>Verified</th>
+  <th>Verified</th>
 
-      </tr>
+  <th>Actions</th>
 
+</tr>
     </thead>
 
-    <tbody>
+<tbody>
 
-      {filteredUsers.map((user) => (
+  {filteredUsers.map((user) => (
 
-        <tr key={user.id}>
+    <tr key={user.id}>
 
-          <td>{user.fullName}</td>
+      <td>{user.fullName}</td>
 
-          <td>{user.email}</td>
+      <td>{user.email}</td>
 
-          <td>{user.accountType}</td>
+      <td>{user.accountType}</td>
 
-          <td>{user.status}</td>
+      <td>{user.status}</td>
 
-          <td>
+      <td>
 
-            {user.verified
-              ? "✅"
-              : "❌"}
+        {user.verified ? "✅" : "❌"}
 
-          </td>
+      </td>
 
-        </tr>
+      <td>
 
-      ))}
+        <button
+          onClick={() => {
 
-    </tbody>
+            alert(
 
+`Full Name: ${user.fullName || "N/A"}
+
+Username: ${user.username || "N/A"}
+
+Email: ${user.email || "N/A"}
+
+Phone: ${user.phone || "N/A"}
+
+Account Type: ${user.accountType || "N/A"}
+
+Verification Status: ${user.verificationStatus || "N/A"}
+
+Verified: ${user.verified ? "Yes" : "No"}
+
+Country: ${user.country || "N/A"}
+
+State: ${user.state || "N/A"}
+
+City: ${user.city || "N/A"}
+
+Joined:
+
+${user.createdAt?.toDate?.().toLocaleString?.() || "Unknown"}
+
+User ID:
+
+${user.id}`
+
+            );
+
+          }}
+
+          style={{
+
+            padding: "8px 14px",
+
+            borderRadius: "8px",
+
+            border: "none",
+
+            background: "#2563eb",
+
+            color: "#fff",
+
+            cursor: "pointer",
+
+            fontWeight: "bold",
+
+          }}
+
+        >
+
+          View
+
+        </button>
+
+      </td>
+
+    </tr>
+
+  ))}
+
+</tbody>
+    
   </table>
 
 </div>
