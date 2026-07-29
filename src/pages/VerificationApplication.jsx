@@ -67,12 +67,10 @@ function VerificationApplication() {
     selectedCategory?.verificationTypes || [];
 
   useEffect(() => {
-    if (verificationTypes.length > 0) {
-      setVerificationType(
-        verificationTypes[0].id
-      );
-    }
-  }, [category]);
+if (verificationTypes?.length > 0) {
+  setVerificationType(verificationTypes[0].id);
+}
+  }, [category, verificationTypes]);
 
   const selectedVerification =
     verificationTypes.find(
@@ -246,14 +244,39 @@ if (isEnterprise) {
   return;
 }
 
-      if (
-        paymentAmount > 0
-      ) {
-        navigate(
-          "/creator-verification-payment"
-        );
-        return;
-      }
+if (requiresContract) {
+  navigate(contractRoute, {
+    state: {
+      verificationId: verificationRef.id,
+      verificationType,
+      category,
+    },
+  });
+  return;
+}
+
+if (isEnterprise) {
+  navigate("/enterprise-partnership", {
+    state: {
+      verificationId: verificationRef.id,
+      verificationType,
+      category,
+    },
+  });
+  return;
+}
+
+if (paymentAmount > 0) {
+  navigate("/creator-verification-payment", {
+    state: {
+      verificationId: verificationRef.id,
+      verificationType,
+      category,
+      paymentAmount,
+    },
+  });
+  return;
+}
 
       alert(
         "Verification request submitted successfully."
@@ -543,8 +566,7 @@ if (isEnterprise) {
         fontSize: "22px",
         fontWeight: "700",
       }}
-    >
-      ${paymentAmount.toLocaleString()}
+    >${Number(paymentAmount || 0).toLocaleString()}
     </p>
   )}
 </div>
