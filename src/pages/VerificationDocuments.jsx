@@ -5,6 +5,9 @@ import {
   addDoc,
   collection,
   serverTimestamp,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 
 import {
@@ -205,8 +208,9 @@ function VerificationDocuments() {
     "Tax Clearance",
     "Proof of Headquarters",
   ],
+    
+}), []);
 
-}));
     const handleDocumentUpload = (
   documentName,
   file
