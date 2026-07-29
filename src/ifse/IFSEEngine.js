@@ -182,16 +182,16 @@ const certificate =
     status: result.status,
   });
 
-  const expiry =
-  evaluateExpiry({
-    ...request,
-    expiryDate: renewal.renewalDate,
-  });
-
   const renewal =
   evaluateRenewal({
     ...request,
     status: result.status,
+  });
+
+const expiry =
+  evaluateExpiry({
+    ...request,
+    expiryDate: renewal.renewalDate,
   });
 
   const appeal =
