@@ -2,7 +2,7 @@ const transactionFees = {
   eventTickets: {
     percentage: 8,
   },
-
+  
   marketplace: {
     percentage: 7,
   },
