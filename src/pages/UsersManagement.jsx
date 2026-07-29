@@ -167,33 +167,61 @@ marginBottom: "24px",
 
 </div>
 
-    <div style={card}>
-      ✅ Verified Users
-    </div>
+  <div style={card}>
+
+  <h3>✅ Verified Users</h3>
+
+  <h2>{statistics.verifiedUsers}</h2>
+
+</div>
 
     <div style={card}>
-      🕒 Pending Verification
-    </div>
+
+  <h3>🕒 Pending Verification</h3>
+
+  <h2>{statistics.pendingVerification}</h2>
+
+</div>
 
     <div style={card}>
-      🏢 Enterprise Accounts
-    </div>
+
+  <h3>🏢 Enterprise Accounts</h3>
+
+  <h2>{statistics.enterpriseAccounts}</h2>
+
+</div>
 
     <div style={card}>
-      🏛 Government Accounts
-    </div>
+
+  <h3>🏛 Government Accounts</h3>
+
+  <h2>{statistics.governmentAccounts}</h2>
+
+</div>
+
+<div style={card}>
+
+  <h3>🎓 Mentor Accounts</h3>
+
+  <h2>{statistics.mentorAccounts}</h2>
+
+</div>
 
     <div style={card}>
-      🎓 Mentor Accounts
-    </div>
+
+  <h3>🤝 Caregiver Accounts</h3>
+
+  <h2>{statistics.caregiverAccounts}</h2>
+
+</div>
 
     <div style={card}>
-      🤝 Caregiver Accounts
-    </div>
 
-    <div style={card}>
-      💼 Employer Accounts
-    </div>
+  <h3>💼 Employer Accounts</h3>
+
+  <h2>{statistics.employerAccounts}</h2>
+
+</div>
 
     <div style={card}>
       🛒 Marketplace Sellers
