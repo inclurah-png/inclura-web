@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   collection,
   getDocs,
@@ -7,7 +8,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -76,7 +77,7 @@ ifseFinalScore:
   ifseDecision.score,
   
   verificationActive: true,
-  approvedAt: new Date(),
+  approvedAt: serverTimestamp(),
   approvedBy: auth.currentUser?.uid || "admin",
 }
 );
