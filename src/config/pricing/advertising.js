@@ -37,18 +37,17 @@ const advertising = [
     duration: "6 Months",
     coverage: "4 Countries",
   },
-  
+
   {
-    {
-  id: "global",
-  name: "Global Campaign",
-  pricing: "Enterprise Negotiation",
-  suggestedBudgetUSD: 1000000000,
-  enterprise: true,
-  contractRequired: true,
-  renewal: "Contract",
-  redirect: "/enterprise-partnership",
-},
+    id: "global",
+    name: "Global Campaign",
+    pricing: "Enterprise Negotiation",
+    suggestedBudgetUSD: 1000000000,
+    enterprise: true,
+    contractRequired: true,
+    renewal: "Contract",
+    redirect: "/enterprise-partnership",
+  },
 ];
 
 export default advertising;
