@@ -135,23 +135,37 @@ marginBottom: "24px",
 👥 Users Management
 </h1>
 
-    <div style={card}>
-      👥 All Users
+<div style={card}>
 
-<h2>{statistics.totalUsers}</h2>
-    </div>
+  <h3>👥 All Users</h3>
+
+  <h2>{statistics.totalUsers}</h2>
+
+</div>
+
+<div style={card}>
+
+  <h3>🟢 Active Users</h3>
+
+  <h2>{statistics.activeUsers}</h2>
+
+</div>
 
     <div style={card}>
-      🟢 Active Users
-    </div>
+
+  <h3>🔴 Suspended Users</h3>
+
+  <h2>{statistics.suspendedUsers}</h2>
+
+</div>
 
     <div style={card}>
-      🔴 Suspended Users
-    </div>
 
-    <div style={card}>
-      🚫 Banned Users
-    </div>
+  <h3>🚫 Banned Users</h3>
+
+  <h2>{statistics.bannedUsers}</h2>
+
+</div>
 
     <div style={card}>
       ✅ Verified Users
