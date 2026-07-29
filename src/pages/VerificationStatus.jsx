@@ -22,7 +22,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import DashboardLayout from "../components/DashboardLayout";
 
 function VerificationStatus() {
-
+  
 const navigate = useNavigate();
 
 // Track the currently signed-in user
