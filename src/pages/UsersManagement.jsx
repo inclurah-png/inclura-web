@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
+  query,
+  orderBy,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -14,6 +16,13 @@ function UsersManagement() {
 const [loading, setLoading] = useState(true);
 
 const [users, setUsers] = useState([]);
+
+const [filteredUsers, setFilteredUsers] = useState([]);
+
+const [searchTerm, setSearchTerm] = useState("");
+
+const [selectedFilter, setSelectedFilter] =
+  useState("all");
 
 const [statistics, setStatistics] = useState({
   totalUsers: 0,
@@ -31,6 +40,7 @@ const [statistics, setStatistics] = useState({
   advertisers: 0,
   reportedUsers: 0,
 });
+
     useEffect(() => {
   loadUsers();
 }, []);
@@ -51,6 +61,8 @@ const loadUsers = async () => {
     }));
 
     setUsers(data);
+
+setFilteredUsers(data);
 
     setStatistics({
       totalUsers: data.length,
@@ -265,7 +277,132 @@ marginBottom: "24px",
   </p>
 
 </div>
-  </div>
+<div
+  style={{
+    marginTop: "40px",
+    background: "#0f172a",
+    borderRadius: "20px",
+    padding: "20px",
+  }}
+>
+
+  <h2
+    style={{
+      marginBottom: "20px",
+    }}
+  >
+    👥 Registered Users
+  </h2>
+
+  <input
+    type="text"
+    placeholder="Search users..."
+    value={searchTerm}
+    onChange={(e) => {
+
+      const value =
+        e.target.value;
+
+      setSearchTerm(value);
+
+      const keyword =
+        value.toLowerCase();
+
+      setFilteredUsers(
+
+        users.filter((user) =>
+
+          (user.fullName || "")
+            .toLowerCase()
+            .includes(keyword) ||
+
+          (user.email || "")
+            .toLowerCase()
+            .includes(keyword) ||
+
+          (user.username || "")
+            .toLowerCase()
+            .includes(keyword)
+
+        )
+
+      );
+
+    }}
+    style={{
+      width: "100%",
+      padding: "14px",
+      borderRadius: "10px",
+      marginBottom: "20px",
+      border: "none",
+      background: "#1e293b",
+      color: "#fff",
+    }}
+  />
+
+  <table
+    style={{
+      width: "100%",
+      borderCollapse: "collapse",
+    }}
+  >
+
+    <thead>
+
+      <tr
+        style={{
+          background: "#1e293b",
+        }}
+      >
+
+        <th>Name</th>
+
+        <th>Email</th>
+
+        <th>Account</th>
+
+        <th>Status</th>
+
+        <th>Verified</th>
+
+      </tr>
+
+    </thead>
+
+    <tbody>
+
+      {filteredUsers.map((user) => (
+
+        <tr key={user.id}>
+
+          <td>{user.fullName}</td>
+
+          <td>{user.email}</td>
+
+          <td>{user.accountType}</td>
+
+          <td>{user.status}</td>
+
+          <td>
+
+            {user.verified
+              ? "✅"
+              : "❌"}
+
+          </td>
+
+        </tr>
+
+      ))}
+
+    </tbody>
+
+  </table>
+
+</div>
+
+</div>
+
 </DashboardLayout>
 
 );
