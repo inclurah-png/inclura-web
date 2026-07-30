@@ -251,28 +251,6 @@ if (isEnterprise) {
   return;
 }
 
-if (requiresContract) {
-  navigate(contractRoute, {
-    state: {
-      verificationId: verificationRef.id,
-      verificationType,
-      category,
-    },
-  });
-  return;
-}
-
-if (isEnterprise) {
-  navigate("/enterprise-partnership", {
-    state: {
-      verificationId: verificationRef.id,
-      verificationType,
-      category,
-    },
-  });
-  return;
-}
-
 if (paymentAmount > 0) {
   navigate("/creator-verification-payment", {
     state: {
