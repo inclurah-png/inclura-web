@@ -11,6 +11,7 @@ import {
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -37,8 +38,16 @@ function CorporatePartnership() {
   const navigate =
     useNavigate();
 
-  const currentUser =
-    auth.currentUser;
+  const [currentUser, setCurrentUser] = useState(null);
+
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setCurrentUser(user);
+  });
+
+  return unsubscribe;
+}, []);
+  
     const [loading,
     setLoading] =
     useState(false);
@@ -100,6 +109,10 @@ function CorporatePartnership() {
   const [contractType,
     setContractType] =
     useState("Annual");
+
+  const [companyClassification,
+  setCompanyClassification] =
+  useState("Startup");
 
   const [estimatedEmployees,
     setEstimatedEmployees] =
@@ -299,6 +312,17 @@ function CorporatePartnership() {
       : corporateRiskScore >= 40
       ? "Medium"
       : "Low";
+
+  const ifseSecurityScore =
+100 - corporateRiskScore;
+
+const trustScore =
+corporateRiskScore >= 70
+? "Low"
+: corporateRiskScore >= 40
+? "Medium"
+: "High";
+  
     const handleSubmit =
     async (e) => {
 
@@ -476,14 +500,16 @@ function CorporatePartnership() {
               "corporatePartnerships"
             ),
             {
-              companyName,
+  companyName,
 
-              registrationNumber,
+  registrationNumber,
 
-              website,
+  website,
 
-              industry,
+  industry,
 
+  companyClassification,
+              
               contactName,
 
               contactEmail,
@@ -494,7 +520,7 @@ function CorporatePartnership() {
 
               country,
 
-              state,
+              province,
 
               city,
 
@@ -509,15 +535,26 @@ function CorporatePartnership() {
               requestStatus:
                 REQUEST_STATUS.SUBMITTED,
 
+              verificationStatus:
+"Awaiting IFSE Review",
+
+approvalStatus:
+"Not Approved",
+
+contractStatus:
+"Inactive",
+
               reviewProgress,
 
 timeline,
 
 userId:
-  currentUser.uid,
+currentUser.uid,
+
+corporateId,
 
 createdAt:
-  serverTimestamp(),
+serverTimestamp(),
 
 updatedAt:
   serverTimestamp(),
@@ -526,75 +563,128 @@ riskScore:
   corporateRiskScore,
 
 threatLevel,
+              securityLayers,
+
+corporateBenefits,
+              
             }
           );
 
         const partnershipId =
           docRef.id;
+        const corporateId =
+`COR-${Date.now()}-${Math.random()
+  .toString(36)
+  .substring(2, 8)
+  .toUpperCase()}`;
+                const timelineStages = [
+
+{
+title: "Application Submitted",
+status: "Completed",
+},
+
+{
+title: "Security Review",
+status: "Pending",
+},
+
+{
+title: "Accessibility Review",
+status: "Pending",
+},
+
+{
+title: "Compliance Review",
+status: "Pending",
+},
+
+{
+title: "Executive Approval",
+status: "Pending",
+},
+
+{
+title: "Activation",
+status: "Pending",
+},
+
+];
+
+for (const stage of timelineStages) {
+
+await addDoc(
+
+collection(
+db,
+"corporateTimeline"
+),
+
+{
+
+partnershipId,
+
+corporateId,
+
+partnershipType:
+"corporate",
+
+...stage,
+
+createdAt:
+serverTimestamp(),
+
+}
+
+);
+
+}
                 await addDoc(
-          collection(
-            db,
-            "corporateTimeline"
-          ),
-          {
-            partnershipId,
+  collection(
+    db,
+    "ifseSecurityEvents"
+  ),
+  {
+    eventType:
+      "corporate_partnership_created",
 
-            partnershipType:
-              "corporate",
+    partnershipId,
 
-            title:
-              "Corporate Partnership Submitted",
+    partnershipType:
+      "corporate",
 
-            status:
-              "submitted",
+    corporateId,
 
-            createdAt:
-              serverTimestamp(),
-          }
-        );
-                await addDoc(
-          collection(
-            db,
-            "ifseSecurityEvents"
-          ),
-          {
-            eventType:
-              "corporate_partnership_created",
+    userId:
+      currentUser.uid,
 
-            partnershipId,
+    companyName,
 
-            partnershipType:
-              "corporate",
+    severity:
+      "low",
 
-            corporateId:
-              docRef.id,
+    riskScore:
+      corporateRiskScore,
 
-            userId:
-              currentUser.uid,
+    ifseSecurityScore,
 
-            companyName,
+    trustScore,
 
-            severity:
-              "low",
+    threatLevel,
 
-            riskScore:
-              corporateRiskScore,
+    automaticAssessment:
+      true,
 
-            threatLevel,
+    requiresManualReview:
+      corporateRiskScore >= 50,
 
-            automaticAssessment:
-              true,
+    reviewed:
+      false,
 
-            requiresManualReview:
-              corporateRiskScore >= 50,
-
-            reviewed:
-              false,
-
-            createdAt:
-              serverTimestamp(),
-          }
-        );
+    createdAt:
+      serverTimestamp(),
+  }
+);
                 setSuccess(
           "Corporate partnership request submitted successfully."
         );
@@ -768,14 +858,14 @@ threatLevel,
 
   </label>
 
-  <select
-    value={contractType}
-    onChange={(e) =>
-      setContractType(
-        e.target.value
-      )
-    }
-  >
+<select
+  value={companyClassification}
+  onChange={(e) =>
+    setCompanyClassification(
+      e.target.value
+    )
+  }
+>
     <option value="Startup">
       Startup
     </option>
@@ -1106,19 +1196,19 @@ threatLevel,
 
             </p>
 
-            <p>
+<p>
 
-              <strong>
+  <strong>
 
-                Annual Fee:
+    Annual Fee:
 
-              </strong>{" "}
+  </strong>{" "}
 
-              {partnershipFee.yearlyUSD
-                ? `$${partnershipFee.yearlyUSD.toLocaleString()}`
-                : "Negotiation Based"}
+  {partnershipFee.yearlyUSD
+    ? `$${partnershipFee.yearlyUSD.toLocaleString()}`
+    : "Negotiation Based"}
 
-            </p>
+</p>
 
             <p>
 
