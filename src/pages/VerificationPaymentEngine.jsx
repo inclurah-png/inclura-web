@@ -123,63 +123,6 @@ return `IFSE-${Date.now()}`;
 
 }, []);
 
-const paymentAmount = useMemo(() => {
-
-  if (!selectedVerification) return 0;
-
-  return (
-    selectedVerification.monthlyUSD ??
-    selectedVerification.monthlyFee ??
-    0
-  );
-
-}, [selectedVerification]);
-
-const flutterwaveConfig = {
-
-  public_key:
-    import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
-
-  tx_ref: transactionId,
-
-  amount: paymentAmount,
-
-  currency: "USD",
-
-  payment_options:
-    "card,banktransfer,ussd",
-
-  customer: {
-
-    email:
-      currentUser?.email ||
-      "user@inclura.com",
-
-    phone_number:
-      currentUser?.phoneNumber || "",
-
-    name:
-      currentUser?.displayName ||
-      "Inclura User",
-
-  },
-
-  customizations: {
-
-    title:
-      "Inclura Verification Payment",
-
-    description:
-      `${verificationType} Verification`,
-
-    logo: "",
-
-  },
-
-};
-  const handleFlutterPayment =
-  useFlutterwave(flutterwaveConfig);
-  
 const calculatePaymentRisk = () => {
 
 let score = 0;
@@ -277,6 +220,64 @@ return null;
 
 }, [verificationType]);
 
+const paymentAmount = useMemo(() => {
+
+  if (!selectedVerification) return 0;
+
+  return (
+    selectedVerification.monthlyUSD ??
+    selectedVerification.monthlyFee ??
+    0
+  );
+
+}, [selectedVerification]);
+
+const flutterwaveConfig = {
+
+  public_key:
+    import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
+
+  tx_ref: transactionId,
+
+  amount: paymentAmount,
+
+  currency: "USD",
+
+  payment_options:
+    "card,banktransfer,ussd",
+
+  customer: {
+
+    email:
+      currentUser?.email ||
+      "user@inclura.com",
+
+    phone_number:
+      currentUser?.phoneNumber || "",
+
+    name:
+      currentUser?.displayName ||
+      "Inclura User",
+
+  },
+
+  customizations: {
+
+    title:
+      "Inclura Verification Payment",
+
+    description:
+      `${verificationType} Verification`,
+
+    logo: "",
+
+  },
+
+};
+
+const handleFlutterPayment =
+  useFlutterwave(flutterwaveConfig);
+
 const paymentSummary = useMemo(() => {
 
 return {
@@ -351,183 +352,209 @@ const SECURITY_COLLECTION =
 
 const handlePayment = async (e) => {
 
-e.preventDefault();
+  e.preventDefault();
 
-setError("");
+  setError("");
+  setSuccess("");
 
-setSuccess("");
+  if (!currentUser) {
+    setError("Please sign in before making a payment.");
+    return;
+  }
 
-if (!currentUser) {
+  if (!paymentMethod) {
+    setError("Please select a payment method.");
+    return;
+  }
 
-setError("Please sign in before making a payment.");
+  if (!acceptedTerms) {
+    setError("You must accept the payment terms.");
+    return;
+  }
 
-return;
+  if (!acceptedSecurity) {
+    setError("You must consent to IFSE payment verification.");
+    return;
+  }
 
-}
+  setLoading(true);
 
-if (!paymentMethod) {
+  handleFlutterPayment({
 
-setError("Please select a payment method.");
+    callback: async (response) => {
 
-return;
+      try {
 
-}
+        if (response.status !== "successful") {
 
-if (!acceptedTerms) {
+          setError("Payment was not successful.");
 
-setError("You must accept the payment terms.");
+          closePaymentModal();
 
-return;
+          setLoading(false);
 
-}
+          return;
 
-if (!acceptedSecurity) {
+        }
 
-setError("You must consent to IFSE payment verification.");
+        const paymentRef = await addDoc(
 
-return;
+          collection(db, PAYMENT_COLLECTION),
 
-}
+          {
 
-setLoading(true);
+            verificationId,
 
-try {
+            transactionId,
 
-const paymentRef = await addDoc(
+            flutterwaveTransactionId:
+              response.transaction_id,
 
-collection(db, PAYMENT_COLLECTION),
+            flutterwaveReference:
+              response.tx_ref,
 
-{
+            verificationType,
 
-verificationId,
+            selectedTier,
 
-transactionId,
-  
-verificationType,
+            paymentMethod,
 
-selectedTier,
+            couponCode,
 
-paymentMethod,
+            invoiceRequested,
 
-couponCode,
+            paymentRiskScore,
 
-invoiceRequested,
+            threatLevel,
 
-paymentRiskScore,
+            paymentSecurityStatus,
 
-threatLevel,
+            requiresExecutiveApproval,
 
-paymentSecurityStatus,
+            amount: paymentAmount,
 
-requiresExecutiveApproval,
+            currency: "USD",
 
-userId: currentUser.uid,
+            paymentStatus: "paid",
 
-status: "pending",
+            flutterwaveStatus: response.status,
+            
+flutterwaveCurrency: response.currency,
+            
+flutterwaveAmount: response.amount,
+            
+flutterwaveProcessorResponse: response.processor_response,
+            
+flutterwavePaymentType: response.payment_type,
+            
+            userId: currentUser.uid,
 
-createdAt: serverTimestamp(),
+            status: "completed",
 
-updatedAt: serverTimestamp(),
+            createdAt: serverTimestamp(),
 
-}
+            updatedAt: serverTimestamp(),
 
+          }
+
+        );
+
+        const paymentId = paymentRef.id;
+        await addDoc(
+  collection(db, SECURITY_COLLECTION),
+  {
+    paymentId,
+    transactionId,
+    eventType: "verification_payment_success",
+    riskScore: paymentRiskScore,
+    threatLevel,
+    requiresExecutiveApproval,
+    reviewed: false,
+    createdAt: serverTimestamp(),
+  }
 );
+        await addDoc(
 
-const paymentId = paymentRef.id;
+          collection(db, AUDIT_COLLECTION),
 
-await addDoc(
+          {
 
-collection(db, SECURITY_COLLECTION),
+            paymentId,
 
-{
+            transactionId,
 
-paymentId,
+            action:
+              "Verification Payment Completed",
 
-transactionId,
+            actor:
+              currentUser.uid,
 
-eventType: "verification_payment_created",
+            createdAt:
+              serverTimestamp(),
 
-riskScore: paymentRiskScore,
+          }
 
-threatLevel,
+        );
 
-requiresExecutiveApproval,
+        await addDoc(
 
-reviewed: false,
+          collection(db, "paymentTimeline"),
 
-createdAt: serverTimestamp(),
+          {
 
-}
+            paymentId,
 
-);
+            transactionId,
 
-  await addDoc(
+            title:
+              "Payment Completed",
 
-collection(db, AUDIT_COLLECTION),
+            status:
+              "Completed",
 
-{
+            createdAt:
+              serverTimestamp(),
 
-paymentId,
+          }
 
-transactionId,
+        );
 
-action: "Verification Payment Submitted",
+        setSuccess(
 
-actor: currentUser.uid,
+          "Verification payment completed successfully."
 
-createdAt: serverTimestamp(),
+        );
 
-}
+        closePaymentModal();
 
-);
-  await addDoc(
+        navigate("/verification-status");
 
-collection(db, "paymentTimeline"),
+      } catch (err) {
 
-{
+        console.error(err);
 
-paymentId,
+        setError(
 
-transactionId,
+          "Unable to finalize verification payment."
 
-title: "Payment Submitted",
+        );
 
-status: "Pending",
+      }
 
-createdAt: serverTimestamp(),
+      setLoading(false);
 
-}
+    },
 
-);
-  setSuccess(
+    onClose: () => {
 
-"Verification payment successfully submitted."
+      setLoading(false);
 
-);
+    },
 
-navigate("/verification-status");
-
-}
-
-catch (err) {
-
-console.error(err);
-
-setError(
-
-"Unable to process verification payment."
-
-);
-
-}
-
-finally {
-
-setLoading(false);
-
-}
+  });
 
 };
+
   return (
 
 <DashboardLayout>
