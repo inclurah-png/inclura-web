@@ -79,9 +79,16 @@ if (verificationTypes?.length > 0) {
     );
 
   const paymentAmount =
-    selectedVerification?.yearlyUSD ??
-    selectedVerification?.monthlyUSD ??
-    0;
+  selectedVerification?.monthlyUSD ??
+  selectedVerification?.yearlyUSD ??
+  0;
+
+const paymentFrequency =
+  selectedVerification?.monthlyUSD
+    ? "Monthly"
+    : selectedVerification?.yearlyUSD
+    ? "Yearly"
+    : "One Time";
 
   const isEnterprise =
   selectedVerification?.enterprise === true;
@@ -561,15 +568,30 @@ if (paymentAmount > 0) {
       Contact Inclura for a customized quotation.
     </p>
   ) : (
-    <p
-      style={{
-        fontSize: "22px",
-        fontWeight: "700",
-      }}
-    >${Number(paymentAmount || 0).toLocaleString()}
-    </p>
+    <>
+      <p
+        style={{
+          fontSize: "26px",
+          fontWeight: "700",
+          marginBottom: "6px",
+        }}
+      >
+        ${Number(paymentAmount || 0).toLocaleString()}
+      </p>
+
+      <p
+        style={{
+          color: "#94a3b8",
+          fontSize: "15px",
+          fontWeight: "600",
+        }}
+      >
+        {paymentFrequency} Subscription
+      </p>
+    </>
   )}
 </div>
+        
                 <button
           onClick={handleContinue}
           style={{
