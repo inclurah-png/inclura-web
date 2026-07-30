@@ -1,4 +1,9 @@
 import {
+  useFlutterwave,
+  closePaymentModal,
+} from "flutterwave-react-v3";
+
+import {
   IFSE_CONFIG,
   VERIFICATION_PLANS,
   partnerships,
@@ -118,6 +123,63 @@ return `IFSE-${Date.now()}`;
 
 }, []);
 
+const paymentAmount = useMemo(() => {
+
+  if (!selectedVerification) return 0;
+
+  return (
+    selectedVerification.monthlyUSD ??
+    selectedVerification.monthlyFee ??
+    0
+  );
+
+}, [selectedVerification]);
+
+const flutterwaveConfig = {
+
+  public_key:
+    import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
+
+  tx_ref: transactionId,
+
+  amount: paymentAmount,
+
+  currency: "USD",
+
+  payment_options:
+    "card,banktransfer,ussd",
+
+  customer: {
+
+    email:
+      currentUser?.email ||
+      "user@inclura.com",
+
+    phone_number:
+      currentUser?.phoneNumber || "",
+
+    name:
+      currentUser?.displayName ||
+      "Inclura User",
+
+  },
+
+  customizations: {
+
+    title:
+      "Inclura Verification Payment",
+
+    description:
+      `${verificationType} Verification`,
+
+    logo: "",
+
+  },
+
+};
+  const handleFlutterPayment =
+  useFlutterwave(flutterwaveConfig);
+  
 const calculatePaymentRisk = () => {
 
 let score = 0;
