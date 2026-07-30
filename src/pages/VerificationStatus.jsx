@@ -70,14 +70,14 @@ const progress = useMemo(() => {
 
 if (!timeline.length) return 0;
 
+const completedStages = timeline.filter(
+(item) =>
+item.status === "Completed" ||
+item.status === "Approved"
+).length;
+
 return Math.round(
-
-(timeline.length /
-
-IFSE_PROGRESS.length)
-
-* 100
-
+(completedStages / IFSE_PROGRESS.length) * 100
 );
 
 }, [timeline]);
@@ -109,7 +109,7 @@ useEffect(() => {
 
       const verificationQuery = query(
         collection(db, "verificationRequests"),
-        where("submittedBy", "==", currentUser.uid)
+        where("userId", "==", currentUser.uid)
       );
 
       const verificationSnapshot = await getDocs(
@@ -380,7 +380,13 @@ Track your verification progress through the
 
       <strong>Risk Score</strong>
 
-      <p>{verification.riskScore}%</p>
+      <p>
+  {Number(
+    verification.riskScore ??
+    verification.ifseScore ??
+    0
+  ).toFixed(0)}%
+</p>
 
     </div>
 
@@ -388,7 +394,11 @@ Track your verification progress through the
 
       <strong>Threat Level</strong>
 
-      <p>{verification.threatLevel}</p>
+<p>
+  {verification.threatLevel ??
+    verification.ifseStatus ??
+    "Pending Assessment"}
+</p>
 
     </div>
 
@@ -397,9 +407,9 @@ Track your verification progress through the
       <strong>Executive Review</strong>
 
       <p>
-        {verification.executiveReviewRequired
-          ? "Required"
-          : "Not Required"}
+        {verification.executiveReview
+  ? "Required"
+  : "Not Required"}
       </p>
 
     </div>
@@ -675,23 +685,23 @@ Track your verification progress through the
 
           <p>
 
-            <strong>Executive Review:</strong>{" "}
+<strong>Executive Review:</strong>{" "}
 
-            {event.executiveReviewRequired
-              ? "Required"
-              : "Not Required"}
+{event.executiveReview
+? "Required"
+: "Not Required"}
 
-          </p>
+</p>
 
-          <p>
+<p>
 
-            <strong>Reviewed:</strong>{" "}
+<strong>Resolved:</strong>{" "}
 
-            {event.reviewed
-              ? "Yes"
-              : "Pending"}
+{event.resolved
+? "Yes"
+: "Pending"}
 
-          </p>
+</p>
 
           <p>
 
@@ -774,9 +784,9 @@ Track your verification progress through the
 
           <p>
 
-            {log.actor || "System"}
+{log.performedBy || "System"}
 
-          </p>
+</p>
 
           <p
             style={{
