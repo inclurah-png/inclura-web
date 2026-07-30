@@ -324,16 +324,12 @@ setLoading(true);
   try {
 
     const existing = query(
-
-      collection(db, "governmentPartnerships"),
-
-      const existing = query(
   collection(db, "governmentPartnerships"),
   where("agencyName", "==", agencyName),
   where("country", "==", country)
 );
 
-    );
+const snapshot = await getDocs(existing);
 
     const snapshot =
       await getDocs(existing);
@@ -419,25 +415,27 @@ setLoading(true);
     );
 
     await addDoc(
-
-      collection(
-        db,
-        "ifseSecurityEvents"
-      ),
-
-      {
+  collection(db, "ifseSecurityEvents"),
+  {
+    eventType: "government_partnership_created",
+    partnershipId: docRef.id,
+    userId: currentUser.uid,
+    riskScore,
+    threatLevel,
+    reviewed: false,
+    resolved: false,
+    executiveReview: riskScore >= 70,
+    createdAt: serverTimestamp(),
+  }
+);
 
     await addDoc(
   collection(db, "verificationAuditLogs"),
   {
-    action:
-      "Government Partnership Submitted",
-    performedBy:
-      currentUser.uid,
-    verificationId:
-      docRef.id,
-    createdAt:
-      serverTimestamp(),
+    action: "Government Partnership Submitted",
+    performedBy: currentUser.uid,
+    verificationId: docRef.id,
+    createdAt: serverTimestamp(),
   }
 );
         eventType:
