@@ -48,7 +48,15 @@ function GovernmentPartnership() {
 
   const navigate = useNavigate();
 
-  const currentUser = auth.currentUser;
+  const [currentUser, setCurrentUser] = useState(null);
+
+useEffect(() => {
+  const unsubscribe = auth.onAuthStateChanged((user) => {
+    setCurrentUser(user);
+  });
+
+  return unsubscribe;
+}, []);
 
   const partnership =
     useMemo(() => {
@@ -111,33 +119,34 @@ const [reviewProgress, setReviewProgress] = useState({
   useEffect(() => {
 
   setTimeline([
-  {
-    title: "Application Started",
-    status: "Completed",
-  },
-  {
-    title: "Government Identity Review",
-    status: "Pending",
-  },
-  {
-    title: "IFSE Security Review",
-    status: "Pending",
-  },
-  {
-    title: "Accessibility Compliance",
-    status: "Pending",
-  },
-  {
-    title: "Compliance Review",
-    status: "Pending",
-  },
-  {
-    title: "Executive Approval",
-    status: "Pending",
-  },
-]);
+    {
+      title: "Application Started",
+      status: "Completed",
+    },
+    {
+      title: "Government Identity Review",
+      status: "Waiting",
+    },
+    {
+      title: "IFSE Security Review",
+      status: "Waiting",
+    },
+    {
+      title: "Accessibility Compliance",
+      status: "Waiting",
+    },
+    {
+      title: "Compliance Review",
+      status: "Waiting",
+    },
+    {
+      title: "Executive Approval",
+      status: "Waiting",
+    },
+  ]);
 
 }, []);
+
   const governmentBenefits = [
 
   "Government Partnership Badge",
@@ -189,7 +198,24 @@ const [reviewProgress, setReviewProgress] = useState({
 
   let score = 0;
 
-  if (!officialEmail.endsWith(".gov")) {
+  const approvedGovernmentDomains = [
+  ".gov",
+  ".gov.ng",
+  ".gov.uk",
+  ".gov.za",
+  ".gov.au",
+  ".gov.in",
+];
+
+const validGovernmentEmail =
+  approvedGovernmentDomains.some(domain =>
+    officialEmail.toLowerCase().endsWith(domain)
+  );
+
+if (!validGovernmentEmail) {
+  score += 25;
+}
+  {
     score += 25;
   }
 
@@ -247,15 +273,47 @@ const threatLevel =
 
   }
 
-  if (
-    !acceptedTerms ||
-    !acceptedPrivacy ||
-    !acceptedSecurity
-  ) {
+if (
+  !acceptedTerms ||
+  !acceptedPrivacy ||
+  !acceptedSecurity
+) {
 
-    setError(
-      "Accept all agreements before continuing."
-    );
+  setError(
+    "Accept all agreements before continuing."
+  );
+
+  return;
+
+}
+
+const approvedGovernmentDomains = [
+  ".gov",
+  ".gov.ng",
+  ".gov.uk",
+  ".gov.za",
+  ".gov.au",
+  ".gov.in",
+];
+
+const validGovernmentEmail =
+  approvedGovernmentDomains.some(domain =>
+    officialEmail
+      .toLowerCase()
+      .endsWith(domain)
+  );
+
+if (!validGovernmentEmail) {
+
+  setError(
+    "Please use an official government email address."
+  );
+
+  return;
+
+}
+
+setLoading(true);
 
     return;
 
@@ -269,11 +327,11 @@ const threatLevel =
 
       collection(db, "governmentPartnerships"),
 
-      where(
-        "agencyName",
-        "==",
-        agencyName
-      )
+      const existing = query(
+  collection(db, "governmentPartnerships"),
+  where("agencyName", "==", agencyName),
+  where("country", "==", country)
+);
 
     );
 
@@ -347,6 +405,9 @@ const threatLevel =
 
         threatLevel,
 
+        executiveReviewRequired:
+  riskScore >= 70,
+
         createdAt:
           serverTimestamp(),
 
@@ -366,6 +427,19 @@ const threatLevel =
 
       {
 
+    await addDoc(
+  collection(db, "verificationAuditLogs"),
+  {
+    action:
+      "Government Partnership Submitted",
+    performedBy:
+      currentUser.uid,
+    verificationId:
+      docRef.id,
+    createdAt:
+      serverTimestamp(),
+  }
+);
         eventType:
           "government_partnership_created",
 
@@ -380,6 +454,11 @@ const threatLevel =
         threatLevel,
 
         reviewed: false,
+        
+resolved: false,
+        
+executiveReview:
+    riskScore >= 70,
 
         createdAt:
           serverTimestamp(),
