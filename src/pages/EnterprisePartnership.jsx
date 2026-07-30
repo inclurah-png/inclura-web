@@ -17,6 +17,8 @@ import DashboardLayout from "../components/DashboardLayout";
 
 import { partnerships as PARTNERSHIP_PLANS } from "../config";
 
+import { onAuthStateChanged } from "firebase/auth";
+
 const REQUEST_STATUS = {
   DRAFT: "draft",
   SUBMITTED: "submitted",
@@ -47,8 +49,16 @@ function EnterprisePartnership() {
   const navigate =
     useNavigate();
 
-  const currentUser =
-    auth.currentUser;
+  const [currentUser, setCurrentUser] = useState(null);
+
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    setCurrentUser(user);
+  });
+
+  return unsubscribe;
+}, []);
+  
     const [loading,
     setLoading] =
     useState(false);
@@ -350,6 +360,23 @@ function EnterprisePartnership() {
       : enterpriseRiskScore >= 40
       ? "Medium"
       : "Low";
+
+  const ifseSecurityScore =
+100 - enterpriseRiskScore;
+
+const trustScore =
+enterpriseRiskScore >= 70
+?
+"Low"
+
+:
+enterpriseRiskScore >= 40
+?
+"Medium"
+
+:
+"High";
+  
     const handleSubmit =
     async (e) => {
 
@@ -520,8 +547,14 @@ function EnterprisePartnership() {
           return;
 
         }
-                const docRef =
-          await addDoc(
+                const enterpriseId =
+`ENT-${Date.now()}-${Math.random()
+  .toString(36)
+  .substring(2,8)
+  .toUpperCase()}`;
+
+const docRef =
+await addDoc(
             collection(
               db,
               "enterprisePartnerships"
@@ -563,15 +596,41 @@ function EnterprisePartnership() {
 
               customRequirements,
 
+              enterpriseModules,
+
+enterpriseBenefits,
+
+securityLayers,
+
               requestStatus:
                 REQUEST_STATUS.SUBMITTED,
 
               reviewProgress,
 
-              timeline,
-
               userId:
                 currentUser.uid,
+
+              enterpriseId,
+
+              enterpriseStatus: "Pending",
+
+verificationStatus:
+"Awaiting IFSE Review",
+
+approvalStatus:
+"Not Approved",
+
+contractStatus:
+"Inactive",
+
+              riskScore:
+enterpriseRiskScore,
+
+threatLevel,
+
+ifseSecurityScore,
+
+trustScore,
 
               createdAt:
                 serverTimestamp(),
@@ -581,71 +640,90 @@ function EnterprisePartnership() {
             }
           );
 
-        const partnershipId =
-          docRef.id;
-                await addDoc(
-          collection(
-            db,
-            "enterpriseTimeline"
-          ),
-          {
-            partnershipId,
+const partnershipId = docRef.id;
 
-            title:
-              "Enterprise Partnership Submitted",
+                const timelineStages = [
 
-            status:
-              "submitted",
+{
+title:
+"Application Submitted",
 
-            createdAt:
-              serverTimestamp(),
-          }
-        );
-                await addDoc(
-          collection(
-            db,
-            "ifseSecurityEvents"
-          ),
-          {
-            eventType:
-              "enterprise_partnership_created",
+status:
+"Completed"
+},
 
-            partnershipId,
+{
+title:
+"Security Review",
 
-            partnershipType:
-              "enterprise",
+status:
+"Pending"
+},
 
-            userId:
-              currentUser.uid,
+{
+title:
+"Accessibility Review",
 
-            severity:
-              "low",
+status:
+"Pending"
+},
 
-            riskScore:
-              enterpriseRiskScore,
+{
+title:
+"Compliance Review",
 
-            threatLevel,
+status:
+"Pending"
+},
 
-            automaticAssessment:
-              true,
+{
+title:
+"Executive Approval",
 
-            requiresManualReview:
-              enterpriseRiskScore >= 50,
+status:
+"Pending"
+},
 
-            reviewed:
-              false,
+{
+title:
+"Activation",
 
-            createdAt:
-              serverTimestamp(),
-          }
-        );
+status:
+"Pending"
+}
+
+];
+
+for(const stage of timelineStages){
+
+await addDoc(
+
+collection(
+db,
+"enterpriseTimeline"
+),
+
+{
+
+partnershipId,
+
+enterpriseId,
+
+...stage,
+
+createdAt:
+serverTimestamp(),
+
+}
+
+);
+
+}
                 setSuccess(
           "Enterprise partnership request submitted successfully."
         );
 
-        navigate(
-          "/verification-center"
-        );
+        navigate(`/enterprise-status/${partnershipId}`);
               }
 
       catch (err) {
