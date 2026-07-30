@@ -55,13 +55,12 @@ useEffect(() => {
     setCurrentUser(user);
   });
 
-  return unsubscribe;
+  return () => unsubscribe();
 }, []);
 
-  const partnership =
-    useMemo(() => {
-      return PARTNERSHIP_PLANS.government;
-    }, []);
+  const partnership = useMemo(() => {
+  return PARTNERSHIP_PLANS.government;
+}, []);
 
   const [loading, setLoading] = useState(false);
 
@@ -125,23 +124,23 @@ const [reviewProgress, setReviewProgress] = useState({
     },
     {
       title: "Government Identity Review",
-      status: "Waiting",
+      status: "Pending",
     },
     {
       title: "IFSE Security Review",
-      status: "Waiting",
+      status: "Pending",
     },
     {
       title: "Accessibility Compliance",
-      status: "Waiting",
+      status: "Pending",
     },
     {
       title: "Compliance Review",
-      status: "Waiting",
+      status: "Pending",
     },
     {
       title: "Executive Approval",
-      status: "Waiting",
+     status: "Pending",
     },
   ]);
 
@@ -215,9 +214,6 @@ const validGovernmentEmail =
 if (!validGovernmentEmail) {
   score += 25;
 }
-  {
-    score += 25;
-  }
 
   if (!ministry.trim()) {
     score += 10;
@@ -315,173 +311,161 @@ if (!validGovernmentEmail) {
 
 setLoading(true);
 
+try {
+
+  const existing = query(
+    collection(db, "governmentPartnerships"),
+    where("agencyName", "==", agencyName),
+    where("country", "==", country)
+  );
+
+  const snapshot = await getDocs(existing);
+
+  if (!snapshot.empty) {
+
+    setError(
+      "A government partnership request for this agency already exists."
+    );
+
+    setLoading(false);
+
     return;
 
   }
 
-  setLoading(true);
+  const docRef = await addDoc(
 
-  try {
+    collection(db, "governmentPartnerships"),
 
-    const existing = query(
-  collection(db, "governmentPartnerships"),
-  where("agencyName", "==", agencyName),
-  where("country", "==", country)
-);
+    {
 
-const snapshot = await getDocs(existing);
+      agencyName,
 
-    const snapshot =
-      await getDocs(existing);
+      governmentLevel,
 
-    if (!snapshot.empty) {
+      ministry,
 
-      setError(
-        "A partnership request already exists."
-      );
+      department,
 
-      setLoading(false);
+      contactName,
 
-      return;
+      position,
+
+      officialEmail,
+
+      officialPhone,
+
+      country,
+
+      state,
+
+      city,
+
+      address,
+
+      contractType,
+
+      estimatedCitizens,
+
+      projectDescription,
+
+      accessibilityGoals,
+
+      status: REQUEST_STATUS.SUBMITTED,
+
+      reviewProgress,
+
+      timeline,
+
+      userId: currentUser.uid,
+
+      riskScore,
+
+      threatLevel,
+
+      executiveReviewRequired:
+        riskScore >= 70,
+
+      createdAt: serverTimestamp(),
+
+      updatedAt: serverTimestamp(),
 
     }
 
-    const docRef = await addDoc(
+  );
 
-      collection(
-        db,
-        "governmentPartnerships"
-      ),
+  await addDoc(
 
-      {
+    collection(db, "ifseSecurityEvents"),
 
-        agencyName,
+    {
 
-        governmentLevel,
+      eventType:
+        "government_partnership_created",
 
-        ministry,
+      partnershipId:
+        docRef.id,
 
-        department,
+      userId:
+        currentUser.uid,
 
-        contactName,
+      riskScore,
 
-        position,
+      threatLevel,
 
-        officialEmail,
+      reviewed: false,
 
-        officialPhone,
+      resolved: false,
 
-        country,
+      executiveReview:
+        riskScore >= 70,
 
-        state,
+      createdAt:
+        serverTimestamp(),
 
-        city,
+    }
 
-        address,
+  );
 
-        contractType,
+  await addDoc(
 
-        estimatedCitizens,
+    collection(db, "verificationAuditLogs"),
 
-        projectDescription,
+    {
 
-        accessibilityGoals,
+      action:
+        "Government Partnership Submitted",
 
-        status:
-          REQUEST_STATUS.SUBMITTED,
+      performedBy:
+        currentUser.uid,
 
-        reviewProgress,
+      verificationId:
+        docRef.id,
 
-        timeline,
+      createdAt:
+        serverTimestamp(),
 
-        userId:
-          currentUser.uid,
+    }
 
-        riskScore,
+  );
 
-        threatLevel,
+  setSuccess(
+    "Government partnership request submitted successfully."
+  );
 
-        executiveReviewRequired:
-  riskScore >= 70,
+  navigate("/verification-center");
 
-        createdAt:
-          serverTimestamp(),
+} catch (err) {
 
-        updatedAt:
-          serverTimestamp(),
+  console.error(err);
 
-      }
+  setError(
+    "Unable to submit request."
+  );
 
-    );
+} finally {
 
-    await addDoc(
-  collection(db, "ifseSecurityEvents"),
-  {
-    eventType: "government_partnership_created",
-    partnershipId: docRef.id,
-    userId: currentUser.uid,
-    riskScore,
-    threatLevel,
-    reviewed: false,
-    resolved: false,
-    executiveReview: riskScore >= 70,
-    createdAt: serverTimestamp(),
-  }
-);
-
-    await addDoc(
-  collection(db, "verificationAuditLogs"),
-  {
-    action: "Government Partnership Submitted",
-    performedBy: currentUser.uid,
-    verificationId: docRef.id,
-    createdAt: serverTimestamp(),
-  }
-);
-        eventType:
-          "government_partnership_created",
-
-        partnershipId:
-          docRef.id,
-
-        userId:
-          currentUser.uid,
-
-        riskScore,
-
-        threatLevel,
-
-        reviewed: false,
-        
-resolved: false,
-        
-executiveReview:
-    riskScore >= 70,
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    setSuccess(
-      "Government partnership request submitted successfully."
-    );
-
-    navigate("/verification-center");
-
-  } catch (err) {
-
-    console.error(err);
-
-    setError(
-      "Unable to submit request."
-    );
-
-  } finally {
-
-    setLoading(false);
+  setLoading(false);
 
   }
 
