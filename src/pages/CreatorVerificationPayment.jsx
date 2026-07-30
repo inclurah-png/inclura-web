@@ -37,25 +37,24 @@ import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
     amount:
       VERIFICATION_FEE,
 
-    currency: "NGN",
+    currency: "USD",
 
     payment_options:
       "card,banktransfer,ussd",
 
     customer: {
-      email:
-        auth.currentUser?.email ||
-        "user@inclura.com",
+  email:
+    auth.currentUser?.email ||
+    "user@inclura.com",
 
-      phone_number:
-verification.phone ||
-auth.currentUser?.phoneNumber ||
-""
+  phone_number:
+    auth.currentUser?.phoneNumber ||
+    "",
 
-      name:
-        auth.currentUser?.displayName ||
-        "Inclura User",
-    },
+  name:
+    auth.currentUser?.displayName ||
+    "Inclura User",
+},
 
     customizations: {
       title:
