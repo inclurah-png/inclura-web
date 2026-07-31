@@ -807,31 +807,33 @@ const handleReject = async (requestId) => {
 
     if (
 
-      selectedRequest &&
+  selectedRequest &&
 
-      selectedRequest.id === requestId
+  selectedRequest.id === requestId
 
-    ) {
+) {
 
-          setSelectedRequest({
+    setSelectedRequest({
       ...selectedRequest,
       status: "rejected",
       rejectionReason: reason,
     });
 
-    alert(
-      "Verification rejected successfully."
-    );
+}   // <-- ADD THIS
 
-  } catch (err) {
+alert(
+  "Verification rejected successfully."
+);
 
-    console.error(err);
+} catch (err) {
 
-    alert(
-      "Unable to reject verification."
-    );
+  console.error(err);
 
-  }
+  alert(
+    "Unable to reject verification."
+  );
+
+}
 
 };
 
