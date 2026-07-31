@@ -1161,10 +1161,20 @@ marginBottom: "35px",
 
 </div>
 
+<div style={card}>
+
+  <h2
+    style={{
+      marginBottom: "20px",
+    }}
+  >
+    Verification Review Panel
+  </h2>
+
 {selectedRequest ? (
 
 <>
-
+  
 <p>
 
 <strong>Name:</strong>
@@ -1717,7 +1727,6 @@ Revenue By Verification Category
 
   }
 
-</div>
   </div>
 </DashboardLayout>
 
