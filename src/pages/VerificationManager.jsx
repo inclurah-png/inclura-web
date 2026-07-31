@@ -1727,7 +1727,10 @@ Revenue By Verification Category
 
   }
 
-  </div>
+  </div>   {/* closes Verified Users Directory */}
+
+  </div>   {/* closes the main white container */}
+
 </DashboardLayout>
 
 );
