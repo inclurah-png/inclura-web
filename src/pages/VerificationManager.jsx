@@ -813,25 +813,12 @@ const handleReject = async (requestId) => {
 
     ) {
 
-      setSelectedRequest({
+          setSelectedRequest({
+      ...selectedRequest,
+      status: "rejected",
+      rejectionReason: reason,
+    });
 
-        ...selectedRequest,
-
-        status: "rejected",
-
-        rejectionReason: reason,
-
-      });
-
-    }
-
-    alert(
-
-      "Verification rejected successfully."
-
-    );
-
-  };
     alert(
       "Verification rejected successfully."
     );
