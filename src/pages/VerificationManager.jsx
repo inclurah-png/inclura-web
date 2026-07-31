@@ -832,8 +832,24 @@ const handleReject = async (requestId) => {
     );
 
   };
+    alert(
+      "Verification rejected successfully."
+    );
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert(
+      "Unable to reject verification."
+    );
+
+  }
+
+};
 
 const calculateIFSERisk = (request) => {
+      
   let score = 100;
 
   if (!request.email && !request.officialEmail) score -= 10;
