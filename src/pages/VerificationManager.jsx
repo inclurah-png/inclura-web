@@ -831,22 +831,45 @@ const handleReject = async (requestId) => {
 
     );
 
-  } catch (err) {
+  };
 
-    console.error(err);
+const calculateIFSERisk = (request) => {
+  let score = 100;
 
-    alert(
+  if (!request.email && !request.officialEmail) score -= 10;
+  if (!request.country) score -= 5;
+  if (!request.documents || request.documents.length === 0) score -= 30;
+  if (request.duplicateIdentity) score -= 40;
+  if (request.blacklisted) score -= 60;
 
-      "Unable to reject verification."
+  if (score < 0) score = 0;
 
-    );
+  let threatLevel = "LOW";
 
-  }
+  if (score < 80) threatLevel = "MEDIUM";
+  if (score < 50) threatLevel = "HIGH";
+  if (score < 25) threatLevel = "CRITICAL";
 
+  let recommendation = "Approve";
+
+  if (score < 80) recommendation = "Manual Review";
+  if (score < 50) recommendation = "Reject";
+
+  return {
+    score,
+    threatLevel,
+    recommendation,
+  };
 };
-  
+
+const ifse =
+  selectedRequest
+    ? calculateIFSERisk(selectedRequest)
+    : null;
+
 return (
 <DashboardLayout>
+  
 <div
 style={{
 color: "white",
@@ -1170,10 +1193,105 @@ marginBottom: "35px",
   >
     Verification Review Panel
   </h2>
-
+const ifse =
+selectedRequest
+? calculateIFSERisk(selectedRequest)
+: null;
+  
 {selectedRequest ? (
 
 <>
+
+  <h3 style={{ marginBottom: "16px" }}>
+  Uploaded Verification Documents
+</h3>
+
+{selectedRequest.documents &&
+selectedRequest.documents.length > 0 ? (
+
+  <div
+    style={{
+      display: "grid",
+      gap: "16px",
+      marginBottom: "24px",
+    }}
+  >
+
+    {selectedRequest.documents.map((file, index) => (
+
+      <div
+        key={index}
+        style={{
+          background: "#111827",
+          padding: "14px",
+          borderRadius: "10px",
+          border: "1px solid #334155",
+        }}
+      >
+
+        <p>
+          <strong>{file.name || `Document ${index + 1}`}</strong>
+        </p>
+
+        {file.url &&
+(file.url.toLowerCase().includes(".pdf") ? (
+
+  <iframe
+    src={file.url}
+    title={file.name}
+    style={{
+      width: "100%",
+      height: "420px",
+      border: "none",
+      marginTop: "10px",
+      borderRadius: "8px",
+      background: "#fff",
+    }}
+  />
+
+) : (
+
+  <img
+    src={file.url}
+    alt={file.name}
+    style={{
+      width: "100%",
+      maxHeight: "300px",
+      objectFit: "contain",
+      marginTop: "10px",
+      borderRadius: "8px",
+    }}
+  />
+
+))}
+
+        {file.url && (
+          <div style={{ marginTop: "12px" }}>
+            <a
+              href={file.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: "#38bdf8",
+                textDecoration: "none",
+              }}
+            >
+              Open Full Document
+            </a>
+          </div>
+        )}
+
+      </div>
+
+    ))}
+
+  </div>
+
+) : (
+
+  <p>No uploaded documents found.</p>
+
+)}
   
 <p>
 
@@ -1263,6 +1381,73 @@ selectedRequest.officialEmail ||
 {selectedRequest.userId}
 
 </p>
+
+<hr
+  style={{
+    margin: "24px 0",
+    borderColor: "#334155",
+  }}
+/>
+
+<h3
+  style={{
+    marginBottom: "18px",
+    color: "#38bdf8",
+  }}
+>
+🛡 IFSE Security Summary
+</h3>
+
+<div
+  style={{
+    display: "grid",
+    gridTemplateColumns:
+      "repeat(auto-fit,minmax(220px,1fr))",
+    gap: "15px",
+  }}
+>
+
+  <div style={miniCard}>
+    <h4>Verification Score</h4>
+    <h2>{ifse?.score}</h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>Threat Level</h4>
+    <h2>{ifse?.threatLevel}</h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>AI Recommendation</h4>
+    <h2>{ifse?.recommendation}</h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>Duplicate Identity</h4>
+    <h2>
+      {selectedRequest?.duplicateIdentity
+        ? "⚠ Detected"
+        : "✅ Clear"}
+    </h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>Blacklist Status</h4>
+    <h2>
+      {selectedRequest?.blacklisted
+        ? "🚫 Blacklisted"
+        : "✅ Clean"}
+    </h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>Documents Uploaded</h4>
+    <h2>
+      {selectedRequest?.documents?.length || 0}
+    </h2>
+  </div>
+
+</div>
 
 </>
 
