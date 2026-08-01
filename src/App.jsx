@@ -74,6 +74,7 @@ import PlatformAnalytics from "./pages/PlatformAnalytics";
 
 import SOS from "./pages/SOS";
 import IdentityBiometricVerification from "./pages/IdentityBiometricVerification";
+import IFSERiskPanel from "./pages/IFSERiskPanel";
 
 function App() {
   return (
@@ -565,6 +566,15 @@ function App() {
           </AdminRoute>
         }
       />
+
+      <Route
+  path="/admin/ifse-risk"
+  element={
+    <AdminRoute>
+      <IFSERiskPanel />
+    </AdminRoute>
+  }
+/>
 
       {/* ========================= */}
       {/* SOS */}
