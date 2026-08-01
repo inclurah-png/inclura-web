@@ -78,13 +78,16 @@ export default function IFSERiskPanel() {
 
   async function markResolved(id) {
 
-    await updateDoc(
-      doc(db, "ifseSecurityEvents", id),
-      {
-        resolved: true,
-        resolvedAt: serverTimestamp(),
-      }
-    );
+  await updateDoc(
+    doc(db, "ifseSecurityEvents", id),
+    {
+      resolved: true,
+      resolvedAt: serverTimestamp(),
+    }
+  );
+
+}
+  
 return (
   <div
     style={{
