@@ -17,6 +17,10 @@ import {
   auth,
 } from "../firebase";
 
+import {
+  calculateIFSERisk
+} from "../services/ifseRiskAutomation";
+
 function VerificationManager() {
 const [statistics, setStatistics] = useState({
   total: 0,
@@ -263,7 +267,38 @@ setGovernmentPending(
         ...doc.data(),
       }));
 
-      setVerificationRequests(requests);
+      const requestsWithRisk = await Promise.all(
+
+  requests.map(async (request) => {
+
+    const riskResult =
+      await calculateIFSERisk(request);
+
+    return {
+
+      ...request,
+
+      riskScore:
+        riskResult.riskScore,
+
+      threatLevel:
+        riskResult.threatLevel,
+
+      executiveReview:
+        riskResult.executiveReview,
+
+      riskReasons:
+        riskResult.reasons,
+
+    };
+
+  })
+
+);
+
+setVerificationRequests(
+  requestsWithRisk
+);
 
     } catch (err) {
 
