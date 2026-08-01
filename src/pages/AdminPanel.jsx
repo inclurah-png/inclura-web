@@ -230,14 +230,13 @@ IFSE
         </Link>
 
         <Link
-          to="/wallet-monitoring"
-          style={link}
-        >
-          <div style={card}>
-            💰 Wallet Monitoring
-          </div>
-        </Link>
-
+  to="/wallet-monitoring"
+  style={link}
+>
+  <div style={card}>
+    💰 Wallet Monitoring
+  </div>
+</Link>
         <Link
           to="/sos"
           style={link}
@@ -248,23 +247,22 @@ IFSE
         </Link>
 
         <Link
-          to="<Link
-to="/creator-monetization""
-          style={link}
-        >
-          <div style={card}>
-            💵 Creator Economy & Revenue
-          </div>
-        </Link>
+  to="/creator-monetization"
+  style={link}
+>
+  <div style={card}>
+    💵 Creator Economy & Revenue
+  </div>
+</Link>
 
-        <Link
-          to="/platform-analytics"
-          style={link}
-        >
-          <div style={card}>
-            📊 Platform Analytics
-          </div>
-        </Link>
+<Link
+  to="/platform-analytics"
+  style={link}
+>
+  <div style={card}>
+    📊 Platform Analytics
+  </div>
+</Link>
 
         <Link
           to="/pricing-manager"
