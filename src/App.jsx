@@ -5,7 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorRoute from "./components/CreatorRoute";
 import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
-import AdminRoute from "./components/AdminRoute";
+import AdminRoute from "./components/AdminRoute"; 
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
