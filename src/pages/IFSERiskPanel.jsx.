@@ -1,0 +1,16 @@
+import DashboardLayout from "../components/DashboardLayout";
+import IFSERiskPanel from "../components/admin/IFSERiskPanel";
+
+export default function IFSERiskPage() {
+
+  return (
+
+    <DashboardLayout>
+
+      <IFSERiskPanel />
+
+    </DashboardLayout>
+
+  );
+
+}
