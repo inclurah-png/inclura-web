@@ -1,3 +1,4 @@
+import IFSERiskPanel from "./pages/IFSERiskPanel";
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -74,7 +75,6 @@ import PlatformAnalytics from "./pages/PlatformAnalytics";
 
 import SOS from "./pages/SOS";
 import IdentityBiometricVerification from "./pages/IdentityBiometricVerification";
-import IFSERiskPanel from "./pages/IFSERiskPanel";
 
 function App() {
   return (
