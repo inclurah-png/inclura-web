@@ -118,7 +118,7 @@ const [verificationRevenue, setVerificationRevenue] =
             "verificationRequests"
           )
         );
-
+      
       const requests =
         snapshot.docs.map(doc => ({
           id: doc.id,
