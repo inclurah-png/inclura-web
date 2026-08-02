@@ -201,10 +201,10 @@ console.log("Verification:", verificationSnap.data().count);
 console.log("Reports:", reportsSnap.data().count);
 console.log("Wallet:", walletSnap.data().count);
 console.log("Enterprise:", enterpriseSnap.data().count);
-console.log("Ads:", adsSnap.data().count);
+console.log("Ads:", adsPendingSnap.data().count);
 console.log("SOS:", sosSnap.data().count);
 console.log("Verified:", verifiedSnap.data().count);
-      
+
       setStats({
   // Placeholder collections
   users: usersSnap.data().count,
@@ -213,7 +213,7 @@ console.log("Verified:", verifiedSnap.data().count);
   wallet: Math.max(0, walletSnap.data().count - 1),
   enterprise: Math.max(0, enterpriseSnap.data().count - 1),
 
-  adsPending: Math.max(0, adsSnap.data().count - 1),
+  adsPending: Math.max(0, adsPendingSnap.data().count - 1),
   emergencySOS: Math.max(0, sosSnap.data().count - 1),
 
   // User-based queries (NO placeholder subtraction)
