@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 import {
   collection,
+  addDoc,
+  doc,
+  getDoc,
+  serverTimestamp,
   getCountFromServer,
   query,
   where,
@@ -89,6 +93,50 @@ const [sosStats, setSosStats] = useState({
 
   loadSOSStats();
 }, []);
+
+  async function submitEmergencySOS() {
+
+  try {
+
+    await addDoc(collection(db, "emergencySOS"), {
+
+      systemPlaceholder: false,
+
+      userId: "SYSTEM",
+
+      emergencyType: "Medical",
+
+      priority: "low",
+
+      description: "Manual SOS test from Admin Panel",
+
+      location: "Unknown",
+
+      status: "open",
+
+      handledBy: "",
+
+      resolved: false,
+
+      createdAt: serverTimestamp(),
+
+      updatedAt: serverTimestamp(),
+
+    });
+
+    alert("Emergency SOS submitted successfully.");
+
+    window.location.reload();
+
+  } catch (err) {
+
+    console.error(err);
+
+    alert("Unable to submit SOS.");
+
+  }
+
+  }
   
   return (
     <DashboardLayout>
@@ -144,7 +192,27 @@ const [sosStats, setSosStats] = useState({
 <h2 style={sectionTitle}>Emergency Actions</h2>
 
 <div style={card}>
-  🚨 Send Emergency Alert
+
+  <h3>🚨 Send Emergency Alert</h3>
+
+  <p>Create a new emergency incident.</p>
+
+  <button
+    onClick={submitEmergencySOS}
+    style={{
+      marginTop: "15px",
+      padding: "12px 18px",
+      background: "#dc2626",
+      color: "#fff",
+      border: "none",
+      borderRadius: "10px",
+      cursor: "pointer",
+      fontWeight: "600",
+    }}
+  >
+    Send SOS Alert
+  </button>
+
 </div>
 
 <div style={card}>
