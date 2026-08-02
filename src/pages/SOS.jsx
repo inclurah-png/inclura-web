@@ -14,7 +14,25 @@ import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 function SOS() {
-const [sosStats, setSosStats] = useState({
+  
+const [sosForm, setSosForm] = useState({
+
+  emergencyType: "Medical",
+
+  priority: "Low",
+
+  description: "",
+
+  location: "",
+
+  trustedContact: "",
+
+  responderNotes: "",
+
+});
+  
+  const [sosStats, setSosStats] = useState({
+
   open: 0,
   resolved: 0,
   highPriority: 0,
@@ -22,6 +40,7 @@ const [sosStats, setSosStats] = useState({
   fire: 0,
   police: 0,
   responders: 0,
+
 });
 
   useEffect(() => {
@@ -94,7 +113,7 @@ const [sosStats, setSosStats] = useState({
   loadSOSStats();
 }, []);
 
-  async function submitEmergencySOS() {
+async function submitEmergencySOS() {
 
   try {
 
@@ -104,13 +123,17 @@ const [sosStats, setSosStats] = useState({
 
       userId: "SYSTEM",
 
-      emergencyType: "Medical",
+      emergencyType: sosForm.emergencyType,
 
-      priority: "low",
+      priority: sosForm.priority,
 
-      description: "Manual SOS test from Admin Panel",
+      description: sosForm.description,
 
-      location: "Unknown",
+      location: sosForm.location,
+
+      trustedContact: sosForm.trustedContact,
+
+      responderNotes: sosForm.responderNotes,
 
       status: "open",
 
@@ -126,6 +149,22 @@ const [sosStats, setSosStats] = useState({
 
     alert("Emergency SOS submitted successfully.");
 
+    setSosForm({
+
+      emergencyType: "Medical",
+
+      priority: "Low",
+
+      description: "",
+
+      location: "",
+
+      trustedContact: "",
+
+      responderNotes: "",
+
+    });
+
     window.location.reload();
 
   } catch (err) {
@@ -136,7 +175,7 @@ const [sosStats, setSosStats] = useState({
 
   }
 
-  }
+}
   
   return (
     <DashboardLayout>
@@ -193,25 +232,115 @@ const [sosStats, setSosStats] = useState({
 
 <div style={card}>
 
-  <h3>🚨 Send Emergency Alert</h3>
+<h3>🚨 Emergency SOS Form</h3>
 
-  <p>Create a new emergency incident.</p>
+<label>Emergency Type</label>
 
-  <button
-    onClick={submitEmergencySOS}
-    style={{
-      marginTop: "15px",
-      padding: "12px 18px",
-      background: "#dc2626",
-      color: "#fff",
-      border: "none",
-      borderRadius: "10px",
-      cursor: "pointer",
-      fontWeight: "600",
-    }}
-  >
-    Send SOS Alert
-  </button>
+<select
+value={sosForm.emergencyType}
+onChange={(e)=>
+setSosForm({
+...sosForm,
+emergencyType:e.target.value,
+})
+}
+style={input}
+>
+
+<option>Medical</option>
+
+<option>Fire</option>
+
+<option>Police</option>
+
+<option>Kidnapping</option>
+
+<option>Accident</option>
+
+<option>Disaster</option>
+
+<option>Security Threat</option>
+
+<option>Missing Person</option>
+
+</select>
+
+<label>Priority</label>
+
+<select
+value={sosForm.priority}
+onChange={(e)=>
+setSosForm({
+...sosForm,
+priority:e.target.value,
+})
+}
+style={input}
+>
+
+<option>Low</option>
+
+<option>Medium</option>
+
+<option>High</option>
+
+<option>Critical</option>
+
+</select>
+
+<label>Description</label>
+
+<textarea
+rows={4}
+placeholder="Describe the emergency..."
+value={sosForm.description}
+onChange={(e)=>
+setSosForm({
+...sosForm,
+description:e.target.value,
+})
+}
+style={input}
+/>
+
+<label>Location</label>
+
+<input
+type="text"
+placeholder="Current location"
+value={sosForm.location}
+onChange={(e)=>
+setSosForm({
+...sosForm,
+location:e.target.value,
+})
+}
+style={input}
+/>
+
+<label>Trusted Contact</label>
+
+<input
+type="text"
+placeholder="Phone or email"
+value={sosForm.trustedContact}
+onChange={(e)=>
+setSosForm({
+...sosForm,
+trustedContact:e.target.value,
+})
+}
+style={input}
+/>
+
+<button
+onClick={submitEmergencySOS}
+style={dangerButton}
+>
+
+🚨 Send SOS Alert
+
+</button>
 
 </div>
 
@@ -276,6 +405,33 @@ const card = {
   padding: "24px",
   borderRadius: "20px",
   marginBottom: "20px",
+};
+
+const input = {
+
+  width: "100%",
+  marginTop: "8px",
+  marginBottom: "15px",
+  padding: "12px",
+  borderRadius: "10px",
+  border: "1px solid #374151",
+  background: "#111827",
+  color: "#fff",
+
+};
+
+const dangerButton = {
+
+  background: "#dc2626",
+  color: "#fff",
+  border: "none",
+  padding: "14px",
+  borderRadius: "12px",
+  cursor: "pointer",
+  width: "100%",
+  fontWeight: "700",
+  fontSize: "16px",
+
 };
 
 export default SOS;
