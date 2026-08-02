@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 import {
   collection,
   addDoc,
@@ -11,6 +9,22 @@ import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 function ReportsAndViolations() {
+async function createTestReport() {
+  try {
+    await addDoc(collection(db, "reports"), {
+      type: "System Test",
+      status: "open",
+      createdAt: serverTimestamp(),
+      message: "Initial report collection created."
+    });
+
+    alert("Reports collection initialized successfully.");
+
+  } catch (error) {
+    console.error(error);
+    alert("Error creating reports collection.");
+  }
+}
 return (
 <DashboardLayout>
 <div
