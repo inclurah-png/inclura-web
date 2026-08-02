@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
   collection,
   getCountFromServer,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -25,19 +27,51 @@ const [stats, setStats] = useState({
 
     try {
 
-      const usersSnap =
-        await getCountFromServer(
-          collection(db, "users")
-        );
+      // USERS
+      const usersSnap = await getCountFromServer(
+        collection(db, "users")
+      );
 
-      setStats((prev) => ({
-        ...prev,
+      // VERIFICATION REQUESTS
+      const verificationSnap = await getCountFromServer(
+        query(
+          collection(db, "verificationRequests"),
+          where("status", "==", "pending")
+        )
+      );
+
+      // REPORTS
+      const reportsSnap = await getCountFromServer(
+        query(
+          collection(db, "reports"),
+          where("status", "==", "open")
+        )
+      );
+
+      // WALLET ALERTS
+      const walletSnap = await getCountFromServer(
+        query(
+          collection(db, "walletAlerts"),
+          where("status", "==", "open")
+        )
+      );
+
+      // ENTERPRISE PARTNERS
+      const enterpriseSnap = await getCountFromServer(
+        collection(db, "enterprisePartners")
+      );
+
+      setStats({
         users: usersSnap.data().count,
-      }));
+        verification: verificationSnap.data().count,
+        reports: reportsSnap.data().count,
+        wallet: walletSnap.data().count,
+        enterprise: enterpriseSnap.data().count,
+      });
 
     } catch (err) {
 
-      console.error(err);
+      console.error("Dashboard Error:", err);
 
     }
 
@@ -56,36 +90,71 @@ const [stats, setStats] = useState({
           color: "white",
         }}
       >
+<h1>👨‍💼 Inclura Admin Control Center</h1>
 
-        <h1>
-          👨‍💼 Inclura Admin Control Center
-        </h1>
-        <div style={dashboardGrid}>
+<div style={dashboardGrid}>
 
+  {/* Users */}
   <div style={summaryCard}>
     <h3>Users</h3>
     <h2>{stats.users}</h2>
     <p>Total Registered</p>
   </div>
 
+  {/* Verification */}
   <div style={summaryCard}>
     <h3>Verification</h3>
-    <h2>--</h2>
+    <h2>{stats.verification}</h2>
     <p>Pending Requests</p>
   </div>
 
+  {/* Reports */}
   <div style={summaryCard}>
     <h3>Reports</h3>
-    <h2>--</h2>
+    <h2>{stats.reports}</h2>
     <p>Open Cases</p>
   </div>
 
+  {/* Wallet */}
   <div style={summaryCard}>
     <h3>Wallet</h3>
-    <h2>--</h2>
+    <h2>{stats.wallet}</h2>
     <p>Alerts</p>
   </div>
-          
+
+  {/* Enterprise */}
+  <div style={summaryCard}>
+    <h3>Enterprise</h3>
+    <h2>{stats.enterprise}</h2>
+    <p>Partners</p>
+  </div>
+
+  {/* IFSE */}
+  <div style={summaryCard}>
+    <h3>IFSE</h3>
+
+    <h2
+      style={{
+        color: "#22c55e",
+      }}
+    >
+      ONLINE
+    </h2>
+
+    <p>Fortress Security Engine</p>
+
+    <small
+      style={{
+        color: "#22c55e",
+        fontWeight: "600",
+      }}
+    >
+      No Critical Threats
+    </small>
+  </div>
+
+</div>
+        
 <h2 style={sectionTitle}>Platform Administration</h2>
 
 <Link to="/users-management" style={link}>
@@ -113,11 +182,6 @@ const [stats, setStats] = useState({
 <Link to="/sos" style={link}>
   <div style={card}>🚨 SOS Monitoring</div>
 </Link>
-  <div style={summaryCard}>
-    <h3>Enterprise</h3>
-    <h2>--</h2>
-    <p>Partners</p>
-  </div>
 
 <h2 style={sectionTitle}>Finance & Revenue</h2>
 
@@ -132,7 +196,7 @@ const [stats, setStats] = useState({
 <Link to="/pricing-manager" style={link}>
   <div style={card}>⚙️ Creator Revenue Policy</div>
 </Link>
-          
+
 <h2 style={sectionTitle}>Enterprise</h2>
 
 <Link to="/enterprise-campaigns" style={link}>
@@ -152,145 +216,7 @@ const [stats, setStats] = useState({
 <Link to="/ad-approval" style={link}>
   <div style={card}>📢 Advertisement Approval</div>
 </Link>
-
-  <div style={summaryCard}>
-    <h3>IFSE</h3>
-    Users
-
-<h2>0</h2>
-
-Verification
-
-<h2>0</h2>
-
-Reports
-
-<h2>0</h2>
-
-Wallet
-
-<h2>0</h2>
-
-Enterprise
-
-<h2>0</h2>
-
-IFSE
-
-<h2>ONLINE</h2>
-    
-    <p>System Status</p>
-  </div>
-
-</div>
-
-        <Link
-          to="/users-management"
-          style={link}
-        >
-          <div style={card}>
-            👥 Users Management
-          </div>
-        </Link>
-
-        <Link
-          to="/verification-manager"
-          style={link}
-        >
-          <div style={card}>
-            ✅ Verification Requests
-          </div>
-        </Link>
-
-        <Link
-          to="/admin/ifse-risk"
-          style={link}
-        >
-          <div style={card}>
-            🛡️ IFSE Risk Monitoring
-          </div>
-        </Link>
-
-        <Link
-          to="/reports-violations"
-          style={link}
-        >
-          <div style={card}>
-            🚨 Reports & Violations
-          </div>
-        </Link>
-
-        <Link
-          to="/ad-approval"
-          style={link}
-        >
-          <div style={card}>
-            📢 Advertisement Approval
-          </div>
-        </Link>
-
-        <Link
-  to="/wallet-monitoring"
-  style={link}
->
-  <div style={card}>
-    💰 Wallet Monitoring
-  </div>
-</Link>
-        <Link
-          to="/sos"
-          style={link}
-        >
-          <div style={card}>
-            🚨 SOS Monitoring
-          </div>
-        </Link>
-
-        <Link
-  to="/creator-monetization"
-  style={link}
->
-  <div style={card}>
-    💵 Creator Economy & Revenue
-  </div>
-</Link>
-
-<Link
-  to="/platform-analytics"
-  style={link}
->
-  <div style={card}>
-    📊 Platform Analytics
-  </div>
-</Link>
-
-        <Link
-          to="/pricing-manager"
-          style={link}
-        >
-          <div style={card}>
-            ⚙️ Creator Revenue Policy
-          </div>
-        </Link>
-
-        <Link
-          to="/enterprise-campaigns"
-          style={link}
-        >
-          <div style={card}>
-            🏢 Enterprise Marketplace
-          </div>
-        </Link>
-
-        <Link
-          to="/enterprise-analytics"
-          style={link}
-        >
-          <div style={card}>
-            📈 Enterprise Analytics
-          </div>
-        </Link>
-
+          
       </div>
 
     </DashboardLayout>
