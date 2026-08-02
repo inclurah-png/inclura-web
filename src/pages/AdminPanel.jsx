@@ -195,6 +195,16 @@ const employerSnap = await getCountFromServer(
   )
 
 );
+
+      console.log("Users:", usersSnap.data().count);
+console.log("Verification:", verificationSnap.data().count);
+console.log("Reports:", reportsSnap.data().count);
+console.log("Wallet:", walletSnap.data().count);
+console.log("Enterprise:", enterpriseSnap.data().count);
+console.log("Ads:", adsSnap.data().count);
+console.log("SOS:", sosSnap.data().count);
+console.log("Verified:", verifiedSnap.data().count);
+      
       setStats({
   // Placeholder collections
   users: usersSnap.data().count,
@@ -216,12 +226,13 @@ const employerSnap = await getCountFromServer(
   caregivers: caregiverSnap.data().count,
   employers: employerSnap.data().count,
 });
+
+      console.log("Dashboard statistics updated successfully.");
       
     } catch (err) {
-
-      console.error("Dashboard Error:", err);
-
-    }
+  console.error("Dashboard Error:", err);
+  alert(err.message);
+}
 
   }
 
