@@ -1,14 +1,15 @@
+import { useEffect, useState } from "react";
+
 import {
   collection,
-  query,
-  where,
-  getCountFromServer,
   addDoc,
   serverTimestamp,
+  getCountFromServer,
+  query,
+  where,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
-
 import DashboardLayout from "../components/DashboardLayout";
 
 function ReportsAndViolations() {
