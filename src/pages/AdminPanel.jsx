@@ -19,6 +19,16 @@ const [stats, setStats] = useState({
   reports: 0,
   wallet: 0,
   enterprise: 0,
+
+  adsPending: 0,
+  emergencySOS: 0,
+  verifiedUsers: 0,
+  creators: 0,
+  organizations: 0,
+  governments: 0,
+  mentors: 0,
+  caregivers: 0,
+  employers: 0,
 });
 
   useEffect(() => {
@@ -61,14 +71,149 @@ const [stats, setStats] = useState({
         collection(db, "enterprisePartners")
       );
 
-      setStats({
-        users: usersSnap.data().count,
-        verification: verificationSnap.data().count,
-        reports: reportsSnap.data().count,
-        wallet: walletSnap.data().count,
-        enterprise: enterpriseSnap.data().count,
-      });
+      // Pending Advertisement Approval
 
+const adsPendingSnap = await getCountFromServer(
+  query(
+
+    collection(db, "advertisements"),
+
+    where("status", "==", "pending")
+
+  )
+
+);
+
+// Emergency SOS
+
+const sosSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "emergencySOS"),
+
+    where("status", "==", "open")
+
+  )
+
+);
+
+// Verified Users
+
+const verifiedSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("verified", "==", true)
+
+  )
+
+);
+
+// Creator Accounts
+
+const creatorSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Creator")
+
+  )
+
+);
+
+// Organization Accounts
+
+const organizationSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Organization")
+
+  )
+
+);
+
+// Government Accounts
+
+const governmentSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Government")
+
+  )
+
+);
+
+// Caregiver Accounts
+
+const caregiverSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Caregiver")
+
+  )
+
+);
+
+// Mentor Accounts
+
+const mentorSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Mentor")
+
+  )
+
+);
+
+// Employer Accounts
+
+const employerSnap = await getCountFromServer(
+
+  query(
+
+    collection(db, "users"),
+
+    where("accountType", "==", "Employer")
+
+  )
+
+);
+      setStats({
+  users: Math.max(0, usersSnap.data().count - 1),
+  verification: Math.max(0, verificationSnap.data().count - 1),
+  reports: Math.max(0, reportsSnap.data().count - 1),
+  wallet: Math.max(0, walletSnap.data().count - 1),
+  enterprise: Math.max(0, enterpriseSnap.data().count - 1),
+
+  adsPending: Math.max(0, adsSnap.data().count - 1),
+  emergencySOS: Math.max(0, sosSnap.data().count - 1),
+  verifiedUsers: Math.max(0, verifiedSnap.data().count),
+
+  creators: Math.max(0, creatorSnap.data().count),
+  organizations: Math.max(0, organizationSnap.data().count),
+  governments: Math.max(0, governmentSnap.data().count),
+  mentors: Math.max(0, mentorSnap.data().count),
+  caregivers: Math.max(0, caregiverSnap.data().count),
+  employers: Math.max(0, employerSnap.data().count),
+});
+      
     } catch (err) {
 
       console.error("Dashboard Error:", err);
@@ -152,6 +297,78 @@ const [stats, setStats] = useState({
       No Critical Threats
     </small>
   </div>
+
+  <div style={summaryCard}>
+  <h3>📢 Pending Ads</h3>
+
+  <h2>{stats.adsPending}</h2>
+
+  <p>Waiting Approval</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🚨 Emergency SOS</h3>
+
+  <h2>{stats.emergencySOS}</h2>
+
+  <p>Open SOS Cases</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>✅ Verified Users</h3>
+
+  <h2>{stats.verifiedUsers}</h2>
+
+  <p>Trusted Members</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🎨 Creators</h3>
+
+  <h2>{stats.creators}</h2>
+
+  <p>Creator Accounts</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🏢 Organizations</h3>
+
+  <h2>{stats.organizations}</h2>
+
+  <p>Organization Accounts</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🏛 Governments</h3>
+
+  <h2>{stats.governments}</h2>
+
+  <p>Government Accounts</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🎓 Mentors</h3>
+
+  <h2>{stats.mentors}</h2>
+
+  <p>Mentor Accounts</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>🤝 Caregivers</h3>
+
+  <h2>{stats.caregivers}</h2>
+
+  <p>Caregiver Accounts</p>
+</div>
+
+<div style={summaryCard}>
+  <h3>💼 Employers</h3>
+
+  <h2>{stats.employers}</h2>
+
+  <p>Employer Accounts</p>
+</div>
 
 </div>
         
