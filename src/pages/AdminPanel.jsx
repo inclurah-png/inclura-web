@@ -196,7 +196,8 @@ const employerSnap = await getCountFromServer(
 
 );
       setStats({
-  users: Math.max(0, usersSnap.data().count - 1),
+  // Placeholder collections
+  users: usersSnap.data().count,
   verification: Math.max(0, verificationSnap.data().count - 1),
   reports: Math.max(0, reportsSnap.data().count - 1),
   wallet: Math.max(0, walletSnap.data().count - 1),
@@ -204,14 +205,16 @@ const employerSnap = await getCountFromServer(
 
   adsPending: Math.max(0, adsSnap.data().count - 1),
   emergencySOS: Math.max(0, sosSnap.data().count - 1),
-  verifiedUsers: Math.max(0, verifiedSnap.data().count),
 
-  creators: Math.max(0, creatorSnap.data().count),
-  organizations: Math.max(0, organizationSnap.data().count),
-  governments: Math.max(0, governmentSnap.data().count),
-  mentors: Math.max(0, mentorSnap.data().count),
-  caregivers: Math.max(0, caregiverSnap.data().count),
-  employers: Math.max(0, employerSnap.data().count),
+  // User-based queries (NO placeholder subtraction)
+  verifiedUsers: verifiedSnap.data().count,
+
+  creators: creatorSnap.data().count,
+  organizations: organizationSnap.data().count,
+  governments: governmentSnap.data().count,
+  mentors: mentorSnap.data().count,
+  caregivers: caregiverSnap.data().count,
+  employers: employerSnap.data().count,
 });
       
     } catch (err) {
