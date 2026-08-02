@@ -1,3 +1,13 @@
+import { useState } from "react";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+
+import { db } from "../firebase";
+
 import DashboardLayout from "../components/DashboardLayout";
 
 function ReportsAndViolations() {
@@ -15,6 +25,21 @@ marginBottom: "24px",
 >
 🚨 Reports & Violations
 </h1>
+
+<button
+  onClick={createTestReport}
+  style={{
+    padding: "12px 20px",
+    borderRadius: "10px",
+    background: "#2563eb",
+    color: "white",
+    border: "none",
+    cursor: "pointer",
+    marginBottom: "20px",
+  }}
+>
+  Initialize Reports Collection
+</button>
 
     <div style={card}>
       🚨 Reported Users
