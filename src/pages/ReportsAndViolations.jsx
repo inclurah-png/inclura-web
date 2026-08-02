@@ -12,10 +12,11 @@ function ReportsAndViolations() {
 async function createTestReport() {
   try {
     await addDoc(collection(db, "reports"), {
-      type: "System Test",
-      status: "open",
-      createdAt: serverTimestamp(),
-      message: "Initial report collection created."
+      type: "SYSTEM_PLACEHOLDER",
+status: "placeholder",
+createdAt: serverTimestamp(),
+message: "Initial Reports collection",
+systemPlaceholder: true,
     });
 
     alert("Reports collection initialized successfully.");
