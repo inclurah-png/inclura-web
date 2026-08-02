@@ -3,8 +3,6 @@ import { useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-  query,
-  orderBy,
   doc,
   updateDoc,
   serverTimestamp,
@@ -26,6 +24,8 @@ const [searchTerm, setSearchTerm] = useState("");
 
 const [selectedFilter, setSelectedFilter] =
   useState("all");
+const [selectedUser, setSelectedUser] =
+  useState(null);
 
 const [statistics, setStatistics] = useState({
   totalUsers: 0,
@@ -125,15 +125,26 @@ const verifyUser = async (userId) => {
   try {
 
     await updateDoc(
+
       doc(db, "users", userId),
+
       {
+
         verified: true,
+
         verificationStatus: "approved",
+
+        status: "active",
+
         verifiedAt: serverTimestamp(),
+
       }
+
     );
 
     loadUsers();
+
+    alert("User verified successfully.");
 
   } catch (error) {
 
@@ -162,7 +173,15 @@ const loadUsers = async () => {
 
     setUsers(data);
 
-setFilteredUsers(data);
+const filtered =
+  selectedFilter === "all"
+    ? data
+    : data.filter(
+        (user) =>
+          user.accountType === selectedFilter
+      );
+
+setFilteredUsers(filtered);
 
     setStatistics({
       totalUsers: data.length,
@@ -395,51 +414,174 @@ marginBottom: "24px",
   </h2>
 
   <input
-    type="text"
-    placeholder="Search users..."
-    value={searchTerm}
-    onChange={(e) => {
+  type="text"
+  placeholder="Search users..."
+  value={searchTerm}
+  onChange={(e) => {
 
-      const value =
-        e.target.value;
+    const value = e.target.value;
 
-      setSearchTerm(value);
+    setSearchTerm(value);
 
-      const keyword =
-        value.toLowerCase();
+    const keyword = value.toLowerCase();
 
-      setFilteredUsers(
+    const filtered = users.filter((user) => {
 
-        users.filter((user) =>
+      const matchesSearch =
 
-          (user.fullName || "")
-            .toLowerCase()
-            .includes(keyword) ||
+        (user.fullName || "")
+          .toLowerCase()
+          .includes(keyword) ||
 
-          (user.email || "")
-            .toLowerCase()
-            .includes(keyword) ||
+        (user.email || "")
+          .toLowerCase()
+          .includes(keyword) ||
 
-          (user.username || "")
-            .toLowerCase()
-            .includes(keyword)
+        (user.username || "")
+          .toLowerCase()
+          .includes(keyword);
 
-        )
+      const matchesFilter =
 
-      );
+        selectedFilter === "all" ||
 
-    }}
-    style={{
-      width: "100%",
-      padding: "14px",
-      borderRadius: "10px",
-      marginBottom: "20px",
-      border: "none",
-      background: "#1e293b",
-      color: "#fff",
-    }}
-  />
+        user.accountType === selectedFilter;
 
+      return matchesSearch && matchesFilter;
+
+    });
+
+    setFilteredUsers(filtered);
+
+  }}
+  style={{
+    width: "100%",
+    padding: "14px",
+    borderRadius: "10px",
+    marginBottom: "20px",
+    border: "none",
+    background: "#1e293b",
+    color: "#fff",
+  }}
+/>
+
+  <select
+  value={selectedFilter}
+  onChange={(e) => {
+
+    const filter = e.target.value;
+
+    setSelectedFilter(filter);
+
+    const keyword =
+      searchTerm.toLowerCase();
+
+    const filtered = users.filter((user) => {
+
+      const matchesSearch =
+
+        (user.fullName || "")
+          .toLowerCase()
+          .includes(keyword) ||
+
+        (user.email || "")
+          .toLowerCase()
+          .includes(keyword) ||
+
+        (user.username || "")
+          .toLowerCase()
+          .includes(keyword);
+
+      const matchesFilter =
+
+        filter === "all" ||
+
+        user.accountType === filter;
+
+      return matchesSearch && matchesFilter;
+
+    });
+
+    setFilteredUsers(filtered);
+
+  }}
+  style={{
+    width: "100%",
+    padding: "14px",
+    borderRadius: "10px",
+    marginBottom: "20px",
+    border: "none",
+    background: "#1e293b",
+    color: "#fff",
+    fontSize: "16px",
+  }}
+>
+
+  <option value="all">
+    All Accounts
+  </option>
+
+  <option value="Creator">
+    Creator
+  </option>
+
+  <option value="Employer">
+    Employer
+  </option>
+
+  <option value="Caregiver">
+    Caregiver
+  </option>
+
+  <option value="Mentor">
+    Mentor
+  </option>
+
+  <option value="Enterprise">
+    Enterprise
+  </option>
+
+  <option value="Government">
+    Government
+  </option>
+
+  <option value="NGO">
+    NGO
+  </option>
+
+  <option value="Institution">
+    Institution
+  </option>
+
+  <option value="Healthcare">
+    Healthcare
+  </option>
+
+  <option value="Religious">
+    Religious
+  </option>
+
+  <option value="Museum">
+    Museum
+  </option>
+
+  <option value="Tourism">
+    Tourism
+  </option>
+
+  <option value="Entertainment">
+    Entertainment
+  </option>
+
+  <option value="Media">
+    Media
+  </option>
+
+  <option value="Accessibility">
+    Accessibility
+  </option>
+
+</select>
   <table
     style={{
       width: "100%",
@@ -476,150 +618,108 @@ marginBottom: "24px",
 
     <tr key={user.id}>
 
-      <td>{user.fullName}</td>
+  <td>{user.fullName || "Unknown User"}</td>
 
-      <td>{user.email}</td>
+  <td>{user.email || "No Email"}</td>
 
-      <td>{user.accountType}</td>
+  <td>{user.accountType || "User"}</td>
 
-      <td>{user.status}</td>
+  <td>{user.status || "active"}</td>
 
-      <td>
+  <td>
 
-        {user.verified ? "✅" : "❌"}
+    {user.verified ? "✅" : "❌"}
 
-      </td>
+  </td>
 
-      <td>
+  <td>
 
-        <button
-          onClick={() => {
+    <button
+      onClick={() => {
 
-            alert(
-
-`Full Name: ${user.fullName || "N/A"}
-
-Username: ${user.username || "N/A"}
-
-Email: ${user.email || "N/A"}
-
-Phone: ${user.phone || "N/A"}
-
-Account Type: ${user.accountType || "N/A"}
-
-Verification Status: ${user.verificationStatus || "N/A"}
-
-Verified: ${user.verified ? "Yes" : "No"}
-
-Country: ${user.country || "N/A"}
-
-State: ${user.state || "N/A"}
-
-City: ${user.city || "N/A"}
-
-Joined:
-
-${user.createdAt?.toDate?.().toLocaleString?.() || "Unknown"}
-
-User ID:
-
-${user.id}`
-
-            );
-
-          }}
-
-          style={{
-
-            padding: "8px 14px",
-
-            borderRadius: "8px",
-
-            border: "none",
-
-            background: "#2563eb",
-
-            color: "#fff",
-
-            cursor: "pointer",
-
-            fontWeight: "bold",
-
-          }}
-
-        >
-
-          View
-
-        </button>
+  setSelectedUser(user);
         
-      <button
-  onClick={() => suspendUser(user.id)}
-  style={{
-    marginLeft: "6px",
-    padding: "8px 14px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#f59e0b",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold",
-  }}
->
-  Suspend
-</button>
+      }}
+      style={{
+        padding: "8px 14px",
+        borderRadius: "8px",
+        border: "none",
+        background: "#2563eb",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      View
+    </button>
 
-<button
-  onClick={() => banUser(user.id)}
-  style={{
-    marginLeft: "6px",
-    padding: "8px 14px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#dc2626",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold",
-  }}
->
-  Ban
-</button>
+    <button
+      onClick={() => suspendUser(user.id)}
+      style={{
+        marginLeft: "6px",
+        padding: "8px 14px",
+        border: "none",
+        borderRadius: "8px",
+        background: "#f59e0b",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      Suspend
+    </button>
 
-<button
-  onClick={() => restoreUser(user.id)}
-  style={{
-    marginLeft: "6px",
-    padding: "8px 14px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#16a34a",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold",
-  }}
->
-  Restore
-</button>
+    <button
+      onClick={() => banUser(user.id)}
+      style={{
+        marginLeft: "6px",
+        padding: "8px 14px",
+        border: "none",
+        borderRadius: "8px",
+        background: "#dc2626",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      Ban
+    </button>
 
-<button
-  onClick={() => verifyUser(user.id)}
-  style={{
-    marginLeft: "6px",
-    padding: "8px 14px",
-    border: "none",
-    borderRadius: "8px",
-    background: "#2563eb",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "bold",
-  }}
->
-  Verify
-</button>
-      </td>
+    <button
+      onClick={() => restoreUser(user.id)}
+      style={{
+        marginLeft: "6px",
+        padding: "8px 14px",
+        border: "none",
+        borderRadius: "8px",
+        background: "#16a34a",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      Restore
+    </button>
 
-    </tr>
+    <button
+      onClick={() => verifyUser(user.id)}
+      style={{
+        marginLeft: "6px",
+        padding: "8px 14px",
+        border: "none",
+        borderRadius: "8px",
+        background: "#2563eb",
+        color: "#fff",
+        cursor: "pointer",
+        fontWeight: "bold",
+      }}
+    >
+      Verify
+    </button>
 
+  </td>
+
+</tr>
   ))}
 
 </tbody>
@@ -628,6 +728,106 @@ ${user.id}`
 
 </div>
 
+  <div
+  style={{
+    marginTop: "35px",
+    background: "#0f172a",
+    borderRadius: "20px",
+    padding: "24px",
+  }}
+>
+
+  <h2
+    style={{
+      marginBottom: "20px",
+    }}
+  >
+    👤 User Details Panel
+  </h2>
+
+  {selectedUser ? (
+
+    <>
+
+      <p>
+        <strong>Full Name:</strong>{" "}
+        {selectedUser.fullName || "N/A"}
+      </p>
+
+      <p>
+        <strong>Username:</strong>{" "}
+        {selectedUser.username || "N/A"}
+      </p>
+
+      <p>
+        <strong>Email:</strong>{" "}
+        {selectedUser.email || "N/A"}
+      </p>
+
+      <p>
+        <strong>Phone:</strong>{" "}
+        {selectedUser.phone || "N/A"}
+      </p>
+
+      <p>
+        <strong>Account Type:</strong>{" "}
+        {selectedUser.accountType || "User"}
+      </p>
+
+      <p>
+        <strong>Status:</strong>{" "}
+        {selectedUser.status || "Active"}
+      </p>
+
+      <p>
+        <strong>Verified:</strong>{" "}
+        {selectedUser.verified ? "✅ Yes" : "❌ No"}
+      </p>
+
+      <p>
+        <strong>Verification Status:</strong>{" "}
+        {selectedUser.verificationStatus || "Pending"}
+      </p>
+
+      <p>
+        <strong>Country:</strong>{" "}
+        {selectedUser.country || "N/A"}
+      </p>
+
+      <p>
+        <strong>State:</strong>{" "}
+        {selectedUser.state || "N/A"}
+      </p>
+
+      <p>
+        <strong>City:</strong>{" "}
+        {selectedUser.city || "N/A"}
+      </p>
+
+      <p>
+        <strong>User ID:</strong>{" "}
+        {selectedUser.id}
+      </p>
+
+      <p>
+        <strong>Joined:</strong>{" "}
+        {selectedUser.createdAt?.toDate?.().toLocaleString?.() || "Unknown"}
+      </p>
+
+    </>
+
+  ) : (
+
+    <p>
+      Select a user by clicking the
+      <strong> View </strong>
+      button.
+    </p>
+
+  )}
+
+</div>
+  
 </div>
 
 </DashboardLayout>
