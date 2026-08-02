@@ -783,7 +783,6 @@ const handleReject = async (requestId) => {
       ),
 
       {
-
         eventType:
           "verification_rejected",
 
