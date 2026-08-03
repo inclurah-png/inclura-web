@@ -414,6 +414,12 @@ console.log("Verified:", verifiedSnap.data().count);
   <div style={card}>🚨 SOS Monitoring</div>
 </Link>
 
+<Link to="/sos-responder" style={link}>
+  <div style={card}>
+    🚑 SOS Responder Dashboard
+  </div>
+</Link>
+
 <h2 style={sectionTitle}>Finance & Revenue</h2>
 
 <Link to="/wallet-monitoring" style={link}>
