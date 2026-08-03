@@ -37,18 +37,7 @@ const [assignedEmergencies, setAssignedEmergencies] = useState([]);
       }));
 
       setActiveEmergencies(emergencies);
-
-    } catch (err) {
-
-      console.error("SOS Dashboard:", err);
-
-    }
-
-  }
-
-  loadEmergencies();
-
-}, []);
+      
   const assignedQuery = query(
   collection(db, "emergencySOS"),
   where("status", "==", "assigned")
@@ -62,6 +51,18 @@ const assigned = assignedSnapshot.docs.map((doc) => ({
 }));
 
 setAssignedEmergencies(assigned);
+  
+    } catch (err) {
+
+      console.error("SOS Dashboard:", err);
+
+    }
+
+  }
+
+  loadEmergencies();
+
+}, []);
   
   return (
 
