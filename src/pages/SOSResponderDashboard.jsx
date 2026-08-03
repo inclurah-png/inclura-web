@@ -12,9 +12,12 @@ import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 function SOSResponderDashboard() {
+  
 const [activeEmergencies, setActiveEmergencies] = useState([]);
-useEffect(() => {
+
 const [assignedEmergencies, setAssignedEmergencies] = useState([]);
+
+  useEffect(() => {
   
   async function loadEmergencies() {
 
