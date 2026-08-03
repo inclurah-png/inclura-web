@@ -577,9 +577,13 @@ function App() {
   }
 />
 
-      <Route
+ <Route
   path="/sos-responder"
-  element={<SOSResponderDashboard />}
+  element={
+    <AdminRoute>
+      <SOSResponderDashboard />
+    </AdminRoute>
+  }
 />
       
       {/* ========================= */}
