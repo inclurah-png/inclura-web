@@ -5,6 +5,9 @@ import {
   query,
   where,
   getDocs,
+  updateDoc,
+  doc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -66,6 +69,25 @@ setAssignedEmergencies(assigned);
   loadEmergencies();
 
 }, []);
+
+  async function assignResponder(emergencyId) {
+  try {
+    await updateDoc(doc(db, "emergencySOS", emergencyId), {
+      status: "assigned",
+      assignedResponder: "Emergency Response Team",
+      assignedResponderId: "SYSTEM_RESPONDER",
+      responseStatus: "Awaiting Response",
+      assignedAt: serverTimestamp(),
+    });
+
+    alert("Responder assigned successfully.");
+
+    window.location.reload();
+  } catch (err) {
+    console.error(err);
+    alert("Unable to assign responder.");
+  }
+  }
   
   return (
 
@@ -112,6 +134,22 @@ setAssignedEmergencies(assigned);
         <br />
 
         Status: {item.status}
+
+        <button
+  onClick={() => assignResponder(item.id)}
+  style={{
+    marginTop: "15px",
+    padding: "10px 16px",
+    border: "none",
+    borderRadius: "10px",
+    background: "#2563eb",
+    color: "#fff",
+    cursor: "pointer",
+    fontWeight: "600",
+  }}
+>
+  🚑 Assign Responder
+</button>
 
       </div>
 
