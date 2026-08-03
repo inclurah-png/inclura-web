@@ -20,12 +20,10 @@ useEffect(() => {
     try {
 
       const q = query(
-
-        collection(db, "emergencySOS"),
-
-        where("status", "==", "open")
-
-      );
+  collection(db, "emergencySOS"),
+  where("status", "==", "open"),
+  where("systemPlaceholder", "==", false)
+);
 
       const snapshot = await getDocs(q);
 
