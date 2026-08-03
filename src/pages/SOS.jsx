@@ -209,11 +209,11 @@ async function submitEmergencySOS() {
 
   } catch (err) {
 
-    console.error(err);
+  console.error("SOS Error:", err);
 
-    alert("Unable to submit SOS.");
+  alert(err.message);
 
-  }
+}
 
 }
   
