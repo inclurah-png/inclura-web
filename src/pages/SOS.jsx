@@ -10,7 +10,7 @@ import {
   where,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 function SOS() {
