@@ -1,4 +1,5 @@
 import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
+import SOSResponderDashboard from "./pages/SOSResponderDashboard";
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -576,6 +577,11 @@ function App() {
   }
 />
 
+      <Route
+  path="/sos-responder"
+  element={<SOSResponderDashboard />}
+/>
+      
       {/* ========================= */}
       {/* SOS */}
       {/* ========================= */}
