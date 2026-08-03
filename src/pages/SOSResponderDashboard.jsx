@@ -14,7 +14,8 @@ import DashboardLayout from "../components/DashboardLayout";
 function SOSResponderDashboard() {
 const [activeEmergencies, setActiveEmergencies] = useState([]);
 useEffect(() => {
-
+const [assignedEmergencies, setAssignedEmergencies] = useState([]);
+  
   async function loadEmergencies() {
 
     try {
@@ -48,6 +49,19 @@ useEffect(() => {
   loadEmergencies();
 
 }, []);
+  const assignedQuery = query(
+  collection(db, "emergencySOS"),
+  where("status", "==", "assigned")
+);
+
+const assignedSnapshot = await getDocs(assignedQuery);
+
+const assigned = assignedSnapshot.docs.map((doc) => ({
+  id: doc.id,
+  ...doc.data(),
+}));
+
+setAssignedEmergencies(assigned);
   
   return (
 
@@ -104,8 +118,54 @@ useEffect(() => {
 </div>
 
         <div style={card}>
-          🚑 Assigned Emergencies
-        </div>
+
+  <h2>🚑 Assigned Emergencies</h2>
+
+  <p>Total: {assignedEmergencies.length}</p>
+
+  {assignedEmergencies.length === 0 ? (
+
+    <p>No assigned emergencies.</p>
+
+  ) : (
+
+    assignedEmergencies.map((item) => (
+
+      <div
+        key={item.id}
+        style={{
+          marginTop: "15px",
+          padding: "15px",
+          background: "#111827",
+          borderRadius: "10px",
+        }}
+      >
+
+        <strong>{item.emergencyType}</strong>
+
+        <br />
+
+        Priority: {item.priority}
+
+        <br />
+
+        Assigned To: {item.assignedResponder || "Unassigned"}
+
+        <br />
+
+        Location: {item.location || "Unknown"}
+
+        <br />
+
+        Status: {item.status}
+
+      </div>
+
+    ))
+
+  )}
+
+</div>
 
         <div style={card}>
           ✅ Resolved Emergencies
