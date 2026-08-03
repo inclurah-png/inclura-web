@@ -119,33 +119,73 @@ async function submitEmergencySOS() {
 
     await addDoc(collection(db, "emergencySOS"), {
 
-      systemPlaceholder: false,
+  systemPlaceholder: false,
 
-      userId: "SYSTEM",
+  userId: auth.currentUser?.uid || "",
 
-      emergencyType: sosForm.emergencyType,
+  userName: auth.currentUser?.displayName || "",
 
-      priority: sosForm.priority,
+  userEmail: auth.currentUser?.email || "",
 
-      description: sosForm.description,
+  userPhoto: auth.currentUser?.photoURL || "",
 
-      location: sosForm.location,
+  emergencyType: sosForm.emergencyType,
 
-      trustedContact: sosForm.trustedContact,
+  priority: sosForm.priority,
 
-      responderNotes: sosForm.responderNotes,
+  description: sosForm.description,
 
-      status: "open",
+  location: sosForm.location,
 
-      handledBy: "",
+  latitude: sosForm.latitude || "",
 
-      resolved: false,
+  longitude: sosForm.longitude || "",
 
-      createdAt: serverTimestamp(),
+  accuracy: sosForm.accuracy || "",
 
-      updatedAt: serverTimestamp(),
+  trustedContact: sosForm.trustedContact,
 
-    });
+  responderNotes: sosForm.responderNotes,
+
+  status: "open",
+
+  handledBy: "",
+
+  resolved: false,
+
+  assignedResponder: "",
+
+  assignedResponderId: "",
+
+  incidentStatus: "Active",
+
+  incidentNumber: Date.now().toString(),
+
+  assignedStation: "",
+
+  assignedVehicle: "",
+
+  estimatedArrival: "",
+
+  responseStatus: "Awaiting Response",
+
+  ifseThreatScore: 0,
+
+  ifseClassification: "Pending",
+
+  resolvedBy: "",
+
+  resolutionNotes: "",
+
+  closedAt: null,
+
+  createdAt: serverTimestamp(),
+
+  updatedAt: serverTimestamp(),
+
+  lastUpdated: serverTimestamp(),
+
+});
 
     alert("Emergency SOS submitted successfully.");
 
