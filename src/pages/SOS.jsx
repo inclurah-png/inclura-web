@@ -191,9 +191,23 @@ async function submitEmergencySOS() {
 
   id: emergencyRef.id,
 
+  userId: auth.currentUser?.uid || "",
+
+  userName: auth.currentUser?.displayName || "",
+
+  userEmail: auth.currentUser?.email || "",
+
   emergencyType: sosForm.emergencyType,
 
   priority: sosForm.priority,
+
+  description: sosForm.description,
+
+  location: sosForm.location,
+
+  gpsLatitude: sosForm.latitude || 0,
+
+  gpsLongitude: sosForm.longitude || 0,
 
 });
 
