@@ -186,6 +186,15 @@ async function submitEmergencySOS() {
   lastUpdated: serverTimestamp(),
 
 });
+    await dispatchEmergency({
+
+  id: emergencyRef.id,
+
+  emergencyType: sosForm.emergencyType,
+
+  priority: sosForm.priority,
+
+});
 
     alert("Emergency SOS submitted successfully.");
 
