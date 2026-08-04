@@ -23,6 +23,11 @@ export async function dispatchEmergency(emergencyData) {
 
     const emergencyId = emergencyData.id;
 
+    console.log("========== IFSE DISPATCH ==========");
+console.log("Emergency Data Received:", emergencyData);
+console.log("Emergency ID:", emergencyId);
+console.log("==================================");
+
     // Read IFSE response rule
 
     const ruleQuery = query(
@@ -126,6 +131,8 @@ console.log("Responder Selected:", responderData);
 // Create assignment
 
 await addDoc(collection(db, "emergencyAssignments"), {
+console.log("Writing Assignment...");
+console.log("Emergency ID being written:", emergencyId);
 
   assignmentId: emergencyId + "_" + responder.id,
 
