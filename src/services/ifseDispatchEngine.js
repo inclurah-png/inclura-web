@@ -133,10 +133,17 @@ await addDoc(collection(db, "emergencyAssignments"), {
 
   responderId: responder.id,
 
-  responderAgency: rule.primaryAgency,
+responderName:
+  responderData.fullName ||
+  responderData.displayName ||
+  responderData.name ||
+  responderData.username ||
+  "Emergency Response Team",
 
-  responderType: responderData.responderType || "Government",
+responderAgency: rule.primaryAgency,
 
+responderType: responderData.responderType || "Government",
+  
   assignedBy: "IFSE Auto Dispatch",
 
   assignmentStatus: "Pending",
@@ -182,12 +189,16 @@ console.log("Emergency Assignment Created");
 // Update original SOS record
 
 await updateDoc(
-
   doc(db, "emergencySOS", emergencyId),
-
   {
+    status: "assigned",
 
-    assignedResponder: responderData.name || "",
+    assignedResponder:
+  responderData.fullName ||
+  responderData.displayName ||
+  responderData.name ||
+  responderData.username ||
+  "Emergency Response Team",
 
     assignedResponderId: responder.id,
 
@@ -197,11 +208,12 @@ await updateDoc(
 
     assignmentStatus: "Pending",
 
+    incidentStatus: "Responder Assigned",
+
     updatedAt: serverTimestamp(),
-
   }
-
 );
+console.log("SOS document updated successfully.");
 
 console.log("Emergency SOS Updated");
 
@@ -226,6 +238,12 @@ await addDoc(collection(db, "emergencyTimeline"), {
   responderId: responder.id,
 
   responderAgency: rule.primaryAgency,
+  responderName:
+  responderData.fullName ||
+  responderData.displayName ||
+  responderData.name ||
+  responderData.username ||
+  "",
 
   eventStatus: "Completed",
 
