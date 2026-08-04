@@ -1,3 +1,6 @@
+import { useEffect } from "react";
+import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
+
 import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
 import SOSResponderDashboard from "./pages/SOSResponderDashboard";
 import { Routes, Route } from "react-router-dom";
@@ -78,6 +81,28 @@ import SOS from "./pages/SOS";
 import IdentityBiometricVerification from "./pages/IdentityBiometricVerification";
 
 function App() {
+  useEffect(() => {
+
+  window.addEventListener(
+
+    "online",
+
+    synchronizeSatelliteQueue
+
+  );
+
+  return () =>
+
+    window.removeEventListener(
+
+      "online",
+
+      synchronizeSatelliteQueue
+
+    );
+
+}, []);
+  
   return (
     <Routes>
 
