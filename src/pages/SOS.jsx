@@ -118,7 +118,7 @@ async function submitEmergencySOS() {
 
   try {
 
-    await addDoc(collection(db, "emergencySOS"), {
+    const emergencyRef = await addDoc(collection(db, "emergencySOS"), {
 
   systemPlaceholder: false,
 
