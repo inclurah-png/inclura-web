@@ -27,6 +27,11 @@ function ResponderAssignments() {
 );
 
       const snapshot = await getDocs(q);
+    console.log("Documents found:", snapshot.size);
+
+snapshot.forEach(doc => {
+  console.log(doc.id, doc.data());
+});
 
       const data = snapshot.docs.map((doc) => ({
         id: doc.id,
