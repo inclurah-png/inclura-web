@@ -420,6 +420,12 @@ console.log("Verified:", verifiedSnap.data().count);
   </div>
 </Link>
 
+<Link to="/responder-assignments" style={link}>
+  <div style={card}>
+    📋 Responder Assignments
+  </div>
+</Link>
+
 <h2 style={sectionTitle}>Finance & Revenue</h2>
 
 <Link to="/wallet-monitoring" style={link}>
