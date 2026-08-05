@@ -13,6 +13,7 @@ import {
 import { db } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
+import { dispatchEmergency } from "../services/ifseDispatchEngine";
 
 function SOSResponderDashboard() {
   
@@ -70,24 +71,45 @@ setAssignedEmergencies(assigned);
 
 }, []);
 
-  async function assignResponder(emergencyId) {
+  async function assignResponder(emergency) {
   try {
-    await updateDoc(doc(db, "emergencySOS", emergencyId), {
-      status: "assigned",
-      assignedResponder: "Emergency Response Team",
-      assignedResponderId: "SYSTEM_RESPONDER",
-      responseStatus: "Awaiting Response",
-      assignedAt: serverTimestamp(),
+
+    await dispatchEmergency({
+
+      id: emergency.id,
+
+      userId: emergency.userId,
+
+      userName: emergency.userName,
+
+      userEmail: emergency.userEmail,
+
+      emergencyType: emergency.emergencyType,
+
+      priority: emergency.priority,
+
+      description: emergency.description,
+
+      location: emergency.location,
+
+      gpsLatitude: emergency.latitude || 0,
+
+      gpsLongitude: emergency.longitude || 0,
+
     });
 
-    alert("Responder assigned successfully.");
+    alert("IFSE responder dispatched successfully.");
 
     window.location.reload();
+
   } catch (err) {
+
     console.error(err);
-    alert("Unable to assign responder.");
+
+    alert("Unable to dispatch responder.");
+
   }
-  }
+}
   
   return (
 
@@ -135,8 +157,11 @@ setAssignedEmergencies(assigned);
 
         Status: {item.status}
 
+  <p>Emergency ID: {item.id}</p>
+<p>User ID: {item.userId}</p>
+<p>Type: {item.emergencyType}</p>
         <button
-  onClick={() => assignResponder(item.id)}
+  onClick={() => assignResponder(item)}
   style={{
     marginTop: "15px",
     padding: "10px 16px",
