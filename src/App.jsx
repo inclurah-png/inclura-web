@@ -79,6 +79,7 @@ import PlatformAnalytics from "./pages/PlatformAnalytics";
 
 import SOS from "./pages/SOS";
 import IdentityBiometricVerification from "./pages/IdentityBiometricVerification";
+import ResponderAssignments from "./pages/ResponderAssignments";
 
 function App() {
   useEffect(() => {
@@ -611,6 +612,15 @@ function App() {
   }
 />
 
+ <Route
+  path="/responder-assignments"
+  element={
+    <AdminRoute>
+      <ResponderAssignments />
+    </AdminRoute>
+  }
+/>
+      
       {/* ========================= */}
       {/* SOS */}
       {/* ========================= */}
