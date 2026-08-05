@@ -131,13 +131,6 @@ if (responderSnapshot.empty) {
     console.log("No responder available.");
     return;
 }
-if (responderSnapshot.empty) {
-
-  console.log("No responder available.");
-
-  return;
-
-}
 
 const responder = responderSnapshot.docs[0];
 
@@ -592,5 +585,7 @@ console.log("Satellite Queue Created");
   });
 
   console.error("IFSE Dispatch Engine Error:", err);
+
+}
 
 }
