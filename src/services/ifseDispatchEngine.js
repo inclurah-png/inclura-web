@@ -22,7 +22,10 @@ export async function dispatchEmergency(emergencyData) {
     const priority = emergencyData.priority;
 
     const emergencyId = emergencyData.id;
-
+console.log("===== STEP 1 =====");
+console.log("Emergency Data:", emergencyData);
+console.log("Emergency ID:", emergencyId);
+    
     console.log("========== IFSE DISPATCH ==========");
 console.log("Emergency Data Received:", emergencyData);
 console.log("Emergency ID:", emergencyId);
@@ -114,6 +117,14 @@ const responderQuery = query(
 
 const responderSnapshot = await getDocs(responderQuery);
 
+console.log("===== STEP 2 =====");
+console.log("Responder collection:", responderCollection);
+console.log("Responders found:", responderSnapshot.size);
+
+if (responderSnapshot.empty) {
+    console.log("No responder available.");
+    return;
+}
 if (responderSnapshot.empty) {
 
   console.log("No responder available.");
@@ -565,10 +576,11 @@ await addDoc(collection(db, "satelliteEmergencyQueue"), {
 
 console.log("Satellite Queue Created");
 
-  } catch (err) {
-
-    console.error("IFSE Dispatch Engine Error:", err);
-
-  }
+} catch (err) {
+    console.log("===== DISPATCH FAILED =====");
+    console.error(err);
+    console.error(err.message);
+    console.error(err.stack);
+}
 
 }
