@@ -4,7 +4,10 @@ import {
   query,
   where,
   getDocs,
-  orderBy,
+  doc,
+  updateDoc,
+  serverTimestamp,
+  addDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
@@ -46,6 +49,104 @@ snapshot.forEach(doc => {
     }
   }
 
+  // =========================
+// START RESPONSE
+// =========================
+async function startResponse(assignment) {
+  try {
+    await updateDoc(
+      doc(db, "emergencyAssignments", assignment.id),
+      {
+        assignmentStatus: "Responding",
+        responderStatus: "En Route",
+        startedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+    );
+
+    await loadAssignments();
+
+    alert("Response started successfully.");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+// =========================
+// ARRIVED
+// =========================
+async function markArrived(assignment) {
+  try {
+    await updateDoc(
+      doc(db, "emergencyAssignments", assignment.id),
+      {
+        assignmentStatus: "On Scene",
+        arrived: true,
+        arrivedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+    );
+
+    await loadAssignments();
+
+    alert("Arrival recorded.");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+// =========================
+// REQUEST BACKUP
+// =========================
+async function requestBackup(assignment) {
+  try {
+
+    await addDoc(
+      collection(db, "backupRequests"),
+      {
+        emergencyId: assignment.emergencyId,
+        assignmentId: assignment.id,
+        responderAgency: assignment.responderAgency,
+        responderId: assignment.responderId,
+        priority: assignment.dispatchPriority,
+        requestedAt: serverTimestamp(),
+        status: "Pending IFSE Dispatch",
+      }
+    );
+
+    alert("Backup request sent to IFSE.");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
+
+// =========================
+// COMPLETE MISSION
+// =========================
+async function completeMission(assignment) {
+  try {
+
+    await updateDoc(
+      doc(db, "emergencyAssignments", assignment.id),
+      {
+        assignmentStatus: "Completed",
+        completed: true,
+        completedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }
+    );
+
+    await loadAssignments();
+
+    alert("Mission completed.");
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+}
   return (
     <DashboardLayout>
       <div style={{ color: "#fff" }}>
@@ -103,19 +204,31 @@ snapshot.forEach(doc => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <button style={startButton}>
+                  <button
+  style={startButton}
+  onClick={() => startResponse(assignment)}
+>
   🚗 Start Response
 </button>
 
-<button style={arrivedButton}>
+<button
+  style={arrivedButton}
+  onClick={() => markArrived(assignment)}
+>
   📍 Arrived
 </button>
-
-<button style={backupButton}>
+                  
+<button
+  style={backupButton}
+  onClick={() => requestBackup(assignment)}
+>
   🚑 Request Backup
 </button>
 
-<button style={completeButton}>
+<button
+  style={completeButton}
+  onClick={() => completeMission(assignment)}
+>
   ✅ Mission Complete
 </button>
                 </div>
