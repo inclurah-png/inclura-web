@@ -103,13 +103,21 @@ snapshot.forEach(doc => {
                     flexWrap: "wrap",
                   }}
                 >
-                  <button style={acceptButton}>
-                    ✅ Accept Emergency
-                  </button>
+                  <button style={startButton}>
+  🚗 Start Response
+</button>
 
-                  <button style={rejectButton}>
-                    ❌ Reject
-                  </button>
+<button style={arrivedButton}>
+  📍 Arrived
+</button>
+
+<button style={backupButton}>
+  🚑 Request Backup
+</button>
+
+<button style={completeButton}>
+  ✅ Mission Complete
+</button>
                 </div>
               </div>
             ))
@@ -133,9 +141,9 @@ const assignmentCard = {
   background: "#111827",
 };
 
-const acceptButton = {
+const startButton = {
   padding: "10px 18px",
-  background: "#16a34a",
+  background: "#2563eb",
   color: "#fff",
   border: "none",
   borderRadius: "8px",
@@ -143,9 +151,29 @@ const acceptButton = {
   fontWeight: "600",
 };
 
-const rejectButton = {
+const arrivedButton = {
   padding: "10px 18px",
-  background: "#dc2626",
+  background: "#0891b2",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+};
+
+const backupButton = {
+  padding: "10px 18px",
+  background: "#d97706",
+  color: "#fff",
+  border: "none",
+  borderRadius: "8px",
+  cursor: "pointer",
+  fontWeight: "600",
+};
+
+const completeButton = {
+  padding: "10px 18px",
+  background: "#16a34a",
   color: "#fff",
   border: "none",
   borderRadius: "8px",
