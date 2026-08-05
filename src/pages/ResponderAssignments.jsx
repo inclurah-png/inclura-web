@@ -20,12 +20,11 @@ function ResponderAssignments() {
   async function loadAssignments() {
     try {
       const q = query(
-        collection(db, "emergencyAssignments"),
-        where("assignmentStatus", "==", "Pending"),
-        where("accepted", "==", false),
-        where("cancelled", "==", false),
-        orderBy("createdAt", "desc")
-      );
+  collection(db, "emergencyAssignments"),
+  where("assignmentStatus", "==", "Pending"),
+  where("accepted", "==", false),
+  where("cancelled", "==", false)
+);
 
       const snapshot = await getDocs(q);
 
