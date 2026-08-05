@@ -130,9 +130,10 @@ console.log("Responder Selected:", responderData);
 
 // Create assignment
 
-await addDoc(collection(db, "emergencyAssignments"), {
-console.log("Writing Assignment...");
+    console.log("Writing Assignment...");
 console.log("Emergency ID being written:", emergencyId);
+    
+await addDoc(collection(db, "emergencyAssignments"), {
 
   assignmentId: emergencyId + "_" + responder.id,
 
