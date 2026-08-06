@@ -227,44 +227,34 @@ async function completeMission(assignment) {
   }
 );
 
-// Close Emergency SOS
-await updateDoc(
-  doc(db, "emergencySOS", assignment.emergencyId),
-  {
-    status: "resolved",
-    responseStatus: "Mission Completed",
-    incidentStatus: "Closed",
-    updatedAt: serverTimestamp(),
-  }
-);
+await syncFamilyEmergency({
 
-// Timeline
-await addDoc(collection(db, "emergencyTimeline"), {
   emergencyId: assignment.emergencyId,
-  eventType: "Mission Completed",
-  eventDescription:
-    assignment.responderName + " completed the emergency response.",
-  performerType: "Responder",
+
+  assignmentId: assignment.id,
+
   responderId: assignment.responderId,
-  responderName: assignment.responderName,
-  responderAgency: assignment.responderAgency,
-  eventStatus: "Completed",
-  severity: assignment.dispatchPriority,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
 
-// Emergency Notification
-await addDoc(collection(db, "emergencyNotifications"), {
-  emergencyId: assignment.emergencyId,
-  recipientType: "Emergency User",
-  emergencyType: "Mission Completed",
+  responderName: assignment.responderName,
+
+  responderAgency: assignment.responderAgency,
+
+  emergencyType: assignment.emergencyType,
+
+  location: assignment.location,
+
   priority: assignment.dispatchPriority,
-  assignedAgency: assignment.responderAgency,
-  notificationStatus: "Pending",
-  deliveryMethod: "System",
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
+
+  status: "Emergency Closed",
+
+  responseStatus: "Mission Completed",
+
+  eventType: "Mission Completed",
+
+  eventDescription:
+    assignment.responderName +
+    " completed the emergency response successfully.",
+
 });
     await loadAssignments();
 
