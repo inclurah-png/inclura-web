@@ -4,10 +4,14 @@ import { useSearchParams } from "react-router-dom";
 import {
   collection,
   addDoc,
+  updateDoc,
+  doc,
   serverTimestamp,
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
+import { syncFamilyEmergency } from "../services/IFSEFamilySyncEngine";
 
 function ResponderIncidentReport() {
 const [searchParams] = useSearchParams();
@@ -137,76 +141,34 @@ useEffect(() => {
 
   }
 );
-      await updateDoc(
-  doc(db, "emergencySOS", emergencyId),
-  {
+      await syncFamilyEmergency({
 
-    status: "resolved",
+  emergencyId,
 
-    incidentStatus: "Resolved",
+  assignmentId,
 
-    responseStatus: "Mission Completed",
+  responderId,
 
-    updatedAt: serverTimestamp(),
+  responderName: form.responderName,
 
-  }
-);
-      await addDoc(
-  collection(db, "emergencyTimeline"),
-  {
+  responderAgency: form.responderAgency,
 
-    emergencyId,
+  emergencyType: "Incident Report",
 
-    eventType: "Incident Report Submitted",
+  location: "",
 
-    eventDescription:
-      "Responder completed emergency mission and submitted report.",
+  priority: "Normal",
 
-    performerType: "Responder",
+  status: "Emergency Closed",
 
-    responderId,
+  responseStatus: "Mission Completed",
 
-    responderAgency: form.responderAgency,
+  eventType: "Incident Report Submitted",
 
-    responderName: form.responderName,
+  eventDescription:
+    "Responder completed the mission and submitted the incident report.",
 
-    eventStatus: "Completed",
-
-    severity: "Normal",
-
-    visibleToFamily: true,
-
-    visibleToGovernment: true,
-
-    visibleToResponders: true,
-
-    createdAt: serverTimestamp(),
-
-    updatedAt: serverTimestamp(),
-
-  }
-);
-      await addDoc(
-  collection(db, "emergencyNotifications"),
-  {
-
-    emergencyId,
-
-    recipientType: "System",
-
-    notificationTitle: "Emergency Resolved",
-
-    notificationMessage:
-      "Emergency incident has been resolved successfully.",
-
-    notificationStatus: "Pending",
-
-    createdAt: serverTimestamp(),
-
-    updatedAt: serverTimestamp(),
-
-  }
-);
+});
       
 
       alert("Incident Report Submitted Successfully.");
