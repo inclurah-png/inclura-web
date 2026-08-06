@@ -14,6 +14,7 @@ import {
 import { db, auth } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 import SOSHistory from "../pages/SOSHistory";
+import TrustedContacts from "./TrustedContacts";
 
 function SOS() {
   
@@ -414,7 +415,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  👨‍👩‍👧 Trusted Contacts
+  👨‍👩‍👧 <TrustedContacts />
 </div>
 
 <div style={card}>
