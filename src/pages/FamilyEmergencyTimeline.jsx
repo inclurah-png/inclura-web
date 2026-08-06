@@ -4,8 +4,9 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -17,9 +18,11 @@ function FamilyEmergencyTimeline() {
 
   useEffect(() => {
 
-    loadTimeline();
+  const unsubscribe = loadTimeline();
 
-  }, []);
+  return () => unsubscribe && unsubscribe();
+
+}, []);
 
   async function loadTimeline() {
 
@@ -31,15 +34,18 @@ function FamilyEmergencyTimeline() {
         orderBy("createdAt", "desc")
       );
 
-      const snapshot = await getDocs(q);
+      const unsubscribe = onSnapshot(q, (snapshot) => {
 
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+  const data = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 
-      setTimeline(data);
+  setTimeline(data);
 
+});
+
+return unsubscribe;
     } catch (err) {
 
       console.error(err);
