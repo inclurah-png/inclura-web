@@ -175,7 +175,35 @@ async function requestBackup(assignment) {
         status: "Pending IFSE Dispatch",
       }
     );
+await syncFamilyEmergency({
 
+  emergencyId: assignment.emergencyId,
+
+  assignmentId: assignment.id,
+
+  responderId: assignment.responderId,
+
+  responderName: assignment.responderName,
+
+  responderAgency: assignment.responderAgency,
+
+  emergencyType: assignment.emergencyType,
+
+  location: assignment.location,
+
+  priority: assignment.dispatchPriority,
+
+  status: "Backup Requested",
+
+  responseStatus: "Waiting Backup",
+
+  eventType: "Backup Requested",
+
+  eventDescription:
+    assignment.responderAgency +
+    " requested additional emergency backup.",
+
+});
     alert("Backup request sent to IFSE.");
   } catch (err) {
     console.error(err);
