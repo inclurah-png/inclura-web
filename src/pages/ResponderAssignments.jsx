@@ -65,45 +65,35 @@ async function startResponse(assignment) {
   }
 );
 
-// Update Emergency SOS
-await updateDoc(
-  doc(db, "emergencySOS", assignment.emergencyId),
-  {
-    responseStatus: "Responder En Route",
-    incidentStatus: "Responder Travelling",
-    updatedAt: serverTimestamp(),
-  }
-);
+await syncFamilyEmergency({
 
-// Timeline
-await addDoc(collection(db, "emergencyTimeline"), {
   emergencyId: assignment.emergencyId,
-  eventType: "Responder Started",
-  eventDescription:
-    assignment.responderName + " has started responding.",
-  performerType: "Responder",
+
+  assignmentId: assignment.id,
+
   responderId: assignment.responderId,
+
   responderName: assignment.responderName,
+
   responderAgency: assignment.responderAgency,
-  eventStatus: "Completed",
-  severity: assignment.dispatchPriority,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
 
-// Emergency Notification
-await addDoc(collection(db, "emergencyNotifications"), {
-  emergencyId: assignment.emergencyId,
-  recipientType: "Emergency User",
-  emergencyType: "Responder Started",
+  emergencyType: assignment.emergencyType,
+
+  location: assignment.location,
+
   priority: assignment.dispatchPriority,
-  assignedAgency: assignment.responderAgency,
-  notificationStatus: "Pending",
-  deliveryMethod: "System",
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
 
+  status: "Responder Travelling",
+
+  responseStatus: "Responder En Route",
+
+  eventType: "Responder Started",
+
+  eventDescription:
+    assignment.responderName +
+    " has started responding.",
+
+});
     await loadAssignments();
 
     alert("Response started successfully.");
