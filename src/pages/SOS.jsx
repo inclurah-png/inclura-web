@@ -15,6 +15,7 @@ import { db, auth } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 import SOSHistory from "../pages/SOSHistory";
 import TrustedContacts from "./TrustedContacts";
+import ShareLiveLocation from "./ShareLiveLocation";
 
 function SOS() {
   
@@ -411,7 +412,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  📍 Share Live Location
+  📍 <ShareLiveLocation />
 </div>
 
 <div style={card}>
