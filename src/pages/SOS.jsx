@@ -13,6 +13,7 @@ import {
 
 import { db, auth } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
+import SOSHistory from "../pages/SOSHistory";
 
 function SOS() {
   
@@ -433,7 +434,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  📜 SOS History
+  📜 <SOSHistory />
 </div>
       </div>
     </DashboardLayout>
