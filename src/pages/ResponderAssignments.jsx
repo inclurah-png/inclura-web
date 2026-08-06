@@ -4,10 +4,11 @@ import {
   query,
   where,
   getDocs,
-  doc,
+  orderBy,
   updateDoc,
-  serverTimestamp,
   addDoc,
+  doc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
@@ -55,14 +56,53 @@ snapshot.forEach(doc => {
 async function startResponse(assignment) {
   try {
     await updateDoc(
-      doc(db, "emergencyAssignments", assignment.id),
-      {
-        assignmentStatus: "Responding",
-        responderStatus: "En Route",
-        startedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }
-    );
+  doc(db, "emergencyAssignments", assignment.id),
+  {
+    assignmentStatus: "Responding",
+    responderStatus: "En Route",
+    startedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+);
+
+// Update Emergency SOS
+await updateDoc(
+  doc(db, "emergencySOS", assignment.emergencyId),
+  {
+    responseStatus: "Responder En Route",
+    incidentStatus: "Responder Travelling",
+    updatedAt: serverTimestamp(),
+  }
+);
+
+// Timeline
+await addDoc(collection(db, "emergencyTimeline"), {
+  emergencyId: assignment.emergencyId,
+  eventType: "Responder Started",
+  eventDescription:
+    assignment.responderName + " has started responding.",
+  performerType: "Responder",
+  responderId: assignment.responderId,
+  responderName: assignment.responderName,
+  responderAgency: assignment.responderAgency,
+  eventStatus: "Completed",
+  severity: assignment.dispatchPriority,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+
+// Emergency Notification
+await addDoc(collection(db, "emergencyNotifications"), {
+  emergencyId: assignment.emergencyId,
+  recipientType: "Emergency User",
+  emergencyType: "Responder Started",
+  priority: assignment.dispatchPriority,
+  assignedAgency: assignment.responderAgency,
+  notificationStatus: "Pending",
+  deliveryMethod: "System",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
 
     await loadAssignments();
 
@@ -79,14 +119,53 @@ async function startResponse(assignment) {
 async function markArrived(assignment) {
   try {
     await updateDoc(
-      doc(db, "emergencyAssignments", assignment.id),
-      {
-        assignmentStatus: "On Scene",
-        arrived: true,
-        arrivedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }
-    );
+  doc(db, "emergencyAssignments", assignment.id),
+  {
+    assignmentStatus: "On Scene",
+    arrived: true,
+    arrivedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+);
+
+// Update SOS
+await updateDoc(
+  doc(db, "emergencySOS", assignment.emergencyId),
+  {
+    responseStatus: "Responder Arrived",
+    incidentStatus: "Responder On Scene",
+    updatedAt: serverTimestamp(),
+  }
+);
+
+// Timeline
+await addDoc(collection(db, "emergencyTimeline"), {
+  emergencyId: assignment.emergencyId,
+  eventType: "Responder Arrived",
+  eventDescription:
+    assignment.responderName + " arrived at the incident.",
+  performerType: "Responder",
+  responderId: assignment.responderId,
+  responderName: assignment.responderName,
+  responderAgency: assignment.responderAgency,
+  eventStatus: "Completed",
+  severity: assignment.dispatchPriority,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+
+// Notification
+await addDoc(collection(db, "emergencyNotifications"), {
+  emergencyId: assignment.emergencyId,
+  recipientType: "Emergency User",
+  emergencyType: "Responder Arrived",
+  priority: assignment.dispatchPriority,
+  assignedAgency: assignment.responderAgency,
+  notificationStatus: "Pending",
+  deliveryMethod: "System",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
 
     await loadAssignments();
 
@@ -130,15 +209,54 @@ async function completeMission(assignment) {
   try {
 
     await updateDoc(
-      doc(db, "emergencyAssignments", assignment.id),
-      {
-        assignmentStatus: "Completed",
-        completed: true,
-        completedAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }
-    );
+  doc(db, "emergencyAssignments", assignment.id),
+  {
+    assignmentStatus: "Completed",
+    completed: true,
+    completedAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  }
+);
 
+// Close Emergency SOS
+await updateDoc(
+  doc(db, "emergencySOS", assignment.emergencyId),
+  {
+    status: "resolved",
+    responseStatus: "Mission Completed",
+    incidentStatus: "Closed",
+    updatedAt: serverTimestamp(),
+  }
+);
+
+// Timeline
+await addDoc(collection(db, "emergencyTimeline"), {
+  emergencyId: assignment.emergencyId,
+  eventType: "Mission Completed",
+  eventDescription:
+    assignment.responderName + " completed the emergency response.",
+  performerType: "Responder",
+  responderId: assignment.responderId,
+  responderName: assignment.responderName,
+  responderAgency: assignment.responderAgency,
+  eventStatus: "Completed",
+  severity: assignment.dispatchPriority,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+
+// Emergency Notification
+await addDoc(collection(db, "emergencyNotifications"), {
+  emergencyId: assignment.emergencyId,
+  recipientType: "Emergency User",
+  emergencyType: "Mission Completed",
+  priority: assignment.dispatchPriority,
+  assignedAgency: assignment.responderAgency,
+  notificationStatus: "Pending",
+  deliveryMethod: "System",
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
     await loadAssignments();
 
     alert("Mission completed.");
