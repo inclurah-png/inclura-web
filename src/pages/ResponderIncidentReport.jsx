@@ -121,6 +121,94 @@ useEffect(() => {
 
       );
 
+      await updateDoc(
+  doc(db, "emergencyAssignments", assignmentId),
+  {
+
+    assignmentStatus: "Completed",
+
+    completed: true,
+
+    completedAt: serverTimestamp(),
+
+    reportSubmitted: true,
+
+    updatedAt: serverTimestamp(),
+
+  }
+);
+      await updateDoc(
+  doc(db, "emergencySOS", emergencyId),
+  {
+
+    status: "resolved",
+
+    incidentStatus: "Resolved",
+
+    responseStatus: "Mission Completed",
+
+    updatedAt: serverTimestamp(),
+
+  }
+);
+      await addDoc(
+  collection(db, "emergencyTimeline"),
+  {
+
+    emergencyId,
+
+    eventType: "Incident Report Submitted",
+
+    eventDescription:
+      "Responder completed emergency mission and submitted report.",
+
+    performerType: "Responder",
+
+    responderId,
+
+    responderAgency: form.responderAgency,
+
+    responderName: form.responderName,
+
+    eventStatus: "Completed",
+
+    severity: "Normal",
+
+    visibleToFamily: true,
+
+    visibleToGovernment: true,
+
+    visibleToResponders: true,
+
+    createdAt: serverTimestamp(),
+
+    updatedAt: serverTimestamp(),
+
+  }
+);
+      await addDoc(
+  collection(db, "emergencyNotifications"),
+  {
+
+    emergencyId,
+
+    recipientType: "System",
+
+    notificationTitle: "Emergency Resolved",
+
+    notificationMessage:
+      "Emergency incident has been resolved successfully.",
+
+    notificationStatus: "Pending",
+
+    createdAt: serverTimestamp(),
+
+    updatedAt: serverTimestamp(),
+
+  }
+);
+      
+
       alert("Incident Report Submitted Successfully.");
 
       setForm({
