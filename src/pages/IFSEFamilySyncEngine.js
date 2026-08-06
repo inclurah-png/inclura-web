@@ -1,128 +1,204 @@
 import {
-  collection,
-  addDoc,
-  updateDoc,
   doc,
+  updateDoc,
+  addDoc,
+  collection,
   serverTimestamp,
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 
 /**
- * Synchronize IFSE updates to the Family Dashboard.
+ * IFSE Family Synchronization Engine
+ * Centralized synchronization for Emergency SOS.
  */
+
 export async function syncFamilyEmergency({
+
   emergencyId,
   assignmentId,
+
   responderId,
   responderName,
   responderAgency,
+
   emergencyType,
   location,
-  status,
-  responseStatus,
+
   priority,
+
+  status,
+
+  responseStatus,
+
   eventType,
+
   eventDescription,
+
 }) {
+
   try {
 
-    // Update emergencySOS
+    // ===========================
+    // UPDATE EMERGENCY SOS
+    // ===========================
+
     await updateDoc(
+
       doc(db, "emergencySOS", emergencyId),
+
       {
-        status,
+
         responseStatus,
+
+        incidentStatus: status,
+
         assignedResponder: responderName,
+
         assignedAgency: responderAgency,
+
         updatedAt: serverTimestamp(),
+
       }
+
     );
 
-    // Add timeline entry
+    // ===========================
+    // EMERGENCY TIMELINE
+    // ===========================
+
     await addDoc(
+
       collection(db, "emergencyTimeline"),
+
       {
+
         emergencyId,
+
         assignmentId,
+
         responderId,
+
         responderName,
+
         responderAgency,
 
+        performerType: "Responder",
+
         eventType,
+
         eventDescription,
-        eventStatus: status,
 
-        priority,
+        eventStatus: "Completed",
 
-        visibleToFamily: true,
-        visibleToGovernment: true,
-        visibleToResponders: true,
+        severity: priority,
 
         createdAt: serverTimestamp(),
+
         updatedAt: serverTimestamp(),
+
       }
+
     );
 
-    // Create family notification
+    // ===========================
+    // FAMILY NOTIFICATION
+    // ===========================
+
     await addDoc(
+
       collection(db, "emergencyNotifications"),
+
       {
-        emergencyId,
+
         assignmentId,
+
+        emergencyId,
+
         responderId,
 
-        recipientType: "Family",
-
-        notificationTitle: eventType,
-        notificationMessage: eventDescription,
-
         assignedAgency: responderAgency,
+
         emergencyType,
+
         location,
 
         priority,
 
-        visibleToFamily: true,
+        recipientType: "Family",
+
+        recipientName: "",
+
+        recipientEmail: "",
+
+        recipientPhone: "",
+
+        notificationTitle: eventType,
+
+        notificationMessage: eventDescription,
 
         notificationStatus: "Pending",
 
+        deliveryMethod: "System",
+
         acknowledged: false,
+
         archived: false,
+
         read: false,
 
         ifseGenerated: true,
 
         createdAt: serverTimestamp(),
+
         updatedAt: serverTimestamp(),
+
+        visibleToFamily: true,
+
       }
+
     );
 
-    // IFSE Audit Log
+    // ===========================
+    // IFSE AUDIT LOG
+    // ===========================
+
     await addDoc(
+
       collection(db, "ifseAuditLogs"),
+
       {
+
         emergencyId,
+
         assignmentId,
+
         responderId,
 
-        module: "EmergencySOS",
+        responderName,
+
+        responderAgency,
 
         action: eventType,
 
         description: eventDescription,
 
-        performedBy: "IFSE",
+        module: "EmergencySOS",
+
+        actor: "IFSE",
 
         createdAt: serverTimestamp(),
+
       }
+
     );
 
   } catch (err) {
 
-    console.error("IFSE Family Sync:", err);
+    console.error("IFSE Sync Error:", err);
 
     throw err;
 
   }
-        }
 
+}
