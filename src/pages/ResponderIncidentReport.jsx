@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+
 import {
   collection,
   addDoc,
@@ -8,14 +10,24 @@ import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
 function ResponderIncidentReport() {
+const [searchParams] = useSearchParams();
 
+const emergencyId =
+  searchParams.get("emergencyId") || "";
+
+const assignmentId =
+  searchParams.get("assignmentId") || "";
+
+const responderId =
+  searchParams.get("responderId") || "";
+  
   const [form, setForm] = useState({
 
-    emergencyId: "",
+    emergencyId,
 
-    assignmentId: "",
+assignmentId,
 
-    responderId: "",
+responderId,
 
     responderAgency: "",
 
@@ -44,7 +56,26 @@ function ResponderIncidentReport() {
     evidenceCollected: false,
 
   });
+useEffect(() => {
 
+  setForm((prev) => ({
+
+    ...prev,
+
+    emergencyId,
+
+    assignmentId,
+
+    responderId,
+
+  }));
+
+}, [
+  emergencyId,
+  assignmentId,
+  responderId,
+]);
+  
   function updateField(e) {
 
     const { name, value, type, checked } = e.target;
@@ -150,6 +181,7 @@ function ResponderIncidentReport() {
           name="emergencyId"
           placeholder="Emergency ID"
           value={form.emergencyId}
+          readOnly
           onChange={updateField}
           style={input}
         />
@@ -158,6 +190,7 @@ function ResponderIncidentReport() {
           name="assignmentId"
           placeholder="Assignment ID"
           value={form.assignmentId}
+          readOnly
           onChange={updateField}
           style={input}
         />
@@ -166,6 +199,7 @@ function ResponderIncidentReport() {
           name="responderId"
           placeholder="Responder ID"
           value={form.responderId}
+          readOnly
           onChange={updateField}
           style={input}
         />
