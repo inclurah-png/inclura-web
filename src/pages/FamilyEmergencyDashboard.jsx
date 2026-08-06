@@ -3,8 +3,9 @@ import {
   collection,
   query,
   where,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -16,9 +17,11 @@ function FamilyEmergencyDashboard() {
 
   useEffect(() => {
 
-    loadEmergencies();
+  const unsubscribe = loadDashboard();
 
-  }, []);
+  return () => unsubscribe && unsubscribe();
+
+}, []);
 
   async function loadEmergencies() {
 
@@ -32,17 +35,21 @@ function FamilyEmergencyDashboard() {
 
       );
 
-      const snapshot = await getDocs(q);
+      const unsubscribe = onSnapshot(q, (snapshot) => {
 
-      const data = snapshot.docs.map(doc => ({
+  const data = snapshot.docs.map(doc => ({
 
-        id: doc.id,
+    id: doc.id,
 
-        ...doc.data(),
+    ...doc.data(),
 
-      }));
+  }));
 
-      setEmergencies(data);
+  setDashboard(data);
+
+});
+
+return unsubscribe;
 
     } catch (err) {
 
