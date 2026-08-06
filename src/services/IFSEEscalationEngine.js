@@ -34,7 +34,57 @@ const escalationList = escalationSnapshot.docs.map((item) => ({
   ...item.data(),
 }));
 
-console.log(escalationList);
+for (const escalation of escalationList) {
+
+  const createdTime = escalation.createdAt?.toDate();
+
+  if (!createdTime) {
+    console.log(
+      "Escalation skipped: missing createdAt",
+      escalation.id
+    );
+    continue;
+  }
+
+  const now = new Date();
+
+  const elapsedMinutes =
+    Math.floor(
+      (now.getTime() - createdTime.getTime()) / 60000
+    );
+
+  console.log(
+    "Emergency:",
+    escalation.emergencyId
+  );
+
+  console.log(
+    "Elapsed Minutes:",
+    elapsedMinutes
+  );
+
+  console.log(
+    "Escalation Limit:",
+    escalation.escalationMinutes
+  );
+
+  if (elapsedMinutes >= escalation.escalationMinutes) {
+
+    console.log(
+      "🚨 Escalation Required:",
+      escalation.emergencyId
+    );
+
+  } else {
+
+    console.log(
+      "✅ Still Waiting:",
+      escalation.emergencyId
+    );
+
+  }
+
+}
   } catch (err) {
 
     console.error("IFSE Escalation Engine:", err);
