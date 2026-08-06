@@ -1,3 +1,5 @@
+import { dispatchEmergency } from "./ifseDispatchEngine";
+
 import {
   collection,
   query,
@@ -121,12 +123,31 @@ for (const escalation of escalationList) {
     updatedAt: serverTimestamp(),
   }
 );
+    await dispatchEmergency({
+  id: escalation.emergencyId,
+  emergencyType: escalation.emergencyType,
+  priority: escalation.priority,
+  userId: escalation.userId,
+  location: escalation.location,
+});
 
 console.log(
   "Backup Request Created:",
   escalation.emergencyId
 );
+await updateDoc(
+  doc(db, "backupRequests", escalation.id),
+  {
+    status: "Responder Dispatch Started",
+    updatedAt: serverTimestamp(),
+  }
+);
 
+console.log(
+  "Backup Dispatch Started:",
+  escalation.emergencyId
+);
+    
 } else {
 
   console.log(
