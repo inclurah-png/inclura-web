@@ -4,6 +4,9 @@ import {
   addDoc,
   collection,
   serverTimestamp,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -38,6 +41,29 @@ export async function syncFamilyEmergency({
 }) {
 
   try {
+    const timelineCheck = query(
+  collection(db, "emergencyTimeline"),
+  where("emergencyId", "==", emergencyId),
+  where("eventType", "==", eventType)
+);
+
+const timelineSnapshot = await getDocs(timelineCheck);
+
+const notificationCheck = query(
+  collection(db, "emergencyNotifications"),
+  where("emergencyId", "==", emergencyId),
+  where("notificationTitle", "==", eventType)
+);
+
+const notificationSnapshot = await getDocs(notificationCheck);
+
+const auditCheck = query(
+  collection(db, "ifseAuditLogs"),
+  where("emergencyId", "==", emergencyId),
+  where("action", "==", eventType)
+);
+
+const auditSnapshot = await getDocs(auditCheck);
 
     // ===========================
     // UPDATE EMERGENCY SOS
@@ -68,9 +94,7 @@ export async function syncFamilyEmergency({
     // ===========================
 
     await addDoc(
-
-      collection(db, "emergencyTimeline"),
-
+  collection(db, "emergencyTimeline"),
       {
 
         emergencyId,
@@ -98,6 +122,10 @@ export async function syncFamilyEmergency({
         updatedAt: serverTimestamp(),
 
       }
+      if (timelineSnapshot.empty) {
+
+  await addDoc(
+    collection(db, "emergencyTimeline"),
 
     );
 
@@ -156,7 +184,10 @@ export async function syncFamilyEmergency({
         visibleToFamily: true,
 
       }
+if (notificationSnapshot.empty) {
 
+  await addDoc(
+    collection(db, "emergencyNotifications"),
     );
 
     // ===========================
@@ -190,6 +221,10 @@ export async function syncFamilyEmergency({
         createdAt: serverTimestamp(),
 
       }
+    if (auditSnapshot.empty) {
+
+  await addDoc(
+    collection(db, "ifseAuditLogs"),
 
     );
 
