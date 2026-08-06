@@ -4,8 +4,9 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
+  onSnapshot,
 } from "firebase/firestore";
+
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -17,9 +18,11 @@ function FamilyEmergencyNotifications() {
 
   useEffect(() => {
 
-    loadNotifications();
+  const unsubscribe = loadNotifications();
 
-  }, []);
+  return () => unsubscribe && unsubscribe();
+
+}, []);
 
   async function loadNotifications() {
 
@@ -35,17 +38,18 @@ function FamilyEmergencyNotifications() {
 
       );
 
-      const snapshot = await getDocs(q);
+      const unsubscribe = onSnapshot(q, (snapshot) => {
 
-      const data = snapshot.docs.map(doc => ({
+  const data = snapshot.docs.map(doc => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
 
-        id: doc.id,
+  setNotifications(data);
 
-        ...doc.data(),
+});
 
-      }));
-
-      setNotifications(data);
+return unsubscribe;
 
     } catch (err) {
 
