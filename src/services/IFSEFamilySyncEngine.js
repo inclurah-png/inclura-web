@@ -17,7 +17,6 @@ import { db } from "../firebase";
  */
 
 export async function syncFamilyEmergency({
-
   emergencyId,
   assignmentId,
 
@@ -37,203 +36,105 @@ export async function syncFamilyEmergency({
   eventType,
 
   eventDescription,
-
 }) {
-
   try {
-    const timelineCheck = query(
-  collection(db, "emergencyTimeline"),
-  where("emergencyId", "==", emergencyId),
-  where("eventType", "==", eventType)
-);
-
-const timelineSnapshot = await getDocs(timelineCheck);
-
-const notificationCheck = query(
-  collection(db, "emergencyNotifications"),
-  where("emergencyId", "==", emergencyId),
-  where("notificationTitle", "==", eventType)
-);
-
-const notificationSnapshot = await getDocs(notificationCheck);
-
-const auditCheck = query(
-  collection(db, "ifseAuditLogs"),
-  where("emergencyId", "==", emergencyId),
-  where("action", "==", eventType)
-);
-
-const auditSnapshot = await getDocs(auditCheck);
-
-    // ===========================
-    // UPDATE EMERGENCY SOS
-    // ===========================
-
-    await updateDoc(
-
-      doc(db, "emergencySOS", emergencyId),
-
-      {
-
-        responseStatus,
-
-        incidentStatus: status,
-
-        assignedResponder: responderName,
-
-        assignedAgency: responderAgency,
-
-        updatedAt: serverTimestamp(),
-
-      }
-
+    // Check duplicates
+    const timelineSnapshot = await getDocs(
+      query(
+        collection(db, "emergencyTimeline"),
+        where("emergencyId", "==", emergencyId),
+        where("eventType", "==", eventType)
+      )
     );
 
-    // ===========================
-    // EMERGENCY TIMELINE
-    // ===========================
+    const notificationSnapshot = await getDocs(
+      query(
+        collection(db, "emergencyNotifications"),
+        where("emergencyId", "==", emergencyId),
+        where("notificationTitle", "==", eventType)
+      )
+    );
 
-    await addDoc(
-  collection(db, "emergencyTimeline"),
-      {
+    const auditSnapshot = await getDocs(
+      query(
+        collection(db, "ifseAuditLogs"),
+        where("emergencyId", "==", emergencyId),
+        where("action", "==", eventType)
+      )
+    );
 
+    // Update Emergency SOS
+    await updateDoc(doc(db, "emergencySOS", emergencyId), {
+      responseStatus,
+      incidentStatus: status,
+      assignedResponder: responderName,
+      assignedAgency: responderAgency,
+      updatedAt: serverTimestamp(),
+    });
+
+    // Timeline
+    if (timelineSnapshot.empty) {
+      await addDoc(collection(db, "emergencyTimeline"), {
         emergencyId,
-
         assignmentId,
-
         responderId,
-
         responderName,
-
         responderAgency,
-
         performerType: "Responder",
-
         eventType,
-
         eventDescription,
-
         eventStatus: "Completed",
-
         severity: priority,
-
         createdAt: serverTimestamp(),
-
         updatedAt: serverTimestamp(),
+      });
+    }
 
-      }
-      if (timelineSnapshot.empty) {
-
-  await addDoc(
-    collection(db, "emergencyTimeline"),
-
-    );
-
-    // ===========================
-    // FAMILY NOTIFICATION
-    // ===========================
-
-    await addDoc(
-
-      collection(db, "emergencyNotifications"),
-
-      {
-
+    // Notification
+    if (notificationSnapshot.empty) {
+      await addDoc(collection(db, "emergencyNotifications"), {
         assignmentId,
-
         emergencyId,
-
         responderId,
-
         assignedAgency: responderAgency,
-
         emergencyType,
-
         location,
-
         priority,
-
         recipientType: "Family",
-
         recipientName: "",
-
         recipientEmail: "",
-
         recipientPhone: "",
-
         notificationTitle: eventType,
-
         notificationMessage: eventDescription,
-
         notificationStatus: "Pending",
-
         deliveryMethod: "System",
-
         acknowledged: false,
-
         archived: false,
-
         read: false,
-
         ifseGenerated: true,
-
         createdAt: serverTimestamp(),
-
         updatedAt: serverTimestamp(),
-
         visibleToFamily: true,
+      });
+    }
 
-      }
-if (notificationSnapshot.empty) {
-
-  await addDoc(
-    collection(db, "emergencyNotifications"),
-    );
-
-    // ===========================
-    // IFSE AUDIT LOG
-    // ===========================
-
-    await addDoc(
-
-      collection(db, "ifseAuditLogs"),
-
-      {
-
-        emergencyId,
-
-        assignmentId,
-
-        responderId,
-
-        responderName,
-
-        responderAgency,
-
-        action: eventType,
-
-        description: eventDescription,
-
-        module: "EmergencySOS",
-
-        actor: "IFSE",
-
-        createdAt: serverTimestamp(),
-
-      }
+    // IFSE Audit Log
     if (auditSnapshot.empty) {
-
-  await addDoc(
-    collection(db, "ifseAuditLogs"),
-
-    );
-
+      await addDoc(collection(db, "ifseAuditLogs"), {
+        emergencyId,
+        assignmentId,
+        responderId,
+        responderName,
+        responderAgency,
+        action: eventType,
+        description: eventDescription,
+        module: "EmergencySOS",
+        actor: "IFSE",
+        createdAt: serverTimestamp(),
+      });
+    }
   } catch (err) {
-
     console.error("IFSE Sync Error:", err);
-
     throw err;
-
   }
-
-}
+        }
