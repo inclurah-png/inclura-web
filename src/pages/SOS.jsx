@@ -17,6 +17,7 @@ import SOSHistory from "../pages/SOSHistory";
 import TrustedContacts from "./TrustedContacts";
 import ShareLiveLocation from "./ShareLiveLocation";
 import EmergencyResponders from "./EmergencyResponders";
+import CommunityAssistance from "./CommunityAssistance";
 
 function SOS() {
   
@@ -421,7 +422,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  🤝 Community Assistance
+  🤝 <CommunityAssistance />
 </div>
 
 <div style={card}>
