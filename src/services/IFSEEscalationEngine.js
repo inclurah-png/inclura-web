@@ -88,6 +88,44 @@ for (const escalation of escalationList) {
     "Escalation Queue Updated:",
     escalation.emergencyId
   );
+  await addDoc(
+  collection(db, "backupRequests"),
+  {
+    emergencyId: escalation.emergencyId,
+
+    assignmentId: escalation.assignmentId,
+
+    responderId: escalation.responderId,
+
+    responderAgency: escalation.assignedAgency,
+
+    escalationLevel:
+      (escalation.escalationLevel || 0) + 1,
+
+    priority: "High",
+
+    status: "Pending IFSE Dispatch",
+
+    automaticDispatch: true,
+
+    ifseGenerated: true,
+
+    governmentEscalation: false,
+
+    backupAccepted: false,
+
+    backupCompleted: false,
+
+    createdAt: serverTimestamp(),
+
+    updatedAt: serverTimestamp(),
+  }
+);
+
+console.log(
+  "Backup Request Created:",
+  escalation.emergencyId
+);
 
 } else {
 
