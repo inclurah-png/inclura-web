@@ -19,6 +19,7 @@ import ShareLiveLocation from "./ShareLiveLocation";
 import EmergencyResponders from "./EmergencyResponders";
 import CommunityAssistance from "./CommunityAssistance";
 import IFSEEmergencyMonitoring from "./IFSEEmergencyMonitoring";
+import EmergencyAnalytics from "./EmergencyAnalytics";
 
 function SOS() {
   
@@ -435,7 +436,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  📊 Emergency Analytics
+  📊 <EmergencyAnalytics />
 </div>
 
 <div style={card}>
