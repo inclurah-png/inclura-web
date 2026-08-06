@@ -70,19 +70,33 @@ for (const escalation of escalationList) {
 
   if (elapsedMinutes >= escalation.escalationMinutes) {
 
-    console.log(
-      "🚨 Escalation Required:",
-      escalation.emergencyId
-    );
+  console.log(
+    "🚨 Escalation Required:",
+    escalation.emergencyId
+  );
 
-  } else {
+  await updateDoc(
+    doc(db, "emergencyEscalationQueue", escalation.id),
+    {
+      status: "Escalating",
+      escalationLevel: (escalation.escalationLevel || 0) + 1,
+      updatedAt: serverTimestamp(),
+    }
+  );
 
-    console.log(
-      "✅ Still Waiting:",
-      escalation.emergencyId
-    );
+  console.log(
+    "Escalation Queue Updated:",
+    escalation.emergencyId
+  );
 
-  }
+} else {
+
+  console.log(
+    "✅ Still Waiting:",
+    escalation.emergencyId
+  );
+
+}
 
 }
   } catch (err) {
