@@ -349,6 +349,27 @@ await addDoc(collection(db, "emergencyNotifications"), {
 >
   ✅ Mission Complete
 </button>
+
+<a
+  href={`/responder-incident-report?emergencyId=${assignment.emergencyId}&assignmentId=${assignment.id}&responderId=${assignment.responderId}`}
+  style={{
+    textDecoration: "none",
+  }}
+>
+  <button
+    style={{
+      padding: "10px 18px",
+      background: "#7c3aed",
+      color: "#fff",
+      border: "none",
+      borderRadius: "8px",
+      cursor: "pointer",
+      fontWeight: "600",
+    }}
+  >
+    📝 Incident Report
+  </button>
+</a>
                 </div>
               </div>
             ))
