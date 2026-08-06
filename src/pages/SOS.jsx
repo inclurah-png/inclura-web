@@ -16,6 +16,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import SOSHistory from "../pages/SOSHistory";
 import TrustedContacts from "./TrustedContacts";
 import ShareLiveLocation from "./ShareLiveLocation";
+import EmergencyResponders from "./EmergencyResponders";
 
 function SOS() {
   
@@ -424,7 +425,7 @@ style={dangerButton}
 </div>
 
 <div style={card}>
-  🚑 Emergency Responders
+  🚑 <EmergencyResponders />
 </div>
 
 <div style={card}>
