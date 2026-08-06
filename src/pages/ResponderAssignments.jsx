@@ -118,43 +118,34 @@ async function markArrived(assignment) {
   }
 );
 
-// Update SOS
-await updateDoc(
-  doc(db, "emergencySOS", assignment.emergencyId),
-  {
-    responseStatus: "Responder Arrived",
-    incidentStatus: "Responder On Scene",
-    updatedAt: serverTimestamp(),
-  }
-);
+await syncFamilyEmergency({
 
-// Timeline
-await addDoc(collection(db, "emergencyTimeline"), {
   emergencyId: assignment.emergencyId,
-  eventType: "Responder Arrived",
-  eventDescription:
-    assignment.responderName + " arrived at the incident.",
-  performerType: "Responder",
+
+  assignmentId: assignment.id,
+
   responderId: assignment.responderId,
-  responderName: assignment.responderName,
-  responderAgency: assignment.responderAgency,
-  eventStatus: "Completed",
-  severity: assignment.dispatchPriority,
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
-});
 
-// Notification
-await addDoc(collection(db, "emergencyNotifications"), {
-  emergencyId: assignment.emergencyId,
-  recipientType: "Emergency User",
-  emergencyType: "Responder Arrived",
+  responderName: assignment.responderName,
+
+  responderAgency: assignment.responderAgency,
+
+  emergencyType: assignment.emergencyType,
+
+  location: assignment.location,
+
   priority: assignment.dispatchPriority,
-  assignedAgency: assignment.responderAgency,
-  notificationStatus: "Pending",
-  deliveryMethod: "System",
-  createdAt: serverTimestamp(),
-  updatedAt: serverTimestamp(),
+
+  status: "Responder On Scene",
+
+  responseStatus: "Responder Arrived",
+
+  eventType: "Responder Arrived",
+
+  eventDescription:
+    assignment.responderName +
+    " arrived at the incident scene.",
+
 });
 
     await loadAssignments();
