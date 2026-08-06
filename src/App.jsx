@@ -1,6 +1,10 @@
 import { useEffect } from "react";
 import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
 import ResponderIncidentReport from "./pages/ResponderIncidentReport";
+import FamilyEmergencyDashboard from "./pages/FamilyEmergencyDashboard";
+import FamilyEmergencyTimeline from "./pages/FamilyEmergencyTimeline";
+import FamilyEmergencyMap from "./pages/FamilyEmergencyMap";
+import FamilyEmergencyNotifications from "./pages/FamilyEmergencyNotifications";
 
 import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
 import SOSResponderDashboard from "./pages/SOSResponderDashboard";
@@ -627,6 +631,42 @@ function App() {
   element={
     <AdminRoute>
       <ResponderAssignments />
+    </AdminRoute>
+  }
+/>
+
+<Route
+  path="/family-emergency-dashboard"
+  element={
+    <AdminRoute>
+      <FamilyEmergencyDashboard />
+    </AdminRoute>
+  }
+/>
+
+<Route
+  path="/family-emergency-timeline"
+  element={
+    <AdminRoute>
+      <FamilyEmergencyTimeline />
+    </AdminRoute>
+  }
+/>
+
+<Route
+  path="/family-emergency-map"
+  element={
+    <AdminRoute>
+      <FamilyEmergencyMap />
+    </AdminRoute>
+  }
+/>
+
+<Route
+  path="/family-emergency-notifications"
+  element={
+    <AdminRoute>
+      <FamilyEmergencyNotifications />
     </AdminRoute>
   }
 />
