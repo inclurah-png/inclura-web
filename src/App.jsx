@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
+import ResponderIncidentReport from "./pages/ResponderIncidentReport";
 
 import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
 import SOSResponderDashboard from "./pages/SOSResponderDashboard";
@@ -613,6 +614,15 @@ function App() {
 />
 
  <Route
+  path="/responder-assignments"
+  element={
+    <AdminRoute>
+      <ResponderAssignments />
+    </AdminRoute>
+  }
+/>
+
+<Route
   path="/responder-assignments"
   element={
     <AdminRoute>
