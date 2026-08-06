@@ -124,6 +124,22 @@ for (const escalation of escalationList) {
   }
 );
     await dispatchEmergency({
+  const existingAssignment = query(
+  collection(db, "emergencyAssignments"),
+  where("emergencyId", "==", escalation.emergencyId),
+  where("assignmentStatus", "==", "Pending")
+);
+
+const existingSnapshot = await getDocs(existingAssignment);
+
+if (!existingSnapshot.empty) {
+
+  console.log(
+    "Responder already assigned. Skipping duplicate dispatch."
+  );
+
+  continue;
+}
   id: escalation.emergencyId,
   emergencyType: escalation.emergencyType,
   priority: escalation.priority,
