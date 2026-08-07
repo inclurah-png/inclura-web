@@ -58,7 +58,12 @@ function SOSHistory() {
               marginTop: "15px",
             }}
           >
-            <strong>{item.emergencyType}</strong>
+                        <strong>{item.emergencyType}</strong>
+
+            <br />
+
+            Emergency Service:{" "}
+            {item.emergencyService || "General Emergency"}
 
             <br />
 
@@ -70,15 +75,228 @@ function SOSHistory() {
 
             <br />
 
-            Response: {item.responseStatus || "Awaiting Response"}
+            Response:{" "}
+            {item.responseStatus || "Awaiting Response"}
 
             <br />
 
-            Location: {item.location}
+            IFSE Dispatch:{" "}
+            {item.ifseDispatch
+              ? "Automatic"
+              : "Pending"}
 
             <br />
 
-            Incident Number: {item.incidentNumber}
+            Government Response:{" "}
+            {item.governmentResponse
+              ? "Initiated"
+              : "Pending"}
+
+            <br />
+
+            Paramilitary Response:{" "}
+            {item.paramilitaryResponse
+              ? "Initiated"
+              : "Pending"}
+
+            <br />
+
+            Military Response:{" "}
+            {item.militaryResponse
+              ? "Initiated"
+              : "Pending"}
+
+            <br />
+
+            SOS Service:{" "}
+            {item.sosService ||
+              "Social Responsibility"}
+
+            <br />
+
+            Payment Required:{" "}
+            {item.paymentRequired === false
+              ? "No"
+              : "No"}
+            
+                        Location: {item.location}
+
+            <br />
+
+            GPS:{" "}
+            {item.latitude || item.gpsLatitude
+              ? `${item.latitude || item.gpsLatitude}, ${
+                  item.longitude || item.gpsLongitude || ""
+                }`
+              : "Location coordinates unavailable"}
+
+            <br />
+
+            Registered Inclura User:{" "}
+            {item.registeredIncluraUser === true
+              ? "Yes"
+              : "Yes"}
+
+            <br />
+
+            Healthcare Routing:{" "}
+            {item.healthcareRouting ||
+              "Not applicable"}
+
+            <br />
+
+                        Incident Number: {item.incidentNumber}
+
+            <br />
+
+            IFSE Classification:{" "}
+            {item.ifseClassification ||
+              "Pending"}
+
+            <br />
+
+            IFSE Monitoring:{" "}
+            {item.ifseMonitoring
+              ? "Active"
+              : "Inactive"}
+
+            <br />
+
+            Automatic Alert:{" "}
+            {item.automaticDispatch ||
+            item.ifseDispatch
+              ? "Yes"
+              : "Pending"}
+
+            <br />
+
+            Assigned Agency:{" "}
+            {item.assignedAgency ||
+              "Awaiting Assignment"}
+
+            <br />
+
+            Assigned Responder:{" "}
+            {item.assignedResponder ||
+              "Awaiting Responder"}
+
+            <br />
+
+                        Incident Number: {item.incidentNumber}
+
+            <br />
+
+            Assigned Responder:{" "}
+            {item.assignedResponder ||
+              "Awaiting Responder"}
+
+            <br />
+
+            Responder Agency:{" "}
+            {item.assignedAgency ||
+              "Awaiting Emergency Authority"}
+
+            <br />
+
+            Assignment Status:{" "}
+            {item.assignmentStatus ||
+              "Pending"}
+
+            <br />
+
+            Automatic Dispatch:{" "}
+            {item.automaticDispatch === true
+              ? "Yes"
+              : "Pending"}
+
+            <br />
+
+            IFSE Generated:{" "}
+            {item.ifseDispatch === true
+              ? "Yes"
+              : "Pending"}
+                        <br />
+
+                        <br />
+
+            Emergency Alerts:{" "}
+            {item.automaticDispatch === true
+              ? "Automatically Initiated"
+              : "Pending"}
+
+            <br />
+
+            Government Alert:{" "}
+            {item.governmentAlert === true
+              ? "Initiated"
+              : "Pending"}
+
+            <br />
+
+            Paramilitary Alert:{" "}
+            {item.paramilitaryAlert === true
+              ? "Initiated"
+              : "Pending"}
+
+            <br />
+
+            Military Alert:{" "}
+            {item.militaryAlert === true
+              ? "Initiated"
+              : "Pending"}
+
+            Incident Status:{" "}
+            {item.incidentStatus ||
+              "Active"}
+
+            <br />
+
+            Resolved:{" "}
+            {item.resolved === true
+              ? "Yes"
+              : "No"}
+
+            <br />
+
+            Resolution:{" "}
+            {item.resolutionNotes ||
+              "No resolution recorded"}
+
+            <br />
+
+            Resolved By:{" "}
+            {item.resolvedBy ||
+              "Not yet resolved"}
+
+            <br />
+
+            Closed At:{" "}
+            {item.closedAt
+              ? item.closedAt.toDate
+                ? item.closedAt.toDate().toLocaleString()
+                : String(item.closedAt)
+              : "Not closed"}
+                        <br />
+
+            Created At:{" "}
+            {item.createdAt
+              ? item.createdAt.toDate
+                ? item.createdAt.toDate().toLocaleString()
+                : String(item.createdAt)
+              : "Unavailable"}
+
+            <br />
+
+            Last Updated:{" "}
+            {item.lastUpdated
+              ? item.lastUpdated.toDate
+                ? item.lastUpdated.toDate().toLocaleString()
+                : String(item.lastUpdated)
+              : item.updatedAt
+                ? item.updatedAt.toDate
+                  ? item.updatedAt.toDate().toLocaleString()
+                  : String(item.updatedAt)
+                : "Unavailable"}
           </div>
         ))
       )}
