@@ -32,7 +32,7 @@ function EmergencyAnalytics() {
 });
 
   useEffect(() => {
-    async function loadAnalytics() {
+        async function loadAnalytics() {
       try {
         const emergencySnap = await getDocs(
           collection(db, "emergencySOS")
@@ -46,64 +46,23 @@ function EmergencyAnalytics() {
           collection(db, "emergencyAssignments")
         );
 
+        const notificationSnap = await getDocs(
+          collection(db, "emergencyNotifications")
+        );
+
         let active = 0;
-let resolved = 0;
+        let resolved = 0;
 
-let medical = 0;
-let fire = 0;
-let police = 0;
-let kidnapping = 0;
-let accident = 0;
-let disaster = 0;
-let securityThreat = 0;
-let missingPerson = 0;
+        let medical = 0;
+        let fire = 0;
+        let police = 0;
+        let kidnapping = 0;
+        let accident = 0;
+        let disaster = 0;
+        let securityThreat = 0;
+        let missingPerson = 0;
 
-emergencySnap.forEach((doc) => {
-  const data = doc.data();
-
-  if (data.status === "resolved") {
-    resolved++;
-  } else {
-    active++;
-  }
-
-  switch (data.emergencyType) {
-    case "Medical":
-      medical++;
-      break;
-
-    case "Fire":
-      fire++;
-      break;
-
-    case "Police":
-      police++;
-      break;
-
-    case "Kidnapping":
-      kidnapping++;
-      break;
-
-    case "Accident":
-      accident++;
-      break;
-
-    case "Disaster":
-      disaster++;
-      break;
-
-    case "Security Threat":
-      securityThreat++;
-      break;
-
-    case "Missing Person":
-      missingPerson++;
-      break;
-
-    default:
-      break;
-  }
-});
+        emergencySnap.forEach((doc) => {
           const data = doc.data();
 
           if (data.status === "resolved") {
@@ -111,106 +70,195 @@ emergencySnap.forEach((doc) => {
           } else {
             active++;
           }
+
+          switch (data.emergencyType) {
+            case "Medical":
+              medical++;
+              break;
+
+            case "Fire":
+              fire++;
+              break;
+
+            case "Police":
+              police++;
+              break;
+
+            case "Kidnapping":
+              kidnapping++;
+              break;
+
+            case "Accident":
+              accident++;
+              break;
+
+            case "Disaster":
+              disaster++;
+              break;
+
+            case "Security Threat":
+              securityThreat++;
+              break;
+
+            case "Missing Person":
+              missingPerson++;
+              break;
+
+            default:
+              break;
+          }
         });
 
-      let pendingNotifications = 0;
-let completedNotifications = 0;
+        let governmentAlerts = 0;
+        let paramilitaryAlerts = 0;
+        let militaryAlerts = 0;
+        let healthcareAlerts = 0;
 
-      const notificationSnap = await getDocs(
-  collection(db, "emergencyNotifications")
-);
+        let pendingNotifications = 0;
+        let completedNotifications = 0;
 
-notificationSnap.forEach((doc) => {
-  const data = doc.data();
-    const notificationStatus =
-    String(
-      data.notificationStatus || ""
-    ).toLowerCase();
+        notificationSnap.forEach((doc) => {
+          const data = doc.data();
 
-  if (
-    notificationStatus === "pending"
-  ) {
-    pendingNotifications++;
-  }
+          const recipientType =
+            String(
+              data.recipientType || ""
+            ).toLowerCase();
 
-  if (
-    notificationStatus === "completed" ||
-    notificationStatus === "delivered"
-  ) {
-    completedNotifications++;
-  }
+          const assignedAgency =
+            String(
+              data.assignedAgency || ""
+            ).toLowerCase();
 
-  const recipientType =
-    String(data.recipientType || "").toLowerCase();
+          const healthcareRouting =
+            String(
+              data.healthcareRouting || ""
+            ).toLowerCase();
 
-  const assignedAgency =
-    String(data.assignedAgency || "").toLowerCase();
+          const notificationStatus =
+            String(
+              data.notificationStatus || ""
+            ).toLowerCase();
 
-  const healthcareRouting =
-    String(data.healthcareRouting || "").toLowerCase();
+          if (
+            notificationStatus ===
+            "pending"
+          ) {
+            pendingNotifications++;
+          }
 
-  if (
-    recipientType.includes("government") ||
-    assignedAgency.includes("government")
-  ) {
-    governmentAlerts++;
-  }
+          if (
+            notificationStatus ===
+              "completed" ||
+            notificationStatus ===
+              "delivered"
+          ) {
+            completedNotifications++;
+          }
 
-  if (
-    recipientType.includes("police") ||
-    recipientType.includes("fire") ||
-    recipientType.includes("paramilitary") ||
-    assignedAgency.includes("police") ||
-    assignedAgency.includes("fire") ||
-    assignedAgency.includes("paramilitary")
-  ) {
-    paramilitaryAlerts++;
-  }
+          if (
+            recipientType.includes(
+              "government"
+            ) ||
+            assignedAgency.includes(
+              "government"
+            )
+          ) {
+            governmentAlerts++;
+          }
 
-  if (
-    recipientType.includes("military") ||
-    assignedAgency.includes("army") ||
-    assignedAgency.includes("navy") ||
-    assignedAgency.includes("military")
-  ) {
-    militaryAlerts++;
-  }
+          if (
+            recipientType.includes(
+              "police"
+            ) ||
+            recipientType.includes(
+              "fire"
+            ) ||
+            recipientType.includes(
+              "paramilitary"
+            ) ||
+            assignedAgency.includes(
+              "police"
+            ) ||
+            assignedAgency.includes(
+              "fire"
+            ) ||
+            assignedAgency.includes(
+              "paramilitary"
+            )
+          ) {
+            paramilitaryAlerts++;
+          }
 
-  if (
-    recipientType.includes("healthcare") ||
-    recipientType.includes("hospital") ||
-    healthcareRouting.includes("government_military")
-  ) {
-    healthcareAlerts++;
-  }
-});
+          if (
+            recipientType.includes(
+              "military"
+            ) ||
+            assignedAgency.includes(
+              "army"
+            ) ||
+            assignedAgency.includes(
+              "navy"
+            ) ||
+            assignedAgency.includes(
+              "military"
+            )
+          ) {
+            militaryAlerts++;
+          }
+
+          if (
+            recipientType.includes(
+              "healthcare"
+            ) ||
+            recipientType.includes(
+              "hospital"
+            ) ||
+            healthcareRouting.includes(
+              "government_military"
+            )
+          ) {
+            healthcareAlerts++;
+          }
+        });
 
         setStats({
-  totalEmergencies: emergencySnap.size,
-  active,
-  resolved,
-  responders: responderSnap.size,
-  reports: reportSnap.size,
+          totalEmergencies:
+            emergencySnap.size,
 
-  medical,
-  fire,
-  police,
-  kidnapping,
-  accident,
-  disaster,
-  securityThreat,
-  missingPerson,
+          active,
 
-  governmentAlerts,
-  paramilitaryAlerts,
-  militaryAlerts,
-  healthcareAlerts,
+          resolved,
 
-  pendingNotifications,
-  completedNotifications,
-});
+          responders:
+            responderSnap.size,
+
+          reports:
+            reportSnap.size,
+
+          medical,
+          fire,
+          police,
+          kidnapping,
+          accident,
+          disaster,
+          securityThreat,
+          missingPerson,
+
+          governmentAlerts,
+          paramilitaryAlerts,
+          militaryAlerts,
+          healthcareAlerts,
+
+          pendingNotifications,
+          completedNotifications,
+        });
+
       } catch (err) {
-        console.error(err);
+        console.error(
+          "Emergency Analytics Error:",
+          err
+        );
       }
     }
 
