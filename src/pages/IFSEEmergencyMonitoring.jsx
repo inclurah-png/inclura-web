@@ -60,53 +60,128 @@ function IFSEEmergencyMonitoring() {
               marginTop: "15px",
             }}
           >
-            <strong>{event.action}</strong>
+            <strong>{event.action || "IFSE Emergency Event"}</strong>
 
 <br />
 
-Module: {event.module}
+Module: {event.module || "SOS"}
 
 <br />
 
-Emergency Type: {event.emergencyType || "SOS"}
-
-            <br />
-
-            Emergency: {event.emergencyId}
+Emergency: {event.emergencyId || "Unavailable"}
 
 <br />
 
-Routing Status:{" "}
-{event.routingStatus || "Automatic"}
+Actor: {event.actor || "IFSE System"}
 
 <br />
 
-Government Alert:{" "}
+Description: {event.description || "No description available."}
+
+<br />
+
+Assigned Agency:{" "}
+{event.assignedAgency || "Awaiting Assignment"}
+
+<br />
+
+Responder:{" "}
+{event.responderName || "Awaiting Responder"}
+
+<br />
+
+Escalation Level:{" "}
+{event.escalationLevel ?? 0}
+
+<br />
+
+Escalation Status:{" "}
+{event.escalationStatus || "Monitoring"}
+
+<br />
+
+Satellite Backup:{" "}
+{event.satelliteActivated === true
+  ? "Activated"
+  : "Standby"}
+
+<br />
+
+GPS Latitude:{" "}
+{event.gpsLatitude ?? "Unavailable"}
+
+<br />
+
+GPS Longitude:{" "}
+{event.gpsLongitude ?? "Unavailable"}
+
+<br />
+
+GPS Accuracy:{" "}
+{event.gpsAccuracy
+  ? `${event.gpsAccuracy} m`
+  : "Unavailable"}
+
+<br />
+
+Notification Routing:{" "}
+{event.notificationRouting ||
+  "Automatic IFSE Routing"}
+
+<br />
+
+Trusted Contacts:{" "}
+{event.trustedContactsNotified === true
+  ? "Queued"
+  : "Pending"}
+
+<br />
+
+Family Network:{" "}
+{event.familyNetworkNotified === true
+  ? "Queued"
+  : "Pending"}
+
+<br />
+
+Government Command:{" "}
 {event.governmentAlert === true
-  ? "Initiated"
+  ? "Queued"
   : "Pending"}
 
 <br />
 
-Paramilitary Alert:{" "}
-{event.paramilitaryAlert === true
-  ? "Initiated"
+Healthcare Routing:{" "}
+{event.healthcareRouting ||
+  "Not Applicable"}
+
+<br />
+
+Healthcare Recipient:{" "}
+{event.healthcareRecipient ||
+  "Awaiting Registered Recipient"}
+
+<br />
+
+Healthcare Alert:{" "}
+{event.healthcareAlert === true
+  ? "Queued"
   : "Pending"}
 
 <br />
 
-Military Alert:{" "}
-{event.militaryAlert === true
-  ? "Initiated"
-  : "Pending"}
+Healthcare Payment Required:{" "}
+"No"
 
 <br />
 
-Actor: {
+IFSE Status:{" "}
+{event.status || "Active"}
 
-            <br />
+<br />
 
-            Description: {event.description}
+Audit Status:{" "}
+{event.auditStatus || "Recorded"}
                         <br />
 
             Event Time:{" "}
