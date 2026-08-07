@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import {
   addDoc,
   collection,
+  doc,
+  updateDoc,
   serverTimestamp,
   query,
   where,
@@ -338,7 +340,9 @@ const selectedPlan =
   setError("");
   setSuccess("");
 
-  if (!currentUser) {
+  const user = auth.currentUser;
+
+  if (!user) {
     setError("Please sign in first.");
     return;
   }
@@ -358,15 +362,315 @@ const selectedPlan =
 
   const missingDocuments =
     requiredDocuments.filter(
-      (document) => !uploadedDocuments[document]
+      (documentName) =>
+        !uploadedDocuments[documentName]?.file
     );
 
   if (missingDocuments.length > 0) {
-
     setError(
-      `Please upload all required documents.\n\nMissing:\n\n${missingDocuments.join("\n")}`
+      `Please upload all required documents.\n\nMissing:\n\n${missingDocuments.join(
+        "\n"
+      )}`
+    );
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    /*
+     * ============================================
+     * FIND EXISTING VERIFICATION APPLICATION
+     * ============================================
+     *
+     * VerificationApplication.jsx already created
+     * the verificationRequests document.
+     *
+     * This page must update that application rather
+     * than create another verification request.
+     */
+
+    const verificationQuery = query(
+      collection(db, "verificationRequests"),
+      where("userId", "==", user.uid)
     );
 
+    const verificationSnapshot =
+      await getDocs(verificationQuery);
+
+    const activeRequest =
+      verificationSnapshot.docs
+        .map((verificationDoc) => ({
+          id: verificationDoc.id,
+          ...verificationDoc.data(),
+        }))
+        .filter((request) =>
+          [
+            "pending",
+            "submitted",
+            "under_review",
+            "payment_completed",
+          ].includes(request.status)
+        )
+        .sort((a, b) => {
+          const aTime =
+            a.createdAt?.toMillis?.() || 0;
+
+          const bTime =
+            b.createdAt?.toMillis?.() || 0;
+
+          return bTime - aTime;
+        })[0];
+
+    if (!activeRequest) {
+      setError(
+        "No active verification application was found. Please start your verification application first."
+      );
+      return;
+    }
+
+    const verificationId =
+      activeRequest.id;
+
+    /*
+     * ============================================
+     * UPLOAD DOCUMENTS
+     * ============================================
+     */
+
+    const uploadedFiles = {};
+
+    for (
+      const [documentName, documentInfo]
+      of Object.entries(uploadedDocuments)
+    ) {
+      if (!documentInfo?.file) continue;
+
+      const safeFileName =
+        documentInfo.file.name.replace(
+          /[^a-zA-Z0-9._-]/g,
+          "_"
+        );
+
+      const storagePath =
+        `verificationDocuments/${verificationId}/${Date.now()}_${safeFileName}`;
+
+      const storageRef =
+        ref(storage, storagePath);
+
+      await uploadBytes(
+        storageRef,
+        documentInfo.file
+      );
+
+      const downloadURL =
+        await getDownloadURL(
+          storageRef
+        );
+
+      uploadedFiles[documentName] = {
+        fileName:
+          documentInfo.file.name,
+
+        fileSize:
+          documentInfo.file.size,
+
+        fileType:
+          documentInfo.file.type,
+
+        storagePath,
+
+        downloadURL,
+
+        uploadedAt:
+          new Date().toISOString(),
+      };
+    }
+
+    /*
+     * ============================================
+     * UPDATE EXISTING VERIFICATION REQUEST
+     * ============================================
+     */
+
+    await updateDoc(
+      doc(
+        db,
+        "verificationRequests",
+        verificationId
+      ),
+      {
+        verificationType,
+
+        organizationName,
+
+        contactName,
+
+        contactEmail,
+
+        country,
+
+        state,
+
+        city,
+
+        notes,
+
+        uploadedDocuments:
+          uploadedFiles,
+
+        documentsSubmitted: true,
+
+        documentSubmissionStatus:
+          "submitted",
+
+        status: "under_review",
+
+        updatedAt:
+          serverTimestamp(),
+      }
+    );
+
+    /*
+     * ============================================
+     * DOCUMENT RECORD
+     * ============================================
+     */
+
+    await addDoc(
+      collection(
+        db,
+        "verificationDocuments"
+      ),
+      {
+        verificationId,
+
+        verificationType,
+
+        uploadedDocuments:
+          uploadedFiles,
+
+        submittedBy:
+          user.uid,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    /*
+     * ============================================
+     * VERIFICATION TIMELINE
+     * ============================================
+     */
+
+    await addDoc(
+      collection(
+        db,
+        "verificationTimeline"
+      ),
+      {
+        verificationId,
+
+        title:
+          "Verification Documents Submitted",
+
+        status:
+          "Completed",
+
+        description:
+          "Required verification documents were uploaded and submitted for IFSE review.",
+
+        createdBy:
+          user.uid,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    /*
+     * ============================================
+     * IFSE SECURITY EVENT
+     * ============================================
+     */
+
+    await addDoc(
+      collection(
+        db,
+        "ifseSecurityEvents"
+      ),
+      {
+        verificationId,
+
+        eventType:
+          "documents_submitted",
+
+        verificationType,
+
+        riskScore,
+
+        threatLevel,
+
+        executiveReviewRequired,
+
+        reviewed: false,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    /*
+     * ============================================
+     * AUDIT LOG
+     * ============================================
+     */
+
+    await addDoc(
+      collection(
+        db,
+        "verificationAuditLogs"
+      ),
+      {
+        verificationId,
+
+        action:
+          "Verification Documents Submitted",
+
+        actor:
+          user.uid,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    setSuccess(
+      "Verification documents submitted successfully."
+    );
+
+    navigate(
+      "/verification-status"
+    );
+
+  } catch (err) {
+
+    console.error(
+      "Verification document submission error:",
+      err
+    );
+
+    setError(
+      "Unable to submit verification documents. Please try again."
+    );
+
+  } finally {
+
+    setLoading(false);
+
+  }
+};
     return;
   }
 
