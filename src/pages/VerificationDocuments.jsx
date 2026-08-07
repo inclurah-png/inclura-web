@@ -869,21 +869,17 @@ if (activeVerification) {
     navigate("/verification-status");
 
   } catch (err) {
-
     console.error(err);
 
     setError(
       "Unable to submit verification."
     );
-
   } finally {
-
     setLoading(false);
-
   }
-
 };
-  return (
+
+return (
 
   <DashboardLayout>
 
