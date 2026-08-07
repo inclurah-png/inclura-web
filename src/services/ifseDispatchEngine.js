@@ -573,19 +573,233 @@ await addDoc(collection(db, "satelliteEmergencyQueue"), {
 
 });
 
-console.log("Satellite Queue Created");
+console.log(
+  "Satellite Emergency Queue Created"
+);
+
+// ============================================================
+// IFSE FINAL DISPATCH AUDIT
+// ============================================================
+//
+// Records the final automatic-routing state of the SOS.
+// This is an audit record only.
+// SOS remains a free social-responsibility service.
+//
+
+await addDoc(
+  collection(
+    db,
+    "emergencyTimeline"
+  ),
+  {
+
+    timelineId:
+      emergencyId +
+      "_FINAL_DISPATCH_AUDIT_" +
+      Date.now(),
+
+    emergencyId,
+
+    eventType:
+      "IFSE Automatic Dispatch Completed",
+
+    eventDescription:
+      "IFSE completed the automatic emergency dispatch workflow and maintained routing to authorized emergency authorities.",
+
+    performedBy:
+      "IFSE Dispatch Engine",
+
+    performerType:
+      "System",
+
+    emergencyType,
+
+    emergencyService,
+
+    priority,
+
+    governmentRouting:
+      true,
+
+    paramilitaryRouting:
+      true,
+
+    militaryRouting:
+      true,
+
+    registeredIncluraOnly:
+      true,
+
+    automaticAlert:
+      true,
+
+    ifseGenerated:
+      true,
+
+    paymentRequired:
+      false,
+
+    sosService:
+      "Social Responsibility",
+
+    gpsLatitude:
+      emergencyData.gpsLatitude ||
+      0,
+
+    gpsLongitude:
+      emergencyData.gpsLongitude ||
+      0,
+
+    gpsAccuracy,
+
+    eventStatus:
+      "Completed",
+
+    visibleToGovernment:
+      true,
+
+    visibleToResponders:
+      true,
+
+    visibleToFamily:
+      true,
+
+    createdAt:
+      serverTimestamp(),
+
+    updatedAt:
+      serverTimestamp(),
+
+  }
+);
+
+console.log(
+  "IFSE Final Dispatch Audit Created"
+);
+
+// ============================================================
+// SUCCESS RESPONSE
+// ============================================================
+
+return {
+  success: true,
+
+  emergencyId,
+
+  assigned: true,
+
+  agency:
+    rule.primaryAgency,
+
+  responderId:
+    responder.id,
+
+  responderName,
+
+  emergencyService,
+
+  registeredIncluraUser:
+    registeredIncluraUser,
+
+  healthcareRouting,
+
+  paymentRequired:
+    false,
+
+  sosService:
+    "Social Responsibility",
+
+  governmentAlertInitiated:
+    true,
+
+  paramilitaryAlertInitiated:
+    true,
+
+  militaryAlertInitiated:
+    true,
+
+};
 
 } catch (err) {
 
-  await addDoc(collection(db, "dispatchDebug"), {
-    step: "ERROR",
-    message: err.message,
-    stack: err.stack || "",
-    createdAt: serverTimestamp(),
-  });
+  console.error(
+    "IFSE Dispatch Engine Error:",
+    err
+  );
 
-  console.error("IFSE Dispatch Engine Error:", err);
+  try {
+
+    await addDoc(
+      collection(
+        db,
+        "dispatchDebug"
+      ),
+      {
+
+        step:
+          "ERROR",
+
+        emergencyId:
+          emergencyId || "",
+
+        message:
+          err?.message ||
+          "Unknown dispatch error",
+
+        stack:
+          err?.stack ||
+          "",
+
+        emergencyType:
+          emergencyData?.emergencyType ||
+          "",
+
+        priority:
+          emergencyData?.priority ||
+          "",
+
+        emergencyService:
+          emergencyData?.emergencyService ||
+          "",
+
+        registeredIncluraUser:
+          emergencyData?.registeredIncluraUser === true,
+
+        healthcareRouting:
+          emergencyData?.healthcareRouting ||
+          "not_applicable",
+
+        paymentRequired:
+          false,
+
+        sosService:
+          "Social Responsibility",
+
+        createdAt:
+          serverTimestamp(),
+
+      }
+    );
+
+  } catch (debugError) {
+
+    console.error(
+      "Unable to record IFSE dispatch error:",
+      debugError
+    );
+
+  }
+
+  return {
+    success: false,
+
+    emergencyId:
+      emergencyId || "",
+
+    error:
+      err?.message ||
+      "Emergency dispatch failed.",
+  };
 
 }
-
 }
