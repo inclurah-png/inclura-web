@@ -198,87 +198,352 @@ executiveReview: ifseResult.executiveReview,
               ? documentFile.name
               : "",
 
-          documentUrl: "",
+async function handleContinue() {
+  const user = auth.currentUser;
 
-          note:
-            "Verification request submitted from Inclura Verification Center.",
+  if (!user) {
+    alert("Please login first.");
+    return;
+  }
 
-          createdAt:
-            serverTimestamp(),
+  if (!fullName.trim()) {
+    alert("Enter your full name.");
+    return;
+  }
+
+  if (!email.trim()) {
+    alert("Enter your email.");
+    return;
+  }
+
+  if (!phone.trim()) {
+    alert("Enter your phone number.");
+    return;
+  }
+
+  if (!verificationType) {
+    alert("Select a verification type.");
+    return;
+  }
+
+  try {
+    const ifseResult = processVerification({
+      identityVerified:
+        !!fullName.trim() &&
+        !!email.trim() &&
+        !!phone.trim(),
+
+      // Selecting a document does NOT mean
+      // the document has already been authenticated.
+      documentVerified: false,
+
+      duplicateChecked: true,
+
+      fraudChecked: true,
+
+      businessValidated:
+        category === "creator"
+          ? true
+          : !!organizationName.trim(),
+
+      governmentValidated:
+        category === "government",
+
+      accessibilityValidated: true,
+
+      paymentVerified:
+        paymentAmount === 0,
+    });
+
+    // ==========================================
+    // CREATE VERIFICATION REQUEST
+    // ==========================================
+
+    const verificationRef = await addDoc(
+      collection(db, "verificationRequests"),
+      {
+        // ========================================
+        // USER IDENTITY
+        // ========================================
+
+        userId: user.uid,
+
+        // Required for VerificationCenter history
+        submittedBy: user.uid,
+
+        // ========================================
+        // APPLICATION INFORMATION
+        // ========================================
+
+        category,
+
+        verificationType,
+
+        accountType: category,
+
+        fullName,
+
+        email,
+
+        phone,
+
+        organizationName,
+
+        website,
+
+        socialLink1,
+
+        socialLink2,
+
+        officialEmail,
+
+        // ========================================
+        // PAYMENT
+        // ========================================
+
+        paymentAmount,
+
+        paymentStatus:
+          paymentAmount > 0
+            ? "pending"
+            : "free",
+
+        // ========================================
+        // VERIFICATION WORKFLOW
+        // ========================================
+
+        status: "pending",
+
+        // ========================================
+        // IFSE SCREENING RESULT
+        // ========================================
+
+        ifseScore:
+          ifseResult.score || 0,
+
+        ifseStatus:
+          ifseResult.status || "PENDING",
+
+        ifseMessage:
+          ifseResult.message || "",
+
+        ifseBadge:
+          ifseResult.badge || "",
+
+        executiveReview:
+          !!ifseResult.executiveReview,
+
+        // ========================================
+        // NORMALIZED IFSE FIELDS
+        // Used by VerificationCenter
+        // ========================================
+
+        riskScore:
+          ifseResult.score || 0,
+
+        threatLevel:
+          ifseResult.status === "REJECTED"
+            ? "High"
+            : "Low",
+
+        executiveReviewRequired:
+          !!ifseResult.executiveReview,
+
+        // ========================================
+        // ENTERPRISE
+        // ========================================
+
+        enterprise:
+          isEnterprise,
+
+        // ========================================
+        // DOCUMENT
+        // ========================================
+
+        documentName:
+          documentFile
+            ? documentFile.name
+            : "",
+
+        // Actual storage URL will be added
+        // by the document workflow.
+        documentUrl: "",
+
+        // File selection is NOT authentication.
+        documentVerified: false,
+
+        // ========================================
+        // APPLICATION METADATA
+        // ========================================
+
+        note:
+          "Verification request submitted from Inclura Verification Center.",
+
+        createdAt:
+          serverTimestamp(),
+
+        updatedAt:
+          serverTimestamp(),
+      }
+    );
+
+    // ==========================================
+    // VERIFICATION TIMELINE
+    // ==========================================
+
+    await addDoc(
+      collection(db, "verificationTimeline"),
+      {
+        verificationId:
+          verificationRef.id,
+
+        title:
+          "Application Submitted",
+
+        status:
+          "Completed",
+
+        description:
+          "Verification application successfully submitted and entered into the IFSE verification workflow.",
+
+        createdBy:
+          user.uid,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    // ==========================================
+    // VERIFICATION AUDIT LOG
+    // ==========================================
+
+    await addDoc(
+      collection(db, "verificationAuditLogs"),
+      {
+        verificationId:
+          verificationRef.id,
+
+        action:
+          "Verification application submitted",
+
+        performedBy:
+          user.uid,
+
+        category,
+
+        verificationType,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    // ==========================================
+    // IFSE SECURITY EVENT
+    // ==========================================
+
+    await addDoc(
+      collection(db, "ifseSecurityEvents"),
+      {
+        verificationId:
+          verificationRef.id,
+
+        eventType:
+          "Application Received",
+
+        threatLevel:
+          ifseResult.status === "REJECTED"
+            ? "High"
+            : "Low",
+
+        riskScore:
+          ifseResult.score || 0,
+
+        // The security lifecycle is not finished
+        // simply because the application was received.
+        resolved: false,
+
+        createdAt:
+          serverTimestamp(),
+      }
+    );
+
+    // ==========================================
+    // ROUTING
+    // ==========================================
+
+    // Corporate / contract-required verification
+    if (requiresContract) {
+      navigate(contractRoute, {
+        state: {
+          verificationId:
+            verificationRef.id,
+        },
+      });
+
+      return;
+    }
+
+    // Enterprise partnership
+    if (isEnterprise) {
+      navigate(
+        "/enterprise-partnership",
+        {
+          state: {
+            verificationId:
+              verificationRef.id,
+          },
         }
       );
-      await addDoc(
-  collection(db, "verificationTimeline"),
-  {
-    verificationId: verificationRef.id,
-    title: "Application Submitted",
-    status: "Completed",
-    description: "Verification application successfully submitted.",
-    createdBy: user.uid,
-    createdAt: serverTimestamp(),
-  }
-);
 
-await addDoc(
-  collection(db, "verificationAuditLogs"),
-  {
-    verificationId: verificationRef.id,
-    action: "Verification application submitted",
-    performedBy: user.uid,
-    createdAt: serverTimestamp(),
-  }
-);
-
-await addDoc(
-  collection(db, "ifseSecurityEvents"),
-  {
-    verificationId: verificationRef.id,
-    eventType: "Application Received",
-    threatLevel: "Low",
-    riskScore: 0,
-    resolved: true,
-    createdAt: serverTimestamp(),
-  }
-);
-
-      if (requiresContract) {
-  navigate(contractRoute);
-  return;
-}
-
-if (isEnterprise) {
-  navigate("/enterprise-partnership");
-  return;
-}
-
-if (paymentAmount > 0) {
-  navigate("/creator-verification-payment", {
-    state: {
-      verificationId: verificationRef.id,
-      verificationType,
-      category,
-      paymentAmount,
-    },
-  });
-  return;
-}
-
-      alert(
-        "Verification request submitted successfully."
-      );
-
-      navigate(
-        "/verification-status"
-      );
-    } catch (error) {
-      console.error(error);
-
-      alert(
-        "Unable to submit verification request."
-      );
+      return;
     }
-  }
 
+    // Paid verification
+    if (paymentAmount > 0) {
+      navigate(
+        "/creator-verification-payment",
+        {
+          state: {
+            verificationId:
+              verificationRef.id,
+
+            verificationType,
+
+            category,
+
+            paymentAmount,
+          },
+        }
+      );
+
+      return;
+    }
+
+    // ==========================================
+    // FREE / NO-PAYMENT VERIFICATION
+    // ==========================================
+
+    alert(
+      "Verification request submitted successfully."
+    );
+
+    navigate(
+      "/verification-status"
+    );
+
+  } catch (error) {
+    console.error(
+      "Verification Application Error:",
+      error
+    );
+
+    alert(
+      "Unable to submit verification request."
+    );
+  }
+}
   const inputStyle = {
     width: "100%",
     padding: "12px",
