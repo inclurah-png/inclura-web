@@ -24,19 +24,15 @@ import EmergencyAnalytics from "./EmergencyAnalytics";
 function SOS() {
   
 const [sosForm, setSosForm] = useState({
-
   emergencyType: "Medical",
-
   priority: "Low",
-
   description: "",
-
   location: "",
-
+  latitude: "",
+  longitude: "",
+  accuracy: "",
   trustedContact: "",
-
   responderNotes: "",
-
 });
   
   const [sosStats, setSosStats] = useState({
@@ -55,63 +51,63 @@ const [sosForm, setSosForm] = useState({
   async function loadSOSStats() {
     try {
       const openSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("status", "==", "open")
-        )
-      );
+  query(
+    collection(db, "emergencySOS"),
+    where("status", "==", "open")
+  )
+);
 
-      const resolvedSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("status", "==", "resolved")
-        )
-      );
+const resolvedSnap = await getCountFromServer(
+  query(
+    collection(db, "emergencySOS"),
+    where("status", "==", "resolved")
+  )
+);
 
-      const highSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("priority", "==", "high")
-        )
-      );
+const highSnap = await getCountFromServer(
+  query(
+    collection(db, "emergencySOS"),
+    where("priority", "==", "High")
+  )
+);
 
-      const medicalSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("emergencyType", "==", "Medical")
-        )
-      );
+const medicalSnap = await getCountFromServer(
+  query(
+    collection(db, "emergencySOS"),
+    where("emergencyType", "==", "Medical")
+  )
+);
 
-      const fireSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("emergencyType", "==", "Fire")
-        )
-      );
+const fireSnap = await getCountFromServer(
+  query(
+    collection(db, "emergencySOS"),
+    where("emergencyType", "==", "Fire")
+  )
+);
 
-      const policeSnap = await getCountFromServer(
-        query(
-          collection(db, "emergencySOS"),
-          where("emergencyType", "==", "Police")
-        )
-      );
+const policeSnap = await getCountFromServer(
+  query(
+    collection(db, "emergencySOS"),
+    where("emergencyType", "==", "Police")
+  )
+);
 
-      const responderSnap = await getCountFromServer(
-        query(
-          collection(db, "users"),
-          where("isResponder", "==", true)
-        )
-      );
+const responderSnap = await getCountFromServer(
+  query(
+    collection(db, "users"),
+    where("isResponder", "==", true)
+  )
+);
 
-      setSosStats({
-        open: Math.max(0, openSnap.data().count - 1),
-        resolved: resolvedSnap.data().count,
-        highPriority: Math.max(0, highSnap.data().count - 1),
-        medical: Math.max(0, medicalSnap.data().count - 1),
-        fire: Math.max(0, fireSnap.data().count - 1),
-        police: Math.max(0, policeSnap.data().count - 1),
-        responders: responderSnap.data().count,
-      });
+setSosStats({
+  open: openSnap.data().count,
+  resolved: resolvedSnap.data().count,
+  highPriority: highSnap.data().count,
+  medical: medicalSnap.data().count,
+  fire: fireSnap.data().count,
+  police: policeSnap.data().count,
+  responders: responderSnap.data().count,
+});
 
     } catch (err) {
       console.error(err);
