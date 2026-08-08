@@ -13,6 +13,8 @@ import { db } from "../firebase";
 
 export async function dispatchEmergency(emergencyData) {
 
+  const emergencyId = emergencyData?.id || "";
+
   try {
 
     console.log("🛡 IFSE Dispatch Engine Started");
@@ -21,12 +23,12 @@ export async function dispatchEmergency(emergencyData) {
 
     const priority = emergencyData.priority;
 
-await addDoc(collection(db, "dispatchDebug"), {
-  step: "STEP 1",
-  emergencyData,
-  emergencyId,
-  createdAt: serverTimestamp(),
-});
+    await addDoc(collection(db, "dispatchDebug"), {
+      step: "STEP 1",
+      emergencyData,
+      emergencyId,
+      createdAt: serverTimestamp(),
+    });
     
     console.log("========== IFSE DISPATCH ==========");
 console.log("Emergency Data Received:", emergencyData);
@@ -156,12 +158,12 @@ await addDoc(collection(db, "emergencyAssignments"), {
 
   responderId: responder.id,
 
-responderName: selectedResponderName,
+  responderName: selectedResponderName,
 
-responderAgency: rule.primaryAgency,
+  responderAgency: rule.primaryAgency,
 
-responderType: responderData.responderType || "Government",
-  
+  responderType: responderData.responderType || "Government",
+
   assignedBy: "IFSE Auto Dispatch",
 
   assignmentStatus: "Pending",
@@ -212,7 +214,7 @@ await updateDoc(
     status: "assigned",
 
     assignedResponder: selectedResponderName,
-    
+
     assignedResponderId: responder.id,
 
     assignedAgency: rule.primaryAgency,
@@ -662,38 +664,30 @@ return {
 
   assigned: true,
 
-  agency:
-    rule.primaryAgency,
+  agency: rule.primaryAgency,
 
-  responderId:
-    responder.id,
+  responderId: responder.id,
 
-  responderName:
-    selectedResponderName,
+  responderName: selectedResponderName,
 
   emergencyService:
-    emergencyData?.emergencyService || "Emergency SOS",
+    emergencyData?.emergencyService || "",
 
-  registeredIncluraUser: true,
+  registeredIncluraUser:
+    Boolean(emergencyData?.userId),
 
   healthcareRouting:
-    emergencyType === "Medical"
-      ? "healthcare"
-      : "not_applicable",
+    emergencyData?.healthcareRouting || "not_applicable",
 
   paymentRequired: false,
 
-  sosService:
-    "Social Responsibility",
+  sosService: "Social Responsibility",
 
-  governmentAlertInitiated:
-    !!rule.notifyGovernment,
+  governmentAlertInitiated: true,
 
-  paramilitaryAlertInitiated:
-    true,
+  paramilitaryAlertInitiated: true,
 
-  militaryAlertInitiated:
-    true,
+  militaryAlertInitiated: true,
 };
     
 } catch (err) {
@@ -706,17 +700,11 @@ return {
   try {
 
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
+        step: "ERROR",
 
-        step:
-          "ERROR",
-
-        emergencyId:
-          emergencyId || "",
+        emergencyId,
 
         message:
           err?.message ||
@@ -727,33 +715,26 @@ return {
           "",
 
         emergencyType:
-          emergencyData?.emergencyType ||
-          "",
+          emergencyData?.emergencyType || "",
 
         priority:
-          emergencyData?.priority ||
-          "",
+          emergencyData?.priority || "",
 
         emergencyService:
-          emergencyData?.emergencyService ||
-          "",
+          emergencyData?.emergencyService || "",
 
         registeredIncluraUser:
-          emergencyData?.registeredIncluraUser === true,
+          Boolean(emergencyData?.userId),
 
         healthcareRouting:
           emergencyData?.healthcareRouting ||
           "not_applicable",
 
-        paymentRequired:
-          false,
+        paymentRequired: false,
 
-        sosService:
-          "Social Responsibility",
+        sosService: "Social Responsibility",
 
-        createdAt:
-          serverTimestamp(),
-
+        createdAt: serverTimestamp(),
       }
     );
 
@@ -769,13 +750,10 @@ return {
   return {
     success: false,
 
-    emergencyId:
-      emergencyId || "",
+    emergencyId,
 
     error:
       err?.message ||
       "Emergency dispatch failed.",
   };
-
-}
 }
