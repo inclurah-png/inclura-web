@@ -91,13 +91,17 @@ switch (rule.primaryAgency) {
     responderCollection = "disasterResponders";
     break;
 
-  case "Community":
-    responderCollection = "communityResponders";
-    break;
+case "Community":
+  responderCollection = "communityResponders";
+  break;
 
-  default:
-    console.log("Unknown responder agency.");
-    return;
+case "Paramilitary":
+  responderCollection = "paramilitaryResponders";
+  break;
+
+default:
+  console.log("Unknown responder agency.");
+  return;
 
 }
 
@@ -142,6 +146,58 @@ const responderData = responder.data();
   responderData.name ||
   responderData.username ||
   "Emergency Response Team";
+
+// =========================
+// IFSE Paramilitary Routing
+// =========================
+
+const paramilitaryRequired =
+  rule.paramilitaryRequired === true;
+
+const paramilitaryAgency =
+  rule.paramilitaryAgency || "";
+
+let paramilitaryResponderCollection = "";
+
+if (paramilitaryRequired && paramilitaryAgency) {
+
+  switch (paramilitaryAgency) {
+
+    case "NSCDC":
+      paramilitaryResponderCollection = "nscdcResponders";
+      break;
+
+    case "FRSC":
+      paramilitaryResponderCollection = "frscResponders";
+      break;
+
+    case "NDLEA":
+      paramilitaryResponderCollection = "ndleaResponders";
+      break;
+
+    default:
+      console.log(
+        "Unknown paramilitary agency:",
+        paramilitaryAgency
+      );
+  }
+
+}
+
+console.log(
+  "Paramilitary Required:",
+  paramilitaryRequired
+);
+
+console.log(
+  "Paramilitary Agency:",
+  paramilitaryAgency
+);
+
+console.log(
+  "Paramilitary Responder Collection:",
+  paramilitaryResponderCollection
+);
 
 console.log("Responder Selected:", responderData);
 
