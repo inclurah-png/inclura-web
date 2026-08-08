@@ -21,7 +21,6 @@ export async function dispatchEmergency(emergencyData) {
 
     const priority = emergencyData.priority;
 
-    const emergencyId = emergencyData.id;
 await addDoc(collection(db, "dispatchDebug"), {
   step: "STEP 1",
   emergencyData,
@@ -135,6 +134,12 @@ if (responderSnapshot.empty) {
 const responder = responderSnapshot.docs[0];
 
 const responderData = responder.data();
+  const selectedResponderName =
+  responderData.fullName ||
+  responderData.displayName ||
+  responderData.name ||
+  responderData.username ||
+  "Emergency Response Team";
 
 console.log("Responder Selected:", responderData);
 
@@ -151,12 +156,7 @@ await addDoc(collection(db, "emergencyAssignments"), {
 
   responderId: responder.id,
 
-responderName:
-  responderData.fullName ||
-  responderData.displayName ||
-  responderData.name ||
-  responderData.username ||
-  "Emergency Response Team",
+responderName: selectedResponderName,
 
 responderAgency: rule.primaryAgency,
 
@@ -211,13 +211,8 @@ await updateDoc(
   {
     status: "assigned",
 
-    assignedResponder:
-  responderData.fullName ||
-  responderData.displayName ||
-  responderData.name ||
-  responderData.username ||
-  "Emergency Response Team",
-
+    assignedResponder: selectedResponderName,
+    
     assignedResponderId: responder.id,
 
     assignedAgency: rule.primaryAgency,
@@ -256,12 +251,8 @@ await addDoc(collection(db, "emergencyTimeline"), {
   responderId: responder.id,
 
   responderAgency: rule.primaryAgency,
-  responderName:
-  responderData.fullName ||
-  responderData.displayName ||
-  responderData.name ||
-  responderData.username ||
-  "",
+  
+  responderName: selectedResponderName,
 
   eventStatus: "Completed",
 
@@ -587,12 +578,8 @@ console.log(
 //
 
 await addDoc(
-  collection(
-    db,
-    "emergencyTimeline"
-  ),
+  collection(db, "emergencyTimeline"),
   {
-
     timelineId:
       emergencyId +
       "_FINAL_DISPATCH_AUDIT_" +
@@ -614,62 +601,49 @@ await addDoc(
 
     emergencyType,
 
-    emergencyService,
+    emergencyService:
+      emergencyData?.emergencyService || "Emergency SOS",
 
     priority,
 
-    governmentRouting:
-      true,
+    governmentRouting: true,
 
-    paramilitaryRouting:
-      true,
+    paramilitaryRouting: true,
 
-    militaryRouting:
-      true,
+    militaryRouting: true,
 
-    registeredIncluraOnly:
-      true,
+    registeredIncluraOnly: true,
 
-    automaticAlert:
-      true,
+    automaticAlert: true,
 
-    ifseGenerated:
-      true,
+    ifseGenerated: true,
 
-    paymentRequired:
-      false,
+    paymentRequired: false,
 
     sosService:
       "Social Responsibility",
 
     gpsLatitude:
-      emergencyData.gpsLatitude ||
-      0,
+      emergencyData?.gpsLatitude || 0,
 
     gpsLongitude:
-      emergencyData.gpsLongitude ||
-      0,
+      emergencyData?.gpsLongitude || 0,
 
-    gpsAccuracy,
+    gpsAccuracy:
+      emergencyData?.accuracy || 0,
 
     eventStatus:
       "Completed",
 
-    visibleToGovernment:
-      true,
+    visibleToGovernment: true,
 
-    visibleToResponders:
-      true,
+    visibleToResponders: true,
 
-    visibleToFamily:
-      true,
+    visibleToFamily: true,
 
-    createdAt:
-      serverTimestamp(),
+    createdAt: serverTimestamp(),
 
-    updatedAt:
-      serverTimestamp(),
-
+    updatedAt: serverTimestamp(),
   }
 );
 
@@ -694,32 +668,34 @@ return {
   responderId:
     responder.id,
 
-  responderName,
+  responderName:
+    selectedResponderName,
 
-  emergencyService,
+  emergencyService:
+    emergencyData?.emergencyService || "Emergency SOS",
 
-  registeredIncluraUser:
-    registeredIncluraUser,
+  registeredIncluraUser: true,
 
-  healthcareRouting,
+  healthcareRouting:
+    emergencyType === "Medical"
+      ? "healthcare"
+      : "not_applicable",
 
-  paymentRequired:
-    false,
+  paymentRequired: false,
 
   sosService:
     "Social Responsibility",
 
   governmentAlertInitiated:
-    true,
+    !!rule.notifyGovernment,
 
   paramilitaryAlertInitiated:
     true,
 
   militaryAlertInitiated:
     true,
-
 };
-
+    
 } catch (err) {
 
   console.error(
