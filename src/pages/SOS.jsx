@@ -190,30 +190,22 @@ async function submitEmergencySOS() {
   lastUpdated: serverTimestamp(),
 
 });
-    await dispatchEmergency({
 
-  id: emergencyRef.id,
+  const emergencyId = emergencyRef.id;
 
+await dispatchEmergency({
+  id: emergencyId,
   userId: auth.currentUser?.uid || "",
-
   userName: auth.currentUser?.displayName || "",
-
   userEmail: auth.currentUser?.email || "",
-
   emergencyType: sosForm.emergencyType,
-
   priority: sosForm.priority,
-
   description: sosForm.description,
-
   location: sosForm.location,
-
-  gpsLatitude: sosForm.latitude || 0,
-
-  gpsLongitude: sosForm.longitude || 0,
-
+  gpsLatitude: Number(sosForm.latitude) || 0,
+  gpsLongitude: Number(sosForm.longitude) || 0,
 });
-
+    
     alert("Emergency SOS submitted successfully.");
 
     setSosForm({
