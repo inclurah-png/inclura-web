@@ -747,7 +747,7 @@ return {
 
   }
 
-  return {
+    return {
     success: false,
 
     emergencyId,
@@ -756,4 +756,5 @@ return {
       err?.message ||
       "Emergency dispatch failed.",
   };
+}
 }
