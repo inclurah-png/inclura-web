@@ -170,23 +170,67 @@ default:
 
 // Search available responders
 
-const responderQuery = query(
-
-  collection(db, responderCollection),
-
-  where("available", "==", true),
-
-  where("onDuty", "==", true),
-
-  where("verified", "==", true),
-
-  where("ifseVerified", "==", true),
-
-  where("suspended", "==", false)
-
+const responderSnapshot = await getDocs(
+  collection(db, responderCollection)
 );
 
-const responderSnapshot = await getDocs(responderQuery);
+const eligibleResponders = responderSnapshot.docs.filter(
+  (responderDoc) => {
+
+    const data = responderDoc.data();
+
+    return (
+      data.available === true &&
+      data.onDuty === true &&
+      data.verified === true &&
+      data.ifseVerified === true &&
+      data.suspended === false
+    );
+
+  }
+);
+
+await addDoc(collection(db, "dispatchDebug"), {
+  step: "STEP 2",
+  responderCollection,
+  respondersFound: responderSnapshot.size,
+  eligibleResponders: eligibleResponders.length,
+  createdAt: serverTimestamp(),
+});
+
+if (eligibleResponders.length === 0) {
+
+  console.log(
+    "No eligible responder found in:",
+    responderCollection
+  );
+
+  return {
+    success: false,
+    emergencyId,
+    assigned: false,
+    error:
+      "No eligible responder found in " +
+      responderCollection,
+  };
+
+}
+
+const responder = eligibleResponders[0];
+
+const responderData = responder.data();
+
+const selectedResponderName =
+  responderData.fullName ||
+  responderData.displayName ||
+  responderData.name ||
+  responderData.username ||
+  "Emergency Response Team";
+
+console.log(
+  "Eligible responder selected:",
+  responderData
+);
 
 await addDoc(collection(db, "dispatchDebug"), {
   step: "STEP 2",
