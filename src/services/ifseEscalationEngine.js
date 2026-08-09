@@ -31,9 +31,9 @@ where("active", "==", true)
 const ruleSnapshot = await getDocs(ruleQuery);
 
 if (ruleSnapshot.empty) {
-throw new Error(
-No active emergency response rule found for ${emergencyData.emergencyType}.
-);
+  throw new Error(
+    `No active emergency response rule found for ${emergencyData.emergencyType}.`
+  );
 }
 
 const ruleDoc = ruleSnapshot.docs[0];
