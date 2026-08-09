@@ -1,52 +1,83 @@
 import {
+  addDoc,
+  updateDoc,
+  doc,
   collection,
   query,
   where,
   getDocs,
-  addDoc,
-  updateDoc,
-  doc,
   serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
 
+const emergencyRuleMap = {
+  Medical: "MEDICAL",
 
-/**
- * Creates the IFSE escalation queue entry for an already
- * validated and dispatched emergency.
- *
- * IMPORTANT:
- * The dispatch engine is responsible for resolving the
- * emergencyResponseRules document.
- *
- * This engine therefore receives the rule directly instead
- * of performing a second emergencyType lookup.
- */
-export async function createEmergencyEscalation(
-  emergencyData,
-  rule,
-  ruleDocumentId,
-  responderId = ""
-) {
+  Fire: "FIRE",
 
+  Police: "POLICE",
+
+  Kidnapping: "ARMED_ATTACK",
+
+  "Security Threat": "ARMED_ATTACK",
+
+  "Armed Attack": "ARMED_ATTACK",
+
+  Accident: "MEDICAL",
+
+  "Missing Person": "POLICE",
+
+  Flood: "FLOOD",
+
+  Disaster: "FLOOD",
+};
+
+export async function createEmergencyEscalation(emergencyData) {
   const emergencyId = emergencyData?.id || "";
+  const emergencyType = emergencyData?.emergencyType || "";
 
   if (!emergencyId) {
-    throw new Error(
-      "IFSE Escalation Error: Emergency ID is missing."
-    );
+    throw new Error("Emergency ID is missing.");
   }
+
+  if (!emergencyType) {
+    throw new Error("Emergency type is missing.");
+  }
+
+  const ruleDocumentId = emergencyRuleMap[emergencyType];
 
   if (!ruleDocumentId) {
     throw new Error(
-      "IFSE Escalation Error: Rule document ID is missing."
+      `IFSE Escalation Error: No authoritative rule mapping exists for emergency type "${emergencyType}".`
     );
   }
 
-  if (!rule) {
+  const ruleRef = doc(
+    db,
+    "emergencyResponseRules",
+    ruleDocumentId
+  );
+
+  const ruleSnapshot = await getDocs(
+    query(
+      collection(db, "emergencyResponseRules"),
+      where("__name__", "==", ruleDocumentId)
+    )
+  );
+
+  if (ruleSnapshot.empty) {
     throw new Error(
-      "IFSE Escalation Error: Emergency response rule is missing."
+      `IFSE Escalation Error: Authoritative rule document "${ruleDocumentId}" was not found.`
+    );
+  }
+
+  const ruleDoc = ruleSnapshot.docs[0];
+  const rule = ruleDoc.data();
+
+  if (rule.active !== true) {
+    throw new Error(
+      `IFSE Escalation Error: Authoritative rule "${ruleDocumentId}" is inactive.`
     );
   }
 
@@ -55,29 +86,26 @@ export async function createEmergencyEscalation(
     {
       emergencyId,
 
-      emergencyType:
-        emergencyData?.emergencyType || "",
+      emergencyType,
 
       priority:
-        emergencyData?.priority ||
-        rule?.priority ||
+        emergencyData.priority ||
+        rule.priority ||
         "Low",
-
-      responderId,
 
       ruleDocumentId,
 
       primaryAgency:
-        rule?.primaryAgency || "",
+        rule.primaryAgency || "",
 
       secondaryAgency:
-        rule?.secondaryAgency || "",
+        rule.secondaryAgency || "",
 
       tertiaryAgency:
-        rule?.tertiaryAgency || "",
+        rule.tertiaryAgency || "",
 
       escalationMinutes:
-        Number(rule?.escalationMinutes) || 0,
+        Number(rule.escalationMinutes) || 0,
 
       escalationLevel: 0,
 
@@ -103,19 +131,14 @@ export async function createEmergencyEscalation(
     }
   );
 
-  console.log(
-    "IFSE Escalation Queue Created:",
-    escalationRef.id
-  );
-
   return {
     success: true,
     escalationId: escalationRef.id,
     emergencyId,
+    emergencyType,
     ruleDocumentId,
   };
 }
-
 
 /**
  * Processes existing Waiting escalation records.
