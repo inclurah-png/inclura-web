@@ -2,7 +2,6 @@ import {
   createEmergencyEscalation,
 } from "../services/ifseEscalationEngine";
 
-import { dispatchEmergency } from "../services/ifseDispatchEngine";
 import { useEffect, useState } from "react";
 import {
   collection,
@@ -122,122 +121,180 @@ setSosStats({
 }, []);
 
 async function submitEmergencySOS() {
-
   try {
 
-    const emergencyRef = await addDoc(collection(db, "emergencySOS"), {
+    const currentUser = auth.currentUser;
 
-  systemPlaceholder: false,
+    if (!currentUser) {
+      throw new Error(
+        "You must be logged in to send an emergency SOS."
+      );
+    }
 
-  userId: auth.currentUser?.uid || "",
+    // STEP 1 — Create the emergency SOS
+    const emergencyRef = await addDoc(
+      collection(db, "emergencySOS"),
+      {
+        systemPlaceholder: false,
 
-  userName: auth.currentUser?.displayName || "",
+        userId: currentUser.uid,
 
-  userEmail: auth.currentUser?.email || "",
+        userName:
+          currentUser.displayName || "",
 
-  userPhoto: auth.currentUser?.photoURL || "",
+        userEmail:
+          currentUser.email || "",
 
-  emergencyType: sosForm.emergencyType,
+        userPhoto:
+          currentUser.photoURL || "",
 
-  priority: sosForm.priority,
+        emergencyType:
+          sosForm.emergencyType,
 
-  description: sosForm.description,
+        priority:
+          sosForm.priority,
 
-  location: sosForm.location,
+        description:
+          sosForm.description,
 
-  latitude: sosForm.latitude || "",
+        location:
+          sosForm.location,
 
-  longitude: sosForm.longitude || "",
+        latitude:
+          sosForm.latitude || "",
 
-  accuracy: sosForm.accuracy || "",
+        longitude:
+          sosForm.longitude || "",
 
-  trustedContact: sosForm.trustedContact,
+        accuracy:
+          sosForm.accuracy || "",
 
-  responderNotes: sosForm.responderNotes,
+        trustedContact:
+          sosForm.trustedContact || "",
 
-  status: "open",
+        responderNotes:
+          sosForm.responderNotes || "",
 
-  handledBy: "",
+        status: "open",
 
-  resolved: false,
+        handledBy: "",
 
-  assignedResponder: "",
+        resolved: false,
 
-  assignedResponderId: "",
+        assignedResponder: "",
 
-  incidentStatus: "Active",
+        assignedResponderId: "",
 
-  incidentNumber: Date.now().toString(),
+        incidentStatus: "Active",
 
-  assignedStation: "",
+        incidentNumber:
+          Date.now().toString(),
 
-  assignedVehicle: "",
+        assignedStation: "",
 
-  estimatedArrival: "",
+        assignedVehicle: "",
 
-  responseStatus: "Awaiting Response",
+        estimatedArrival: "",
 
-  ifseThreatScore: 0,
+        responseStatus:
+          "Awaiting Response",
 
-  ifseClassification: "Pending",
+        ifseThreatScore: 0,
 
-  resolvedBy: "",
+        ifseClassification:
+          "Pending",
 
-  resolutionNotes: "",
+        resolvedBy: "",
 
-  closedAt: null,
+        resolutionNotes: "",
 
-  createdAt: serverTimestamp(),
+        closedAt: null,
 
-  updatedAt: serverTimestamp(),
+        createdAt:
+          serverTimestamp(),
 
-  lastUpdated: serverTimestamp(),
+        updatedAt:
+          serverTimestamp(),
 
-});
+        lastUpdated:
+          serverTimestamp(),
+      }
+    );
 
-  const emergencyId = emergencyRef.id;
+    const emergencyId =
+      emergencyRef.id;
 
-await dispatchEmergency({
-  id: emergencyId,
-  userId: auth.currentUser?.uid || "",
-  userName: auth.currentUser?.displayName || "",
-  userEmail: auth.currentUser?.email || "",
-  emergencyType: sosForm.emergencyType,
-  priority: sosForm.priority,
-  description: sosForm.description,
-  location: sosForm.location,
-  gpsLatitude: Number(sosForm.latitude) || 0,
-  gpsLongitude: Number(sosForm.longitude) || 0,
-});
-    
-    alert("Emergency SOS submitted successfully.");
+
+    // STEP 2 — Create IFSE escalation queue entry
+    const escalationResult =
+      await createEmergencyEscalation({
+        id: emergencyId,
+
+        userId:
+          currentUser.uid,
+
+        userName:
+          currentUser.displayName || "",
+
+        userEmail:
+          currentUser.email || "",
+
+        emergencyType:
+          sosForm.emergencyType,
+
+        priority:
+          sosForm.priority,
+
+        description:
+          sosForm.description,
+
+        location:
+          sosForm.location,
+      });
+
+
+    console.log(
+      "Emergency SOS Created:",
+      emergencyId
+    );
+
+    console.log(
+      "IFSE Escalation Created:",
+      escalationResult
+    );
+
+
+    alert(
+      `Emergency SOS submitted successfully.\n\nEmergency ID: ${emergencyId}\nEscalation ID: ${escalationResult.escalationId}`
+    );
+
 
     setSosForm({
-
       emergencyType: "Medical",
-
       priority: "Low",
-
       description: "",
-
       location: "",
-
+      latitude: "",
+      longitude: "",
+      accuracy: "",
       trustedContact: "",
-
       responderNotes: "",
-
     });
 
     window.location.reload();
 
   } catch (err) {
 
-  console.error("SOS Error:", err);
+    console.error(
+      "SOS Error:",
+      err
+    );
 
-  alert(err.message);
-
-}
-
+    alert(
+      err?.message ||
+      "Unable to submit emergency SOS."
+    );
+  }
 }
   
   return (
