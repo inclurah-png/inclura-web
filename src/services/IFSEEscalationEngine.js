@@ -3,6 +3,7 @@ import {
   query,
   where,
   getDocs,
+  addDoc,
   updateDoc,
   doc,
   serverTimestamp,
@@ -10,63 +11,119 @@ import {
 
 import { db } from "../firebase";
 
+export async function createEmergencyEscalation(emergencyData) {
+  const emergencyId = emergencyData?.id || "";
+
+  if (!emergencyId) {
+    throw new Error("Emergency ID is missing.");
+  }
+
+  const ruleQuery = query(
+    collection(db, "emergencyResponseRules"),
+    where(
+      "emergencyType",
+      "==",
+      emergencyData.emergencyType
+    ),
+    where("active", "==", true)
+  );
+
+  const ruleSnapshot = await getDocs(ruleQuery);
+
+  if (ruleSnapshot.empty) {
+    throw new Error(
+      `No active emergency response rule found for ${emergencyData.emergencyType}.`
+    );
+  }
+
+  const ruleDoc = ruleSnapshot.docs[0];
+  const rule = ruleDoc.data();
+
+  const escalationRef = await addDoc(
+    collection(db, "emergencyEscalationQueue"),
+    {
+      emergencyId,
+
+      emergencyType:
+        emergencyData.emergencyType || "",
+
+      priority:
+        emergencyData.priority ||
+        rule.priority ||
+        "Low",
+
+      ruleDocumentId: ruleDoc.id,
+
+      primaryAgency:
+        rule.primaryAgency || "",
+
+      secondaryAgency:
+        rule.secondaryAgency || "",
+
+      tertiaryAgency:
+        rule.tertiaryAgency || "",
+
+      escalationMinutes:
+        Number(rule.escalationMinutes) || 0,
+
+      escalationLevel: 0,
+
+      waitingForAcceptance: true,
+
+      accepted: false,
+
+      acceptedAt: null,
+
+      governmentEscalated: false,
+
+      paramilitaryEscalated: false,
+
+      militaryEscalated: false,
+
+      satelliteActivated: false,
+
+      status: "Waiting",
+
+      createdAt: serverTimestamp(),
+
+      updatedAt: serverTimestamp(),
+    }
+  );
+
+  return {
+    success: true,
+    escalationId: escalationRef.id,
+    emergencyId,
+  };
+}
+
+
 export async function runIFSEEscalationEngine() {
   try {
-    console.log("🛡 IFSE Escalation Engine Started");
-
     const escalationQuery = query(
       collection(db, "emergencyEscalationQueue"),
       where("status", "==", "Waiting")
     );
 
-    const escalationSnapshot = await getDocs(escalationQuery);
+    const snapshot = await getDocs(escalationQuery);
 
-    console.log(
-      "Escalation Queue Found:",
-      escalationSnapshot.size
-    );
-
-    for (const escalationDoc of escalationSnapshot.docs) {
+    for (const escalationDoc of snapshot.docs) {
       const escalation = escalationDoc.data();
 
-      const createdTime = escalation.createdAt?.toDate();
+      const createdAt =
+        escalation.createdAt?.toDate();
 
-      if (!createdTime) {
-        console.log(
-          "Escalation skipped: missing createdAt",
-          escalationDoc.id
-        );
-        continue;
-      }
-
-      const now = new Date();
+      if (!createdAt) continue;
 
       const elapsedMinutes = Math.floor(
-        (now.getTime() - createdTime.getTime()) / 60000
+        (Date.now() - createdAt.getTime()) /
+          60000
       );
 
-      const escalationMinutes =
+      const limit =
         Number(escalation.escalationMinutes) || 0;
 
-      console.log(
-        "Emergency:",
-        escalation.emergencyId
-      );
-
-      console.log(
-        "Elapsed Minutes:",
-        elapsedMinutes
-      );
-
-      console.log(
-        "Escalation Limit:",
-        escalationMinutes
-      );
-
-      if (elapsedMinutes >= escalationMinutes) {
-        const newLevel =
-          (Number(escalation.escalationLevel) || 0) + 1;
-
+      if (elapsedMinutes >= limit) {
         await updateDoc(
           doc(
             db,
@@ -75,39 +132,32 @@ export async function runIFSEEscalationEngine() {
           ),
           {
             status: "Escalating",
-            escalationLevel: newLevel,
+
+            escalationLevel:
+              (Number(
+                escalation.escalationLevel
+              ) || 0) + 1,
+
             updatedAt: serverTimestamp(),
           }
-        );
-
-        console.log(
-          "🚨 Escalation Triggered:",
-          escalation.emergencyId
-        );
-      } else {
-        console.log(
-          "✅ Still Waiting:",
-          escalation.emergencyId
         );
       }
     }
 
     return {
       success: true,
-      processed: escalationSnapshot.size,
+      processed: snapshot.size,
     };
 
-  } catch (err) {
+  } catch (error) {
     console.error(
       "IFSE Escalation Engine Error:",
-      err
+      error
     );
 
     return {
       success: false,
-      error:
-        err?.message ||
-        "Escalation engine failed.",
+      error: error.message,
     };
   }
 }
