@@ -35,31 +35,94 @@ console.log("Emergency Data Received:", emergencyData);
 console.log("Emergency ID:", emergencyId);
 console.log("==================================");
 
-    // Read IFSE response rule
+// Read IFSE response rule using the existing Firestore document IDs
 
-    const ruleQuery = query(
+const emergencyRuleMap = {
+  "Security Threat": "ARMED_ATTACK",
+  "Police": "POLICE",
+  "Fire": "FIRE",
+  "Flood": "FLOOD",
+  "Medical": "MEDICAL",
+  "Armed Attack": "ARMED_ATTACK",
+  "Disaster": "FLOOD",
+};
 
-      collection(db, "emergencyResponseRules"),
+const ruleDocumentId =
+  emergencyRuleMap[emergencyType];
 
-      where("emergencyType", "==", emergencyType),
+if (!ruleDocumentId) {
 
-      where("active", "==", true)
+  console.log(
+    "No IFSE rule mapping found for emergency type:",
+    emergencyType
+  );
 
-    );
+  return {
+    success: false,
+    emergencyId,
+    assigned: false,
+    error:
+      "No IFSE response rule mapping found for " +
+      emergencyType,
+  };
 
-    const ruleSnapshot = await getDocs(ruleQuery);
+}
 
-    if (ruleSnapshot.empty) {
+console.log(
+  "IFSE Rule Document Selected:",
+  ruleDocumentId
+);
 
-      console.log("No emergency response rule found.");
+const ruleRef = doc(
+  db,
+  "emergencyResponseRules",
+  ruleDocumentId
+);
 
-      return;
+const ruleSnapshot = await getDoc(ruleRef);
 
-    }
+if (!ruleSnapshot.exists()) {
 
-    const rule = ruleSnapshot.docs[0].data();
+  console.log(
+    "IFSE response rule document does not exist:",
+    ruleDocumentId
+  );
 
-    console.log("Loaded IFSE Rule:", rule);
+  return {
+    success: false,
+    emergencyId,
+    assigned: false,
+    error:
+      "IFSE response rule document not found: " +
+      ruleDocumentId,
+  };
+
+}
+
+const rule = ruleSnapshot.data();
+
+if (rule.active !== true) {
+
+  console.log(
+    "IFSE response rule is inactive:",
+    ruleDocumentId
+  );
+
+  return {
+    success: false,
+    emergencyId,
+    assigned: false,
+    error:
+      "IFSE response rule is inactive: " +
+      ruleDocumentId,
+  };
+
+}
+
+console.log(
+  "Loaded IFSE Rule:",
+  rule
+);
 
     // Determine responder collection
 
