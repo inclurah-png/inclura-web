@@ -32,8 +32,8 @@ const ruleSnapshot = await getDocs(ruleQuery);
 
 if (ruleSnapshot.empty) {
   throw new Error(
-    `No active emergency response rule found for ${emergencyData.emergencyType}.`
-  );
+  `IFSE Escalation Error: No active emergency response rule exists for emergency type "${emergencyData.emergencyType}".`
+);
 }
 
 const ruleDoc = ruleSnapshot.docs[0];
