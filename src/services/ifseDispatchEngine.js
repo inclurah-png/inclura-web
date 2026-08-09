@@ -244,16 +244,6 @@ if (responderSnapshot.empty) {
     return;
 }
 
-const responder = responderSnapshot.docs[0];
-
-const responderData = responder.data();
-  const selectedResponderName =
-  responderData.fullName ||
-  responderData.displayName ||
-  responderData.name ||
-  responderData.username ||
-  "Emergency Response Team";
-
 // =========================
 // IFSE Paramilitary Routing
 // =========================
