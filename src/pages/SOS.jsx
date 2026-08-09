@@ -223,7 +223,16 @@ async function submitEmergencySOS() {
 
     const emergencyId =
       emergencyRef.id;
-
+await createEmergencyEscalation({
+  id: emergencyId,
+  userId: auth.currentUser?.uid || "",
+  userName: auth.currentUser?.displayName || "",
+  userEmail: auth.currentUser?.email || "",
+  emergencyType: sosForm.emergencyType,
+  priority: sosForm.priority,
+  description: sosForm.description,
+  location: sosForm.location,
+});
 
     // STEP 2 — Create IFSE escalation queue entry
     const escalationResult =
