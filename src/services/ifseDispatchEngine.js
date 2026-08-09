@@ -5,6 +5,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   doc,
@@ -240,11 +241,6 @@ await addDoc(collection(db, "dispatchDebug"), {
   respondersFound: responderSnapshot.size,
   createdAt: serverTimestamp(),
 });
-
-if (responderSnapshot.empty) {
-    console.log("No responder available.");
-    return;
-}
 
 // =========================
 // IFSE Paramilitary Routing
@@ -611,41 +607,22 @@ if (rule.notifyGovernment) {
 
 }
 
-  // =========================
+// =========================
 // IFSE Automatic Escalation
 // =========================
 
-await addDoc(collection(db, "emergencyEscalationQueue"), {
+const escalationResult =
+  await createEmergencyEscalation(
+    emergencyData,
+    rule,
+    ruleDocumentId,
+    responder.id
+  );
 
-  emergencyId: emergencyId,
-
-  responderId: responder.id,
-
-  assignedAgency: rule.primaryAgency,
-
-  escalationMinutes: rule.escalationMinutes,
-
-  escalationLevel: 0,
-
-  waitingForAcceptance: true,
-
-  accepted: false,
-
-  acceptedAt: null,
-
-  governmentEscalated: false,
-
-  satelliteActivated: false,
-
-  status: "Waiting",
-
-  createdAt: serverTimestamp(),
-
-  updatedAt: serverTimestamp(),
-
-});
-
-console.log("Escalation Queue Created");
+console.log(
+  "Escalation Queue Created:",
+  escalationResult
+);
 
 // =========================
 // Multi-Agency Dispatch
