@@ -123,25 +123,6 @@ console.log(
   "Loaded IFSE Rule:",
   rule
 );
-await addDoc(collection(db, "dispatchDebug"), {
-  step: "RULE CHECK",
-  emergencyId,
-  emergencyType,
-  ruleDocumentId,
-  ruleExists: ruleSnapshot.exists(),
-  ruleActive: rule.active === true,
-  primaryAgency: rule.primaryAgency || "",
-  secondaryAgency: rule.secondaryAgency || "",
-  tertiaryAgency: rule.tertiaryAgency || "",
-  notifyFamily: rule.notifyFamily === true,
-  notifyGovernment: rule.notifyGovernment === true,
-  escalationMinutes: rule.escalationMinutes || 0,
-  createdAt: serverTimestamp(),
-});
-
-console.log("IFSE RULE CHECK COMPLETED");
-console.log("Rule Document:", ruleDocumentId);
-console.log("Primary Agency:", rule.primaryAgency);
 
     // Determine responder collection
 
