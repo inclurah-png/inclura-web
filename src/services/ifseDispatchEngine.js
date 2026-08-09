@@ -1,5 +1,3 @@
-import { createEmergencyEscalation } from "../services/ifseEscalationEngine";
-
 import {
   collection,
   query,
@@ -41,13 +39,25 @@ console.log("==================================");
 // Read IFSE response rule using the existing Firestore document IDs
 
 const emergencyRuleMap = {
+  Medical: "MEDICAL",
+
+  Fire: "FIRE",
+
+  Police: "POLICE",
+
+  Kidnapping: "ARMED_ATTACK",
+
   "Security Threat": "ARMED_ATTACK",
-  "Police": "POLICE",
-  "Fire": "FIRE",
-  "Flood": "FLOOD",
-  "Medical": "MEDICAL",
+
   "Armed Attack": "ARMED_ATTACK",
-  "Disaster": "FLOOD",
+
+  Accident: "MEDICAL",
+
+  "Missing Person": "POLICE",
+
+  Flood: "FLOOD",
+
+  Disaster: "FLOOD",
 };
 
 const ruleDocumentId =
