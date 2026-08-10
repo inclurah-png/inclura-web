@@ -2062,8 +2062,6 @@ return (
 
         </div>
 
-      </div>
-
     </DashboardLayout>
 
   );
