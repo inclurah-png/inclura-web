@@ -2070,7 +2070,7 @@ return (
 // ============================================================
 
 const dashboardGrid = {
-display: "grid",
+  display: "grid",
 gridTemplateColumns:
 "repeat(auto-fit, minmax(220px, 1fr))",
 gap: "18px",
