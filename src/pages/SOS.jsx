@@ -2062,9 +2062,9 @@ return (
 
         </div>
 
-    </DashboardLayout>
-
+        </DashboardLayout>
   );
+}
 
 // ============================================================
 // STYLES
@@ -2307,24 +2307,5 @@ marginTop:
 textAlign:
 "center",
 };
-
-export default SOS;
-  background:
-    "#111827",
-
-  border:
-    "1px solid #374151",
-
-  borderRadius:
-    "12px",
-
-  padding:
-    "14px",
-
-  marginBottom:
-    "15px",
-
-};
-
 
 export default SOS;
