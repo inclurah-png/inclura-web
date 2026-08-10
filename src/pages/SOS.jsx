@@ -707,8 +707,6 @@ useEffect(() => {
           "SOS was created, but IFSE could not complete emergency dispatch."
         );
 
-        return;
-
       }
 
 
@@ -823,7 +821,7 @@ useEffect(() => {
   }     
       
 return (
-<DashboardLayout>
+ <DashboardLayout>
 
 <div style={page}>
 
