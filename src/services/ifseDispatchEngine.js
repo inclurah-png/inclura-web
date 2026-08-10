@@ -9,7 +9,6 @@ import {
   doc,
   serverTimestamp,
 } from "firebase/firestore";
-
 import { db } from "../firebase";
 
 export async function dispatchEmergency(emergencyData) {
