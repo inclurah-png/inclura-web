@@ -39,27 +39,22 @@ console.log("==================================");
 // Read IFSE response rule using the existing Firestore document IDs
 
 const emergencyRuleMap = {
-  Medical: "MEDICAL",
-
-  Fire: "FIRE",
-
-  Police: "POLICE",
-
-  Kidnapping: "ARMED_ATTACK",
-
   "Security Threat": "ARMED_ATTACK",
-
+  
+  "Kidnapping": "ARMED_ATTACK",
+  
   "Armed Attack": "ARMED_ATTACK",
 
-  Accident: "MEDICAL",
+  "Police": "POLICE",
 
-  "Missing Person": "POLICE",
+  "Fire": "FIRE",
 
-  Flood: "FLOOD",
-
-  Disaster: "FLOOD",
+  "Flood": "FLOOD",
+  
+  "Disaster": "FLOOD",
+  
+  "Medical": "MEDICAL",
 };
-
 const ruleDocumentId =
   emergencyRuleMap[emergencyType];
 
