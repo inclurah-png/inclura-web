@@ -426,418 +426,401 @@ useEffect(() => {
   // SUBMIT EMERGENCY SOS
   // ============================================================
 
-  async function submitEmergencySOS() {
+   async function submitEmergencySOS() {
 
-  if (isSubmittingSOS) {
-    return;
-  }
-
-
-  setIsSubmittingSOS(true);
-
-
-  try {
-
-    const currentUser =
-      auth.currentUser;
-
-
-    if (!currentUser) {
-
-      throw new Error(
-        "You must be logged in to send an emergency SOS."
-      );
-
+    if (isSubmittingSOS) {
+      return;
     }
 
+    setIsSubmittingSOS(true);
 
-    // ============================================================
-    // STEP 1 — CREATE EMERGENCY SOS RECORD
-    // ============================================================
+    try {
 
-    const emergencyRef =
-      await addDoc(
-        collection(
-          db,
-          "emergencySOS"
-        ),
-        {
+      const currentUser =
+        auth.currentUser;
 
-          systemPlaceholder:
-            false,
+      if (!currentUser) {
 
-          userId:
-            currentUser.uid,
+        throw new Error(
+          "You must be logged in to send an emergency SOS."
+        );
 
-          userName:
-            currentUser.displayName ||
-            "",
+      }
 
-          userEmail:
-            currentUser.email ||
-            "",
+      // ============================================================
+      // STEP 1 — CREATE EMERGENCY SOS RECORD
+      // ============================================================
 
-          userPhoto:
-            currentUser.photoURL ||
-            "",
+      const emergencyRef =
+        await addDoc(
+          collection(
+            db,
+            "emergencySOS"
+          ),
+          {
 
-          emergencyType:
-            sosForm.emergencyType,
+            systemPlaceholder:
+              false,
 
-          priority:
-            sosForm.priority,
+            userId:
+              currentUser.uid,
 
-          description:
-            sosForm.description,
+            userName:
+              currentUser.displayName ||
+              "",
 
-          location:
-            sosForm.location,
+            userEmail:
+              currentUser.email ||
+              "",
 
-          latitude:
-            sosForm.latitude ||
-            "",
+            userPhoto:
+              currentUser.photoURL ||
+              "",
 
-          longitude:
-            sosForm.longitude ||
-            "",
+            emergencyType:
+              sosForm.emergencyType,
 
-          accuracy:
-            sosForm.accuracy ||
-            "",
+            priority:
+              sosForm.priority,
 
-          gpsLatitude:
-            Number(
-              sosForm.latitude
-            ) || 0,
+            description:
+              sosForm.description,
 
-          gpsLongitude:
-            Number(
-              sosForm.longitude
-            ) || 0,
+            location:
+              sosForm.location,
 
-          trustedContact:
-            sosForm.trustedContact ||
-            "",
+            latitude:
+              sosForm.latitude ||
+              "",
 
-          responderNotes:
-            sosForm.responderNotes ||
-            "",
+            longitude:
+              sosForm.longitude ||
+              "",
 
-          status:
-            "open",
+            accuracy:
+              sosForm.accuracy ||
+              "",
 
-          handledBy:
-            "",
+            gpsLatitude:
+              Number(
+                sosForm.latitude
+              ) || 0,
 
-          resolved:
-            false,
+            gpsLongitude:
+              Number(
+                sosForm.longitude
+              ) || 0,
 
-          assignedResponder:
-            "",
+            trustedContact:
+              sosForm.trustedContact ||
+              "",
 
-          assignedResponderId:
-            "",
+            responderNotes:
+              sosForm.responderNotes ||
+              "",
 
-          assignedAgency:
-            "",
+            status:
+              "open",
 
-          assignedAgencyCode:
-            "",
+            handledBy:
+              "",
 
-          assignedAgencyType:
-            "",
+            resolved:
+              false,
 
-          incidentStatus:
-            "Active",
+            assignedResponder:
+              "",
 
-          incidentNumber:
-            Date.now().toString(),
+            assignedResponderId:
+              "",
 
-          assignedStation:
-            "",
+            assignedAgency:
+              "",
 
-          assignedVehicle:
-            "",
+            assignedAgencyCode:
+              "",
 
-          estimatedArrival:
-            "",
+            assignedAgencyType:
+              "",
 
-          responseStatus:
-            "Awaiting Response",
+            incidentStatus:
+              "Active",
 
-          assignmentStatus:
-            "Pending",
+            incidentNumber:
+              Date.now().toString(),
 
-          ifseThreatScore:
-            0,
+            assignedStation:
+              "",
 
-          ifseClassification:
-            "Pending",
+            assignedVehicle:
+              "",
 
-          resolvedBy:
-            "",
+            estimatedArrival:
+              "",
 
-          resolutionNotes:
-            "",
+            responseStatus:
+              "Awaiting Response",
 
-          closedAt:
-            null,
+            assignmentStatus:
+              "Pending",
 
-          createdAt:
-            serverTimestamp(),
+            ifseThreatScore:
+              0,
 
-          updatedAt:
-            serverTimestamp(),
+            ifseClassification:
+              "Pending",
 
-          lastUpdated:
-            serverTimestamp(),
+            resolvedBy:
+              "",
 
-        }
+            resolutionNotes:
+              "",
+
+            closedAt:
+              null,
+
+            createdAt:
+              serverTimestamp(),
+
+            updatedAt:
+              serverTimestamp(),
+
+            lastUpdated:
+              serverTimestamp(),
+
+          }
+        );
+
+      const emergencyId =
+        emergencyRef.id;
+
+      console.log(
+        "IFSE SOS Record Created:",
+        emergencyId
       );
 
 
-    const emergencyId =
-      emergencyRef.id;
+      // ============================================================
+      // STEP 2 — BUILD COMPLETE IFSE EMERGENCY DATA
+      // ============================================================
+
+      const emergencyData = {
+
+        id:
+          emergencyId,
+
+        userId:
+          currentUser.uid,
+
+        userName:
+          currentUser.displayName ||
+          "",
+
+        userEmail:
+          currentUser.email ||
+          "",
+
+        userPhoto:
+          currentUser.photoURL ||
+          "",
+
+        emergencyType:
+          sosForm.emergencyType,
+
+        priority:
+          sosForm.priority,
+
+        description:
+          sosForm.description,
+
+        location:
+          sosForm.location,
+
+        latitude:
+          sosForm.latitude ||
+          "",
+
+        longitude:
+          sosForm.longitude ||
+          "",
+
+        accuracy:
+          sosForm.accuracy ||
+          "",
+
+        gpsLatitude:
+          Number(
+            sosForm.latitude
+          ) || 0,
+
+        gpsLongitude:
+          Number(
+            sosForm.longitude
+          ) || 0,
+
+        trustedContact:
+          sosForm.trustedContact ||
+          "",
+
+        responderNotes:
+          sosForm.responderNotes ||
+          "",
+
+        emergencyService:
+          sosForm.emergencyType,
+
+        healthcareRouting:
+          sosForm.emergencyType ===
+          "Medical"
+            ? "medical"
+            : "not_applicable",
+
+      };
 
 
-    console.log(
-      "IFSE SOS Record Created:",
-      emergencyId
-    );
+      // ============================================================
+      // STEP 3 — AUTHORITATIVE IFSE DISPATCH
+      // ============================================================
 
+      const dispatchResult =
+        await dispatchEmergency(
+          emergencyData
+        );
 
-    // ============================================================
-    // STEP 2 — BUILD COMPLETE IFSE EMERGENCY DATA
-    // ============================================================
-
-    const emergencyData = {
-
-      id:
-        emergencyId,
-
-      userId:
-        currentUser.uid,
-
-      userName:
-        currentUser.displayName ||
-        "",
-
-      userEmail:
-        currentUser.email ||
-        "",
-
-      userPhoto:
-        currentUser.photoURL ||
-        "",
-
-      emergencyType:
-        sosForm.emergencyType,
-
-      priority:
-        sosForm.priority,
-
-      description:
-        sosForm.description,
-
-      location:
-        sosForm.location,
-
-      latitude:
-        sosForm.latitude ||
-        "",
-
-      longitude:
-        sosForm.longitude ||
-        "",
-
-      accuracy:
-        sosForm.accuracy ||
-        "",
-
-      gpsLatitude:
-        Number(
-          sosForm.latitude
-        ) || 0,
-
-      gpsLongitude:
-        Number(
-          sosForm.longitude
-        ) || 0,
-
-      trustedContact:
-        sosForm.trustedContact ||
-        "",
-
-      responderNotes:
-        sosForm.responderNotes ||
-        "",
-
-      emergencyService:
-        sosForm.emergencyType,
-
-      healthcareRouting:
-        sosForm.emergencyType ===
-        "Medical"
-          ? "medical"
-          : "not_applicable",
-
-    };
-
-
-    // ============================================================
-    // STEP 3 — AUTHORITATIVE IFSE DISPATCH
-    // ============================================================
-
-    const dispatchResult =
-      await dispatchEmergency(
-        emergencyData
-      );
-
-
-    console.log(
-      "IFSE Dispatch Result:",
-      dispatchResult
-    );
-
-
-    if (
-      !dispatchResult ||
-      dispatchResult.success !== true
-    ) {
-
-      console.error(
-        "IFSE dispatch failed:",
+      console.log(
+        "IFSE Dispatch Result:",
         dispatchResult
       );
 
+      if (
+        !dispatchResult ||
+        dispatchResult.success !== true
+      ) {
 
-      alert(
-        dispatchResult?.error ||
-        "SOS was created, but IFSE could not complete emergency dispatch."
+        console.error(
+          "IFSE dispatch failed:",
+          dispatchResult
+        );
+
+        alert(
+          dispatchResult?.error ||
+          "SOS was created, but IFSE could not complete emergency dispatch."
+        );
+
+        return;
+
+      }
+
+
+      // ============================================================
+      // STEP 4 — ESCALATION INFORMATION
+      // ============================================================
+
+      const escalationResult = {
+
+        success:
+          Boolean(
+            dispatchResult?.escalationId
+          ),
+
+        escalationId:
+          dispatchResult?.escalationId ||
+          "",
+
+      };
+
+      console.log(
+        "IFSE Escalation Result:",
+        escalationResult
       );
 
 
-      return;
+      // ============================================================
+      // STEP 5 — SUCCESS
+      // ============================================================
+
+      alert(
+        `Emergency SOS dispatched successfully.\n\n` +
+        `Emergency ID: ${emergencyId}\n` +
+        `Agency: ${
+          dispatchResult.agency ||
+          "Authorized Response Agency"
+        }\n` +
+        `Responder: ${
+          dispatchResult.responderName ||
+          "Responder Assigned"
+        }\n` +
+        `Escalation ID: ${
+          escalationResult.escalationId ||
+          "Already Existing"
+        }`
+      );
+
+
+      // ============================================================
+      // STEP 6 — RESET FORM
+      // ============================================================
+
+      setSosForm({
+
+        emergencyType:
+          "Medical",
+
+        priority:
+          "Low",
+
+        description:
+          "",
+
+        location:
+          "",
+
+        latitude:
+          "",
+
+        longitude:
+          "",
+
+        accuracy:
+          "",
+
+        trustedContact:
+          "",
+
+        responderNotes:
+          "",
+
+      });
+
+
+      // ============================================================
+      // STEP 7 — REFRESH SOS DASHBOARD
+      // ============================================================
+
+      window.location.reload();
+
+
+    } catch (err) {
+
+      console.error(
+        "SOS Error:",
+        err
+      );
+
+      alert(
+        err?.message ||
+        "Unable to submit emergency SOS."
+      );
+
+    } finally {
+
+      setIsSubmittingSOS(
+        false
+      );
 
     }
 
-
-    // ============================================================
-    // STEP 4 — VERIFY ESCALATION RESULT
-    // ============================================================
-
-    const escalationResult =
-      dispatchResult?.escalationId
-        ? {
-            success:
-              true,
-
-            escalationId:
-              dispatchResult.escalationId,
-          }
-        : {
-            success:
-              false,
-
-            escalationId:
-              "",
-          };
-
-
-    console.log(
-      "IFSE Escalation Result:",
-      escalationResult
-    );
-
-
-    // ============================================================
-    // STEP 5 — SUCCESS
-    // ============================================================
-
-    alert(
-      `Emergency SOS dispatched successfully.\n\n` +
-      `Emergency ID: ${emergencyId}\n` +
-      `Agency: ${
-        dispatchResult.agency ||
-        "Authorized Response Agency"
-      }\n` +
-      `Responder: ${
-        dispatchResult.responderName ||
-        "Responder Assigned"
-      }\n` +
-      `Escalation ID: ${
-        escalationResult.escalationId ||
-        "Already Existing"
-      }`
-    );
-
-
-    // ============================================================
-    // STEP 6 — RESET FORM
-    // ============================================================
-
-    setSosForm({
-
-      emergencyType:
-        "Medical",
-
-      priority:
-        "Low",
-
-      description:
-        "",
-
-      location:
-        "",
-
-      latitude:
-        "",
-
-      longitude:
-        "",
-
-      accuracy:
-        "",
-
-      trustedContact:
-        "",
-
-      responderNotes:
-        "",
-
-    });
-
-
-    // ============================================================
-    // STEP 7 — REFRESH SOS DASHBOARD
-    // ============================================================
-
-    window.location.reload();
-
-
-  } catch (err) {
-
-    console.error(
-      "SOS Error:",
-      err
-    );
-
-
-    alert(
-      err?.message ||
-      "Unable to submit emergency SOS."
-    );
-
-
-  } finally {
-
-    setIsSubmittingSOS(
-      false
-    );
-
-  }
-
-}
+  }     
       
 return (
 <DashboardLayout>
