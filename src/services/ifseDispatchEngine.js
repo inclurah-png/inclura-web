@@ -1,8 +1,4 @@
 import {
-  dispatchEmergency,
-} from "./ifseDispatchEngine";
-
-import {
   resolveEmergencyResponseRule,
   resolveIFSEAgency,
   createEmergencyEscalation,
@@ -19,123 +15,53 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import {
-  db,
-} from "../firebase";
-
+import { db } from "../firebase";
 
 // ============================================================
 // IFSE DISPATCH ENGINE
 // ============================================================
 
-export async function dispatchEmergency(
-  emergencyData
-) {
-
-  const emergencyId =
-    emergencyData?.id || "";
-
+export async function dispatchEmergency(emergencyData) {
+  const emergencyId = emergencyData?.id || "";
+  const emergencyType = String(emergencyData?.emergencyType || "").trim();
+  const priority = emergencyData?.priority || "Critical";
 
   try {
-
-    console.log(
-      "🛡 IFSE Dispatch Engine Started"
-    );
-
+    console.log("🛡 IFSE Dispatch Engine Started");
 
     // ==========================================================
     // STEP 1 — VALIDATE INPUT
     // ==========================================================
 
-    const emergencyType =
-      String(
-        emergencyData?.emergencyType || ""
-      ).trim();
-
-
-    const priority =
-      emergencyData?.priority ||
-      "Critical";
-
-
     if (!emergencyId) {
-
       throw new Error(
         "IFSE Dispatch Error: Emergency ID is missing."
       );
-
     }
 
-
     if (!emergencyType) {
-
       throw new Error(
         "IFSE Dispatch Error: Emergency type is missing."
       );
-
     }
 
-
-    if (
-      !emergencyData?.userId
-    ) {
-
+    if (!emergencyData?.userId) {
       throw new Error(
         "IFSE Dispatch Error: Registered Inclura user ID is missing."
       );
-
     }
 
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
-        step:
-          "STEP 1 — DISPATCH INPUT RECEIVED",
-
+        step: "STEP 1 — DISPATCH INPUT RECEIVED",
         emergencyId,
-
         emergencyType,
-
         priority,
-
-        userId:
-          emergencyData.userId,
-
-        createdAt:
-          serverTimestamp(),
-
+        userId: emergencyData.userId,
+        createdAt: serverTimestamp(),
       }
     );
-
-
-    console.log(
-      "========== IFSE DISPATCH =========="
-    );
-
-    console.log(
-      "Emergency ID:",
-      emergencyId
-    );
-
-    console.log(
-      "Emergency Type:",
-      emergencyType
-    );
-
-    console.log(
-      "Priority:",
-      priority
-    );
-
-    console.log(
-      "=================================="
-    );
-
 
     // ==========================================================
     // STEP 2 — RESOLVE AUTHORITATIVE IFSE RESPONSE RULE
@@ -146,79 +72,42 @@ export async function dispatchEmergency(
         emergencyData
       );
 
-
     if (
-      !ruleResolution ||
-      !ruleResolution.ruleId ||
-      !ruleResolution.rule
+      !ruleResolution?.ruleId ||
+      !ruleResolution?.rule
     ) {
-
       await addDoc(
-        collection(
-          db,
-          "dispatchDebug"
-        ),
+        collection(db, "dispatchDebug"),
         {
-
-          step:
-            "STEP 2 — RULE RESOLUTION FAILED",
-
+          step: "STEP 2 — RULE RESOLUTION FAILED",
           emergencyId,
-
           emergencyType,
-
           priority,
-
-          createdAt:
-            serverTimestamp(),
-
+          createdAt: serverTimestamp(),
         }
       );
 
-
       throw new Error(
         "No active IFSE response rule could be resolved for emergency type: " +
-        emergencyType
+          emergencyType
       );
-
     }
-
 
     const ruleDocumentId =
       ruleResolution.ruleId;
 
-
     const rule =
       ruleResolution.rule;
 
-
-    console.log(
-      "IFSE Authoritative Rule:",
-      ruleDocumentId
-    );
-
-    console.log(
-      "IFSE Rule Data:",
-      rule
-    );
-
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
         step:
           "STEP 2 — AUTHORITATIVE RULE RESOLVED",
 
         emergencyId,
-
         emergencyType,
-
         priority,
-
         ruleDocumentId,
 
         primaryAgency:
@@ -232,54 +121,38 @@ export async function dispatchEmergency(
 
         createdAt:
           serverTimestamp(),
-
       }
     );
 
-
     // ==========================================================
     // STEP 3 — RESOLVE PRIMARY AGENCY
-    //         THROUGH IFSE AGENCY REGISTRY
+    // THROUGH IFSE AGENCY REGISTRY
     // ==========================================================
 
-    if (
-      !rule.primaryAgency
-    ) {
-
+    if (!rule.primaryAgency) {
       throw new Error(
         "IFSE Dispatch Error: Authoritative rule has no primary agency."
       );
-
     }
-
 
     const primaryAgency =
       await resolveIFSEAgency(
         rule.primaryAgency
       );
 
-
     if (
       !primaryAgency ||
       primaryAgency.active !== true
     ) {
-
       await addDoc(
-        collection(
-          db,
-          "dispatchDebug"
-        ),
+        collection(db, "dispatchDebug"),
         {
-
           step:
             "STEP 3 — PRIMARY AGENCY RESOLUTION FAILED",
 
           emergencyId,
-
           emergencyType,
-
           priority,
-
           ruleDocumentId,
 
           requestedAgency:
@@ -287,60 +160,37 @@ export async function dispatchEmergency(
 
           createdAt:
             serverTimestamp(),
-
         }
       );
 
-
       throw new Error(
         "IFSE agency registry could not resolve an active primary agency: " +
-        rule.primaryAgency
+          rule.primaryAgency
       );
-
     }
-
 
     const responderCollection =
       primaryAgency.responderCollection;
 
-
-    if (
-      !responderCollection
-    ) {
-
+    if (!responderCollection) {
       throw new Error(
         "IFSE agency registry has no responderCollection for agency: " +
-        (
-          primaryAgency.agencyName ||
-          rule.primaryAgency
-        )
+          (
+            primaryAgency.agencyName ||
+            rule.primaryAgency
+          )
       );
-
     }
 
-
-    console.log(
-      "IFSE Agency Registry Selected:",
-      primaryAgency
-    );
-
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
         step:
           "STEP 3 — PRIMARY AGENCY REGISTRY RESOLVED",
 
         emergencyId,
-
         emergencyType,
-
         priority,
-
         ruleDocumentId,
 
         agencyName:
@@ -355,19 +205,15 @@ export async function dispatchEmergency(
         responderCollection,
 
         governmentAuthorized:
-          primaryAgency.governmentAuthorized ===
-          true,
+          primaryAgency.governmentAuthorized === true,
 
         ifseVerifiedRequired:
-          primaryAgency.ifseVerifiedRequired ===
-          true,
+          primaryAgency.ifseVerifiedRequired === true,
 
         createdAt:
           serverTimestamp(),
-
       }
     );
-
 
     // ==========================================================
     // STEP 4 — SEARCH PRIMARY RESPONDERS
@@ -381,59 +227,37 @@ export async function dispatchEmergency(
         )
       );
 
+    const verificationRequired =
+      primaryAgency.ifseVerifiedRequired === true;
 
     const eligibleResponders =
       responderSnapshot.docs.filter(
-        (
-          responderDoc
-        ) => {
-
+        (responderDoc) => {
           const data =
             responderDoc.data();
-
-
-          const verificationRequired =
-            primaryAgency
-              .ifseVerifiedRequired ===
-            true;
-
 
           const verificationSatisfied =
             verificationRequired
               ? data.ifseVerified === true
               : true;
 
-
           return (
-
             data.available === true &&
-
             data.onDuty === true &&
-
             data.verified === true &&
-
             verificationSatisfied &&
-
             data.suspended !== true
-
           );
-
         }
       );
 
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
         step:
           "STEP 4 — PRIMARY RESPONDER SEARCH",
 
         emergencyId,
-
         ruleDocumentId,
 
         agencyName:
@@ -452,28 +276,17 @@ export async function dispatchEmergency(
 
         createdAt:
           serverTimestamp(),
-
       }
     );
-
 
     if (
       eligibleResponders.length === 0
     ) {
-
-      console.log(
-        "No eligible responder found in:",
-        responderCollection
-      );
-
-
       throw new Error(
         "No eligible responder found in " +
-        responderCollection
+          responderCollection
       );
-
     }
-
 
     // ==========================================================
     // STEP 5 — SELECT PRIMARY RESPONDER
@@ -482,10 +295,8 @@ export async function dispatchEmergency(
     const responder =
       eligibleResponders[0];
 
-
     const responderData =
       responder.data();
-
 
     const selectedResponderName =
       responderData.fullName ||
@@ -494,25 +305,13 @@ export async function dispatchEmergency(
       responderData.username ||
       "Emergency Response Team";
 
-
-    console.log(
-      "Eligible responder selected:",
-      responderData
-    );
-
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
         step:
           "STEP 5 — PRIMARY RESPONDER SELECTED",
 
         emergencyId,
-
         ruleDocumentId,
 
         responderId:
@@ -534,10 +333,8 @@ export async function dispatchEmergency(
 
         createdAt:
           serverTimestamp(),
-
       }
     );
-
 
     // ==========================================================
     // STEP 6 — RESOLVE SECONDARY AGENCY
@@ -550,7 +347,6 @@ export async function dispatchEmergency(
           )
         : null;
 
-
     if (
       rule.secondaryAgency &&
       (
@@ -558,14 +354,11 @@ export async function dispatchEmergency(
         secondaryAgency.active !== true
       )
     ) {
-
       throw new Error(
         "IFSE agency registry could not resolve an active secondary agency: " +
-        rule.secondaryAgency
+          rule.secondaryAgency
       );
-
     }
-
 
     // ==========================================================
     // STEP 7 — RESOLVE TERTIARY AGENCY
@@ -578,7 +371,6 @@ export async function dispatchEmergency(
           )
         : null;
 
-
     if (
       rule.tertiaryAgency &&
       (
@@ -586,27 +378,19 @@ export async function dispatchEmergency(
         tertiaryAgency.active !== true
       )
     ) {
-
       throw new Error(
         "IFSE agency registry could not resolve an active tertiary agency: " +
-        rule.tertiaryAgency
+          rule.tertiaryAgency
       );
-
     }
 
-
     await addDoc(
-      collection(
-        db,
-        "dispatchDebug"
-      ),
+      collection(db, "dispatchDebug"),
       {
-
         step:
           "STEP 6/7 — MULTI AGENCY REGISTRY RESOLUTION",
 
         emergencyId,
-
         ruleDocumentId,
 
         primaryAgency:
@@ -629,10 +413,8 @@ export async function dispatchEmergency(
 
         createdAt:
           serverTimestamp(),
-
       }
     );
-
 
     // ==========================================================
     // STEP 8 — DETERMINE ROUTING FLAGS
@@ -641,10 +423,8 @@ export async function dispatchEmergency(
     const governmentRouting =
       rule.notifyGovernment === true;
 
-
     const paramilitaryRouting =
       Boolean(
-
         secondaryAgency &&
         (
           secondaryAgency.agencyType ===
@@ -656,13 +436,10 @@ export async function dispatchEmergency(
           secondaryAgency.agencyType ===
             "Paramilitary"
         )
-
       );
-
 
     const militaryRouting =
       Boolean(
-
         primaryAgency.agencyType ===
           "Military" ||
 
@@ -671,9 +448,7 @@ export async function dispatchEmergency(
 
         tertiaryAgency?.agencyType ===
           "Military"
-
       );
-
 
     // ==========================================================
     // STEP 9 — CREATE PRIMARY RESPONDER ASSIGNMENT
@@ -686,7 +461,6 @@ export async function dispatchEmergency(
           "emergencyAssignments"
         ),
         {
-
           assignmentId:
             emergencyId +
             "_" +
@@ -773,16 +547,8 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
-
-    console.log(
-      "Emergency Assignment Created:",
-      assignmentRef.id
-    );
-
 
     // ==========================================================
     // STEP 10 — UPDATE ORIGINAL SOS RECORD
@@ -795,7 +561,6 @@ export async function dispatchEmergency(
         emergencyId
       ),
       {
-
         status:
           "assigned",
 
@@ -830,15 +595,8 @@ export async function dispatchEmergency(
 
         updatedAt:
           serverTimestamp(),
-
       }
     );
-
-
-    console.log(
-      "SOS document updated successfully."
-    );
-
 
     // ==========================================================
     // STEP 11 — CREATE EMERGENCY TIMELINE
@@ -851,7 +609,6 @@ export async function dispatchEmergency(
           "emergencyTimeline"
         ),
         {
-
           timelineId:
             emergencyId +
             "_001",
@@ -942,43 +699,34 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
 
     // ==========================================================
     // STEP 12 — TRUSTED CONTACT NOTIFICATIONS
     // ==========================================================
 
-    const trustedContactsQuery =
-      query(
-        collection(
-          db,
-          "trustedContacts"
-        ),
-        where(
-          "ownerId",
-          "==",
-          emergencyData.userId
-        )
-      );
-
-
     const trustedContactsSnapshot =
       await getDocs(
-        trustedContactsQuery
+        query(
+          collection(
+            db,
+            "trustedContacts"
+          ),
+          where(
+            "ownerId",
+            "==",
+            emergencyData.userId
+          )
+        )
       );
-
 
     for (
       const contactDoc
       of trustedContactsSnapshot.docs
     ) {
-
       const contactData =
         contactDoc.data();
-
 
       await addDoc(
         collection(
@@ -986,7 +734,6 @@ export async function dispatchEmergency(
           "emergencyNotifications"
         ),
         {
-
           emergencyId,
 
           recipientType:
@@ -1034,50 +781,35 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
     }
-
-
-    console.log(
-      "Trusted Contacts Notification Queue Created"
-    );
-
 
     // ==========================================================
     // STEP 13 — FAMILY NETWORK NOTIFICATIONS
     // ==========================================================
 
-    const familyQuery =
-      query(
-        collection(
-          db,
-          "familyEmergencyNetwork"
-        ),
-        where(
-          "ownerId",
-          "==",
-          emergencyData.userId
-        )
-      );
-
-
     const familySnapshot =
       await getDocs(
-        familyQuery
+        query(
+          collection(
+            db,
+            "familyEmergencyNetwork"
+          ),
+          where(
+            "ownerId",
+            "==",
+            emergencyData.userId
+          )
+        )
       );
-
 
     for (
       const familyDoc
       of familySnapshot.docs
     ) {
-
       const familyData =
         familyDoc.data();
-
 
       await addDoc(
         collection(
@@ -1085,21 +817,22 @@ export async function dispatchEmergency(
           "emergencyNotifications"
         ),
         {
-
           emergencyId,
 
           recipientType:
-            "Family",
+            "Family Network",
 
           recipientId:
             familyDoc.id,
 
           recipientName:
             familyData.fullName ||
+            familyData.name ||
             "",
 
           recipientPhone:
             familyData.phoneNumber ||
+            familyData.phone ||
             "",
 
           recipientEmail:
@@ -1133,54 +866,43 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
     }
 
-
-    console.log(
-      "Family Notification Queue Created"
-    );
-
-
     // ==========================================================
-    // STEP 14 — GOVERNMENT COMMAND NOTIFICATION
+    // STEP 14 — GOVERNMENT NOTIFICATION
+    //
+    // Government handling is notification-only.
+    // Government agencies do not control Inclura,
+    // access IFSE core, or use an Inclura dashboard.
     // ==========================================================
 
-    if (
-      governmentRouting
-    ) {
+    let governmentNotificationsQueued =
+      0;
 
-      const governmentQuery =
-        query(
+    if (governmentRouting) {
+      const governmentSnapshot =
+        await getDocs(
           collection(
             db,
             "governmentEmergencyCenter"
-          ),
-          where(
-            "active",
-            "==",
-            true
           )
         );
-
-
-      const governmentSnapshot =
-        await getDocs(
-          governmentQuery
-        );
-
 
       for (
         const governmentDoc
         of governmentSnapshot.docs
       ) {
-
         const governmentData =
           governmentDoc.data();
 
+        if (
+          governmentData.active ===
+          false
+        ) {
+          continue;
+        }
 
         await addDoc(
           collection(
@@ -1188,7 +910,6 @@ export async function dispatchEmergency(
             "emergencyNotifications"
           ),
           {
-
             emergencyId,
 
             recipientType:
@@ -1199,10 +920,12 @@ export async function dispatchEmergency(
 
             recipientName:
               governmentData.centerName ||
+              governmentData.name ||
               "",
 
             recipientPhone:
               governmentData.phoneNumber ||
+              governmentData.phone ||
               "",
 
             recipientEmail:
@@ -1221,6 +944,10 @@ export async function dispatchEmergency(
               primaryAgency.agencyCode ||
               "",
 
+            assignedAgencyType:
+              primaryAgency.agencyType ||
+              "",
+
             location:
               emergencyData.location ||
               "",
@@ -1231,24 +958,24 @@ export async function dispatchEmergency(
             deliveryMethod:
               "System",
 
+            governmentNotificationOnly:
+              true,
+
+            ifseCoreAccess:
+              false,
+
             createdAt:
               serverTimestamp(),
 
             updatedAt:
               serverTimestamp(),
-
           }
         );
 
+        governmentNotificationsQueued +=
+          1;
       }
-
-
-      console.log(
-        "Government Notification Queue Created"
-      );
-
     }
-
 
     // ==========================================================
     // STEP 15 — CREATE IFSE ESCALATION QUEUE
@@ -1258,13 +985,6 @@ export async function dispatchEmergency(
       await createEmergencyEscalation(
         emergencyData
       );
-
-
-    console.log(
-      "Escalation Queue Created:",
-      escalationResult
-    );
-
 
     // ==========================================================
     // STEP 16 — CREATE MULTI-AGENCY DISPATCH RECORD
@@ -1277,7 +997,6 @@ export async function dispatchEmergency(
           "emergencyMultiAgencyDispatch"
         ),
         {
-
           emergencyId,
 
           ruleDocumentId,
@@ -1380,16 +1099,8 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
-
-    console.log(
-      "Multi-Agency Dispatch Created:",
-      multiAgencyRef.id
-    );
-
 
     // ==========================================================
     // STEP 17 — FINAL IFSE DISPATCH AUDIT
@@ -1402,7 +1113,6 @@ export async function dispatchEmergency(
           "emergencyTimeline"
         ),
         {
-
           timelineId:
             emergencyId +
             "_FINAL",
@@ -1473,6 +1183,8 @@ export async function dispatchEmergency(
 
           governmentRouting,
 
+          governmentNotificationsQueued,
+
           paramilitaryRouting,
 
           militaryRouting,
@@ -1527,10 +1239,8 @@ export async function dispatchEmergency(
 
           updatedAt:
             serverTimestamp(),
-
         }
       );
-
 
     // ==========================================================
     // STEP 18 — FINAL DEBUG RECORD
@@ -1542,7 +1252,6 @@ export async function dispatchEmergency(
         "dispatchDebug"
       ),
       {
-
         step:
           "STEP 18 — DISPATCH COMPLETED",
 
@@ -1602,19 +1311,18 @@ export async function dispatchEmergency(
         finalAuditCreated:
           true,
 
+        governmentNotificationsQueued,
+
         createdAt:
           serverTimestamp(),
-
       }
     );
-
 
     // ==========================================================
     // STEP 19 — SUCCESS
     // ==========================================================
 
     return {
-
       success:
         true,
 
@@ -1665,6 +1373,8 @@ export async function dispatchEmergency(
       governmentAlertInitiated:
         governmentRouting,
 
+      governmentNotificationsQueued,
+
       paramilitaryAlertInitiated:
         paramilitaryRouting,
 
@@ -1688,32 +1398,24 @@ export async function dispatchEmergency(
 
       finalAuditId:
         finalAuditRef.id,
-
     };
-
-
   } catch (err) {
-
-
     console.error(
       "IFSE Dispatch Engine Error:",
       err
     );
-
 
     // ==========================================================
     // ERROR AUDIT
     // ==========================================================
 
     try {
-
       await addDoc(
         collection(
           db,
           "dispatchDebug"
         ),
         {
-
           step:
             "ERROR",
 
@@ -1727,13 +1429,9 @@ export async function dispatchEmergency(
             err?.stack ||
             "",
 
-          emergencyType:
-            emergencyData?.emergencyType ||
-            "",
+          emergencyType,
 
-          priority:
-            emergencyData?.priority ||
-            "",
+          priority,
 
           emergencyService:
             emergencyData?.emergencyService ||
@@ -1756,24 +1454,16 @@ export async function dispatchEmergency(
 
           createdAt:
             serverTimestamp(),
-
         }
       );
-
-    } catch (
-      debugError
-    ) {
-
+    } catch (debugError) {
       console.error(
         "Unable to record IFSE dispatch error:",
         debugError
       );
-
     }
 
-
     return {
-
       success:
         false,
 
@@ -1785,9 +1475,6 @@ export async function dispatchEmergency(
       error:
         err?.message ||
         "Emergency dispatch failed.",
-
     };
-
   }
-
 }
