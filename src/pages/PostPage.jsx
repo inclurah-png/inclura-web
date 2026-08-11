@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   doc,
@@ -22,6 +23,12 @@ function PostPage() {
 
   const [loading, setLoading] = useState(true);
 
+  const { t, i18n } = useTranslation();
+
+  const [translatedText, setTranslatedText] = useState("");
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  
   const [reacting, setReacting] =
     useState(false);
 
@@ -43,6 +50,52 @@ useEffect(() => {
 
   loadPost();
 }, [id]);
+
+  async function translatePost() {
+    if (!post?.text || translating) return;
+
+    if (isTranslated) {
+      setIsTranslated(false);
+      return;
+    }
+
+    setTranslating(true);
+
+    try {
+      const targetLanguage = i18n.language;
+
+      /*
+       * Translation provider will be connected here.
+       * We intentionally do not fake a translation.
+       *
+       * The post is only marked translated when a real
+       * translated result is returned.
+       */
+
+      if (
+        post.originalLanguage &&
+        post.originalLanguage === targetLanguage
+      ) {
+        setTranslatedText(post.text);
+        setIsTranslated(true);
+        return;
+      }
+
+      if (post.translations?.[targetLanguage]) {
+        setTranslatedText(
+          post.translations[targetLanguage]
+        );
+        setIsTranslated(true);
+        return;
+      }
+
+      setTranslatedText("");
+      setIsTranslated(false);
+    } finally {
+      setTranslating(false);
+    }
+  }
+  
 const reactions = [
   "👍",
   "❤️",
@@ -174,13 +227,46 @@ async function react(emoji) {
             />
           </div>
 
-          <p
-            style={{
-              marginTop: "16px",
-            }}
-          >
-            {post.text}
-          </p>
+<div
+  style={{
+    marginTop: "16px",
+  }}
+>
+  <p>
+    {isTranslated && translatedText
+      ? translatedText
+      : post.text}
+  </p>
+
+  <button
+    type="button"
+    onClick={translatePost}
+    disabled={translating}
+    aria-label={
+      isTranslated
+        ? t("showOriginal")
+        : t("translatePost")
+    }
+  >
+    {translating
+      ? t("translating")
+      : isTranslated
+      ? t("showOriginal")
+      : t("translatePost")}
+  </button>
+
+  {isTranslated && (
+    <small
+      style={{
+        display: "block",
+        marginTop: "6px",
+        opacity: 0.7,
+      }}
+    >
+      {t("translated")}
+    </small>
+  )}
+</div>
 
           {post.imageUrl && (
             <img
