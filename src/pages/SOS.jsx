@@ -1304,19 +1304,19 @@ return (
 </div>
 
   </DashboardLayout>
-);
+  );
+}
 
-        
 // ============================================================
 // STYLES
 // ============================================================
 
 const dashboardGrid = {
   display: "grid",
-gridTemplateColumns:
-"repeat(auto-fit, minmax(220px, 1fr))",
-gap: "18px",
-marginBottom: "30px",
+  gridTemplateColumns:
+    "repeat(auto-fit, minmax(220px, 1fr))",
+  gap: "18px",
+  marginBottom: "30px",
 };
 
 const summaryCard = {
