@@ -23,11 +23,17 @@ import { db } from "../firebase";
 
 export async function dispatchEmergency(emergencyData) {
   const emergencyId = emergencyData?.id || "";
-  const emergencyType = String(emergencyData?.emergencyType || "").trim();
-  const priority = emergencyData?.priority || "Critical";
+  const emergencyType = String(
+    emergencyData?.emergencyType || ""
+  ).trim();
+
+  const priority =
+    emergencyData?.priority || "Critical";
 
   try {
-    console.log("🛡 IFSE Dispatch Engine Started");
+    console.log(
+      "🛡 IFSE Dispatch Engine Started"
+    );
 
     // ==========================================================
     // STEP 1 — VALIDATE INPUT
@@ -54,12 +60,18 @@ export async function dispatchEmergency(emergencyData) {
     await addDoc(
       collection(db, "dispatchDebug"),
       {
-        step: "STEP 1 — DISPATCH INPUT RECEIVED",
+        step:
+          "STEP 1 — DISPATCH INPUT RECEIVED",
+
         emergencyId,
         emergencyType,
         priority,
-        userId: emergencyData.userId,
-        createdAt: serverTimestamp(),
+
+        userId:
+          emergencyData.userId,
+
+        createdAt:
+          serverTimestamp(),
       }
     );
 
@@ -79,11 +91,15 @@ export async function dispatchEmergency(emergencyData) {
       await addDoc(
         collection(db, "dispatchDebug"),
         {
-          step: "STEP 2 — RULE RESOLUTION FAILED",
+          step:
+            "STEP 2 — RULE RESOLUTION FAILED",
+
           emergencyId,
           emergencyType,
           priority,
-          createdAt: serverTimestamp(),
+
+          createdAt:
+            serverTimestamp(),
         }
       );
 
@@ -108,6 +124,7 @@ export async function dispatchEmergency(emergencyData) {
         emergencyId,
         emergencyType,
         priority,
+
         ruleDocumentId,
 
         primaryAgency:
@@ -153,6 +170,7 @@ export async function dispatchEmergency(emergencyData) {
           emergencyId,
           emergencyType,
           priority,
+
           ruleDocumentId,
 
           requestedAgency:
@@ -191,6 +209,7 @@ export async function dispatchEmergency(emergencyData) {
         emergencyId,
         emergencyType,
         priority,
+
         ruleDocumentId,
 
         agencyName:
@@ -205,10 +224,12 @@ export async function dispatchEmergency(emergencyData) {
         responderCollection,
 
         governmentAuthorized:
-          primaryAgency.governmentAuthorized === true,
+          primaryAgency.governmentAuthorized ===
+          true,
 
         ifseVerifiedRequired:
-          primaryAgency.ifseVerifiedRequired === true,
+          primaryAgency.ifseVerifiedRequired ===
+          true,
 
         createdAt:
           serverTimestamp(),
@@ -228,7 +249,8 @@ export async function dispatchEmergency(emergencyData) {
       );
 
     const verificationRequired =
-      primaryAgency.ifseVerifiedRequired === true;
+      primaryAgency.ifseVerifiedRequired ===
+      true;
 
     const eligibleResponders =
       responderSnapshot.docs.filter(
@@ -920,12 +942,10 @@ export async function dispatchEmergency(emergencyData) {
 
             recipientName:
               governmentData.centerName ||
-              governmentData.name ||
               "",
 
             recipientPhone:
               governmentData.phoneNumber ||
-              governmentData.phone ||
               "",
 
             recipientEmail:
@@ -944,10 +964,6 @@ export async function dispatchEmergency(emergencyData) {
               primaryAgency.agencyCode ||
               "",
 
-            assignedAgencyType:
-              primaryAgency.agencyType ||
-              "",
-
             location:
               emergencyData.location ||
               "",
@@ -961,7 +977,7 @@ export async function dispatchEmergency(emergencyData) {
             governmentNotificationOnly:
               true,
 
-            ifseCoreAccess:
+            incluraCoreAccess:
               false,
 
             createdAt:
@@ -972,8 +988,7 @@ export async function dispatchEmergency(emergencyData) {
           }
         );
 
-        governmentNotificationsQueued +=
-          1;
+        governmentNotificationsQueued += 1;
       }
     }
 
@@ -985,6 +1000,11 @@ export async function dispatchEmergency(emergencyData) {
       await createEmergencyEscalation(
         emergencyData
       );
+
+    console.log(
+      "Escalation Queue Created:",
+      escalationResult
+    );
 
     // ==========================================================
     // STEP 16 — CREATE MULTI-AGENCY DISPATCH RECORD
@@ -1044,6 +1064,8 @@ export async function dispatchEmergency(emergencyData) {
             0,
 
           governmentRouting,
+
+          governmentNotificationsQueued,
 
           paramilitaryRouting,
 
@@ -1399,6 +1421,7 @@ export async function dispatchEmergency(emergencyData) {
       finalAuditId:
         finalAuditRef.id,
     };
+
   } catch (err) {
     console.error(
       "IFSE Dispatch Engine Error:",
