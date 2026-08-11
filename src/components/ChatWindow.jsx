@@ -20,14 +20,97 @@ import {
   storage,
 } from "../firebase";
 
+
 function ChatWindow({
   selectedChat,
   messages,
 }) {
-  const [text, setText] = useState("");
-  const [recording, setRecording] = useState(false);
+
+  const [text, setText] =
+    useState("");
+
+  const [recording, setRecording] =
+    useState(false);
+
   const [mediaRecorder, setMediaRecorder] =
     useState(null);
+
+  const [isSending, setIsSending] =
+    useState(false);
+
+  const [isUploadingImage, setIsUploadingImage] =
+    useState(false);
+
+  const [isSpeaking, setIsSpeaking] =
+    useState(false);
+
+  const [isSpeechToTextActive, setIsSpeechToTextActive] =
+    useState(false);
+
+  const [isTextToSpeechActive, setIsTextToSpeechActive] =
+    useState(false);
+
+  const recognitionRef =
+    useRef(null);
+
+  const messagesEndRef =
+    useRef(null);
+
+  const typingTimeoutRef =
+    useRef(null);
+
+
+  // ============================================================
+  // AUTO-SCROLL TO LATEST MESSAGE
+  // ============================================================
+
+  useEffect(() => {
+
+    messagesEndRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+
+  }, [messages]);
+
+
+  // ============================================================
+  // CLEAN UP SPEECH RECOGNITION
+  // ============================================================
+
+  useEffect(() => {
+
+    return () => {
+
+      if (
+        recognitionRef.current
+      ) {
+
+        recognitionRef.current.stop();
+
+      }
+
+      if (
+        typingTimeoutRef.current
+      ) {
+
+        clearTimeout(
+          typingTimeoutRef.current
+        );
+
+      }
+
+      if (
+        typeof window !== "undefined" &&
+        window.speechSynthesis
+      ) {
+
+        window.speechSynthesis.cancel();
+
+      }
+
+    };
+
+  }, []);
 
   const [speechSupported, setSpeechSupported] =
     useState(false);
@@ -46,31 +129,93 @@ function ChatWindow({
     );
   }, []);
 
-  async function updateTypingStatus(isTyping) {
-    if (!selectedChat || !auth.currentUser) {
+  // ============================================================
+  // UPDATE TYPING STATUS
+  // ============================================================
+
+  async function updateTypingStatus(
+    isTyping
+  ) {
+
+    if (
+      !selectedChat ||
+      !auth.currentUser
+    ) {
       return;
     }
 
     try {
+
       await updateDoc(
-        doc(db, "chats", selectedChat.id),
+        doc(
+          db,
+          "chats",
+          selectedChat.id
+        ),
         {
-          typing: isTyping,
-          typingUser: isTyping
-            ? auth.currentUser.uid
-            : null,
+          typing:
+            isTyping,
+
+          typingUser:
+            isTyping
+              ? auth.currentUser.uid
+              : "",
         }
       );
+
     } catch (error) {
+
       console.error(
-        "Typing status error:",
+        "Chat typing status error:",
         error
       );
+
     }
+
   }
 
-  async function sendMessage() {
+
+  // ============================================================
+  // HANDLE TYPING
+  // ============================================================
+
+  function handleTyping(
+    value
+  ) {
+
+    setText(value);
+
+    updateTypingStatus(true);
+
+
     if (
+      typingTimeoutRef.current
+    ) {
+
+      clearTimeout(
+        typingTimeoutRef.current
+      );
+
+    }
+
+
+    typingTimeoutRef.current =
+      setTimeout(() => {
+
+        updateTypingStatus(false);
+
+      }, 1500);
+
+  }
+
+  // ============================================================
+  // SEND TEXT MESSAGE
+  // ============================================================
+
+  async function sendMessage() {
+
+    if (
+      isSending ||
       !selectedChat ||
       !auth.currentUser ||
       !text.trim()
@@ -78,9 +223,16 @@ function ChatWindow({
       return;
     }
 
-    const messageText = text.trim();
+
+    const messageText =
+      text.trim();
+
+
+    setIsSending(true);
+
 
     try {
+
       await addDoc(
         collection(
           db,
@@ -89,33 +241,69 @@ function ChatWindow({
           "messages"
         ),
         {
-          text: messageText,
+
+          text:
+            messageText,
+
           senderId:
             auth.currentUser.uid,
+
           createdAt:
             serverTimestamp(),
-          status: "sent",
+
+          status:
+            "sent",
+
           readBy: [
             auth.currentUser.uid,
           ],
-          messageType: "text",
+
+          messageType:
+            "text",
+
         }
       );
 
-      await updateTypingStatus(false);
+
+      await updateTypingStatus(
+        false
+      );
+
+
+      if (
+        typingTimeoutRef.current
+      ) {
+
+        clearTimeout(
+          typingTimeoutRef.current
+        );
+
+      }
+
 
       setText("");
+
+
     } catch (error) {
+
       console.error(
         "Send message error:",
         error
       );
 
+
       alert(
-        error.message ||
-          "Unable to send message."
+        error?.message ||
+        "Unable to send message."
       );
+
+
+    } finally {
+
+      setIsSending(false);
+
     }
+
   }
 
   async function handleImageUpload(event) {
@@ -551,30 +739,7 @@ function ChatWindow({
                       <div>
                         {msg.text}
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() =>
-                          speaking
-                            ? stopSpeaking()
-                            : speakText(
-                                msg.text
-                              )
-                        }
-                        aria-label={
-                          speaking
-                            ? "Stop reading message aloud"
-                            : "Read message aloud"
-                        }
-                        style={{
-                          marginTop:
-                            "8px",
-                        }}
-                      >
-                        {speaking
-                          ? "⏹ Stop reading"
-                          : "🔊 Read aloud"}
-                      </button>
+                      
                     </>
                   )}
 
@@ -648,42 +813,93 @@ function ChatWindow({
           })
         )}
       </main>
+      
+                  {msg.text && (
+                    <div>
+                      {msg.text}
+                    </div>
+                  )}
+
+                  {msg.imageUrl && (
+                    <img
+                      src={msg.imageUrl}
+                      alt={
+                        msg.fileName
+                          ? `Shared image: ${msg.fileName}`
+                          : "Shared image"
+                      }
+                      style={{
+                        width: "220px",
+                        maxWidth: "100%",
+                        borderRadius: "12px",
+                        marginTop: "8px",
+                      }}
+                    />
+                  )}
+
+                  {msg.audioUrl && (
+                    <audio
+                      controls
+                      aria-label="Voice message"
+                      style={{
+                        marginTop: "8px",
+                        width: "100%",
+                      }}
+                    >
+                      <source
+                        src={msg.audioUrl}
+                        type="audio/webm"
+                      />
+                    </audio>
+                  )}
+
+                  {isOwnMessage && (
+                    <div
+                      style={{
+                        fontSize: "11px",
+                        color: "#cbd5e1",
+                        marginTop: "4px",
+                      }}
+                    >
+                      {msg.status === "read"
+                        ? "✓✓ Read"
+                        : "✓ Sent"}
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })
+        )}
+      </main>
 
       <section
         aria-label="Message composer"
         style={{
           padding: "16px",
-          borderTop:
-            "1px solid #1e293b",
+          borderTop: "1px solid #1e293b",
         }}
       >
         <textarea
-          ref={messageInputRef}
           value={text}
-          onChange={
-            handleInputChange
-          }
-          onKeyDown={
-            handleInputKeyDown
-          }
+          onChange={handleInputChange}
+          onKeyDown={handleInputKeyDown}
           onBlur={() =>
-            updateTypingStatus(
-              false
-            )
+            updateTypingStatus(false)
           }
           placeholder="Type a message..."
           aria-label="Type a message"
-          rows="2"
+          rows={3}
           style={{
             width: "100%",
-            boxSizing:
-              "border-box",
-            padding: "14px",
-            borderRadius:
-              "12px",
+            padding: "12px",
+            borderRadius: "12px",
+            border: "1px solid #374151",
+            background: "#111827",
+            color: "#fff",
+            boxSizing: "border-box",
             resize: "vertical",
-            marginBottom:
-              "10px",
+            marginBottom: "10px",
           }}
         />
 
@@ -693,15 +909,13 @@ function ChatWindow({
           style={{
             display: "flex",
             gap: "10px",
-            flexWrap:
-              "wrap",
+            flexWrap: "wrap",
           }}
         >
           <label
             htmlFor="chat-image-upload"
             style={{
-              cursor:
-                "pointer",
+              cursor: "pointer",
             }}
           >
             🖼️ Image
@@ -711,19 +925,14 @@ function ChatWindow({
             id="chat-image-upload"
             type="file"
             accept="image/*"
-            onChange={
-              handleImageUpload
-            }
+            onChange={handleImageUpload}
             aria-label="Share an image"
             style={{
-              position:
-                "absolute",
+              position: "absolute",
               width: "1px",
               height: "1px",
-              overflow:
-                "hidden",
-              clip:
-                "rect(0, 0, 0, 0)",
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
             }}
           />
 
@@ -734,9 +943,7 @@ function ChatWindow({
                 ? stopRecording()
                 : startRecording()
             }
-            aria-pressed={
-              recording
-            }
+            aria-pressed={recording}
             aria-label={
               recording
                 ? "Stop voice recording"
@@ -750,12 +957,8 @@ function ChatWindow({
 
           <button
             type="button"
-            onClick={
-              startSpeechToText
-            }
-            disabled={
-              !speechSupported
-            }
+            onClick={startSpeechToText}
+            disabled={!speechSupported}
             aria-label="Convert speech to text"
           >
             🎙 Speech to text
