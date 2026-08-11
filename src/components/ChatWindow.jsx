@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   addDoc,
@@ -24,44 +24,61 @@ function ChatWindow({
   selectedChat,
   messages,
 }) {
-  const [text, setText] =
-    useState("");
-
-  const [recording, setRecording] =
-    useState(false);
-
+  const [text, setText] = useState("");
+  const [recording, setRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] =
     useState(null);
 
-  async function updateTypingStatus(
-    isTyping
-  ) {
-    if (!selectedChat) return;
+  const [speechSupported, setSpeechSupported] =
+    useState(false);
+
+  const [speaking, setSpeaking] = useState(false);
+
+  const messageInputRef = useRef(null);
+
+  useEffect(() => {
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    setSpeechSupported(
+      Boolean(SpeechRecognition)
+    );
+  }, []);
+
+  async function updateTypingStatus(isTyping) {
+    if (!selectedChat || !auth.currentUser) {
+      return;
+    }
 
     try {
       await updateDoc(
-        doc(
-          db,
-          "chats",
-          selectedChat.id
-        ),
+        doc(db, "chats", selectedChat.id),
         {
           typing: isTyping,
-          typingUser:
-            auth.currentUser.uid,
+          typingUser: isTyping
+            ? auth.currentUser.uid
+            : null,
         }
       );
     } catch (error) {
-      console.log(error);
+      console.error(
+        "Typing status error:",
+        error
+      );
     }
   }
 
   async function sendMessage() {
     if (
-      !text.trim() ||
-      !selectedChat
-    )
+      !selectedChat ||
+      !auth.currentUser ||
+      !text.trim()
+    ) {
       return;
+    }
+
+    const messageText = text.trim();
 
     try {
       await addDoc(
@@ -72,7 +89,7 @@ function ChatWindow({
           "messages"
         ),
         {
-          text,
+          text: messageText,
           senderId:
             auth.currentUser.uid,
           createdAt:
@@ -81,31 +98,45 @@ function ChatWindow({
           readBy: [
             auth.currentUser.uid,
           ],
+          messageType: "text",
         }
       );
 
-      await updateTypingStatus(
-        false
-      );
+      await updateTypingStatus(false);
 
       setText("");
     } catch (error) {
-      alert(error.message);
+      console.error(
+        "Send message error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to send message."
+      );
     }
   }
 
-  async function handleImageUpload(
-    e
-  ) {
-    const file =
-      e.target.files[0];
+  async function handleImageUpload(event) {
+    if (
+      !selectedChat ||
+      !auth.currentUser
+    ) {
+      return;
+    }
 
-    if (!file) return;
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
 
     try {
       const storageRef = ref(
         storage,
-        `chatImages/${Date.now()}`
+        `chatImages/${auth.currentUser.uid}/${Date.now()}-${file.name}`
       );
 
       await uploadBytes(
@@ -129,20 +160,49 @@ function ChatWindow({
           senderId:
             auth.currentUser.uid,
           imageUrl,
+          fileName: file.name,
           createdAt:
             serverTimestamp(),
           status: "sent",
           readBy: [
             auth.currentUser.uid,
           ],
+          messageType: "image",
         }
       );
+
+      event.target.value = "";
     } catch (error) {
-      alert(error.message);
+      console.error(
+        "Image upload error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Unable to upload image."
+      );
     }
   }
 
   async function startRecording() {
+    if (
+      !selectedChat ||
+      !auth.currentUser
+    ) {
+      return;
+    }
+
+    if (
+      !navigator.mediaDevices ||
+      !navigator.mediaDevices.getUserMedia
+    ) {
+      alert(
+        "Audio recording is not supported on this device or browser."
+      );
+      return;
+    }
+
     try {
       const stream =
         await navigator.mediaDevices.getUserMedia(
@@ -152,34 +212,29 @@ function ChatWindow({
         );
 
       const recorder =
-        new MediaRecorder(
-          stream
-        );
+        new MediaRecorder(stream);
 
       const chunks = [];
 
-      recorder.ondataavailable =
-        (event) => {
-          chunks.push(
-            event.data
-          );
-        };
+      recorder.ondataavailable = (
+        event
+      ) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
 
-      recorder.onstop =
-        async () => {
+      recorder.onstop = async () => {
+        try {
           const audioBlob =
-            new Blob(
-              chunks,
-              {
-                type: "audio/webm",
-              }
-            );
+            new Blob(chunks, {
+              type: "audio/webm",
+            });
 
-          const storageRef =
-            ref(
-              storage,
-              `voiceNotes/${Date.now()}`
-            );
+          const storageRef = ref(
+            storage,
+            `voiceNotes/${auth.currentUser.uid}/${Date.now()}.webm`
+          );
 
           await uploadBytes(
             storageRef,
@@ -208,32 +263,171 @@ function ChatWindow({
               readBy: [
                 auth.currentUser.uid,
               ],
+              messageType: "audio",
             }
           );
-        };
+        } catch (error) {
+          console.error(
+            "Voice upload error:",
+            error
+          );
+
+          alert(
+            error.message ||
+              "Unable to send voice message."
+          );
+        } finally {
+          stream
+            .getTracks()
+            .forEach((track) =>
+              track.stop()
+            );
+        }
+      };
 
       recorder.start();
 
-      setMediaRecorder(
-        recorder
-      );
-
+      setMediaRecorder(recorder);
       setRecording(true);
     } catch (error) {
-      alert(error.message);
+      console.error(
+        "Recording error:",
+        error
+      );
+
+      alert(
+        error.message ||
+          "Microphone permission is required."
+      );
     }
   }
 
   function stopRecording() {
-    if (mediaRecorder) {
+    if (
+      mediaRecorder &&
+      mediaRecorder.state !==
+        "inactive"
+    ) {
       mediaRecorder.stop();
-      setRecording(false);
+    }
+
+    setMediaRecorder(null);
+    setRecording(false);
+  }
+
+  function startSpeechToText() {
+    if (!speechSupported) {
+      alert(
+        "Speech recognition is not supported by this browser."
+      );
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    const recognition =
+      new SpeechRecognition();
+
+    recognition.lang =
+      document.documentElement.lang ||
+      "en";
+
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = (
+      event
+    ) => {
+      const transcript =
+        event.results[0][0].transcript;
+
+      setText((currentText) =>
+        currentText
+          ? `${currentText} ${transcript}`
+          : transcript
+      );
+    };
+
+    recognition.onerror = (
+      error
+    ) => {
+      console.error(
+        "Speech recognition error:",
+        error
+      );
+    };
+
+    recognition.start();
+  }
+
+  function speakText(value) {
+    if (
+      !value ||
+      !window.speechSynthesis
+    ) {
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        value
+      );
+
+    utterance.onstart = () => {
+      setSpeaking(true);
+    };
+
+    utterance.onend = () => {
+      setSpeaking(false);
+    };
+
+    utterance.onerror = () => {
+      setSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+  }
+
+  function stopSpeaking() {
+    if (
+      window.speechSynthesis
+    ) {
+      window.speechSynthesis.cancel();
+    }
+
+    setSpeaking(false);
+  }
+
+  function handleInputChange(event) {
+    setText(event.target.value);
+
+    updateTypingStatus(
+      event.target.value.trim().length >
+        0
+    );
+  }
+
+  function handleInputKeyDown(event) {
+    if (
+      event.key === "Enter" &&
+      !event.shiftKey
+    ) {
+      event.preventDefault();
+      sendMessage();
     }
   }
 
   if (!selectedChat) {
     return (
       <div
+        role="status"
+        aria-live="polite"
         style={{
           flex: 1,
           display: "flex",
@@ -242,12 +436,18 @@ function ChatWindow({
           alignItems:
             "center",
           color: "#94a3b8",
+          padding: "24px",
+          textAlign: "center",
         }}
       >
         Select a conversation
+        to begin messaging.
       </div>
     );
   }
+
+  const currentUserId =
+    auth.currentUser?.uid;
 
   return (
     <div
@@ -256,215 +456,340 @@ function ChatWindow({
         display: "flex",
         flexDirection:
           "column",
+        minWidth: 0,
       }}
     >
-      <div
+      <header
+        aria-label="Conversation header"
         style={{
           padding: "16px",
           borderBottom:
             "1px solid #1e293b",
         }}
       >
+        <strong>
+          {selectedChat.name ||
+            "Conversation"}
+        </strong>
+
         <p
+          aria-live="polite"
           style={{
             color: "#94a3b8",
             fontSize: "13px",
+            margin:
+              "6px 0 0",
           }}
         >
-          {selectedChat?.typing
+          {selectedChat.typing &&
+          selectedChat.typingUser !==
+            currentUserId
             ? "Someone is typing..."
             : ""}
         </p>
-      </div>
+      </header>
 
-      <div
+      <main
+        aria-label="Messages"
         style={{
           flex: 1,
           padding: "20px",
           overflowY: "auto",
         }}
       >
-        {messages.map(
-          (msg) => (
-            <div
-              key={msg.id}
-              style={{
-                display:
-                  "flex",
-                justifyContent:
-                  msg.senderId ===
-                  auth.currentUser
-                    .uid
-                    ? "flex-end"
-                    : "flex-start",
-                marginBottom:
-                  "12px",
-              }}
-            >
-              <div
+        {messages.length === 0 ? (
+          <div
+            role="status"
+            style={{
+              color: "#94a3b8",
+              textAlign: "center",
+              padding: "30px",
+            }}
+          >
+            No messages yet.
+          </div>
+        ) : (
+          messages.map((msg) => {
+            const isOwnMessage =
+              msg.senderId ===
+              currentUserId;
+
+            return (
+              <article
+                key={msg.id}
+                aria-label={
+                  isOwnMessage
+                    ? "Your message"
+                    : "Received message"
+                }
                 style={{
-                  background:
-                    msg.senderId ===
-                    auth
-                      .currentUser
-                      .uid
-                      ? "#38bdf8"
-                      : "#1e293b",
-                  color:
-                    "white",
-                  padding:
+                  display: "flex",
+                  justifyContent:
+                    isOwnMessage
+                      ? "flex-end"
+                      : "flex-start",
+                  marginBottom:
                     "12px",
-                  borderRadius:
-                    "16px",
-                  maxWidth:
-                    "70%",
                 }}
               >
-                {msg.text && (
-                  <div>
-                    {msg.text}
-                  </div>
-                )}
+                <div
+                  style={{
+                    background:
+                      isOwnMessage
+                        ? "#38bdf8"
+                        : "#1e293b",
+                    color: "white",
+                    padding: "12px",
+                    borderRadius:
+                      "16px",
+                    maxWidth:
+                      "70%",
+                  }}
+                >
+                  {msg.text && (
+                    <>
+                      <div>
+                        {msg.text}
+                      </div>
 
-                {msg.imageUrl && (
-                  <img
-                    src={
-                      msg.imageUrl
-                    }
-                    alt="Chat"
-                    style={{
-                      width:
-                        "220px",
-                      borderRadius:
-                        "12px",
-                      marginTop:
-                        "8px",
-                    }}
-                  />
-                )}
+                      <button
+                        type="button"
+                        onClick={() =>
+                          speaking
+                            ? stopSpeaking()
+                            : speakText(
+                                msg.text
+                              )
+                        }
+                        aria-label={
+                          speaking
+                            ? "Stop reading message aloud"
+                            : "Read message aloud"
+                        }
+                        style={{
+                          marginTop:
+                            "8px",
+                        }}
+                      >
+                        {speaking
+                          ? "⏹ Stop reading"
+                          : "🔊 Read aloud"}
+                      </button>
+                    </>
+                  )}
 
-                {msg.audioUrl && (
-                  <audio
-                    controls
-                    style={{
-                      marginTop:
-                        "8px",
-                      width:
-                        "100%",
-                    }}
-                  >
-                    <source
-                      src={
-                        msg.audioUrl
+                  {msg.imageUrl && (
+                    <img
+                      src={msg.imageUrl}
+                      alt={
+                        msg.fileName ||
+                        "Shared image"
                       }
-                      type="audio/webm"
+                      style={{
+                        width:
+                          "220px",
+                        maxWidth:
+                          "100%",
+                        borderRadius:
+                          "12px",
+                        marginTop:
+                          "8px",
+                      }}
                     />
-                  </audio>
-                )}
+                  )}
 
-                {msg.senderId ===
-                  auth
-                    .currentUser
-                    .uid && (
-                  <div
-                    style={{
-                      fontSize:
-                        "11px",
-                      color:
-                        "#cbd5e1",
-                      marginTop:
-                        "4px",
-                    }}
-                  >
-                    {msg.status ===
-                    "read"
-                      ? "✓✓ Read"
-                      : "✓ Sent"}
-                  </div>
-                )}
-              </div>
-            </div>
-          )
+                  {msg.audioUrl && (
+                    <audio
+                      controls
+                      preload="metadata"
+                      aria-label="Voice message"
+                      style={{
+                        marginTop:
+                          "8px",
+                        width:
+                          "100%",
+                      }}
+                    >
+                      <source
+                        src={
+                          msg.audioUrl
+                        }
+                        type="audio/webm"
+                      />
+                    </audio>
+                  )}
+
+                  {isOwnMessage && (
+                    <div
+                      aria-label={
+                        msg.status ===
+                        "read"
+                          ? "Message read"
+                          : "Message sent"
+                      }
+                      style={{
+                        fontSize:
+                          "11px",
+                        color:
+                          "#cbd5e1",
+                        marginTop:
+                          "4px",
+                      }}
+                    >
+                      {msg.status ===
+                      "read"
+                        ? "✓✓ Read"
+                        : "✓ Sent"}
+                    </div>
+                  )}
+                </div>
+              </article>
+            );
+          })
         )}
-      </div>
+      </main>
 
-      <div
+      <section
+        aria-label="Message composer"
         style={{
-          display: "flex",
-          gap: "10px",
           padding: "16px",
-          flexWrap:
-            "wrap",
+          borderTop:
+            "1px solid #1e293b",
         }}
       >
-        <input
+        <textarea
+          ref={messageInputRef}
           value={text}
-          onChange={(e) => {
-            setText(
-              e.target.value
-            );
-
-            updateTypingStatus(
-              true
-            );
-          }}
+          onChange={
+            handleInputChange
+          }
+          onKeyDown={
+            handleInputKeyDown
+          }
           onBlur={() =>
             updateTypingStatus(
               false
             )
           }
           placeholder="Type a message..."
+          aria-label="Type a message"
+          rows="2"
           style={{
-            flex: 1,
-            minWidth:
-              "220px",
-            padding:
-              "14px",
+            width: "100%",
+            boxSizing:
+              "border-box",
+            padding: "14px",
             borderRadius:
               "12px",
+            resize: "vertical",
+            marginBottom:
+              "10px",
           }}
         />
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={
-            handleImageUpload
-          }
-        />
-
-        <button
-          onClick={() =>
-            recording
-              ? stopRecording()
-              : startRecording()
-          }
+        <div
+          role="toolbar"
+          aria-label="Message tools"
+          style={{
+            display: "flex",
+            gap: "10px",
+            flexWrap:
+              "wrap",
+          }}
         >
-          {recording
-            ? "⏹ Stop"
-            : "🎤 Record"}
-        </button>
+          <label
+            htmlFor="chat-image-upload"
+            style={{
+              cursor:
+                "pointer",
+            }}
+          >
+            🖼️ Image
+          </label>
 
-        <button
-          onClick={
-            sendMessage
-          }
-        >
-          Send
-        </button>
+          <input
+            id="chat-image-upload"
+            type="file"
+            accept="image/*"
+            onChange={
+              handleImageUpload
+            }
+            aria-label="Share an image"
+            style={{
+              position:
+                "absolute",
+              width: "1px",
+              height: "1px",
+              overflow:
+                "hidden",
+              clip:
+                "rect(0, 0, 0, 0)",
+            }}
+          />
 
-        <button>
-          🔊 Read
-        </button>
+          <button
+            type="button"
+            onClick={() =>
+              recording
+                ? stopRecording()
+                : startRecording()
+            }
+            aria-pressed={
+              recording
+            }
+            aria-label={
+              recording
+                ? "Stop voice recording"
+                : "Start voice recording"
+            }
+          >
+            {recording
+              ? "⏹ Stop"
+              : "🎤 Record"}
+          </button>
 
-        <button>
-          🎙 Speech To Text
-        </button>
+          <button
+            type="button"
+            onClick={
+              startSpeechToText
+            }
+            disabled={
+              !speechSupported
+            }
+            aria-label="Convert speech to text"
+          >
+            🎙 Speech to text
+          </button>
 
-        <button>
-          📝 Text To Speech
-        </button>
-      </div>
+          <button
+            type="button"
+            onClick={() =>
+              speaking
+                ? stopSpeaking()
+                : speakText(text)
+            }
+            disabled={!text.trim()}
+            aria-label={
+              speaking
+                ? "Stop text to speech"
+                : "Read typed text aloud"
+            }
+          >
+            {speaking
+              ? "⏹ Stop"
+              : "📝 Read aloud"}
+          </button>
+
+          <button
+            type="button"
+            onClick={sendMessage}
+            disabled={!text.trim()}
+            aria-label="Send message"
+          >
+            Send
+          </button>
+        </div>
+      </section>
     </div>
   );
 }
