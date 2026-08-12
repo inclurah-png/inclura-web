@@ -814,65 +814,6 @@ function ChatWindow({
         )}
       </main>
       
-                  {msg.text && (
-                    <div>
-                      {msg.text}
-                    </div>
-                  )}
-
-                  {msg.imageUrl && (
-                    <img
-                      src={msg.imageUrl}
-                      alt={
-                        msg.fileName
-                          ? `Shared image: ${msg.fileName}`
-                          : "Shared image"
-                      }
-                      style={{
-                        width: "220px",
-                        maxWidth: "100%",
-                        borderRadius: "12px",
-                        marginTop: "8px",
-                      }}
-                    />
-                  )}
-
-                  {msg.audioUrl && (
-                    <audio
-                      controls
-                      aria-label="Voice message"
-                      style={{
-                        marginTop: "8px",
-                        width: "100%",
-                      }}
-                    >
-                      <source
-                        src={msg.audioUrl}
-                        type="audio/webm"
-                      />
-                    </audio>
-                  )}
-
-                  {isOwnMessage && (
-                    <div
-                      style={{
-                        fontSize: "11px",
-                        color: "#cbd5e1",
-                        marginTop: "4px",
-                      }}
-                    >
-                      {msg.status === "read"
-                        ? "✓✓ Read"
-                        : "✓ Sent"}
-                    </div>
-                  )}
-                </div>
-              </article>
-            );
-          })
-        )}
-      </main>
-
       <section
         aria-label="Message composer"
         style={{
