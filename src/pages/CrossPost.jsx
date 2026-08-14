@@ -317,6 +317,7 @@ async function createCrossPostRequest() {
   </div>
 )}
 
+ </div>
 {selectedPlatforms.length > 0 && (
   <button
     type="button"
