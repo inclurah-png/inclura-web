@@ -83,7 +83,7 @@ import PricingManager from "./pages/PricingManager";
 import PlatformAnalytics from "./pages/PlatformAnalytics";
 
 import SOS from "./pages/SOS";
-import IdentityBiometricVerification from "./pages/IdentityBiometricVerification";
+import BiometricsDemoPage from "./pages/BiometricsDemoPage";
 import ResponderAssignments from "./pages/ResponderAssignments";
 
 function App() {
@@ -132,12 +132,12 @@ function App() {
       />
 
       <Route
-    path="/identity/biometric-verification"
-    element={
-        <ProtectedRoute>
-            <IdentityBiometricVerification />
-        </ProtectedRoute>
-    }
+  path="/identity/biometric-verification"
+  element={
+    <ProtectedRoute>
+      <BiometricsDemoPage />
+    </ProtectedRoute>
+  }
 />
 
       <Route
