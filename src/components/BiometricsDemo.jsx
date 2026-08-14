@@ -146,69 +146,127 @@ export default function BiometricsDemo() {
   }, []);
 
   const handleRegisterPasskey = async () => {
-    try {
-      setPasskeyStatus("Creating a passkey with your browser...");
-      const response = await fetch(
-  "https://inclura-ifse-backend.onrender.com/api/identity/register/options",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      userId: "inclura-demo-user",
-      email: "demo@inclura.com",
-      fullName: "Inclura Demo User",
-    }),
-  }
-);
+  try {
+    setPasskeyStatus(
+      "Connecting to Inclura IFSE and creating a secure registration challenge..."
+    );
 
-const backend = await response.json();
+    // =====================================================
+    // STEP 1 — Ask IFSE backend for registration options
+    // =====================================================
 
-alert(JSON.stringify(backend, null, 2));
+    const response = await fetch(
+      "https://inclura-ifse-backend.onrender.com/api/identity/register/options",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: "inclura-demo-user",
+          email: "demo@inclura.com",
+          fullName: "Inclura Demo User",
+        }),
+      }
+    );
 
-return;
-
-// Temporarily stop here
-const attestation = await startRegistration({
-  optionsJSON: backend.optionsJSON,
-});
-      const verifyResponse = await fetch(
-  "https://inclura-ifse-backend.onrender.com/api/identity/register/verify",
-  {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    
-    body: JSON.stringify({
-      challengeId: backend.challengeId,
-      response: attestation,
-      deviceName: navigator.userAgent,
-      platform: navigator.platform,
-    }),
-  }
-);
-
-const verification = await verifyResponse.json();
-
-if (!verification.success) {
-
-  throw new Error(
-    verification.message || "Passkey verification failed."
-  );
-
-}
-
-setPasskeyStatus(
-  "Passkey registered and verified successfully with IFSE."
-);
-    } catch (error) {
-      console.error(error);
-      setPasskeyStatus(`Registration failed: ${error.message}`);
+    if (!response.ok) {
+      throw new Error(
+        `IFSE registration-options request failed (${response.status})`
+      );
     }
-  };
 
+    const backend = await response.json();
+
+    if (!backend.success) {
+      throw new Error(
+        backend.message ||
+          "IFSE could not create passkey registration options."
+      );
+    }
+
+    if (!backend.optionsJSON) {
+      throw new Error(
+        "IFSE did not return WebAuthn registration options."
+      );
+    }
+
+    if (!backend.challengeId) {
+      throw new Error(
+        "IFSE did not return a challenge ID."
+      );
+    }
+
+    setPasskeyStatus(
+      "IFSE challenge created. Your browser is now requesting a passkey..."
+    );
+
+    // =====================================================
+    // STEP 2 — Browser creates the passkey
+    // =====================================================
+
+    const attestation = await startRegistration({
+      optionsJSON: backend.optionsJSON,
+    });
+
+    setPasskeyStatus(
+      "Passkey created. Sending the registration response to IFSE for verification..."
+    );
+
+    // =====================================================
+    // STEP 3 — Send browser response back to IFSE
+    // =====================================================
+
+    const verifyResponse = await fetch(
+      "https://inclura-ifse-backend.onrender.com/api/identity/register/verify",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          challengeId: backend.challengeId,
+          response: attestation,
+          deviceName: navigator.userAgent,
+          platform: navigator.platform,
+        }),
+      }
+    );
+
+    if (!verifyResponse.ok) {
+      throw new Error(
+        `IFSE registration verification request failed (${verifyResponse.status})`
+      );
+    }
+
+    const verification = await verifyResponse.json();
+
+    if (!verification.success || !verification.verified) {
+      throw new Error(
+        verification.message ||
+          "IFSE could not verify the passkey registration."
+      );
+    }
+
+    // =====================================================
+    // STEP 4 — Registration completed
+    // =====================================================
+
+    setPasskeyStatus(
+      "✅ Passkey registered and verified successfully by Inclura IFSE."
+    );
+
+  } catch (error) {
+    console.error(
+      "IFSE passkey registration error:",
+      error
+    );
+
+    setPasskeyStatus(
+      `Registration failed: ${error.message}`
+    );
+  }
+};
   const handleAuthenticatePasskey = async () => {
     try {
       const stored = localStorage.getItem("inclura-passkey-demo");
@@ -218,7 +276,11 @@ setPasskeyStatus(
       }
 
       const parsed = JSON.parse(stored);
-      const challenge = crypto.getRandomValues(new Uint8Array(32));
+      const handleAuthenticatePasskey = async () => {
+  setPasskeyStatus(
+    "Passkey authentication will be enabled after the IFSE authentication challenge and verification routes are connected."
+  );
+};
 
       const assertion = await startAuthentication({
         publicKey: {
@@ -341,7 +403,7 @@ setPasskeyStatus(
                 opacity: passkeySupported ? 1 : 0.8,
               }}
             >
-              Sign in with the stored passkey
+              Sign in with Passkey
             </button>
           </div>
         </section>
