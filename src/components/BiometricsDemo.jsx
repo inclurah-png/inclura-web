@@ -178,18 +178,17 @@ export default function BiometricsDemo() {
   }
 };
   const handleAuthenticatePasskey = async () => {
-    try {
-      const stored = localStorage.getItem("inclura-passkey-demo");
-      if (!stored) {
-        setPasskeyStatus("Register a passkey first so it can be used here.");
-        return;
-      }
+  try {
+    setPasskeyStatus(
+      "Passkey authentication will be enabled after the IFSE authentication challenge and verification routes are connected."
+    );
+  } catch (error) {
+    console.error(error);
 
-      const parsed = JSON.parse(stored);
-      const handleAuthenticatePasskey = async () => {
-  setPasskeyStatus(
-    "Passkey authentication will be enabled after the IFSE authentication challenge and verification routes are connected."
-  );
+    setPasskeyStatus(
+      `Authentication failed: ${error.message}`
+    );
+  }
 };
 
       const assertion = await startAuthentication({
