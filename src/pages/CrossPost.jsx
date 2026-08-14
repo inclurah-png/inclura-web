@@ -235,7 +235,7 @@ async function createCrossPostRequest() {
         </p>
       </div>
 
-      <div
+            <div
         style={{
           background: "#0f172a",
           borderRadius: "22px",
@@ -254,106 +254,100 @@ async function createCrossPostRequest() {
           }}
         >
           {platforms.map((platform) => {
-  const selected =
-    selectedPlatforms.includes(platform);
+            const selected =
+              selectedPlatforms.includes(platform);
 
-  return (
-    <button
-      key={platform}
-      type="button"
-      onClick={() =>
-        togglePlatform(platform)
-      }
-      aria-pressed={selected}
-      style={{
-        padding: "18px",
-        borderRadius: "16px",
-        cursor: "pointer",
-        border: selected
-          ? "3px solid #22c55e"
-          : "1px solid #475569",
-        background: selected
-          ? "#14532d"
-          : "#1e293b",
-        color: "white",
-        fontWeight: selected
-          ? "700"
-          : "500",
-      }}
-    >
-      {selected ? "✓ " : ""}
-      {platform}
-    </button>
-  );
-})}
+            return (
+              <button
+                key={platform}
+                type="button"
+                onClick={() =>
+                  togglePlatform(platform)
+                }
+                aria-pressed={selected}
+                style={{
+                  padding: "18px",
+                  borderRadius: "16px",
+                  cursor: "pointer",
+                  border: selected
+                    ? "3px solid #22c55e"
+                    : "1px solid #475569",
+                  background: selected
+                    ? "#14532d"
+                    : "#1e293b",
+                  color: "white",
+                  fontWeight: selected
+                    ? "700"
+                    : "500",
+                }}
+              >
+                {selected ? "✓ " : ""}
+                {platform}
+              </button>
+            );
+          })}
+        </div>
 
-{selectedPlatforms.length > 0 && (
-  <div
-    style={{
-      marginTop: "22px",
-      padding: "18px",
-      borderRadius: "16px",
-      background: "#1e293b",
-    }}
-  >
-    <h3>Selected Platforms</h3>
+        {selectedPlatforms.length > 0 && (
+          <div
+            style={{
+              marginTop: "22px",
+              padding: "18px",
+              borderRadius: "16px",
+              background: "#1e293b",
+            }}
+          >
+            <h3>Selected Platforms</h3>
 
-    <p>
-      {selectedPlatforms.join(", ")}
-    </p>
+            <p>
+              {selectedPlatforms.join(", ")}
+            </p>
 
-    <p
-      style={{
-        fontSize: "14px",
-        opacity: 0.8,
-      }}
-    >
-      Your selections will be prepared
-      for the secure CrossPost workflow.
-      Publishing and watermark processing
-      will occur only after backend
-      services are connected.
-    </p>
-  </div>
-)}
+            <p
+              style={{
+                fontSize: "14px",
+                opacity: 0.8,
+              }}
+            >
+              Your selections will be prepared
+              for the secure CrossPost workflow.
+              Publishing and watermark processing
+              will occur only after backend
+              services are connected.
+            </p>
+          </div>
+        )}
 
- </div>
-{selectedPlatforms.length > 0 && (
-  <button
-    type="button"
-    onClick={createCrossPostRequest}
-    disabled={creatingRequest}
-    aria-busy={creatingRequest}
-    style={{
-      marginTop: "20px",
-      width: "100%",
-      padding: "16px",
-      borderRadius: "14px",
-      border: "none",
-      cursor: creatingRequest
-        ? "not-allowed"
-        : "pointer",
-      background: "#22c55e",
-      color: "white",
-      fontWeight: "700",
-      fontSize: "16px",
-      opacity: creatingRequest ? 0.7 : 1,
-    }}
-  >
-    {creatingRequest
-      ? "Preparing Secure Cross-Post..."
-      : "Prepare Secure Cross-Post"}
-  </button>
-)}
+        {selectedPlatforms.length > 0 && (
+          <button
+            type="button"
+            onClick={createCrossPostRequest}
+            disabled={creatingRequest}
+            aria-busy={creatingRequest}
+            style={{
+              marginTop: "20px",
+              width: "100%",
+              padding: "16px",
+              borderRadius: "14px",
+              border: "none",
+              cursor: creatingRequest
+                ? "not-allowed"
+                : "pointer",
+              background: "#22c55e",
+              color: "white",
+              fontWeight: "700",
+              fontSize: "16px",
+              opacity: creatingRequest ? 0.7 : 1,
+            }}
+          >
+            {creatingRequest
+              ? "Preparing Secure Cross-Post..."
+              : "Prepare Secure Cross-Post"}
+          </button>
+        )}
+      </div>
 
-</div>
-</div>
-
-</div>
-</div>
-
-            {/* CROSS-POST PREVIEW */}
-
+      {/* CROSS-POST PREVIEW */}
       {selectedPlatforms.length > 0 && (
         <div
           style={{
