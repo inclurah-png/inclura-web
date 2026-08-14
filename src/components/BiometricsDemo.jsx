@@ -1,54 +1,75 @@
 import React, { useEffect, useRef, useState } from "react";
-import { DrawingUtils, FaceLandmarker, FilesetResolver } from "@mediapipe/tasks-vision";
-import { startAuthentication, startRegistration } from "@simplewebauthn/browser";
+import {
+  DrawingUtils,
+  FaceLandmarker,
+  FilesetResolver,
+} from "@mediapipe/tasks-vision";
+import { startRegistration } from "@simplewebauthn/browser";
 
 const MODEL_ASSET_URL =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
+
 const WASM_URL =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm";
-
-function base64UrlDecode(value) {
-  const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-  const padding = "=".repeat((4 - (normalized.length % 4)) % 4);
-  const binary = atob(normalized + padding);
-  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-  return bytes;
-}
 
 export default function BiometricsDemo() {
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
-  const [status, setStatus] = useState("Loading MediaPipe face landmarking...");
+
+  const [status, setStatus] = useState(
+    "Loading MediaPipe face landmarking..."
+  );
+
   const [passkeyStatus, setPasskeyStatus] = useState(
     "Passkeys are ready to be tested from this browser."
   );
+
   const [cameraReady, setCameraReady] = useState(false);
   const [passkeySupported, setPasskeySupported] = useState(true);
+
+  // ============================================================
+  // CHECK PASSKEY SUPPORT
+  // ============================================================
 
   useEffect(() => {
     let cancelled = false;
 
     async function detectPasskeySupport() {
-      if (typeof window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+      if (
+        typeof window.PublicKeyCredential?.isUserVerifyingPlatformAuthenticatorAvailable !==
+        "function"
+      ) {
         if (!cancelled) {
           setPasskeySupported(false);
-          setPasskeyStatus("This browser does not expose WebAuthn platform authenticator support.");
+
+          setPasskeyStatus(
+            "This browser does not expose WebAuthn platform authenticator support."
+          );
         }
+
         return;
       }
 
       try {
-        const available = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        const available =
+          await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+
         if (!cancelled) {
           setPasskeySupported(Boolean(available));
+
           if (!available) {
-            setPasskeyStatus("This device does not currently expose a platform authenticator for passkeys.");
+            setPasskeyStatus(
+              "This device does not currently expose a platform authenticator for passkeys."
+            );
           }
         }
       } catch (error) {
         if (!cancelled) {
           setPasskeySupported(false);
-          setPasskeyStatus(`Passkey support check failed: ${error.message}`);
+
+          setPasskeyStatus(
+            `Passkey support check failed: ${error.message}`
+          );
         }
       }
     }
@@ -60,27 +81,56 @@ export default function BiometricsDemo() {
     };
   }, []);
 
+  // ============================================================
+  // MEDIAPIPE + CAMERA
+  // ============================================================
+
   useEffect(() => {
     let animationFrameId = null;
     let cancelled = false;
+    let faceLandmarker = null;
 
     async function initialize() {
       if (!navigator.mediaDevices?.getUserMedia) {
-        setStatus("Camera access is not supported by this browser.");
+        setStatus(
+          "Camera access is not supported by this browser."
+        );
+
+        setCameraReady(false);
+
         return;
       }
 
       try {
+        // --------------------------------------------------------
+        // Load MediaPipe WASM
+        // --------------------------------------------------------
+
         const vision = await FilesetResolver.forVisionTasks(WASM_URL);
-        const faceLandmarker = await FaceLandmarker.createFromOptions(vision, {
-          baseOptions: {
-            modelAssetPath: MODEL_ASSET_URL,
-            delegate: "CPU",
-          },
-          outputFaceBlendshapes: true,
-          runningMode: "VIDEO",
-          numFaces: 1,
-        });
+
+        if (cancelled) {
+          return;
+        }
+
+        // --------------------------------------------------------
+        // Create Face Landmarker
+        // --------------------------------------------------------
+
+        faceLandmarker = await FaceLandmarker.createFromOptions(
+          vision,
+          {
+            baseOptions: {
+              modelAssetPath: MODEL_ASSET_URL,
+              delegate: "CPU",
+            },
+
+            outputFaceBlendshapes: true,
+
+            runningMode: "VIDEO",
+
+            numFaces: 1,
+          }
+        );
 
         if (cancelled) {
           return;
@@ -88,148 +138,425 @@ export default function BiometricsDemo() {
 
         const video = videoRef.current;
         const canvas = canvasRef.current;
+
+        if (!video || !canvas) {
+          throw new Error(
+            "Biometrics camera elements could not be initialized."
+          );
+        }
+
         const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+          throw new Error(
+            "Could not create the camera canvas context."
+          );
+        }
+
         const drawingUtils = new DrawingUtils(ctx);
 
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: "user" },
-          audio: false,
-        });
+        // --------------------------------------------------------
+        // Request camera
+        // --------------------------------------------------------
+
+        const stream =
+          await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: "user",
+            },
+            audio: false,
+          });
 
         if (cancelled) {
-          stream.getTracks().forEach((track) => track.stop());
+          stream
+            .getTracks()
+            .forEach((track) => track.stop());
+
           return;
         }
 
         video.srcObject = stream;
+
         await video.play();
+
+        if (cancelled) {
+          stream
+            .getTracks()
+            .forEach((track) => track.stop());
+
+          return;
+        }
+
+        // --------------------------------------------------------
+        // Set canvas dimensions
+        // --------------------------------------------------------
+
         canvas.width = video.videoWidth || 640;
         canvas.height = video.videoHeight || 480;
 
-        const render = () => {
-          if (video.readyState >= 2) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // --------------------------------------------------------
+        // Render face landmarks
+        // --------------------------------------------------------
 
-            const result = faceLandmarker.detectForVideo(video, performance.now());
-            if (result.faceLandmarks?.length) {
-              drawingUtils.drawLandmarks(result.faceLandmarks[0], {
-                color: "#f59e0b",
-                radius: 2,
-              });
+        const render = () => {
+          if (cancelled) {
+            return;
+          }
+
+          if (video.readyState >= 2) {
+            ctx.clearRect(
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            ctx.drawImage(
+              video,
+              0,
+              0,
+              canvas.width,
+              canvas.height
+            );
+
+            try {
+              const result =
+                faceLandmarker.detectForVideo(
+                  video,
+                  performance.now()
+                );
+
+              if (result.faceLandmarks?.length) {
+                drawingUtils.drawLandmarks(
+                  result.faceLandmarks[0],
+                  {
+                    color: "#f59e0b",
+                    radius: 2,
+                  }
+                );
+              }
+            } catch (error) {
+              console.error(
+                "Face landmark detection error:",
+                error
+              );
             }
           }
 
-          animationFrameId = window.requestAnimationFrame(render);
+          animationFrameId =
+            window.requestAnimationFrame(render);
         };
 
         render();
-        setStatus("Face landmarking is active. Move your face into view.");
+
+        setStatus(
+          "Face landmarking is active. Move your face into view."
+        );
+
         setCameraReady(true);
       } catch (error) {
-  console.error("Biometrics initialization error:", error);
+        console.error(
+          "Biometrics initialization error:",
+          error
+        );
 
-  if (error.name === "NotAllowedError") {
-    setStatus(
-      "Camera permission was denied. Please allow camera access in your browser settings."
-    );
-  } else if (error.name === "NotFoundError") {
-    setStatus(
-      "No camera was found on this device."
-    );
-  } else if (error.name === "NotReadableError") {
-    setStatus(
-      "The camera is already being used by another application."
-    );
-  } else {
-    setStatus(
-      `MediaPipe/camera initialization failed: ${error.message}`
-    );
-  }
+        setCameraReady(false);
 
-  setCameraReady(false);
-}
+        if (error?.name === "NotAllowedError") {
+          setStatus(
+            "Camera permission was denied. Please allow camera access in your browser settings."
+          );
+        } else if (error?.name === "NotFoundError") {
+          setStatus(
+            "No camera was found on this device."
+          );
+        } else if (error?.name === "NotReadableError") {
+          setStatus(
+            "The camera is already being used by another application."
+          );
+        } else {
+          setStatus(
+            `MediaPipe/camera initialization failed: ${
+              error?.message || "Unknown error"
+            }`
+          );
+        }
+      }
     }
 
     initialize();
 
     return () => {
       cancelled = true;
+
       if (animationFrameId) {
-        window.cancelAnimationFrame(animationFrameId);
+        window.cancelAnimationFrame(
+          animationFrameId
+        );
       }
+
       if (videoRef.current?.srcObject) {
-        videoRef.current.srcObject.getTracks().forEach((track) => track.stop());
+        videoRef.current.srcObject
+          .getTracks()
+          .forEach((track) => track.stop());
+
+        videoRef.current.srcObject = null;
+      }
+
+      if (faceLandmarker) {
+        try {
+          faceLandmarker.close();
+        } catch (error) {
+          console.warn(
+            "Could not close MediaPipe FaceLandmarker:",
+            error
+          );
+        }
       }
     };
   }, []);
 
-  const handleAuthenticatePasskey = async () => {
-  try {
-    setPasskeyStatus(
-      "IFSE authentication challenge is not connected yet."
-    );
-  } catch (error) {
-    console.error(error);
+  // ============================================================
+  // PASSKEY REGISTRATION
+  // ============================================================
 
-    setPasskeyStatus(
-      `Authentication failed: ${error.message}`
-    );
-  }
-};
-  const handleAuthenticatePasskey = async () => {
-  try {
-    setPasskeyStatus(
-      "Passkey authentication will be enabled after the IFSE authentication challenge and verification routes are connected."
-    );
-  } catch (error) {
-    console.error(error);
+  const handleRegisterPasskey = async () => {
+    try {
+      setPasskeyStatus(
+        "Connecting to Inclura IFSE and creating a secure registration challenge..."
+      );
 
-    setPasskeyStatus(
-      `Authentication failed: ${error.message}`
-    );
-  }
-};
+      // --------------------------------------------------------
+      // STEP 1
+      // Ask IFSE backend for registration options
+      // --------------------------------------------------------
 
-      const assertion = await startAuthentication({
-        publicKey: {
-          challenge,
-          timeout: 60000,
-          userVerification: "required",
-          allowCredentials: [
-            {
-              id: base64UrlDecode(parsed.credentialId),
-              type: "public-key",
-            },
-          ],
-        },
+      const response = await fetch(
+        "https://inclura-ifse-backend.onrender.com/api/identity/register/options",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            userId: "inclura-demo-user",
+            email: "demo@inclura.com",
+            fullName: "Inclura Demo User",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(
+          `IFSE registration-options request failed (${response.status})`
+        );
+      }
+
+      const backend = await response.json();
+
+      if (!backend.success) {
+        throw new Error(
+          backend.message ||
+            "IFSE could not create passkey registration options."
+        );
+      }
+
+      if (!backend.optionsJSON) {
+        throw new Error(
+          "IFSE did not return WebAuthn registration options."
+        );
+      }
+
+      if (!backend.challengeId) {
+        throw new Error(
+          "IFSE did not return a challenge ID."
+        );
+      }
+
+      setPasskeyStatus(
+        "IFSE challenge created. Your browser is now requesting a passkey..."
+      );
+
+      // --------------------------------------------------------
+      // STEP 2
+      // Browser creates the passkey
+      // --------------------------------------------------------
+
+      const attestation = await startRegistration({
+        optionsJSON: backend.optionsJSON,
       });
 
       setPasskeyStatus(
-        `Authentication succeeded. Signature length: ${assertion.response.authenticatorData.byteLength}`
+        "Passkey created. Sending the registration response to IFSE for verification..."
+      );
+
+      // --------------------------------------------------------
+      // STEP 3
+      // Send browser response back to IFSE
+      // --------------------------------------------------------
+
+      const verifyResponse = await fetch(
+        "https://inclura-ifse-backend.onrender.com/api/identity/register/verify",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json",
+          },
+
+          body: JSON.stringify({
+            challengeId: backend.challengeId,
+
+            response: attestation,
+
+            deviceName: navigator.userAgent,
+
+            platform: navigator.platform,
+          }),
+        }
+      );
+
+      if (!verifyResponse.ok) {
+        throw new Error(
+          `IFSE registration verification request failed (${verifyResponse.status})`
+        );
+      }
+
+      const verification =
+        await verifyResponse.json();
+
+      if (
+        !verification.success ||
+        !verification.verified
+      ) {
+        throw new Error(
+          verification.message ||
+            "IFSE could not verify the passkey registration."
+        );
+      }
+
+      // --------------------------------------------------------
+      // STEP 4
+      // Registration completed
+      // --------------------------------------------------------
+
+      setPasskeyStatus(
+        "✅ Passkey registered and verified successfully by Inclura IFSE."
       );
     } catch (error) {
-      console.error(error);
-      setPasskeyStatus(`Authentication failed: ${error.message}`);
+      console.error(
+        "IFSE passkey registration error:",
+        error
+      );
+
+      setPasskeyStatus(
+        `Registration failed: ${
+          error?.message || "Unknown error"
+        }`
+      );
     }
   };
 
+  // ============================================================
+  // PASSKEY AUTHENTICATION
+  // ============================================================
+
+  /*
+   * IMPORTANT:
+   *
+   * We are deliberately NOT attempting startAuthentication()
+   * here yet.
+   *
+   * WebAuthn authentication must receive a fresh challenge
+   * from IFSE. The previous code tried to use an undefined
+   * "challenge" variable and an undefined local credential.
+   *
+   * We will connect this button to:
+   *
+   *   /api/identity/authenticate/options
+   *
+   * and:
+   *
+   *   /api/identity/authenticate/verify
+   *
+   * once those IFSE routes are ready.
+   */
+
+  const handleAuthenticatePasskey = async () => {
+    try {
+      if (!passkeySupported) {
+        setPasskeyStatus(
+          "Passkey authentication is not available on this browser or device."
+        );
+
+        return;
+      }
+
+      setPasskeyStatus(
+        "IFSE passkey authentication is not connected yet. Registration is available, but authentication requires the IFSE authentication challenge and verification routes."
+      );
+    } catch (error) {
+      console.error(
+        "Passkey authentication error:",
+        error
+      );
+
+      setPasskeyStatus(
+        `Authentication failed: ${
+          error?.message || "Unknown error"
+        }`
+      );
+    }
+  };
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
-    <div style={{ padding: "24px", maxWidth: "1100px", margin: "0 auto" }}>
-      <h1 style={{ marginBottom: "8px" }}>MediaPipe + Passkey Demo</h1>
-      <p style={{ color: "#64748b", marginBottom: "24px" }}>
-        This route demonstrates browser-based face landmarking and WebAuthn passkey creation.
-        For production deployments, verify the WebAuthn responses on your backend and store the registration data securely.
+    <div
+      style={{
+        padding: "24px",
+        maxWidth: "1100px",
+        margin: "0 auto",
+      }}
+    >
+      <h1
+        style={{
+          marginBottom: "8px",
+        }}
+      >
+        MediaPipe + Passkey Demo
+      </h1>
+
+      <p
+        style={{
+          color: "#64748b",
+          marginBottom: "24px",
+        }}
+      >
+        This route demonstrates browser-based face
+        landmarking and WebAuthn passkey creation.
+        For production deployments, WebAuthn responses
+        must be verified by the IFSE backend and
+        registration data must be stored securely.
       </p>
 
       <div
         style={{
           display: "grid",
           gap: "24px",
-          gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+          gridTemplateColumns:
+            "repeat(auto-fit, minmax(320px, 1fr))",
           alignItems: "start",
         }}
       >
+        {/* =====================================================
+            FACE LANDMARKER
+        ====================================================== */}
+
         <section
           style={{
             border: "1px solid #e2e8f0",
@@ -238,8 +565,22 @@ export default function BiometricsDemo() {
             background: "#fff",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>Face Landmarker</h2>
-          <p style={{ color: "#475569" }}>{status}</p>
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            Face Landmarker
+          </h2>
+
+          <p
+            style={{
+              color: "#475569",
+            }}
+          >
+            {status}
+          </p>
+
           <div
             style={{
               position: "relative",
@@ -254,8 +595,14 @@ export default function BiometricsDemo() {
               autoPlay
               playsInline
               muted
-              style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
             />
+
             <canvas
               ref={canvasRef}
               style={{
@@ -263,16 +610,39 @@ export default function BiometricsDemo() {
                 inset: 0,
                 width: "100%",
                 height: "100%",
+                pointerEvents: "none",
               }}
             />
           </div>
-          <p style={{ color: cameraReady ? "#15803d" : "#64748b", marginTop: "12px" }}>
-            {cameraReady ? "Camera streaming and landmark detection are running." : "Waiting for camera access..."}
+
+          <p
+            style={{
+              color: cameraReady
+                ? "#15803d"
+                : "#64748b",
+              marginTop: "12px",
+            }}
+          >
+            {cameraReady
+              ? "Camera streaming and landmark detection are running."
+              : "Waiting for camera access..."}
           </p>
-          <p style={{ color: "#64748b", fontSize: "14px", marginTop: "8px" }}>
-            The face model runs with the CPU delegate for wider browser compatibility.
+
+          <p
+            style={{
+              color: "#64748b",
+              fontSize: "14px",
+              marginTop: "8px",
+            }}
+          >
+            The face model runs with the CPU delegate
+            for wider browser compatibility.
           </p>
         </section>
+
+        {/* =====================================================
+            WEBAUTHN / PASSKEYS
+        ====================================================== */}
 
         <section
           style={{
@@ -282,9 +652,29 @@ export default function BiometricsDemo() {
             background: "#fff",
           }}
         >
-          <h2 style={{ marginTop: 0 }}>WebAuthn / Passkeys</h2>
-          <p style={{ color: "#475569" }}>{passkeyStatus}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          <h2
+            style={{
+              marginTop: 0,
+            }}
+          >
+            WebAuthn / Passkeys
+          </h2>
+
+          <p
+            style={{
+              color: "#475569",
+            }}
+          >
+            {passkeyStatus}
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "12px",
+            }}
+          >
             <button
               onClick={handleRegisterPasskey}
               disabled={!passkeySupported}
@@ -292,14 +682,21 @@ export default function BiometricsDemo() {
                 padding: "12px 16px",
                 borderRadius: "10px",
                 border: "none",
-                background: passkeySupported ? "#2563eb" : "#94a3b8",
+                background: passkeySupported
+                  ? "#2563eb"
+                  : "#94a3b8",
                 color: "white",
-                cursor: passkeySupported ? "pointer" : "not-allowed",
-                opacity: passkeySupported ? 1 : 0.8,
+                cursor: passkeySupported
+                  ? "pointer"
+                  : "not-allowed",
+                opacity: passkeySupported
+                  ? 1
+                  : 0.8,
               }}
             >
               Register a passkey
             </button>
+
             <button
               onClick={handleAuthenticatePasskey}
               disabled={!passkeySupported}
@@ -308,8 +705,13 @@ export default function BiometricsDemo() {
                 borderRadius: "10px",
                 border: "1px solid #cbd5e1",
                 background: "#f8fafc",
-                cursor: passkeySupported ? "pointer" : "not-allowed",
-                opacity: passkeySupported ? 1 : 0.8,
+                color: "#0f172a",
+                cursor: passkeySupported
+                  ? "pointer"
+                  : "not-allowed",
+                opacity: passkeySupported
+                  ? 1
+                  : 0.8,
               }}
             >
               Sign in with Passkey
