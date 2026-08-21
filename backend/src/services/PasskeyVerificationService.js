@@ -4,127 +4,300 @@
 // =======================================================
 
 import admin from "firebase-admin";
-import { firestore } from "../config/firebaseAdmin.js";
-import { verifyRegistrationResponse } from "@simplewebauthn/server";
 
-export async function verifyPasskeyRegistrationService(data) {
+import {
+  firestore,
+} from "../config/firebaseAdmin.js";
 
-  const challengeDoc = await firestore()
+import {
+  verifyRegistrationResponse,
+} from "@simplewebauthn/server";
 
-    .collection("ifse_passkey_challenges")
+// =======================================================
+// Helpers
+// =======================================================
 
-    .doc(data.challengeId)
+function toBase64Url(value) {
 
-    .get();
+  return Buffer.from(value)
+    .toString("base64")
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/g, "");
 
-  if (!challengeDoc.exists) {
+}
 
-    throw new Error("Challenge not found.");
+// =======================================================
+// Verify Passkey Registration
+// =======================================================
+
+export async function verifyPasskeyRegistrationService(
+  data
+) {
+
+  // =====================================================
+  // Validate Request
+  // =====================================================
+
+  if (
+    !data ||
+    !data.challengeId ||
+    !data.response
+  ) {
+
+    throw new Error(
+      "challengeId and response are required."
+    );
 
   }
 
-  const challenge = challengeDoc.data();
+  // =====================================================
+  // Load Challenge
+  // =====================================================
 
-  const verification = await verifyRegistrationResponse({
+  const challengeDoc =
+    await firestore()
 
-  response: data.response,
+      .collection(
+        "ifse_passkey_challenges"
+      )
 
-  expectedChallenge: challenge.challenge,
+      .doc(data.challengeId)
 
-  expectedOrigin: process.env.WEBAUTHN_ORIGIN,
+      .get();
 
-  expectedRPID: process.env.WEBAUTHN_RP_ID,
+  if (!challengeDoc.exists) {
 
-  requireUserVerification: true,
+    throw new Error(
+      "Challenge not found."
+    );
 
-});
+  }
+
+  const challenge =
+    challengeDoc.data();
+
+  // =====================================================
+  // Validate Challenge Type
+  // =====================================================
+
+  if (
+    challenge.type &&
+    challenge.type !== "registration"
+  ) {
+
+    throw new Error(
+      "Invalid challenge type."
+    );
+
+  }
+
+  // =====================================================
+  // Prevent Challenge Replay
+  // =====================================================
+
+  if (challenge.used === true) {
+
+    throw new Error(
+      "Challenge has already been used."
+    );
+
+  }
+
+  // =====================================================
+  // Check Challenge Expiration
+  // =====================================================
+
+  if (
+    !challenge.expiresAt ||
+    Date.now() > challenge.expiresAt
+  ) {
+
+    throw new Error(
+      "Challenge expired."
+    );
+
+  }
+
+  // =====================================================
+  // Verify WebAuthn Registration
+  // =====================================================
+
+  const verification =
+    await verifyRegistrationResponse({
+
+      response:
+        data.response,
+
+      expectedChallenge:
+        challenge.challenge,
+
+      expectedOrigin:
+        process.env.WEBAUTHN_ORIGIN,
+
+      expectedRPID:
+        process.env.WEBAUTHN_RP_ID,
+
+      requireUserVerification:
+        true,
+
+    });
+
+  // =====================================================
+  // Verification Failed
+  // =====================================================
+
   if (!verification.verified) {
 
     return {
 
       success: false,
 
-      message: "Registration verification failed.",
+      verified: false,
+
+      message:
+        "Registration verification failed.",
 
     };
 
   }
 
-  const credential = verification.registrationInfo;
-  if (!credential) {
+  // =====================================================
+  // Registration Information
+  // =====================================================
 
-  return {
+  const registrationInfo =
+    verification.registrationInfo;
 
-    success: false,
+  if (!registrationInfo) {
 
-    message: "Credential information was not returned.",
+    return {
 
-  };
+      success: false,
+
+      verified: false,
+
+      message:
+        "Credential information was not returned.",
+
+    };
 
   }
 
-  const credentialId = Buffer.from(
-  credential.credentialID
-).toString("base64");
+  // =====================================================
+  // Extract Credential
+  // =====================================================
 
-await firestore()
+  const credentialId =
+    toBase64Url(
+      registrationInfo.credentialID
+    );
 
-  .collection("ifse_passkeys")
+  const credentialPublicKey =
+    toBase64Url(
+      registrationInfo.credentialPublicKey
+    );
 
-  .doc(challenge.userId)
+  const counter =
+    Number(
+      registrationInfo.counter || 0
+    );
 
-  .collection("credentials")
-
-  .doc(credentialId)
-
-  .set({
-
-    credentialId,
-
-    credentialPublicKey: Buffer.from(
-      credential.credentialPublicKey
-    ).toString("base64"),
-
-    counter: credential.counter,
-
-    createdAt:
-      admin.firestore.FieldValue.serverTimestamp(),
-
-    lastUsed:
-      admin.firestore.FieldValue.serverTimestamp(),
-
-    verified: true,
-
-    deviceName: data.deviceName || "Unknown Device",
-
-    platform: data.platform || "Unknown",
-
-    authenticatorType: "Passkey",
-    registeredFrom: process.env.WEBAUTHN_ORIGIN,
-
-registrationMethod: "PASSKEY",
-
-securityEngine: "IFSE",
-
-  });
+  // =====================================================
+  // Store Credential
+  // =====================================================
 
   await firestore()
 
-    .collection("ifse_passkey_challenges")
+    .collection(
+      "ifse_passkeys"
+    )
 
-    .doc(data.challengeId)
+    .doc(
+      String(challenge.userId)
+    )
 
-    .update({
+    .collection(
+      "credentials"
+    )
+
+    .doc(
+      credentialId
+    )
+
+    .set({
+
+      credentialId,
+
+      credentialPublicKey,
+
+      counter,
+
+      createdAt:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
+
+      lastUsed:
+        admin.firestore.FieldValue
+          .serverTimestamp(),
 
       verified: true,
 
+      deviceName:
+        data.deviceName ||
+        "Unknown Device",
+
+      platform:
+        data.platform ||
+        "Unknown",
+
+      authenticatorType:
+        "Passkey",
+
+      registeredFrom:
+        process.env.WEBAUTHN_ORIGIN,
+
+      registrationMethod:
+        "PASSKEY",
+
+      securityEngine:
+        "IFSE",
+
     });
+
+  // =====================================================
+  // Mark Challenge Used
+  // =====================================================
+
+  await challengeDoc.ref.update({
+
+    verified: true,
+
+    used: true,
+
+    verifiedAt:
+      admin.firestore.FieldValue
+        .serverTimestamp(),
+
+  });
+
+  // =====================================================
+  // Success
+  // =====================================================
 
   return {
 
     success: true,
 
     verified: true,
+
+    credentialId,
+
+    userId:
+      String(challenge.userId),
+
+    message:
+      "Passkey registration verified successfully.",
 
   };
 
