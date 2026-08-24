@@ -20,17 +20,13 @@ import { firestore } from "../config/firebaseAdmin.js";
 // =======================================================
 
 function decodeBase64Url(value) {
-
   if (!value) {
-    throw new Error(
-      "Missing Base64URL value."
-    );
+    throw new Error("Missing Base64URL value.");
   }
 
-  const normalized =
-    String(value)
-      .replace(/-/g, "+")
-      .replace(/_/g, "/");
+  const normalized = String(value)
+    .replace(/-/g, "+")
+    .replace(/_/g, "/");
 
   const padded =
     normalized +
@@ -39,10 +35,7 @@ function decodeBase64Url(value) {
     );
 
   return Uint8Array.from(
-    Buffer.from(
-      padded,
-      "base64"
-    )
+    Buffer.from(padded, "base64")
   );
 }
 
@@ -51,62 +44,37 @@ function decodeBase64Url(value) {
 // =======================================================
 
 export async function healthService() {
-
   return {
-
     success: true,
-
-    service:
-      "IFSE Identity Service",
-
-    status:
-      "Operational",
-
-    timestamp:
-      new Date().toISOString(),
-
+    service: "IFSE Identity Service",
+    status: "Operational",
+    timestamp: new Date().toISOString(),
   };
-
 }
 
 // =======================================================
 // Passkey Registration
 // =======================================================
 
-export async function registerPasskeyService(
-  data
-) {
-
+export async function registerPasskeyService(data) {
   if (
     !data ||
     !data.userId ||
     !data.email
   ) {
-
     throw new Error(
       "userId and email are required for passkey registration."
     );
-
   }
 
-  const userId =
-    String(data.userId);
-
-  const challengeId =
-    randomUUID();
-
-  // -----------------------------------------------------
-  // WebAuthn user ID
-  // -----------------------------------------------------
+  const userId = String(data.userId);
+  const challengeId = randomUUID();
 
   const userIdBytes =
-    new TextEncoder().encode(
-      userId
-    );
+    new TextEncoder().encode(userId);
 
   const options =
     await generateRegistrationOptions({
-
       rpName:
         process.env.WEBAUTHN_RP_NAME,
 
@@ -130,18 +98,14 @@ export async function registerPasskeyService(
         "none",
 
       authenticatorSelection: {
-
         residentKey:
           "preferred",
 
         userVerification:
           "required",
-
       },
 
-      excludeCredentials:
-        [],
-
+      excludeCredentials: [],
     });
 
   const expiresAt =
@@ -149,15 +113,11 @@ export async function registerPasskeyService(
     5 * 60 * 1000;
 
   await firestore()
-
     .collection(
       "ifse_passkey_challenges"
     )
-
     .doc(challengeId)
-
     .set({
-
       challengeId,
 
       type:
@@ -182,11 +142,9 @@ export async function registerPasskeyService(
 
       used:
         false,
-
     });
 
   return {
-
     success:
       true,
 
@@ -194,9 +152,7 @@ export async function registerPasskeyService(
 
     optionsJSON:
       options,
-
   };
-
 }
 
 // =======================================================
@@ -206,20 +162,16 @@ export async function registerPasskeyService(
 export async function authenticationOptionsService(
   data = {}
 ) {
-
   if (
     !data.email &&
     !data.userId
   ) {
-
     throw new Error(
       "email or userId is required for passkey authentication."
     );
-
   }
 
   let userId;
-
   let email;
 
   // =====================================================
@@ -227,7 +179,6 @@ export async function authenticationOptionsService(
   // =====================================================
 
   if (data.userId) {
-
     userId =
       String(data.userId);
 
@@ -236,14 +187,12 @@ export async function authenticationOptionsService(
       null;
 
   } else {
-
     email =
       String(data.email)
         .trim()
         .toLowerCase();
 
     try {
-
       const firebaseUser =
         await admin
           .auth()
@@ -255,7 +204,6 @@ export async function authenticationOptionsService(
         firebaseUser.uid;
 
     } catch (error) {
-
       console.error(
         "IFSE Firebase user lookup failed:",
         error
@@ -264,9 +212,7 @@ export async function authenticationOptionsService(
       throw new Error(
         "No Inclura account was found for this email."
       );
-
     }
-
   }
 
   // =====================================================
@@ -275,25 +221,19 @@ export async function authenticationOptionsService(
 
   const credentialsSnapshot =
     await firestore()
-
       .collection(
         "ifse_passkeys"
       )
-
       .doc(userId)
-
       .collection(
         "credentials"
       )
-
       .get();
 
-  const allowCredentials =
-    [];
+  const allowCredentials = [];
 
   credentialsSnapshot.forEach(
     (credentialDoc) => {
-
       const credential =
         credentialDoc.data();
 
@@ -301,9 +241,7 @@ export async function authenticationOptionsService(
         credential.credentialId &&
         credential.verified === true
       ) {
-
         allowCredentials.push({
-
           id:
             decodeBase64Url(
               credential.credentialId
@@ -311,22 +249,17 @@ export async function authenticationOptionsService(
 
           type:
             "public-key",
-
         });
-
       }
-
     }
   );
 
   if (
     allowCredentials.length === 0
   ) {
-
     throw new Error(
       "No registered passkeys were found for this user."
     );
-
   }
 
   // =====================================================
@@ -335,7 +268,6 @@ export async function authenticationOptionsService(
 
   const options =
     await generateAuthenticationOptions({
-
       rpID:
         process.env.WEBAUTHN_RP_ID,
 
@@ -346,7 +278,6 @@ export async function authenticationOptionsService(
         "required",
 
       allowCredentials,
-
     });
 
   // =====================================================
@@ -361,15 +292,11 @@ export async function authenticationOptionsService(
     5 * 60 * 1000;
 
   await firestore()
-
     .collection(
       "ifse_passkey_challenges"
     )
-
     .doc(challengeId)
-
     .set({
-
       challengeId,
 
       type:
@@ -393,11 +320,9 @@ export async function authenticationOptionsService(
 
       used:
         false,
-
     });
 
   return {
-
     success:
       true,
 
@@ -407,9 +332,7 @@ export async function authenticationOptionsService(
 
     optionsJSON:
       options,
-
   };
-
 }
 
 // =======================================================
@@ -419,18 +342,14 @@ export async function authenticationOptionsService(
 export async function verifyAuthenticationService(
   data
 ) {
-
   try {
-
     if (
       !data ||
       !data.challengeId ||
       !data.credentialId ||
       !data.authenticationResponse
     ) {
-
       return {
-
         success:
           false,
 
@@ -438,542 +357,10 @@ export async function verifyAuthenticationService(
           false,
 
         message:
-          "Invalid authentication request.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Resolve User ID
-    // ===================================================
-
-    let userId =
-      data.userId
-        ? String(data.userId)
-        : null;
-
-    if (
-      !userId &&
-      data.email
-    ) {
-
-      const email =
-        String(data.email)
-          .trim()
-          .toLowerCase();
-
-      try {
-
-        const firebaseUser =
-          await admin
-            .auth()
-            .getUserByEmail(
-              email
-            );
-
-        userId =
-          firebaseUser.uid;
-
-      } catch (error) {
-
-        console.error(
-          "IFSE Firebase user lookup failed during authentication:",
-          error
-        );
-
-        return {
-
-          success:
-            false,
-
-          authenticated:
-            false,
-
-          message:
-            "Inclura account could not be resolved.",
-
-        };
-
-      }
-
-    }
-
-    if (!userId) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "User identity is required for authentication.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Load Authentication Challenge
-    // ===================================================
-
-    const challengeDoc =
-      await firestore()
-
-        .collection(
-          "ifse_passkey_challenges"
-        )
-
-        .doc(
-          data.challengeId
-        )
-
-        .get();
-
-    if (
-      !challengeDoc.exists
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Authentication challenge not found.",
-
-      };
-
-    }
-
-    const challenge =
-      challengeDoc.data();
-
-    // ===================================================
-    // Verify Challenge Ownership
-    // ===================================================
-
-    if (
-      String(challenge.userId) !==
-        userId ||
-      challenge.type !==
-        "authentication"
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Authentication challenge is invalid.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Check Challenge Expiration
-    // ===================================================
-
-    if (
-      !challenge.expiresAt ||
-      Date.now() >
-        challenge.expiresAt
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Authentication challenge expired.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Prevent Challenge Replay
-    // ===================================================
-
-    if (
-      challenge.used === true
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Authentication challenge has already been used.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Find Registered Credential
-    // ===================================================
-
-    const credentialsSnapshot =
-      await firestore()
-
-        .collection(
-          "ifse_passkeys"
-        )
-
-        .doc(userId)
-
-        .collection(
-          "credentials"
-        )
-
-        .get();
-
-    let credentialDoc =
-      null;
-
-    let credential =
-      null;
-
-    const requestedId =
-      decodeBase64Url(
-        data.credentialId
-      );
-
-    for (
-      const document
-        of credentialsSnapshot.docs
-    ) {
-
-      const storedCredential =
-        document.data();
-
-      if (
-        !storedCredential.credentialId
-      ) {
-
-        continue;
-
-      }
-
-      try {
-
-        const storedId =
-          decodeBase64Url(
-            storedCredential
-              .credentialId
-          );
-
-        if (
-          Buffer.from(
-            storedId
-          ).equals(
-            Buffer.from(
-              requestedId
-            )
-          )
-        ) {
-
-          credentialDoc =
-            document;
-
-          credential =
-            storedCredential;
-
-          break;
-
-        }
-
-      } catch (error) {
-
-        console.error(
-          "Credential ID decoding error:",
-          error
-        );
-
-      }
-
-    }
-
-    if (
-      !credentialDoc ||
-      !credential
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Trusted passkey credential not found.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Verify Cryptographic WebAuthn Response
-    // ===================================================
-
-    const verification =
-      await verifyAuthenticationResponse({
-
-        response:
-          data.authenticationResponse,
-
-        expectedChallenge:
-          challenge.challenge,
-
-        expectedOrigin:
-          process.env.WEBAUTHN_ORIGIN,
-
-        expectedRPID:
-          process.env.WEBAUTHN_RP_ID,
-
-        credential: {
-
-          id:
-            credential.credentialId,
-
-          publicKey:
-            decodeBase64Url(
-              credential
-                .credentialPublicKey
-            ),
-
-          counter:
-            Number(
-              credential.counter ||
-              0
-            ),
-
-        },
-
-        requireUserVerification:
-          true,
-
-      });
-
-    if (
-      !verification.verified
-    ) {
-
-      return {
-
-        success:
-          false,
-
-        authenticated:
-          false,
-
-        message:
-          "Passkey cryptographic verification failed.",
-
-      };
-
-    }
-
-    // ===================================================
-    // Update Credential Counter
-    // ===================================================
-
-    const newCounter =
-      verification
-        .authenticationInfo
-        ?.newCounter;
-
-    const updateData = {
-
-      lastUsed:
-        admin.firestore.FieldValue
-          .serverTimestamp(),
-
-    };
-
-    if (
-      typeof newCounter ===
-      "number"
-    ) {
-
-      updateData.counter =
-        newCounter;
-
-    }
-
-    await credentialDoc.ref.update(
-      updateData
-    );
-
-    // ===================================================
-    // Mark Challenge Used
-    // ===================================================
-
-    await challengeDoc.ref.update({
-
-      verified:
-        true,
-
-      used:
-        true,
-
-      verifiedAt:
-        admin.firestore.FieldValue
-          .serverTimestamp(),
-
-    });
-
-    // ===================================================
-    // Authentication Successful
-    // ===================================================
-
-    return {
-
-      success:
-        true,
-
-      authenticated:
-        true,
-
-      userId,
-
-      credentialId:
-        credential.credentialId,
-
-      message:
-        "Passkey authentication verified successfully.",
-
-    };
-
-  } catch (error) {
-
-    console.error(
-      "IFSE passkey authentication error:",
-      error
-    );
-
-    return {
-
-      success:
-        false,
-
-      authenticated:
-        false,
-
-      message:
-        error.message,
-
-    };
-
-  }
-
-}
-
-// =======================================================
-// Face Verification
-// =======================================================
-
-export async function verifyFaceService(
-  data
-) {
-
-  return {
-
-    success:
-      true,
-
-    verified:
-      false,
-
-    engine:
-      "FaceAuthenticityEngine",
-
-    message:
-      "Face verification engine will be connected next.",
-
-    request:
-      data,
-
-  };
-
-}
-
-// =======================================================
-// Biometric Verification
-// =======================================================
-
-export async function verifyBiometricService(
-  data
-) {
-
-  return {
-
-    success:
-      true,
-
-    verified:
-      false,
-
-    engine:
-      "BiometricVerificationEngine",
-
-    message:
-      "Biometric verification engine will be connected next.",
-
-    request:
-      data,
-
-  };
-
-}
-
-// =======================================================
-// Identity Verification
-// =======================================================
-
-export async function verifyIdentityService(
-  data
-) {
-
-  return {
-
-    success:
-      true,
-
-    verified:
-      false,
-
-    engine:
-      "IdentityVerificationEngine",
-
-    message:
       "Identity verification engine will be connected next.",
 
     request:
       data,
-
   };
-
 }
+         
