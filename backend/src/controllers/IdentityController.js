@@ -4,17 +4,27 @@
 // =======================================================
 
 import {
+
   healthService,
+
   registerPasskeyService,
+
   authenticationOptionsService,
+
   verifyAuthenticationService,
+
   verifyFaceService,
+
   verifyBiometricService,
+
   verifyIdentityService,
+
 } from "../services/IdentityService.js";
 
 import {
+
   verifyPasskeyRegistrationService,
+
 } from "../services/PasskeyVerificationService.js";
 
 // =======================================================
@@ -22,10 +32,15 @@ import {
 // =======================================================
 
 export async function health(req, res) {
-  try {
-    const result = await healthService();
 
-    return res.status(200).json(result);
+  try {
+
+    const result =
+      await healthService();
+
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -34,11 +49,20 @@ export async function health(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Identity service health check failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
@@ -46,6 +70,7 @@ export async function health(req, res) {
 // =======================================================
 
 export async function registerPasskey(req, res) {
+
   try {
 
     const result =
@@ -53,7 +78,9 @@ export async function registerPasskey(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -62,18 +89,31 @@ export async function registerPasskey(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Passkey registration failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Verify Passkey Registration
 // =======================================================
 
-export async function verifyRegistration(req, res) {
+export async function verifyRegistration(
+  req,
+  res
+) {
+
   try {
 
     const result =
@@ -81,7 +121,9 @@ export async function verifyRegistration(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -90,29 +132,57 @@ export async function verifyRegistration(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Passkey registration verification failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Authentication Options
 // =======================================================
 
-export async function authenticationOptions(req, res) {
+export async function authenticationOptions(
+  req,
+  res
+) {
+
   try {
 
     // IMPORTANT:
-    // Pass the email/userId from the frontend
-    // into IdentityService.
+    // Pass the frontend request body to the
+    // Identity Service.
+    //
+    // The frontend sends:
+    //
+    // {
+    //   email: "user@example.com"
+    // }
+    //
+    // The previous version called:
+    //
+    // authenticationOptionsService()
+    //
+    // which discarded the email.
+
     const result =
       await authenticationOptionsService(
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -121,18 +191,31 @@ export async function authenticationOptions(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Could not create passkey authentication options.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Verify Authentication
 // =======================================================
 
-export async function verifyAuthentication(req, res) {
+export async function verifyAuthentication(
+  req,
+  res
+) {
+
   try {
 
     const result =
@@ -140,7 +223,9 @@ export async function verifyAuthentication(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -149,18 +234,33 @@ export async function verifyAuthentication(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        authenticated: false,
+
+        message:
+          error.message ||
+          "Passkey authentication verification failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Face Verification
 // =======================================================
 
-export async function verifyFace(req, res) {
+export async function verifyFace(
+  req,
+  res
+) {
+
   try {
 
     const result =
@@ -168,7 +268,9 @@ export async function verifyFace(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -177,18 +279,31 @@ export async function verifyFace(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Face verification failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Biometric Verification
 // =======================================================
 
-export async function verifyBiometric(req, res) {
+export async function verifyBiometric(
+  req,
+  res
+) {
+
   try {
 
     const result =
@@ -196,7 +311,9 @@ export async function verifyBiometric(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -205,18 +322,31 @@ export async function verifyBiometric(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Biometric verification failed.",
+
+      });
+
   }
+
 }
 
 // =======================================================
 // Identity Verification
 // =======================================================
 
-export async function verifyIdentity(req, res) {
+export async function verifyIdentity(
+  req,
+  res
+) {
+
   try {
 
     const result =
@@ -224,7 +354,9 @@ export async function verifyIdentity(req, res) {
         req.body
       );
 
-    return res.status(200).json(result);
+    return res
+      .status(200)
+      .json(result);
 
   } catch (error) {
 
@@ -233,9 +365,18 @@ export async function verifyIdentity(req, res) {
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      message: error.message,
-    });
+    return res
+      .status(500)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Identity verification failed.",
+
+      });
+
   }
+
 }
