@@ -4,21 +4,34 @@
 // Production Foundation
 // =======================================================
 
-import passkeyRoutes from "./src/routes/passkeyRoutes.js";
-import {
-  initializeFirebaseAdmin,
-} from "./src/config/firebaseAdmin.js";
-import {
-  validateEnvironment,
-  environment,
-} from "./src/config/environment.js";
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
+import passkeyRoutes from "./src/routes/passkeyRoutes.js";
+
+import {
+  initializeFirebaseAdmin,
+} from "./src/config/firebaseAdmin.js";
+
+import {
+  validateEnvironment,
+  environment,
+} from "./src/config/environment.js";
+
+// =======================================================
+// Environment
+// =======================================================
+
 dotenv.config();
+
 validateEnvironment();
+
 initializeFirebaseAdmin();
+
+// =======================================================
+// Express Application
+// =======================================================
 
 const app = express();
 
@@ -26,133 +39,239 @@ const app = express();
 // Configuration
 // =======================================================
 
-const PORT = process.env.PORT || 5000;
+const PORT =
+  process.env.PORT || 5000;
 
 // =======================================================
-// Middleware
+// CORS
 // =======================================================
 
 app.use(
   cors({
-    origin: "https://inclura-web.pages.dev",
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    origin:
+      "https://inclura-web.pages.dev",
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
     allowedHeaders: [
       "Content-Type",
       "Authorization",
     ],
+
     credentials: false,
   })
 );
 
-app.options("*", cors());
+// =======================================================
+// JSON Body Parser
+// =======================================================
+//
+// IMPORTANT:
+// This allows Express to read JSON sent by Login.jsx.
+//
+// Without this middleware:
+// req.body can be undefined.
+//
+// That was preventing the email from reaching
+// authenticationOptionsService().
+//
+
+app.use(
+  express.json({
+    limit: "1mb",
+  })
+);
+
+// =======================================================
+// URL-Encoded Body Parser
+// =======================================================
+
+app.use(
+  express.urlencoded({
+    extended: true,
+    limit: "1mb",
+  })
+);
+
+// =======================================================
+// OPTIONS / CORS Preflight
+// =======================================================
+
+app.options(
+  "*",
+  cors()
+);
 
 // =======================================================
 // Health Check
 // =======================================================
 
-app.get("/", (req, res) => {
+app.get(
+  "/",
+  (req, res) => {
 
-  res.status(200).json({
+    res.status(200).json({
 
-    platform: "Inclura",
+      platform:
+        "Inclura",
 
-    service: "IFSE Identity Backend",
+      service:
+        "IFSE Identity Backend",
 
-    version: "1.0.0",
+      version:
+        "1.0.0",
 
-    status: "Running",
+      status:
+        "Running",
 
-    timestamp: new Date().toISOString(),
+      timestamp:
+        new Date().toISOString(),
 
-  });
+    });
 
-});
+  }
+);
 
 // =======================================================
 // API Status
 // =======================================================
 
-app.get("/api/status", (req, res) => {
+app.get(
+  "/api/status",
+  (req, res) => {
 
-  res.status(200).json({
+    res.status(200).json({
 
-    success: true,
+      success:
+        true,
 
-    backend: "Identity Backend",
+      backend:
+        "Identity Backend",
 
-    securityEngine: "IFSE",
+      securityEngine:
+        "IFSE",
 
-    environment:
-      process.env.NODE_ENV || "development",
+      environment:
+        process.env.NODE_ENV ||
+        "development",
 
-    uptime: process.uptime(),
+      uptime:
+        process.uptime(),
 
-    timestamp: new Date().toISOString(),
+      timestamp:
+        new Date().toISOString(),
 
-  });
+    });
 
-});
+  }
+);
 
 // =======================================================
 // IFSE Identity Routes
 // =======================================================
 
-app.use("/api/identity", passkeyRoutes);
+app.use(
+  "/api/identity",
+  passkeyRoutes
+);
 
 // =======================================================
 // 404 Handler
 // =======================================================
 
-app.use((req, res) => {
+app.use(
+  (req, res) => {
 
-  res.status(404).json({
+    res.status(404).json({
 
-    success: false,
+      success:
+        false,
 
-    message: "Endpoint not found.",
+      message:
+        "Endpoint not found.",
 
-  });
+    });
 
-});
+  }
+);
 
 // =======================================================
 // Global Error Handler
 // =======================================================
 
-app.use((error, req, res, next) => {
+app.use(
+  (
+    error,
+    req,
+    res,
+    next
+  ) => {
 
-  console.error(error);
+    console.error(
+      "IFSE Backend Error:",
+      error
+    );
 
-  res.status(500).json({
+    res.status(500).json({
 
-    success: false,
+      success:
+        false,
 
-    message: "Internal server error.",
+      message:
+        "Internal server error.",
 
-  });
+    });
 
-});
+  }
+);
 
 // =======================================================
 // Start Server
 // =======================================================
 
-app.listen(PORT, () => {
+app.listen(
+  PORT,
+  () => {
 
-  console.log("");
+    console.log("");
 
-  console.log("====================================");
+    console.log(
+      "===================================="
+    );
 
-  console.log(" Inclura IFSE Identity Backend");
+    console.log(
+      " Inclura IFSE Identity Backend"
+    );
 
-  console.log("====================================");
+    console.log(
+      "===================================="
+    );
 
-  console.log(` Server Running : ${PORT}`);
+    console.log(
+      ` Server Running : ${PORT}`
+    );
 
-  console.log(
-    ` Environment : ${process.env.NODE_ENV || "development"}`
-  );
+    console.log(
+      ` Environment : ${
+        process.env.NODE_ENV ||
+        "development"
+      }`
+    );
 
-  console.log("====================================");
+    console.log(
+      " JSON Body Parser : Enabled"
+    );
 
-});
+    console.log(
+      "===================================="
+    );
+
+  }
+);
