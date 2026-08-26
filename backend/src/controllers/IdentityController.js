@@ -26,8 +26,13 @@ export async function health(req, res) {
     const result = await healthService();
 
     return res.status(200).json(result);
+
   } catch (error) {
-    console.error("IFSE Identity Health Error:", error);
+
+    console.error(
+      "IFSE Identity Health Error:",
+      error
+    );
 
     return res.status(500).json({
       success: false,
@@ -42,11 +47,16 @@ export async function health(req, res) {
 
 export async function registerPasskey(req, res) {
   try {
+
     const result =
-      await registerPasskeyService(req.body);
+      await registerPasskeyService(
+        req.body
+      );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
       "IFSE Passkey Registration Error:",
       error
@@ -65,13 +75,16 @@ export async function registerPasskey(req, res) {
 
 export async function verifyRegistration(req, res) {
   try {
+
     const result =
       await verifyPasskeyRegistrationService(
         req.body
       );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
       "IFSE Passkey Registration Verification Error:",
       error
@@ -88,31 +101,23 @@ export async function verifyRegistration(req, res) {
 // Authentication Options
 // =======================================================
 
-export async function authenticationOptions(
-  req,
-  res
-) {
+export async function authenticationOptions(req, res) {
   try {
-    // IMPORTANT:
-    // Pass the frontend request body to the service.
-    //
-    // Login.jsx sends:
-    // {
-    //   email: "user@example.com"
-    // }
-    //
-    // IdentityService.js uses that email to resolve
-    // the Firebase UID and locate registered passkeys.
 
+    // IMPORTANT:
+    // Pass the email/userId from the frontend
+    // into IdentityService.
     const result =
       await authenticationOptionsService(
         req.body
       );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
-      "IFSE Authentication Options Error:",
+      "IFSE Passkey Authentication Options Error:",
       error
     );
 
@@ -127,20 +132,20 @@ export async function authenticationOptions(
 // Verify Authentication
 // =======================================================
 
-export async function verifyAuthentication(
-  req,
-  res
-) {
+export async function verifyAuthentication(req, res) {
   try {
+
     const result =
       await verifyAuthenticationService(
         req.body
       );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
-      "IFSE Authentication Verification Error:",
+      "IFSE Passkey Authentication Verification Error:",
       error
     );
 
@@ -157,11 +162,16 @@ export async function verifyAuthentication(
 
 export async function verifyFace(req, res) {
   try {
+
     const result =
-      await verifyFaceService(req.body);
+      await verifyFaceService(
+        req.body
+      );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
       "IFSE Face Verification Error:",
       error
@@ -178,18 +188,18 @@ export async function verifyFace(req, res) {
 // Biometric Verification
 // =======================================================
 
-export async function verifyBiometric(
-  req,
-  res
-) {
+export async function verifyBiometric(req, res) {
   try {
+
     const result =
       await verifyBiometricService(
         req.body
       );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
       "IFSE Biometric Verification Error:",
       error
@@ -206,18 +216,18 @@ export async function verifyBiometric(
 // Identity Verification
 // =======================================================
 
-export async function verifyIdentity(
-  req,
-  res
-) {
+export async function verifyIdentity(req, res) {
   try {
+
     const result =
       await verifyIdentityService(
         req.body
       );
 
     return res.status(200).json(result);
+
   } catch (error) {
+
     console.error(
       "IFSE Identity Verification Error:",
       error
@@ -228,4 +238,4 @@ export async function verifyIdentity(
       message: error.message,
     });
   }
-      }
+}
