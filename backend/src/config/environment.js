@@ -1,86 +1,357 @@
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
-// Environment Configuration
+// Identity Controller
 // =======================================================
 
-import dotenv from "dotenv";
+import {
 
-dotenv.config();
+  healthService,
 
-export function validateEnvironment() {
+  registerPasskeyService,
 
-  const required = [
+  authenticationOptionsService,
 
-    "NODE_ENV",
+  verifyAuthenticationService,
 
-    "PORT",
+  verifyFaceService,
 
-    "FIREBASE_PROJECT_ID",
+  verifyBiometricService,
 
-    "FIREBASE_CLIENT_EMAIL",
+  verifyIdentityService,
 
-    "FIREBASE_PRIVATE_KEY",
+} from "../services/IdentityService.js";
 
-  ];
+import {
 
-  const missing = [];
+  verifyPasskeyRegistrationService,
 
-  required.forEach((item) => {
+} from "../services/PasskeyVerificationService.js";
 
-    if (!process.env[item]) {
+// =======================================================
+// Health
+// =======================================================
 
-      missing.push(item);
+export async function health(req, res) {
 
-    }
+  try {
 
-  });
+    const result =
+      await healthService();
 
-  if (missing.length) {
+    return res
+      .status(200)
+      .json(result);
 
-    console.error("");
+  } catch (error) {
 
-    console.error("====================================");
+    console.error(
+      "IFSE Identity Health Error:",
+      error
+    );
 
-    console.error(" Missing Environment Variables");
+    return res
+      .status(500)
+      .json({
 
-    console.error("====================================");
+        success: false,
 
-    missing.forEach((item) => {
+        message:
+          error.message ||
+          "Identity service health check failed.",
 
-      console.error(item);
-
-    });
-
-    console.error("====================================");
-
-    process.exit(1);
+      });
 
   }
 
 }
 
-export const environment = {
+// =======================================================
+// Passkey Registration
+// =======================================================
 
-  nodeEnv:
-    process.env.NODE_ENV,
+export async function registerPasskey(req, res) {
 
-  port:
-    Number(process.env.PORT),
+  try {
 
-  firebase: {
+    const result =
+      await registerPasskeyService(
+        req.body
+      );
 
-    projectId:
-      process.env.FIREBASE_PROJECT_ID,
+    return res
+      .status(200)
+      .json(result);
 
-    clientEmail:
-      process.env.FIREBASE_CLIENT_EMAIL,
+  } catch (error) {
 
-    privateKey:
-      process.env.FIREBASE_PRIVATE_KEY?.replace(
-        /\\n/g,
-        "\n"
-      ),
+    console.error(
+      "IFSE Passkey Registration Error:",
+      error
+    );
 
-  },
+    return res
+      .status(400)
+      .json({
 
-};
+        success: false,
+
+        message:
+          error.message ||
+          "Passkey registration failed.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Verify Passkey Registration
+// =======================================================
+
+export async function verifyRegistration(req, res) {
+
+  try {
+
+    const result =
+      await verifyPasskeyRegistrationService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Passkey Registration Verification Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Passkey registration verification failed.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Authentication Options
+// =======================================================
+
+export async function authenticationOptions(req, res) {
+
+  try {
+
+    // IMPORTANT:
+    // The email/userId MUST be passed to the service.
+
+    const result =
+      await authenticationOptionsService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Authentication Options Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        message:
+          error.message ||
+          "Could not create passkey authentication options.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Verify Authentication
+// =======================================================
+
+export async function verifyAuthentication(req, res) {
+
+  try {
+
+    const result =
+      await verifyAuthenticationService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Passkey Authentication Verification Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        authenticated: false,
+
+        message:
+          error.message ||
+          "Passkey authentication verification failed.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Face Verification
+// =======================================================
+
+export async function verifyFace(req, res) {
+
+  try {
+
+    const result =
+      await verifyFaceService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Face Verification Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        verified: false,
+
+        message:
+          error.message ||
+          "Face verification failed.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Biometric Verification
+// =======================================================
+
+export async function verifyBiometric(req, res) {
+
+  try {
+
+    const result =
+      await verifyBiometricService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Biometric Verification Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        verified: false,
+
+        message:
+          error.message ||
+          "Biometric verification failed.",
+
+      });
+
+  }
+
+}
+
+// =======================================================
+// Identity Verification
+// =======================================================
+
+export async function verifyIdentity(req, res) {
+
+  try {
+
+    const result =
+      await verifyIdentityService(
+        req.body
+      );
+
+    return res
+      .status(200)
+      .json(result);
+
+  } catch (error) {
+
+    console.error(
+      "IFSE Identity Verification Error:",
+      error
+    );
+
+    return res
+      .status(400)
+      .json({
+
+        success: false,
+
+        verified: false,
+
+        message:
+          error.message ||
+          "Identity verification failed.",
+
+      });
+
+  }
+
+}
