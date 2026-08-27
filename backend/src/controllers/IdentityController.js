@@ -4,27 +4,17 @@
 // =======================================================
 
 import {
-
   healthService,
-
   registerPasskeyService,
-
   authenticationOptionsService,
-
   verifyAuthenticationService,
-
   verifyFaceService,
-
   verifyBiometricService,
-
   verifyIdentityService,
-
 } from "../services/IdentityService.js";
 
 import {
-
   verifyPasskeyRegistrationService,
-
 } from "../services/PasskeyVerificationService.js";
 
 // =======================================================
@@ -45,20 +35,15 @@ export async function health(req, res) {
   } catch (error) {
 
     console.error(
-      "IFSE Identity Health Error:",
+      "IFSE Identity health error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Identity service health check failed.",
-
+        message: error.message,
       });
 
   }
@@ -85,20 +70,15 @@ export async function registerPasskey(req, res) {
   } catch (error) {
 
     console.error(
-      "IFSE Passkey Registration Error:",
+      "IFSE passkey registration error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Passkey registration failed.",
-
+        message: error.message,
       });
 
   }
@@ -109,10 +89,7 @@ export async function registerPasskey(req, res) {
 // Verify Passkey Registration
 // =======================================================
 
-export async function verifyRegistration(
-  req,
-  res
-) {
+export async function verifyRegistration(req, res) {
 
   try {
 
@@ -128,20 +105,15 @@ export async function verifyRegistration(
   } catch (error) {
 
     console.error(
-      "IFSE Passkey Registration Verification Error:",
+      "IFSE passkey registration verification error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Passkey registration verification failed.",
-
+        message: error.message,
       });
 
   }
@@ -152,28 +124,13 @@ export async function verifyRegistration(
 // Authentication Options
 // =======================================================
 
-export async function authenticationOptions(
-  req,
-  res
-) {
+export async function authenticationOptions(req, res) {
 
   try {
 
     // IMPORTANT:
-    // Pass the frontend request body to the
-    // Identity Service.
-    //
-    // The frontend sends:
-    //
-    // {
-    //   email: "user@example.com"
-    // }
-    //
-    // The previous version called:
-    //
-    // authenticationOptionsService()
-    //
-    // which discarded the email.
+    // The email/userId from the frontend MUST be
+    // passed into the Identity Service.
 
     const result =
       await authenticationOptionsService(
@@ -187,20 +144,15 @@ export async function authenticationOptions(
   } catch (error) {
 
     console.error(
-      "IFSE Passkey Authentication Options Error:",
+      "IFSE authentication options error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Could not create passkey authentication options.",
-
+        message: error.message,
       });
 
   }
@@ -211,10 +163,7 @@ export async function authenticationOptions(
 // Verify Authentication
 // =======================================================
 
-export async function verifyAuthentication(
-  req,
-  res
-) {
+export async function verifyAuthentication(req, res) {
 
   try {
 
@@ -230,22 +179,16 @@ export async function verifyAuthentication(
   } catch (error) {
 
     console.error(
-      "IFSE Passkey Authentication Verification Error:",
+      "IFSE authentication verification error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
         authenticated: false,
-
-        message:
-          error.message ||
-          "Passkey authentication verification failed.",
-
+        message: error.message,
       });
 
   }
@@ -256,10 +199,7 @@ export async function verifyAuthentication(
 // Face Verification
 // =======================================================
 
-export async function verifyFace(
-  req,
-  res
-) {
+export async function verifyFace(req, res) {
 
   try {
 
@@ -275,20 +215,16 @@ export async function verifyFace(
   } catch (error) {
 
     console.error(
-      "IFSE Face Verification Error:",
+      "IFSE face verification error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Face verification failed.",
-
+        verified: false,
+        message: error.message,
       });
 
   }
@@ -299,10 +235,7 @@ export async function verifyFace(
 // Biometric Verification
 // =======================================================
 
-export async function verifyBiometric(
-  req,
-  res
-) {
+export async function verifyBiometric(req, res) {
 
   try {
 
@@ -318,20 +251,16 @@ export async function verifyBiometric(
   } catch (error) {
 
     console.error(
-      "IFSE Biometric Verification Error:",
+      "IFSE biometric verification error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Biometric verification failed.",
-
+        verified: false,
+        message: error.message,
       });
 
   }
@@ -342,10 +271,7 @@ export async function verifyBiometric(
 // Identity Verification
 // =======================================================
 
-export async function verifyIdentity(
-  req,
-  res
-) {
+export async function verifyIdentity(req, res) {
 
   try {
 
@@ -361,20 +287,16 @@ export async function verifyIdentity(
   } catch (error) {
 
     console.error(
-      "IFSE Identity Verification Error:",
+      "IFSE identity verification error:",
       error
     );
 
     return res
       .status(500)
       .json({
-
         success: false,
-
-        message:
-          error.message ||
-          "Identity verification failed.",
-
+        verified: false,
+        message: error.message,
       });
 
   }
