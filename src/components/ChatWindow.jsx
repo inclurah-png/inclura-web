@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+
+import { useTranslation } from "react-i18next";
 
 import {
   addDoc,
@@ -26,6 +32,9 @@ function ChatWindow({
   messages,
 }) {
 
+  const { t, i18n } =
+    useTranslation();
+
   const [text, setText] =
     useState("");
 
@@ -41,13 +50,10 @@ function ChatWindow({
   const [isUploadingImage, setIsUploadingImage] =
     useState(false);
 
-  const [isSpeaking, setIsSpeaking] =
+  const [speaking, setSpeaking] =
     useState(false);
 
-  const [isSpeechToTextActive, setIsSpeechToTextActive] =
-    useState(false);
-
-  const [isTextToSpeechActive, setIsTextToSpeechActive] =
+  const [speechSupported, setSpeechSupported] =
     useState(false);
 
   const recognitionRef =
@@ -74,7 +80,30 @@ function ChatWindow({
 
 
   // ============================================================
-  // CLEAN UP SPEECH RECOGNITION
+  // CHECK SPEECH RECOGNITION SUPPORT
+  // ============================================================
+
+  useEffect(() => {
+
+    if (
+      typeof window === "undefined"
+    ) {
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
+
+    setSpeechSupported(
+      Boolean(SpeechRecognition)
+    );
+
+  }, []);
+
+
+  // ============================================================
+  // CLEAN UP SPEECH, TYPING AND MEDIA
   // ============================================================
 
   useEffect(() => {
@@ -84,50 +113,50 @@ function ChatWindow({
       if (
         recognitionRef.current
       ) {
-
-        recognitionRef.current.stop();
-
+        try {
+          recognitionRef.current.stop();
+        } catch (error) {
+          console.warn(
+            "Speech recognition cleanup error:",
+            error
+          );
+        }
       }
 
       if (
         typingTimeoutRef.current
       ) {
-
         clearTimeout(
           typingTimeoutRef.current
         );
+      }
 
+      if (
+        mediaRecorder &&
+        mediaRecorder.state !==
+          "inactive"
+      ) {
+        try {
+          mediaRecorder.stop();
+        } catch (error) {
+          console.warn(
+            "Media recorder cleanup error:",
+            error
+          );
+        }
       }
 
       if (
         typeof window !== "undefined" &&
         window.speechSynthesis
       ) {
-
         window.speechSynthesis.cancel();
-
       }
 
     };
 
-  }, []);
+  }, [mediaRecorder]);
 
-  const [speechSupported, setSpeechSupported] =
-    useState(false);
-
-  const [speaking, setSpeaking] = useState(false);
-
-  const messageInputRef = useRef(null);
-
-  useEffect(() => {
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
-
-    setSpeechSupported(
-      Boolean(SpeechRecognition)
-    );
-  }, []);
 
   // ============================================================
   // UPDATE TYPING STATUS
@@ -176,37 +205,43 @@ function ChatWindow({
 
 
   // ============================================================
-  // HANDLE TYPING
+  // HANDLE TEXT INPUT
   // ============================================================
 
-  function handleTyping(
-    value
+  function handleInputChange(
+    event
   ) {
+
+    const value =
+      event.target.value;
 
     setText(value);
 
-    updateTypingStatus(true);
-
+    updateTypingStatus(
+      value.trim().length > 0
+    );
 
     if (
       typingTimeoutRef.current
     ) {
-
       clearTimeout(
         typingTimeoutRef.current
       );
+    }
+
+    if (value.trim().length > 0) {
+
+      typingTimeoutRef.current =
+        setTimeout(() => {
+
+          updateTypingStatus(false);
+
+        }, 1500);
 
     }
 
-
-    typingTimeoutRef.current =
-      setTimeout(() => {
-
-        updateTypingStatus(false);
-
-      }, 1500);
-
   }
+
 
   // ============================================================
   // SEND TEXT MESSAGE
@@ -223,13 +258,10 @@ function ChatWindow({
       return;
     }
 
-
     const messageText =
       text.trim();
 
-
     setIsSending(true);
-
 
     try {
 
@@ -241,7 +273,6 @@ function ChatWindow({
           "messages"
         ),
         {
-
           text:
             messageText,
 
@@ -260,29 +291,22 @@ function ChatWindow({
 
           messageType:
             "text",
-
         }
       );
-
 
       await updateTypingStatus(
         false
       );
 
-
       if (
         typingTimeoutRef.current
       ) {
-
         clearTimeout(
           typingTimeoutRef.current
         );
-
       }
 
-
       setText("");
-
 
     } catch (error) {
 
@@ -291,12 +315,10 @@ function ChatWindow({
         error
       );
 
-
       alert(
         error?.message ||
-        "Unable to send message."
+        t("messageSendError")
       );
-
 
     } finally {
 
@@ -306,7 +328,15 @@ function ChatWindow({
 
   }
 
-  async function handleImageUpload(event) {
+
+  // ============================================================
+  // IMAGE UPLOAD
+  // ============================================================
+
+  async function handleImageUpload(
+    event
+  ) {
+
     if (
       !selectedChat ||
       !auth.currentUser
@@ -321,11 +351,15 @@ function ChatWindow({
       return;
     }
 
+    setIsUploadingImage(true);
+
     try {
-      const storageRef = ref(
-        storage,
-        `chatImages/${auth.currentUser.uid}/${Date.now()}-${file.name}`
-      );
+
+      const storageRef =
+        ref(
+          storage,
+          `chatImages/${auth.currentUser.uid}/${Date.now()}-${file.name}`
+        );
 
       await uploadBytes(
         storageRef,
@@ -347,33 +381,56 @@ function ChatWindow({
         {
           senderId:
             auth.currentUser.uid,
+
           imageUrl,
-          fileName: file.name,
+
+          fileName:
+            file.name,
+
           createdAt:
             serverTimestamp(),
-          status: "sent",
+
+          status:
+            "sent",
+
           readBy: [
             auth.currentUser.uid,
           ],
-          messageType: "image",
+
+          messageType:
+            "image",
         }
       );
 
       event.target.value = "";
+
     } catch (error) {
+
       console.error(
         "Image upload error:",
         error
       );
 
       alert(
-        error.message ||
-          "Unable to upload image."
+        error?.message ||
+        t("imageUploadError")
       );
+
+    } finally {
+
+      setIsUploadingImage(false);
+
     }
+
   }
 
+
+  // ============================================================
+  // START VOICE RECORDING
+  // ============================================================
+
   async function startRecording() {
+
     if (
       !selectedChat ||
       !auth.currentUser
@@ -385,13 +442,16 @@ function ChatWindow({
       !navigator.mediaDevices ||
       !navigator.mediaDevices.getUserMedia
     ) {
+
       alert(
-        "Audio recording is not supported on this device or browser."
+        t("audioRecordingUnsupported")
       );
+
       return;
     }
 
     try {
+
       const stream =
         await navigator.mediaDevices.getUserMedia(
           {
@@ -404,110 +464,210 @@ function ChatWindow({
 
       const chunks = [];
 
-      recorder.ondataavailable = (
-        event
-      ) => {
-        if (event.data.size > 0) {
-          chunks.push(event.data);
-        }
-      };
+      recorder.ondataavailable =
+        (event) => {
 
-      recorder.onstop = async () => {
-        try {
-          const audioBlob =
-            new Blob(chunks, {
-              type: "audio/webm",
-            });
+          if (
+            event.data.size > 0
+          ) {
+            chunks.push(
+              event.data
+            );
+          }
 
-          const storageRef = ref(
-            storage,
-            `voiceNotes/${auth.currentUser.uid}/${Date.now()}.webm`
-          );
+        };
 
-          await uploadBytes(
-            storageRef,
-            audioBlob
-          );
 
-          const audioUrl =
-            await getDownloadURL(
-              storageRef
+      recorder.onstop =
+        async () => {
+
+          try {
+
+            const audioBlob =
+              new Blob(
+                chunks,
+                {
+                  type: "audio/webm",
+                }
+              );
+
+            const storageRef =
+              ref(
+                storage,
+                `voiceNotes/${auth.currentUser.uid}/${Date.now()}.webm`
+              );
+
+            await uploadBytes(
+              storageRef,
+              audioBlob
             );
 
-          await addDoc(
-            collection(
-              db,
-              "chats",
-              selectedChat.id,
-              "messages"
-            ),
-            {
-              senderId:
-                auth.currentUser.uid,
-              audioUrl,
-              createdAt:
-                serverTimestamp(),
-              status: "sent",
-              readBy: [
-                auth.currentUser.uid,
-              ],
-              messageType: "audio",
-            }
-          );
-        } catch (error) {
-          console.error(
-            "Voice upload error:",
-            error
-          );
+            const audioUrl =
+              await getDownloadURL(
+                storageRef
+              );
 
-          alert(
-            error.message ||
-              "Unable to send voice message."
-          );
-        } finally {
-          stream
-            .getTracks()
-            .forEach((track) =>
-              track.stop()
+            await addDoc(
+              collection(
+                db,
+                "chats",
+                selectedChat.id,
+                "messages"
+              ),
+              {
+                senderId:
+                  auth.currentUser.uid,
+
+                audioUrl,
+
+                createdAt:
+                  serverTimestamp(),
+
+                status:
+                  "sent",
+
+                readBy: [
+                  auth.currentUser.uid,
+                ],
+
+                messageType:
+                  "audio",
+              }
             );
-        }
-      };
+
+          } catch (error) {
+
+            console.error(
+              "Voice upload error:",
+              error
+            );
+
+            alert(
+              error?.message ||
+              t("voiceMessageError")
+            );
+
+          } finally {
+
+            stream
+              .getTracks()
+              .forEach(
+                (track) =>
+                  track.stop()
+              );
+
+          }
+
+        };
+
 
       recorder.start();
 
-      setMediaRecorder(recorder);
+      setMediaRecorder(
+        recorder
+      );
+
       setRecording(true);
+
     } catch (error) {
+
       console.error(
         "Recording error:",
         error
       );
 
       alert(
-        error.message ||
-          "Microphone permission is required."
+        error?.message ||
+        t("microphonePermissionRequired")
       );
+
     }
+
   }
 
+
+  // ============================================================
+  // STOP VOICE RECORDING
+  // ============================================================
+
   function stopRecording() {
+
     if (
       mediaRecorder &&
       mediaRecorder.state !==
         "inactive"
     ) {
+
       mediaRecorder.stop();
+
     }
 
     setMediaRecorder(null);
+
     setRecording(false);
+
   }
 
+
+  // ============================================================
+  // SPEECH-TO-TEXT LANGUAGE MAPPING
+  // ============================================================
+
+  function getSpeechRecognitionLanguage() {
+
+    const languageMap = {
+
+      en: "en-US",
+
+      yo: "yo-NG",
+
+      ig: "ig-NG",
+
+      ha: "ha-NG",
+
+      fr: "fr-FR",
+
+      es: "es-ES",
+
+      pt: "pt-PT",
+
+      sw: "sw-KE",
+
+      ar: "ar-SA",
+
+      zh: "zh-CN",
+
+    };
+
+    return (
+      languageMap[i18n.language] ||
+      "en-US"
+    );
+
+  }
+
+
+  // ============================================================
+  // SPEECH-TO-TEXT
+  // ============================================================
+
   function startSpeechToText() {
-    if (!speechSupported) {
+
+    if (
+      !speechSupported
+    ) {
+
       alert(
-        "Speech recognition is not supported by this browser."
+        t("speechRecognitionUnsupported")
       );
+
+      return;
+    }
+
+    if (
+      typeof window ===
+        "undefined"
+    ) {
       return;
     }
 
@@ -515,44 +675,104 @@ function ChatWindow({
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
 
+    if (!SpeechRecognition) {
+      return;
+    }
+
+    if (
+      recognitionRef.current
+    ) {
+
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.warn(
+          "Existing speech recognition could not be stopped:",
+          error
+        );
+      }
+
+    }
+
     const recognition =
       new SpeechRecognition();
 
     recognition.lang =
-      document.documentElement.lang ||
-      "en";
+      getSpeechRecognitionLanguage();
 
-    recognition.interimResults = false;
-    recognition.continuous = false;
+    recognition.interimResults =
+      false;
 
-    recognition.onresult = (
-      event
-    ) => {
-      const transcript =
-        event.results[0][0].transcript;
+    recognition.continuous =
+      false;
 
-      setText((currentText) =>
-        currentText
-          ? `${currentText} ${transcript}`
-          : transcript
-      );
-    };
+    recognition.onresult =
+      (event) => {
 
-    recognition.onerror = (
-      error
-    ) => {
+        const transcript =
+          event
+            .results?.[0]?.[0]
+            ?.transcript || "";
+
+        setText(
+          (currentText) =>
+            currentText
+              ? `${currentText} ${transcript}`
+              : transcript
+        );
+
+      };
+
+    recognition.onerror =
+      (error) => {
+
+        console.error(
+          "Speech recognition error:",
+          error
+        );
+
+      };
+
+    recognition.onend =
+      () => {
+
+        recognitionRef.current =
+          null;
+
+      };
+
+    recognitionRef.current =
+      recognition;
+
+    try {
+
+      recognition.start();
+
+    } catch (error) {
+
       console.error(
-        "Speech recognition error:",
+        "Unable to start speech recognition:",
         error
       );
-    };
 
-    recognition.start();
+      recognitionRef.current =
+        null;
+
+    }
+
   }
 
+
+  // ============================================================
+  // TEXT-TO-SPEECH
+  // ============================================================
+
   function speakText(value) {
+
     if (
       !value ||
+      typeof window ===
+        "undefined" ||
       !window.speechSynthesis
     ) {
       return;
@@ -565,53 +785,80 @@ function ChatWindow({
         value
       );
 
-    utterance.onstart = () => {
-      setSpeaking(true);
-    };
+    utterance.lang =
+      getSpeechRecognitionLanguage();
 
-    utterance.onend = () => {
-      setSpeaking(false);
-    };
+    utterance.onstart =
+      () => {
+        setSpeaking(true);
+      };
 
-    utterance.onerror = () => {
-      setSpeaking(false);
-    };
+    utterance.onend =
+      () => {
+        setSpeaking(false);
+      };
+
+    utterance.onerror =
+      () => {
+        setSpeaking(false);
+      };
 
     window.speechSynthesis.speak(
       utterance
     );
+
   }
 
+
+  // ============================================================
+  // STOP TEXT-TO-SPEECH
+  // ============================================================
+
   function stopSpeaking() {
+
     if (
+      typeof window !==
+        "undefined" &&
       window.speechSynthesis
     ) {
+
       window.speechSynthesis.cancel();
+
     }
 
     setSpeaking(false);
+
   }
 
-  function handleInputChange(event) {
-    setText(event.target.value);
 
-    updateTypingStatus(
-      event.target.value.trim().length >
-        0
-    );
-  }
+  // ============================================================
+  // HANDLE ENTER KEY
+  // ============================================================
 
-  function handleInputKeyDown(event) {
+  function handleInputKeyDown(
+    event
+  ) {
+
     if (
       event.key === "Enter" &&
       !event.shiftKey
     ) {
+
       event.preventDefault();
+
       sendMessage();
+
     }
+
   }
 
+
+  // ============================================================
+  // NO CHAT SELECTED
+  // ============================================================
+
   if (!selectedChat) {
+
     return (
       <div
         role="status"
@@ -628,14 +875,16 @@ function ChatWindow({
           textAlign: "center",
         }}
       >
-        Select a conversation
-        to begin messaging.
+        {t("selectConversation")}
       </div>
     );
+
   }
+
 
   const currentUserId =
     auth.currentUser?.uid;
+
 
   return (
     <div
@@ -647,17 +896,25 @@ function ChatWindow({
         minWidth: 0,
       }}
     >
+
+      {/* ======================================================
+          CONVERSATION HEADER
+          ====================================================== */}
+
       <header
-        aria-label="Conversation header"
+        aria-label={t(
+          "conversationHeader"
+        )}
         style={{
           padding: "16px",
           borderBottom:
             "1px solid #1e293b",
         }}
       >
+
         <strong>
           {selectedChat.name ||
-            "Conversation"}
+            t("conversation")}
         </strong>
 
         <p
@@ -672,20 +929,30 @@ function ChatWindow({
           {selectedChat.typing &&
           selectedChat.typingUser !==
             currentUserId
-            ? "Someone is typing..."
+            ? t("someoneIsTyping")
             : ""}
         </p>
+
       </header>
 
+
+      {/* ======================================================
+          MESSAGE LIST
+          ====================================================== */}
+
       <main
-        aria-label="Messages"
+        aria-label={t(
+          "messages"
+        )}
         style={{
           flex: 1,
           padding: "20px",
           overflowY: "auto",
         }}
       >
+
         {messages.length === 0 ? (
+
           <div
             role="status"
             style={{
@@ -694,10 +961,13 @@ function ChatWindow({
               padding: "30px",
             }}
           >
-            No messages yet.
+            {t("noMessagesYet")}
           </div>
+
         ) : (
+
           messages.map((msg) => {
+
             const isOwnMessage =
               msg.senderId ===
               currentUserId;
@@ -707,8 +977,8 @@ function ChatWindow({
                 key={msg.id}
                 aria-label={
                   isOwnMessage
-                    ? "Your message"
-                    : "Received message"
+                    ? t("yourMessage")
+                    : t("receivedMessage")
                 }
                 style={{
                   display: "flex",
@@ -720,6 +990,7 @@ function ChatWindow({
                     "12px",
                 }}
               >
+
                 <div
                   style={{
                     background:
@@ -734,21 +1005,25 @@ function ChatWindow({
                       "70%",
                   }}
                 >
+
+                  {/* TEXT MESSAGE */}
+
                   {msg.text && (
-                    <>
-                      <div>
-                        {msg.text}
-                      </div>
-                      
-                    </>
+                    <div>
+                      {msg.text}
+                    </div>
                   )}
 
+
+                  {/* IMAGE MESSAGE */}
+
                   {msg.imageUrl && (
+
                     <img
                       src={msg.imageUrl}
                       alt={
                         msg.fileName ||
-                        "Shared image"
+                        t("sharedImage")
                       }
                       style={{
                         width:
@@ -761,13 +1036,20 @@ function ChatWindow({
                           "8px",
                       }}
                     />
+
                   )}
 
+
+                  {/* AUDIO MESSAGE */}
+
                   {msg.audioUrl && (
+
                     <audio
                       controls
                       preload="metadata"
-                      aria-label="Voice message"
+                      aria-label={t(
+                        "voiceMessage"
+                      )}
                       style={{
                         marginTop:
                           "8px",
@@ -775,22 +1057,101 @@ function ChatWindow({
                           "100%",
                       }}
                     >
+
                       <source
                         src={
                           msg.audioUrl
                         }
                         type="audio/webm"
                       />
+
                     </audio>
+
                   )}
 
+
+                  {/* =================================================
+                      MESSAGE TRANSLATION HOOK
+                      =================================================
+
+                      The message schema remains compatible with
+                      future translatedMessage / translations data.
+
+                      We do NOT falsely generate a translation here.
+                      The actual translation engine will be connected
+                      in the next messaging translation stage.
+                      ================================================= */}
+
+                  {msg.text && (
+
+                    <div
+                      style={{
+                        marginTop:
+                          "6px",
+                        display:
+                          "flex",
+                        gap:
+                          "8px",
+                        flexWrap:
+                          "wrap",
+                      }}
+                    >
+
+                      <button
+                        type="button"
+                        aria-label={t(
+                          "translateMessage"
+                        )}
+                        title={t(
+                          "translateMessage"
+                        )}
+                        style={{
+                          background:
+                            "transparent",
+                          border:
+                            "none",
+                          color:
+                            isOwnMessage
+                              ? "#e0f2fe"
+                              : "#93c5fd",
+                          cursor:
+                            "pointer",
+                          padding:
+                            "2px 0",
+                          fontSize:
+                            "12px",
+                        }}
+                        onClick={() => {
+                          console.info(
+                            "Message translation will be connected to the Inclura translation engine.",
+                            msg.id
+                          );
+                        }}
+                      >
+                        🌐 {t(
+                          "translateMessage"
+                        )}
+                      </button>
+
+                    </div>
+
+                  )}
+
+
+                  {/* MESSAGE STATUS */}
+
                   {isOwnMessage && (
+
                     <div
                       aria-label={
                         msg.status ===
                         "read"
-                          ? "Message read"
-                          : "Message sent"
+                          ? t(
+                              "messageRead"
+                            )
+                          : t(
+                              "messageSent"
+                            )
                       }
                       style={{
                         fontSize:
@@ -801,81 +1162,153 @@ function ChatWindow({
                           "4px",
                       }}
                     >
+
                       {msg.status ===
                       "read"
-                        ? "✓✓ Read"
-                        : "✓ Sent"}
+                        ? `✓✓ ${t(
+                            "read"
+                          )}`
+                        : `✓ ${t(
+                            "sent"
+                          )}`}
+
                     </div>
+
                   )}
+
                 </div>
+
               </article>
             );
+
           })
+
         )}
+
+        <div
+          ref={messagesEndRef}
+          aria-hidden="true"
+        />
+
       </main>
-      
+
+
+      {/* ========================================================
+          MESSAGE COMPOSER
+          ======================================================== */}
+
       <section
-        aria-label="Message composer"
+        aria-label={t(
+          "messageComposer"
+        )}
         style={{
           padding: "16px",
-          borderTop: "1px solid #1e293b",
+          borderTop:
+            "1px solid #1e293b",
         }}
       >
+
         <textarea
           value={text}
-          onChange={handleInputChange}
-          onKeyDown={handleInputKeyDown}
+          onChange={
+            handleInputChange
+          }
+          onKeyDown={
+            handleInputKeyDown
+          }
           onBlur={() =>
             updateTypingStatus(false)
           }
-          placeholder="Type a message..."
-          aria-label="Type a message"
+          placeholder={t(
+            "typeMessage"
+          )}
+          aria-label={t(
+            "typeMessage"
+          )}
           rows={3}
+          disabled={isSending}
           style={{
             width: "100%",
             padding: "12px",
             borderRadius: "12px",
-            border: "1px solid #374151",
-            background: "#111827",
+            border:
+              "1px solid #374151",
+            background:
+              "#111827",
             color: "#fff",
-            boxSizing: "border-box",
+            boxSizing:
+              "border-box",
             resize: "vertical",
-            marginBottom: "10px",
+            marginBottom:
+              "10px",
           }}
         />
 
+
+        {/* ======================================================
+            MESSAGE TOOLS
+            ====================================================== */}
+
         <div
           role="toolbar"
-          aria-label="Message tools"
+          aria-label={t(
+            "messageTools"
+          )}
           style={{
             display: "flex",
             gap: "10px",
             flexWrap: "wrap",
           }}
         >
+
+          {/* IMAGE UPLOAD */}
+
           <label
             htmlFor="chat-image-upload"
             style={{
-              cursor: "pointer",
+              cursor:
+                isUploadingImage
+                  ? "wait"
+                  : "pointer",
+              opacity:
+                isUploadingImage
+                  ? 0.6
+                  : 1,
             }}
           >
-            🖼️ Image
+            🖼️{" "}
+            {isUploadingImage
+              ? t("uploading")
+              : t("image")}
           </label>
 
           <input
             id="chat-image-upload"
             type="file"
             accept="image/*"
-            onChange={handleImageUpload}
-            aria-label="Share an image"
+            onChange={
+              handleImageUpload
+            }
+            disabled={
+              isUploadingImage
+            }
+            aria-label={t(
+              "shareImage"
+            )}
             style={{
-              position: "absolute",
+              position:
+                "absolute",
               width: "1px",
               height: "1px",
-              overflow: "hidden",
-              clip: "rect(0, 0, 0, 0)",
+              overflow:
+                "hidden",
+              clip:
+                "rect(0, 0, 0, 0)",
             }}
           />
+
+
+          {/* VOICE RECORDING */}
 
           <button
             type="button"
@@ -884,26 +1317,54 @@ function ChatWindow({
                 ? stopRecording()
                 : startRecording()
             }
-            aria-pressed={recording}
+            aria-pressed={
+              recording
+            }
             aria-label={
               recording
-                ? "Stop voice recording"
-                : "Start voice recording"
+                ? t(
+                    "stopVoiceRecording"
+                  )
+                : t(
+                    "startVoiceRecording"
+                  )
+            }
+            disabled={
+              isSending
             }
           >
             {recording
-              ? "⏹ Stop"
-              : "🎤 Record"}
+              ? `⏹ ${t(
+                  "stop"
+                )}`
+              : `🎤 ${t(
+                  "record"
+                )}`}
           </button>
+
+
+          {/* SPEECH TO TEXT */}
 
           <button
             type="button"
-            onClick={startSpeechToText}
-            disabled={!speechSupported}
-            aria-label="Convert speech to text"
+            onClick={
+              startSpeechToText
+            }
+            disabled={
+              !speechSupported ||
+              isSending
+            }
+            aria-label={t(
+              "speechToText"
+            )}
           >
-            🎙 Speech to text
+            🎙 {t(
+              "speechToText"
+            )}
           </button>
+
+
+          {/* TEXT TO SPEECH */}
 
           <button
             type="button"
@@ -912,30 +1373,59 @@ function ChatWindow({
                 ? stopSpeaking()
                 : speakText(text)
             }
-            disabled={!text.trim()}
+            disabled={
+              !text.trim() ||
+              isSending
+            }
             aria-label={
               speaking
-                ? "Stop text to speech"
-                : "Read typed text aloud"
+                ? t(
+                    "stopReadingAloud"
+                  )
+                : t(
+                    "readAloud"
+                  )
             }
           >
             {speaking
-              ? "⏹ Stop"
-              : "📝 Read aloud"}
+              ? `⏹ ${t(
+                  "stop"
+                )}`
+              : `📝 ${t(
+                  "readAloud"
+                )}`}
           </button>
+
+
+          {/* SEND */}
 
           <button
             type="button"
-            onClick={sendMessage}
-            disabled={!text.trim()}
-            aria-label="Send message"
+            onClick={
+              sendMessage
+            }
+            disabled={
+              !text.trim() ||
+              isSending
+            }
+            aria-label={t(
+              "send"
+            )}
           >
-            Send
+            {isSending
+              ? t("sending")
+              : t("send")}
           </button>
+
         </div>
+
       </section>
+
     </div>
   );
+
 }
 
+
 export default ChatWindow;
+        
