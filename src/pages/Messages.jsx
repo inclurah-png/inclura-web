@@ -1,109 +1,369 @@
 import { useState, useEffect } from "react";
+
 import ChatList from "../components/ChatList";
 import ChatWindow from "../components/ChatWindow";
+
 import {
   collection,
   query,
-  orderBy,
+  where,
   onSnapshot,
   doc,
   updateDoc,
   arrayUnion,
 } from "firebase/firestore";
 
-import { db, auth } from "../firebase";
+import {
+  onAuthStateChanged,
+} from "firebase/auth";
+
+import {
+  db,
+  auth,
+} from "../firebase";
+
 
 function Messages() {
-  const [selectedChat,
-    setSelectedChat] =
-    useState(null);
 
-  const [chats, setChats] = useState([]);
-const [messages, setMessages] = useState([]);
+  const [
+    currentUser,
+    setCurrentUser,
+  ] = useState(null);
+
+  const [
+    selectedChat,
+    setSelectedChat,
+  ] = useState(null);
+
+  const [
+    chats,
+    setChats,
+  ] = useState([]);
+
+  const [
+    messages,
+    setMessages,
+  ] = useState([]);
+
+
+  // =====================================================
+  // Authentication
+  // =====================================================
 
   useEffect(() => {
-  if (!selectedChat) return;
 
-  const q = query(
-    collection(
-      db,
-      "chats",
-      selectedChat.id,
-      "messages"
-    ),
-    orderBy("createdAt", "asc")
-  );
+    const unsubscribe =
+      onAuthStateChanged(
+        auth,
+        (user) => {
 
-  const unsubscribe =
-    onSnapshot(q, (snapshot) => {
-      const loadedMessages =
-  snapshot.docs.map((docSnap) => {
-    const data =
-      docSnap.data();
+          setCurrentUser(user);
+
+          if (!user) {
+
+            setChats([]);
+
+            setSelectedChat(null);
+
+            setMessages([]);
+
+          }
+
+        }
+      );
+
+    return () => unsubscribe();
+
+  }, []);
+
+
+  // =====================================================
+  // Load User Chats
+  // =====================================================
+
+  useEffect(() => {
+
+    if (!currentUser) {
+
+      return;
+
+    }
+
+    const chatsQuery =
+      query(
+        collection(
+          db,
+          "chats"
+        ),
+        where(
+          "participants",
+          "array-contains",
+          currentUser.uid
+        )
+      );
+
+
+    const unsubscribe =
+      onSnapshot(
+        chatsQuery,
+        (snapshot) => {
+
+          const loadedChats =
+            snapshot.docs.map(
+              (docSnap) => ({
+
+                id:
+                  docSnap.id,
+
+                ...docSnap.data(),
+
+              })
+            );
+
+
+          // Sort by most recently updated chat.
+          loadedChats.sort(
+            (a, b) => {
+
+              const aTime =
+                a.updatedAt?.toMillis
+                  ? a.updatedAt.toMillis()
+                  : 0;
+
+              const bTime =
+                b.updatedAt?.toMillis
+                  ? b.updatedAt.toMillis()
+                  : 0;
+
+              return bTime - aTime;
+
+            }
+          );
+
+
+          setChats(
+            loadedChats
+          );
+
+        },
+        (error) => {
+
+          console.error(
+            "Failed to load chats:",
+            error
+          );
+
+          setChats([]);
+
+        }
+      );
+
+
+    return () => unsubscribe();
+
+  }, [currentUser]);
+
+
+  // =====================================================
+  // Load Messages For Selected Chat
+  // =====================================================
+
+  useEffect(() => {
 
     if (
-      data.senderId !==
-      auth.currentUser.uid
+      !currentUser ||
+      !selectedChat
     ) {
-      updateDoc(
-        doc(
+
+      setMessages([]);
+
+      return;
+
+    }
+
+
+    const messagesQuery =
+      query(
+        collection(
           db,
           "chats",
           selectedChat.id,
-          "messages",
-          docSnap.id
-        ),
-        {
-          status: "read",
-          readBy: arrayUnion(
-            auth.currentUser.uid
-          ),
+          "messages"
+        )
+      );
+
+
+    const unsubscribe =
+      onSnapshot(
+        messagesQuery,
+        async (snapshot) => {
+
+          const loadedMessages =
+            snapshot.docs
+              .map(
+                (docSnap) => {
+
+                  const data =
+                    docSnap.data();
+
+
+                  // =======================================
+                  // Mark Incoming Message As Read
+                  // =======================================
+
+                  const readBy =
+                    Array.isArray(
+                      data.readBy
+                    )
+                      ? data.readBy
+                      : [];
+
+
+                  const isOwnMessage =
+                    data.senderId ===
+                    currentUser.uid;
+
+
+                  const alreadyRead =
+                    readBy.includes(
+                      currentUser.uid
+                    );
+
+
+                  if (
+                    !isOwnMessage &&
+                    !alreadyRead
+                  ) {
+
+                    try {
+
+                      await updateDoc(
+                        doc(
+                          db,
+                          "chats",
+                          selectedChat.id,
+                          "messages",
+                          docSnap.id
+                        ),
+                        {
+
+                          status:
+                            "read",
+
+                          readBy:
+                            arrayUnion(
+                              currentUser.uid
+                            ),
+
+                        }
+                      );
+
+                    } catch (error) {
+
+                      console.error(
+                        "Failed to update read receipt:",
+                        error
+                      );
+
+                    }
+
+                  }
+
+
+                  return {
+
+                    id:
+                      docSnap.id,
+
+                    ...data,
+
+                  };
+
+                }
+              );
+
+
+          // =============================================
+          // Sort Messages Chronologically
+          // =============================================
+
+          loadedMessages.sort(
+            (a, b) => {
+
+              const aTime =
+                a.createdAt?.toMillis
+                  ? a.createdAt.toMillis()
+                  : 0;
+
+              const bTime =
+                b.createdAt?.toMillis
+                  ? b.createdAt.toMillis()
+                  : 0;
+
+              return aTime - bTime;
+
+            }
+          );
+
+
+          setMessages(
+            loadedMessages
+          );
+
+        },
+        (error) => {
+
+          console.error(
+            "Failed to load messages:",
+            error
+          );
+
+          setMessages([]);
+
         }
       );
-    }
 
-    return {
-      id: docSnap.id,
-      ...data,
-    };
-  });
 
-setMessages(
-  loadedMessages
-);
-    });
+    return () => unsubscribe();
 
-  return () => unsubscribe();
-}, [selectedChat]);
-  
+  }, [
+    currentUser,
+    selectedChat,
+  ]);
+
+
+  // =====================================================
+  // Render
+  // =====================================================
+
   return (
+
     <div
       style={{
         height: "100vh",
         display: "flex",
-        background:
-          "#020617",
+        background: "#020617",
         color: "white",
       }}
     >
+
       <ChatList
         chats={chats}
-        selectedChat={
-          selectedChat
-        }
-        setSelectedChat={
-          setSelectedChat
-        }
+        selectedChat={selectedChat}
+        setSelectedChat={setSelectedChat}
       />
 
+
       <ChatWindow
-        selectedChat={
-          selectedChat
-        }
+        selectedChat={selectedChat}
         messages={messages}
       />
+
     </div>
+
   );
+
 }
+
 
 export default Messages;
