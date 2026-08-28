@@ -17,13 +17,50 @@ import {
 // Helpers
 // =======================================================
 
-function toBase64Url(value) {
+function normalizeBase64Url(value) {
 
-  return Buffer.from(value)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/g, "");
+  if (
+    value === null ||
+    value === undefined
+  ) {
+
+    throw new Error(
+      "Missing credential value."
+    );
+
+  }
+
+  // Current SimpleWebAuthn returns credential IDs
+  // as Base64URL strings.
+  if (
+    typeof value === "string"
+  ) {
+
+    return value
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+  }
+
+  // Public-key bytes and older API values may be
+  // Uint8Array / Buffer instances.
+  if (
+    value instanceof Uint8Array ||
+    Buffer.isBuffer(value)
+  ) {
+
+    return Buffer.from(value)
+      .toString("base64")
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/g, "");
+
+  }
+
+  throw new Error(
+    "Unsupported credential value type."
+  );
 
 }
 
@@ -62,11 +99,15 @@ export async function verifyPasskeyRegistrationService(
         "ifse_passkey_challenges"
       )
 
-      .doc(data.challengeId)
+      .doc(
+        data.challengeId
+      )
 
       .get();
 
-  if (!challengeDoc.exists) {
+  if (
+    !challengeDoc.exists
+  ) {
 
     throw new Error(
       "Challenge not found."
@@ -82,12 +123,12 @@ export async function verifyPasskeyRegistrationService(
   // =====================================================
 
   if (
-    challenge.type &&
-    challenge.type !== "registration"
+    challenge.type !==
+    "registration"
   ) {
 
     throw new Error(
-      "Invalid challenge type."
+      "Invalid registration challenge."
     );
 
   }
@@ -96,7 +137,9 @@ export async function verifyPasskeyRegistrationService(
   // Prevent Challenge Replay
   // =====================================================
 
-  if (challenge.used === true) {
+  if (
+    challenge.used === true
+  ) {
 
     throw new Error(
       "Challenge has already been used."
@@ -110,7 +153,8 @@ export async function verifyPasskeyRegistrationService(
 
   if (
     !challenge.expiresAt ||
-    Date.now() > challenge.expiresAt
+    Date.now() >
+      Number(challenge.expiresAt)
   ) {
 
     throw new Error(
@@ -123,37 +167,58 @@ export async function verifyPasskeyRegistrationService(
   // Verify WebAuthn Registration
   // =====================================================
 
-  const verification =
-    await verifyRegistrationResponse({
+  let verification;
 
-      response:
-        data.response,
+  try {
 
-      expectedChallenge:
-        challenge.challenge,
+    verification =
+      await verifyRegistrationResponse({
 
-      expectedOrigin:
-        process.env.WEBAUTHN_ORIGIN,
+        response:
+          data.response,
 
-      expectedRPID:
-        process.env.WEBAUTHN_RP_ID,
+        expectedChallenge:
+          challenge.challenge,
 
-      requireUserVerification:
-        true,
+        expectedOrigin:
+          process.env.WEBAUTHN_ORIGIN,
 
-    });
+        expectedRPID:
+          process.env.WEBAUTHN_RP_ID,
+
+        requireUserVerification:
+          true,
+
+      });
+
+  } catch (error) {
+
+    console.error(
+      "IFSE WebAuthn registration verification error:",
+      error
+    );
+
+    throw new Error(
+      `Passkey registration verification failed: ${error.message}`
+    );
+
+  }
 
   // =====================================================
   // Verification Failed
   // =====================================================
 
-  if (!verification.verified) {
+  if (
+    !verification.verified
+  ) {
 
     return {
 
-      success: false,
+      success:
+        false,
 
-      verified: false,
+      verified:
+        false,
 
       message:
         "Registration verification failed.",
@@ -169,18 +234,30 @@ export async function verifyPasskeyRegistrationService(
   const registrationInfo =
     verification.registrationInfo;
 
-  if (!registrationInfo) {
+  if (
+    !registrationInfo
+  ) {
 
-    return {
+    throw new Error(
+      "Credential information was not returned."
+    );
 
-      success: false,
+  }
 
-      verified: false,
+  // =====================================================
+  // Current SimpleWebAuthn Credential Structure
+  // =====================================================
 
-      message:
-        "Credential information was not returned.",
+  const registeredCredential =
+    registrationInfo.credential;
 
-    };
+  if (
+    !registeredCredential
+  ) {
+
+    throw new Error(
+      "Registered credential information was not returned."
+    );
 
   }
 
@@ -189,81 +266,108 @@ export async function verifyPasskeyRegistrationService(
   // =====================================================
 
   const credentialId =
-    toBase64Url(
-      registrationInfo.credentialID
+    normalizeBase64Url(
+      registeredCredential.id
     );
 
   const credentialPublicKey =
-    toBase64Url(
-      registrationInfo.credentialPublicKey
+    normalizeBase64Url(
+      registeredCredential.publicKey
     );
 
   const counter =
     Number(
-      registrationInfo.counter || 0
+      registeredCredential.counter ||
+      0
     );
+
+  if (
+    !credentialId ||
+    !credentialPublicKey
+  ) {
+
+    throw new Error(
+      "Passkey credential ID or public key is missing."
+    );
+
+  }
+
+  // =====================================================
+  // Optional Authenticator Information
+  // =====================================================
+
+  const transports =
+    Array.isArray(
+      data.response?.response?.transports
+    )
+      ? data.response.response.transports
+      : [];
 
   // =====================================================
   // Store Credential
   // =====================================================
 
-  await firestore()
+  const credentialRef =
+    firestore()
 
-    .collection(
-      "ifse_passkeys"
-    )
+      .collection(
+        "ifse_passkeys"
+      )
 
-    .doc(
-      String(challenge.userId)
-    )
+      .doc(
+        String(challenge.userId)
+      )
 
-    .collection(
-      "credentials"
-    )
+      .collection(
+        "credentials"
+      )
 
-    .doc(
-      credentialId
-    )
+      .doc(
+        credentialId
+      );
 
-    .set({
+  await credentialRef.set({
 
-      credentialId,
+    credentialId,
 
-      credentialPublicKey,
+    credentialPublicKey,
 
-      counter,
+    counter,
 
-      createdAt:
-        admin.firestore.FieldValue
-          .serverTimestamp(),
+    transports,
 
-      lastUsed:
-        admin.firestore.FieldValue
-          .serverTimestamp(),
+    createdAt:
+      admin.firestore.FieldValue
+        .serverTimestamp(),
 
-      verified: true,
+    lastUsed:
+      admin.firestore.FieldValue
+        .serverTimestamp(),
 
-      deviceName:
-        data.deviceName ||
-        "Unknown Device",
+    verified:
+      true,
 
-      platform:
-        data.platform ||
-        "Unknown",
+    deviceName:
+      data.deviceName ||
+      "Unknown Device",
 
-      authenticatorType:
-        "Passkey",
+    platform:
+      data.platform ||
+      "Unknown",
 
-      registeredFrom:
-        process.env.WEBAUTHN_ORIGIN,
+    authenticatorType:
+      "Passkey",
 
-      registrationMethod:
-        "PASSKEY",
+    registeredFrom:
+      process.env.WEBAUTHN_ORIGIN,
 
-      securityEngine:
-        "IFSE",
+    registrationMethod:
+      "PASSKEY",
 
-    });
+    securityEngine:
+      "IFSE",
+
+  });
 
   // =====================================================
   // Mark Challenge Used
@@ -271,9 +375,11 @@ export async function verifyPasskeyRegistrationService(
 
   await challengeDoc.ref.update({
 
-    verified: true,
+    verified:
+      true,
 
-    used: true,
+    used:
+      true,
 
     verifiedAt:
       admin.firestore.FieldValue
@@ -287,14 +393,18 @@ export async function verifyPasskeyRegistrationService(
 
   return {
 
-    success: true,
+    success:
+      true,
 
-    verified: true,
+    verified:
+      true,
 
     credentialId,
 
     userId:
-      String(challenge.userId),
+      String(
+        challenge.userId
+      ),
 
     message:
       "Passkey registration verified successfully.",
