@@ -231,44 +231,36 @@ function Messages() {
 
 
                   if (
-                    !isOwnMessage &&
-                    !alreadyRead
-                  ) {
+  !isOwnMessage &&
+  !alreadyRead
+) {
 
-                    try {
+  updateDoc(
+    doc(
+      db,
+      "chats",
+      selectedChat.id,
+      "messages",
+      docSnap.id
+    ),
+    {
+      status: "read",
 
-                      await updateDoc(
-                        doc(
-                          db,
-                          "chats",
-                          selectedChat.id,
-                          "messages",
-                          docSnap.id
-                        ),
-                        {
+      readBy:
+        arrayUnion(
+          currentUser.uid
+        ),
+    }
+  ).catch((error) => {
 
-                          status:
-                            "read",
+    console.error(
+      "Failed to update read receipt:",
+      error
+    );
 
-                          readBy:
-                            arrayUnion(
-                              currentUser.uid
-                            ),
+  });
 
-                        }
-                      );
-
-                    } catch (error) {
-
-                      console.error(
-                        "Failed to update read receipt:",
-                        error
-                      );
-
-                    }
-
-                  }
-
+}
 
                   return {
 
