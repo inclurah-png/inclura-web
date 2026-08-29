@@ -17,20 +17,20 @@ export async function onRequestPost(context) {
     }
 
     const response = await fetch(
-      "https://translate.flossboxin.org.in/translate",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          q: text,
-          source: "auto",
-          target,
-          format: "text",
-        }),
-      }
-    );
+  "https://translate.argosopentech.com/translate",
+  {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      q: text,
+      source: "auto",
+      target,
+      format: "text",
+    }),
+  }
+);
 
     const raw = await response.text();
 
