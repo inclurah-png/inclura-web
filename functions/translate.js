@@ -16,24 +16,8 @@ export async function onRequestPost(context) {
       );
     }
 
-    const apiKey = context.env.LIBRETRANSLATE_API_KEY;
-
-    if (!apiKey) {
-      return new Response(
-        JSON.stringify({
-          error: "LibreTranslate API key is not configured.",
-        }),
-        {
-          status: 500,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
-
     const response = await fetch(
-      "https://de.libretranslate.com/translate",
+      "https://translate.flossboxin.org.in/translate",
       {
         method: "POST",
         headers: {
@@ -44,7 +28,6 @@ export async function onRequestPost(context) {
           source: "auto",
           target,
           format: "text",
-          api_key: apiKey,
         }),
       }
     );
@@ -57,7 +40,7 @@ export async function onRequestPost(context) {
       data = JSON.parse(raw);
     } catch {
       data = {
-        error: raw || "Invalid response from LibreTranslate.",
+        error: raw || "Invalid response from translation service.",
       };
     }
 
@@ -66,7 +49,7 @@ export async function onRequestPost(context) {
         JSON.stringify({
           error:
             data.error ||
-            "LibreTranslate translation request failed.",
+            "Translation service request failed.",
         }),
         {
           status: response.status,
@@ -77,8 +60,24 @@ export async function onRequestPost(context) {
       );
     }
 
+    if (!data.translatedText) {
+      return new Response(
+        JSON.stringify({
+          error: "Translation service returned no translated text.",
+        }),
+        {
+          status: 502,
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
     return new Response(
-      JSON.stringify(data),
+      JSON.stringify({
+        translatedText: data.translatedText,
+      }),
       {
         status: 200,
         headers: {
