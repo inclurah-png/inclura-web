@@ -1,4 +1,4 @@
-import {
+   import {
   collection,
   addDoc,
   serverTimestamp,
@@ -20,6 +20,12 @@ import {
  *
  * This function receives translation requests
  * from PostPage and other platform features.
+ *
+ * Translation is handled through the secure
+ * Cloudflare Pages /translate gateway.
+ *
+ * The Gemini API key is never exposed to
+ * the browser.
  */
 export async function translateText({
   sourceId,
@@ -89,19 +95,125 @@ export async function translateText({
     }
   }
 
-  /*
-   * AI TRANSLATION PROVIDER
-   *
-   * The actual AI translation backend
-   * will be connected here.
-   *
-   * We deliberately do not return the
-   * original text and pretend it was translated.
-   */
+  // ---------------------------------------------------
+  // Secure AI translation gateway
+  // ---------------------------------------------------
+  //
+  // The browser calls the same-origin Cloudflare
+  // Pages Function at /translate.
+  //
+  // The Gemini API key remains server-side in the
+  // Cloudflare environment and is never exposed here.
+  // ---------------------------------------------------
 
-  throw new Error(
-    "AI translation provider is not connected yet."
-  );
+  let response;
+
+  try {
+    response =
+      await fetch(
+        "/translate",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            text,
+            target:
+              targetLanguage,
+          }),
+        }
+      );
+  } catch (error) {
+    console.error(
+      "Inclura Translation Gateway Network Error:",
+      error
+    );
+
+    throw new Error(
+      "Unable to connect to the translation service."
+    );
+  }
+
+  // ---------------------------------------------------
+  // Read gateway response
+  // ---------------------------------------------------
+
+  let data = null;
+
+  try {
+    data =
+      await response.json();
+  } catch (error) {
+    console.error(
+      "Inclura Translation Gateway Invalid Response:",
+      error
+    );
+
+    throw new Error(
+      "Translation service returned an invalid response."
+    );
+  }
+
+  // ---------------------------------------------------
+  // Handle gateway/provider failure
+  // ---------------------------------------------------
+
+  if (!response.ok) {
+    console.error(
+      "Inclura Translation Gateway Error:",
+      data
+    );
+
+    throw new Error(
+      data?.error ||
+        "Translation service request failed."
+    );
+  }
+
+  // ---------------------------------------------------
+  // Validate translation
+  // ---------------------------------------------------
+
+  if (
+    !data?.translatedText ||
+    typeof data.translatedText !==
+      "string"
+  ) {
+    throw new Error(
+      "Translation service returned no translated text."
+    );
+  }
+
+  const translatedText =
+    data.translatedText.trim();
+
+  if (!translatedText) {
+    throw new Error(
+      "Translation service returned empty text."
+    );
+  }
+
+  // ---------------------------------------------------
+  // Return real translation
+  // ---------------------------------------------------
+  //
+  // Confidence is set to 0 because the Gemini gateway
+  // does not currently provide a calibrated translation
+  // confidence score. We must not invent one.
+  // ---------------------------------------------------
+
+  return {
+    originalLanguage,
+    targetLanguage:
+      data.targetLanguage ||
+      targetLanguage,
+    translatedText,
+    confidence: 0,
+  };
 }
 
 /**
@@ -109,7 +221,7 @@ export async function translateText({
  *
  * This function is kept separate from the
  * translation request so the AI provider can
- * later return a real translation first.
+ * return a real translation first.
  */
 export async function saveTranslation({
   sourceId,
@@ -162,4 +274,4 @@ export async function saveTranslation({
     translatedText,
     confidence,
   };
-}
+}     
