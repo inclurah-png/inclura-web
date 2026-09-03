@@ -13,12 +13,13 @@
 //
 // Response:
 // {
-//   "translatedText": "..."
+//   "translatedText": "Bawo"
 // }
 //
 // Translation engine:
-// Inclura Translation Service
-// MADLAD-400-3B-CT2
+// Google Gemini API
+// Model:
+// gemini-3.1-flash-lite
 // =======================================================
 
 
@@ -38,6 +39,9 @@ function jsonResponse(
       headers: {
         "Content-Type":
           "application/json",
+
+        "Cache-Control":
+          "no-store",
       },
     }
   );
@@ -51,6 +55,7 @@ function jsonResponse(
 function normalizeLanguage(
   code
 ) {
+
   if (!code) {
     return "";
   }
@@ -60,6 +65,7 @@ function normalizeLanguage(
       .trim()
       .toLowerCase();
 
+
   if (
     value === "zh-tw" ||
     value === "zh_hant"
@@ -67,8 +73,88 @@ function normalizeLanguage(
     return "zh-TW";
   }
 
+
   return value;
 }
+
+
+// =======================================================
+// Language names
+// =======================================================
+//
+// These names give Gemini explicit language targets,
+// especially for African languages where language-code
+// interpretation needs to be unambiguous.
+// =======================================================
+
+const LANGUAGE_NAMES = {
+
+  en: "English",
+  es: "Spanish",
+  fr: "French",
+  pt: "Portuguese",
+  ar: "Arabic",
+  zh: "Simplified Chinese",
+  "zh-TW": "Traditional Chinese",
+  ja: "Japanese",
+  de: "German",
+  hi: "Hindi",
+  ru: "Russian",
+  it: "Italian",
+  nl: "Dutch",
+
+  sw: "Swahili",
+  yo: "Yoruba",
+  ig: "Igbo",
+  ha: "Hausa",
+  pcm: "Nigerian Pidgin",
+
+  ko: "Korean",
+  vi: "Vietnamese",
+  th: "Thai",
+  id: "Indonesian",
+  ms: "Malay",
+  bn: "Bengali",
+  tr: "Turkish",
+
+  af: "Afrikaans",
+  am: "Amharic",
+  zu: "Zulu",
+  xh: "Xhosa",
+  so: "Somali",
+  st: "Southern Sotho",
+  tn: "Tswana",
+  ts: "Tsonga",
+  ss: "Swati",
+  rw: "Kinyarwanda",
+  lg: "Luganda",
+  ln: "Lingala",
+  ff: "Fula",
+  wo: "Wolof",
+  tw: "Twi",
+  bm: "Bambara",
+  ee: "Ewe",
+};
+
+
+// =======================================================
+// Supported languages
+// =======================================================
+
+const SUPPORTED_LANGUAGES =
+  new Set(
+    Object.keys(
+      LANGUAGE_NAMES
+    )
+  );
+
+
+// =======================================================
+// Gemini configuration
+// =======================================================
+
+const GEMINI_MODEL =
+  "gemini-3.1-flash-lite";
 
 
 // =======================================================
@@ -82,11 +168,52 @@ export async function onRequestPost(
   try {
 
     // ---------------------------------------------------
+    // Check Gemini secret
+    // ---------------------------------------------------
+
+    const apiKey =
+      context.env.GEMINI_API_KEY;
+
+
+    if (!apiKey) {
+
+      return jsonResponse(
+        {
+          error:
+            "Gemini API key is not configured.",
+          code:
+            "GEMINI_API_KEY_NOT_CONFIGURED",
+        },
+
+        500
+      );
+    }
+
+
+    // ---------------------------------------------------
     // Read request
     // ---------------------------------------------------
 
-    const body =
-      await context.request.json();
+    let body;
+
+    try {
+
+      body =
+        await context.request.json();
+
+    } catch {
+
+      return jsonResponse(
+        {
+          error:
+            "Invalid JSON request.",
+          code:
+            "INVALID_JSON",
+        },
+
+        400
+      );
+    }
 
 
     const text =
@@ -102,7 +229,7 @@ export async function onRequestPost(
 
 
     // ---------------------------------------------------
-    // Validate
+    // Validate request
     // ---------------------------------------------------
 
     if (
@@ -114,6 +241,8 @@ export async function onRequestPost(
         {
           error:
             "Text and target language are required.",
+          code:
+            "INVALID_TRANSLATION_REQUEST",
         },
 
         400
@@ -133,6 +262,8 @@ export async function onRequestPost(
         {
           error:
             "Text is too long. Maximum length is 5000 characters.",
+          code:
+            "TEXT_TOO_LONG",
         },
 
         413
@@ -141,48 +272,83 @@ export async function onRequestPost(
 
 
     // ---------------------------------------------------
-    // Translation service URL
-    // ---------------------------------------------------
-    //
-    // Configure this in Cloudflare Pages:
-    //
-    // TRANSLATION_SERVICE_URL
-    //
-    // Example:
-    //
-    // https://your-inclura-translation-service.example.com
-    //
-    // We deliberately do NOT hard-code an imaginary
-    // deployment URL.
+    // Validate target language
     // ---------------------------------------------------
 
-    const serviceUrl =
-      context.env
-        .TRANSLATION_SERVICE_URL;
-
-
-    if (!serviceUrl) {
+    if (
+      !SUPPORTED_LANGUAGES.has(
+        target
+      )
+    ) {
 
       return jsonResponse(
         {
           error:
-            "Translation service is not configured.",
+            `Unsupported target language: ${target}`,
           code:
-            "TRANSLATION_SERVICE_NOT_CONFIGURED",
+            "UNSUPPORTED_TARGET_LANGUAGE",
         },
 
-        500
+        400
       );
     }
 
 
+    const targetLanguage =
+      LANGUAGE_NAMES[target];
+
+
     // ---------------------------------------------------
-    // Build inference request
+    // Gemini API endpoint
     // ---------------------------------------------------
 
     const endpoint =
-      `${serviceUrl.replace(/\/$/, "")}/translate`;
+      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
+
+    // ---------------------------------------------------
+    // Translation instruction
+    // ---------------------------------------------------
+    //
+    // The model is instructed to return ONLY the
+    // translation. This prevents explanations,
+    // quotation marks, labels, or extra commentary
+    // from being inserted into Inclura posts.
+    // ---------------------------------------------------
+
+    const prompt = `
+You are the translation engine for Inclura.
+
+Translate the user's text into ${targetLanguage}.
+
+Target language code: ${target}
+
+Rules:
+1. Return ONLY the translated text.
+2. Do NOT explain the translation.
+3. Do NOT add quotation marks.
+4. Do NOT add labels such as "Translation:".
+5. Do NOT summarize.
+6. Preserve the original meaning and tone.
+7. Preserve names, usernames, URLs, hashtags, emojis, numbers, and punctuation whenever appropriate.
+8. Do not translate URLs or usernames.
+9. Preserve paragraph breaks where possible.
+10. If the source text is already in ${targetLanguage}, return it unchanged.
+11. For Nigerian Pidgin (pcm), use natural Nigerian Pidgin rather than Standard English.
+12. For Yoruba (yo), use natural contemporary Yoruba.
+13. For Igbo (ig), use natural contemporary Igbo.
+14. For Hausa (ha), use natural contemporary Hausa.
+15. Do not invent information that is not present in the source.
+
+Text to translate:
+
+${text}
+`;
+
+
+    // ---------------------------------------------------
+    // Call Gemini
+    // ---------------------------------------------------
 
     const response =
       await fetch(
@@ -193,18 +359,41 @@ export async function onRequestPost(
           headers: {
             "Content-Type":
               "application/json",
+
+            "x-goog-api-key":
+              apiKey,
           },
 
-          body: JSON.stringify({
-            text,
-            target,
-          }),
+          body:
+            JSON.stringify(
+              {
+                contents: [
+                  {
+                    parts: [
+                      {
+                        text:
+                          prompt,
+                      },
+                    ],
+                  },
+                ],
+
+                generationConfig: {
+
+                  temperature:
+                    0.1,
+
+                  maxOutputTokens:
+                    4096,
+                },
+              }
+            ),
         }
       );
 
 
     // ---------------------------------------------------
-    // Read response
+    // Read Gemini response
     // ---------------------------------------------------
 
     const raw =
@@ -221,50 +410,96 @@ export async function onRequestPost(
 
     } catch {
 
-      data = {
-        error:
-          raw ||
-          "Invalid translation service response.",
-      };
+      data = null;
 
     }
 
 
     // ---------------------------------------------------
-    // Provider failure
+    // Gemini provider failure
     // ---------------------------------------------------
 
     if (
       !response.ok
     ) {
 
+      console.error(
+        "Gemini Translation Error:",
+        response.status,
+        data || raw
+      );
+
+
+      let errorMessage =
+        "Gemini translation request failed.";
+
+
+      if (
+        data &&
+        data.error &&
+        typeof data.error.message ===
+          "string"
+      ) {
+
+        errorMessage =
+          data.error.message;
+      }
+
+
       return jsonResponse(
         {
           error:
-            data.detail ||
-            data.error ||
-            "Translation service request failed.",
+            errorMessage,
+
+          code:
+            "GEMINI_TRANSLATION_FAILED",
+
+          providerStatus:
+            response.status,
         },
 
-        response.status
+        502
       );
     }
 
 
     // ---------------------------------------------------
-    // Validate translation
+    // Extract translated text
+    // ---------------------------------------------------
+
+    const translatedText =
+      data &&
+      data.candidates &&
+      data.candidates[0] &&
+      data.candidates[0].content &&
+      data.candidates[0].content.parts &&
+      data.candidates[0].content.parts[0] &&
+      data.candidates[0].content.parts[0].text;
+
+
+    // ---------------------------------------------------
+    // Validate Gemini output
     // ---------------------------------------------------
 
     if (
-      !data.translatedText ||
-      typeof data.translatedText !==
-        "string"
+      typeof translatedText !==
+        "string" ||
+      !translatedText.trim()
     ) {
+
+      console.error(
+        "Gemini returned no translated text:",
+        data
+      );
+
 
       return jsonResponse(
         {
           error:
-            "Translation service returned no translated text.",
+            "Gemini returned no translated text.",
+
+          code:
+            "EMPTY_TRANSLATION_RESPONSE",
         },
 
         502
@@ -279,7 +514,16 @@ export async function onRequestPost(
     return jsonResponse(
       {
         translatedText:
-          data.translatedText.trim(),
+          translatedText.trim(),
+
+        targetLanguage:
+          target,
+
+        model:
+          GEMINI_MODEL,
+
+        provider:
+          "Google Gemini API",
       },
 
       200
@@ -300,6 +544,9 @@ export async function onRequestPost(
           err instanceof Error
             ? err.message
             : "Translation failed.",
+
+        code:
+          "TRANSLATION_GATEWAY_ERROR",
       },
 
       500
