@@ -1,5 +1,6 @@
-      import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -39,28 +40,51 @@ function Feed() {
 
   const [hasMore, setHasMore] = useState(true);
 
-  const [filteredPosts, setFilteredPosts] =
-    useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
 
-  const [userLanguage, setUserLanguage] =
-    useState("en");
+  const [userLanguage, setUserLanguage] = useState("en");
 
-  /*
-   * Stores translation state independently for
-   * each post.
-   *
-   * Example:
-   * {
-   *   post123: true,
-   *   post456: false
-   * }
-   */
-  const [translatingPosts, setTranslatingPosts] =
-    useState({});
+  const [translatingPosts, setTranslatingPosts] = useState({});
 
   const navigate = useNavigate();
 
+  const { i18n } = useTranslation();
+
   const POSTS_PER_PAGE = 15;
+
+  /*
+   * Keep Feed language synchronized with
+   * the active application language.
+   *
+   * This is important because the previous
+   * implementation only loaded the user's
+   * preferred language once from Firestore.
+   *
+   * Now, when the user changes:
+   *
+   * English → Yoruba
+   * Yoruba → Spanish
+   * Spanish → Igbo
+   *
+   * the Feed immediately follows i18n.language.
+   */
+  useEffect(() => {
+    const activeLanguage =
+      String(i18n.language || "en")
+        .trim()
+        .toLowerCase();
+
+    setUserLanguage(
+      activeLanguage || "en"
+    );
+  }, [i18n.language]);
+
+  /*
+   * Load the initial Feed.
+   */
+  useEffect(() => {
+    loadPosts(false);
+  }, []);
 
   async function loadPosts(loadMore = false) {
     if (loading) return;
@@ -155,35 +179,6 @@ function Feed() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    async function loadLanguage() {
-      const user = auth.currentUser;
-
-      if (!user) return;
-
-      try {
-        const userSnap = await getDoc(
-          doc(db, "users", user.uid)
-        );
-
-        if (userSnap.exists()) {
-          setUserLanguage(
-            userSnap.data()
-              .preferredLanguage || "en"
-          );
-        }
-      } catch (error) {
-        console.error(
-          "Inclura Language Load Error:",
-          error
-        );
-      }
-    }
-
-    loadLanguage();
-    loadPosts(false);
-  }, []);
 
   async function savePost(post) {
     try {
@@ -368,11 +363,6 @@ function Feed() {
         }
       );
 
-      /*
-       * Update the local Feed immediately
-       * so the reaction count changes without
-       * requiring a reload.
-       */
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -422,16 +412,22 @@ function Feed() {
     const postId = post.id;
 
     /*
-     * Prevent duplicate requests for the
-     * same post while it is translating.
+     * Prevent duplicate requests for
+     * this specific post.
      */
     if (translatingPosts[postId]) {
       return;
     }
 
+    /*
+     * Always read the current active
+     * application language.
+     */
     const targetLanguage =
       String(
-        userLanguage || "en"
+        i18n.language ||
+          userLanguage ||
+          "en"
       )
         .trim()
         .toLowerCase();
@@ -441,9 +437,9 @@ function Feed() {
     }
 
     /*
-     * If the Feed already has this translation,
-     * display it immediately without another
-     * Gemini request.
+     * If this post already has a translation
+     * for the active language, nothing needs
+     * to be sent to Gemini again.
      */
     if (
       post.translatedText?.[
@@ -468,15 +464,17 @@ function Feed() {
       );
 
       /*
-       * Use the same translation engine as
-       * PostPage.jsx.
+       * Always translate from the original
+       * post text.
        *
-       * This gives us:
-       * - language detection
-       * - supported-language validation
-       * - Firestore translation cache
-       * - Cloudflare /translate gateway
-       * - Gemini translation
+       * We do NOT translate:
+       *
+       * Spanish → Yoruba → Igbo
+       *
+       * Instead, if the original post is
+       * English, every requested language
+       * is generated directly from the
+       * original English text.
        */
       const result =
         await translateText({
@@ -506,11 +504,8 @@ function Feed() {
       }
 
       /*
-       * Save the translation through the
-       * existing translation subsystem.
-       *
-       * This makes future requests for the
-       * same post/language much faster.
+       * Save to the central translation
+       * collection for cache/reuse.
        */
       try {
         await saveTranslation({
@@ -526,9 +521,8 @@ function Feed() {
         });
       } catch (cacheSaveError) {
         /*
-         * The translation itself succeeded.
-         * A cache-save failure should not make
-         * the user lose the successful translation.
+         * Translation succeeded even if
+         * the optional cache write fails.
          */
         console.error(
           "Inclura Translation Cache Save Error:",
@@ -536,11 +530,6 @@ function Feed() {
         );
       }
 
-      /*
-       * Keep the existing translatedText
-       * structure on the post so the Feed
-       * can display it immediately.
-       */
       const updatedTranslatedText = {
         ...(post.translatedText || {}),
         [targetLanguage]:
@@ -548,7 +537,7 @@ function Feed() {
       };
 
       /*
-       * Persist the Feed translation on the
+       * Persist the translation on the
        * post as well.
        */
       await updateDoc(
@@ -560,7 +549,7 @@ function Feed() {
       );
 
       /*
-       * Update the visible Feed immediately.
+       * Immediately update the visible Feed.
        */
       setPosts((prev) =>
         prev.map((p) =>
@@ -1055,4 +1044,3 @@ function Feed() {
 }
 
 export default Feed;
-    
