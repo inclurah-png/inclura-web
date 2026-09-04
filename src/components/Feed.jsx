@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+      import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 import {
@@ -20,122 +20,169 @@ import { db, auth } from "../firebase";
 import FollowButton from "./FollowButton";
 import CommentBox from "./CommentBox";
 import SearchBar from "./SearchBar";
+
 import {
   getVerificationBadge,
   getPremiumBadge,
 } from "../config/verificationTypes";
 
+import {
+  translateText,
+  saveTranslation,
+} from "../translation/textTranslator";
+
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [lastVisible, setLastVisible] = useState(null);
 
-const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-const [hasMore, setHasMore] = useState(true);
-  
+  const [hasMore, setHasMore] = useState(true);
+
   const [filteredPosts, setFilteredPosts] =
     useState([]);
+
   const [userLanguage, setUserLanguage] =
-  useState("en");
+    useState("en");
+
+  /*
+   * Stores translation state independently for
+   * each post.
+   *
+   * Example:
+   * {
+   *   post123: true,
+   *   post456: false
+   * }
+   */
+  const [translatingPosts, setTranslatingPosts] =
+    useState({});
 
   const navigate = useNavigate();
-const POSTS_PER_PAGE = 15;
 
-async function loadPosts(loadMore = false) {
-  if (loading) return;
+  const POSTS_PER_PAGE = 15;
 
-  setLoading(true);
+  async function loadPosts(loadMore = false) {
+    if (loading) return;
 
-  try {
-    let q;
+    setLoading(true);
 
-    if (loadMore && lastVisible) {
-      q = query(
-        collection(db, "posts"),
-        orderBy("createdAt", "desc"),
-        startAfter(lastVisible),
-        limit(POSTS_PER_PAGE)
+    try {
+      let q;
+
+      if (loadMore && lastVisible) {
+        q = query(
+          collection(db, "posts"),
+          orderBy("createdAt", "desc"),
+          startAfter(lastVisible),
+          limit(POSTS_PER_PAGE)
+        );
+      } else {
+        q = query(
+          collection(db, "posts"),
+          orderBy("createdAt", "desc"),
+          limit(POSTS_PER_PAGE)
+        );
+      }
+
+      const snapshot = await getDocs(q);
+
+      const fetchedPosts =
+        snapshot.docs.map((postDoc) => ({
+          id: postDoc.id,
+          ...postDoc.data(),
+        }));
+
+      if (snapshot.docs.length > 0) {
+        setLastVisible(
+          snapshot.docs[
+            snapshot.docs.length - 1
+          ]
+        );
+      }
+
+      if (
+        snapshot.docs.length <
+        POSTS_PER_PAGE
+      ) {
+        setHasMore(false);
+      }
+
+      if (loadMore) {
+        setPosts((prev) => {
+          const existingIds = new Set(
+            prev.map((p) => p.id)
+          );
+
+          const newPosts =
+            fetchedPosts.filter(
+              (p) => !existingIds.has(p.id)
+            );
+
+          return [
+            ...prev,
+            ...newPosts,
+          ];
+        });
+
+        setFilteredPosts((prev) => {
+          const existingIds = new Set(
+            prev.map((p) => p.id)
+          );
+
+          const newPosts =
+            fetchedPosts.filter(
+              (p) => !existingIds.has(p.id)
+            );
+
+          return [
+            ...prev,
+            ...newPosts,
+          ];
+        });
+      } else {
+        setPosts(fetchedPosts);
+        setFilteredPosts(
+          fetchedPosts
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Inclura Feed Load Error:",
+        error
       );
-    } else {
-      q = query(
-        collection(db, "posts"),
-        orderBy("createdAt", "desc"),
-        limit(POSTS_PER_PAGE)
-      );
-    }
-
-    const snapshot = await getDocs(q);
-
-    const fetchedPosts = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    if (snapshot.docs.length > 0) {
-      setLastVisible(
-        snapshot.docs[snapshot.docs.length - 1]
-      );
-    }
-
-    if (snapshot.docs.length < POSTS_PER_PAGE) {
-      setHasMore(false);
-    }
-
-    if (loadMore) {
-  setPosts((prev) => {
-    const existingIds = new Set(prev.map((p) => p.id));
-
-    const newPosts = fetchedPosts.filter(
-      (p) => !existingIds.has(p.id)
-    );
-
-    return [...prev, ...newPosts];
-  });
-
-  setFilteredPosts((prev) => {
-    const existingIds = new Set(prev.map((p) => p.id));
-
-    const newPosts = fetchedPosts.filter(
-      (p) => !existingIds.has(p.id)
-    );
-
-    return [...prev, ...newPosts];
-  });
-
-} else {
-
-  setPosts(fetchedPosts);
-
-  setFilteredPosts(fetchedPosts);
-
-}
-} catch (error) {
-  console.error(error);
-} finally {
-  setLoading(false);
-}
-}
-  useEffect(() => {
-  async function loadLanguage() {
-    const user = auth.currentUser;
-
-    if (!user) return;
-
-    const userSnap = await getDoc(
-      doc(db, "users", user.uid)
-    );
-
-    if (userSnap.exists()) {
-      setUserLanguage(
-        userSnap.data()
-          .preferredLanguage || "en"
-      );
+    } finally {
+      setLoading(false);
     }
   }
-  
-    loadLanguage();
 
-  loadPosts(false);
+  useEffect(() => {
+    async function loadLanguage() {
+      const user = auth.currentUser;
+
+      if (!user) return;
+
+      try {
+        const userSnap = await getDoc(
+          doc(db, "users", user.uid)
+        );
+
+        if (userSnap.exists()) {
+          setUserLanguage(
+            userSnap.data()
+              .preferredLanguage || "en"
+          );
+        }
+      } catch (error) {
+        console.error(
+          "Inclura Language Load Error:",
+          error
+        );
+      }
+    }
+
+    loadLanguage();
+    loadPosts(false);
   }, []);
 
   async function savePost(post) {
@@ -155,9 +202,10 @@ async function loadPosts(loadMore = false) {
         await getDoc(userRef);
 
       const savedPosts =
-userSnap.exists()
-  ? userSnap.data().savedPosts || []
-  : [];
+        userSnap.exists()
+          ? userSnap.data()
+              .savedPosts || []
+          : [];
 
       if (
         savedPosts.includes(
@@ -171,9 +219,7 @@ userSnap.exists()
             ),
         });
 
-        alert(
-          "Post removed"
-        );
+        alert("Post removed");
       } else {
         await updateDoc(userRef, {
           savedPosts:
@@ -185,188 +231,419 @@ userSnap.exists()
         alert("Post saved");
       }
     } catch (err) {
-  console.error(err);
-
-  alert(
-    "Translation failed:\n" +
-    err.message
-  );
-}
-  }
-  async function reactToPost(postId, emoji) {
-  const user = auth.currentUser;
-
-  if (!user) return;
-
-  const postRef = doc(db, "posts", postId);
-
-  const postSnap = await getDoc(postRef);
-
-  if (!postSnap.exists()) return;
-
-  const post = postSnap.data();
-
-  const scoreMap = {
-    "❤️": 4,
-    "👏": 3,
-    "😊": 3,
-    "👍": 2,
-    "😂": 2,
-    "😮": 2,
-    "😢": 2,
-    "👎": -3,
-  };
-    
-  const previousReaction =
-    post.userReactions?.[user.uid];
-
-  let reactions = {
-  "👍": post.reactions?.["👍"] || 0,
-  "❤️": post.reactions?.["❤️"] || 0,
-  "😂": post.reactions?.["😂"] || 0,
-  "😊": post.reactions?.["😊"] || 0,
-  "😮": post.reactions?.["😮"] || 0,
-  "😢": post.reactions?.["😢"] || 0,
-  "👏": post.reactions?.["👏"] || 0,
-  "👎": post.reactions?.["👎"] || 0,
-};
-
-  let creatorScore =
-    post.creatorScore || 0;
-
-  // Remove old reaction if user already reacted
-  if (previousReaction) {
-    reactions[previousReaction] =
-      Math.max(
-        0,
-        (reactions[previousReaction] || 1) - 1
+      console.error(
+        "Inclura Save Post Error:",
+        err
       );
 
-    creatorScore -=
-      scoreMap[previousReaction] || 0;
+      alert(
+        "Unable to save post."
+      );
+    }
   }
 
-  // Add new reaction
-  reactions[emoji] =
-    (reactions[emoji] || 0) + 1;
+  async function reactToPost(
+    postId,
+    emoji
+  ) {
+    const user =
+      auth.currentUser;
 
-  creatorScore +=
-    scoreMap[emoji] || 0;
+    if (!user) return;
 
-  // Save the reaction on the post
-  await updateDoc(postRef, {
-    reactions,
-    creatorScore,
-    userReactions: {
-      ...(post.userReactions || {}),
-      [user.uid]: emoji,
-    },
-  });
+    try {
+      const postRef = doc(
+        db,
+        "posts",
+        postId
+      );
 
-  // Update the creator's total score
-  const creatorRef = doc(
-    db,
-    "users",
-    post.userId
-  );
+      const postSnap =
+        await getDoc(postRef);
 
-  await updateDoc(creatorRef, {
-    creatorScore,
-  });
-}
+      if (!postSnap.exists()) return;
 
-async function translatePost(post) {
- console.log("🌍 Translate button clicked");
-console.log("Language:", userLanguage);
-console.log("Text:", post.text);
-  
-  try {
-    // Don't translate if already translated
-    if (post.translatedText?.[userLanguage]) {
-      return;
-    }
+      const post =
+        postSnap.data();
 
-    console.log("Calling /translate...");
-    const response = await fetch("/translate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: post.text,
-        target: userLanguage,
-      }),
-    });
+      const scoreMap = {
+        "❤️": 4,
+        "👏": 3,
+        "😊": 3,
+        "👍": 2,
+        "😂": 2,
+        "😮": 2,
+        "😢": 2,
+        "👎": -3,
+      };
 
-    const data = await response.json();
-    console.log("Response status:", response.status);
-    console.log("Response data:", data);
-    
-    if (!response.ok || data.error) {
-      alert(data.error || "Translation failed.");
-      return;
-    }
+      const previousReaction =
+        post.userReactions?.[
+          user.uid
+        ];
 
-    const translatedText = {
-      ...(post.translatedText || {}),
-      [userLanguage]: data.translatedText,
-    };
+      const reactions = {
+        "👍":
+          post.reactions?.[
+            "👍"
+          ] || 0,
+        "❤️":
+          post.reactions?.[
+            "❤️"
+          ] || 0,
+        "😂":
+          post.reactions?.[
+            "😂"
+          ] || 0,
+        "😊":
+          post.reactions?.[
+            "😊"
+          ] || 0,
+        "😮":
+          post.reactions?.[
+            "😮"
+          ] || 0,
+        "😢":
+          post.reactions?.[
+            "😢"
+          ] || 0,
+        "👏":
+          post.reactions?.[
+            "👏"
+          ] || 0,
+        "👎":
+          post.reactions?.[
+            "👎"
+          ] || 0,
+      };
 
-    await updateDoc(
-      doc(db, "posts", post.id),
-      {
-        translatedText,
+      let creatorScore =
+        post.creatorScore || 0;
+
+      if (previousReaction) {
+        reactions[
+          previousReaction
+        ] = Math.max(
+          0,
+          (
+            reactions[
+              previousReaction
+            ] || 1
+          ) - 1
+        );
+
+        creatorScore -=
+          scoreMap[
+            previousReaction
+          ] || 0;
       }
-    );
 
-    // Update Feed immediately
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === post.id
-          ? {
-              ...p,
-              translatedText,
-            }
-          : p
-      )
-    );
+      reactions[emoji] =
+        (reactions[emoji] || 0) +
+        1;
 
-    setFilteredPosts((prev) =>
-      prev.map((p) =>
-        p.id === post.id
-          ? {
-              ...p,
-              translatedText,
-            }
-          : p
-      )
-    );
-  } catch (err) {
-    console.error(err);
-    alert("Translation failed.");
+      creatorScore +=
+        scoreMap[emoji] || 0;
+
+      await updateDoc(postRef, {
+        reactions,
+        creatorScore,
+        userReactions: {
+          ...(post.userReactions ||
+            {}),
+          [user.uid]: emoji,
+        },
+      });
+
+      const creatorRef = doc(
+        db,
+        "users",
+        post.userId
+      );
+
+      await updateDoc(
+        creatorRef,
+        {
+          creatorScore,
+        }
+      );
+
+      /*
+       * Update the local Feed immediately
+       * so the reaction count changes without
+       * requiring a reload.
+       */
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                reactions,
+                creatorScore,
+                userReactions: {
+                  ...(p.userReactions ||
+                    {}),
+                  [user.uid]: emoji,
+                },
+              }
+            : p
+        )
+      );
+
+      setFilteredPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                reactions,
+                creatorScore,
+                userReactions: {
+                  ...(p.userReactions ||
+                    {}),
+                  [user.uid]: emoji,
+                },
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Inclura Reaction Error:",
+        error
+      );
+    }
   }
-}
 
-function handleShare(postId) {
-  const url =
-    `${window.location.origin}/post/${postId}`;
+  async function translatePost(post) {
+    if (!post?.id || !post?.text) {
+      return;
+    }
 
-  navigator.clipboard.writeText(url);
+    const postId = post.id;
 
-  alert("Post link copied!");
-}
+    /*
+     * Prevent duplicate requests for the
+     * same post while it is translating.
+     */
+    if (translatingPosts[postId]) {
+      return;
+    }
+
+    const targetLanguage =
+      String(
+        userLanguage || "en"
+      )
+        .trim()
+        .toLowerCase();
+
+    if (!targetLanguage) {
+      return;
+    }
+
+    /*
+     * If the Feed already has this translation,
+     * display it immediately without another
+     * Gemini request.
+     */
+    if (
+      post.translatedText?.[
+        targetLanguage
+      ]
+    ) {
+      return;
+    }
+
+    setTranslatingPosts((prev) => ({
+      ...prev,
+      [postId]: true,
+    }));
+
+    try {
+      console.log(
+        "🌍 Inclura Feed Translation:",
+        {
+          postId,
+          targetLanguage,
+        }
+      );
+
+      /*
+       * Use the same translation engine as
+       * PostPage.jsx.
+       *
+       * This gives us:
+       * - language detection
+       * - supported-language validation
+       * - Firestore translation cache
+       * - Cloudflare /translate gateway
+       * - Gemini translation
+       */
+      const result =
+        await translateText({
+          sourceId: postId,
+          sourceType: "post",
+          text: post.text,
+          targetLanguage,
+        });
+
+      if (
+        !result?.translatedText ||
+        typeof result.translatedText !==
+          "string"
+      ) {
+        throw new Error(
+          "Translation service returned no translated text."
+        );
+      }
+
+      const translatedText =
+        result.translatedText.trim();
+
+      if (!translatedText) {
+        throw new Error(
+          "Translation service returned empty text."
+        );
+      }
+
+      /*
+       * Save the translation through the
+       * existing translation subsystem.
+       *
+       * This makes future requests for the
+       * same post/language much faster.
+       */
+      try {
+        await saveTranslation({
+          sourceId: postId,
+          sourceType: "post",
+          originalLanguage:
+            result.originalLanguage ||
+            "",
+          targetLanguage,
+          translatedText,
+          confidence:
+            result.confidence || 0,
+        });
+      } catch (cacheSaveError) {
+        /*
+         * The translation itself succeeded.
+         * A cache-save failure should not make
+         * the user lose the successful translation.
+         */
+        console.error(
+          "Inclura Translation Cache Save Error:",
+          cacheSaveError
+        );
+      }
+
+      /*
+       * Keep the existing translatedText
+       * structure on the post so the Feed
+       * can display it immediately.
+       */
+      const updatedTranslatedText = {
+        ...(post.translatedText || {}),
+        [targetLanguage]:
+          translatedText,
+      };
+
+      /*
+       * Persist the Feed translation on the
+       * post as well.
+       */
+      await updateDoc(
+        doc(db, "posts", postId),
+        {
+          translatedText:
+            updatedTranslatedText,
+        }
+      );
+
+      /*
+       * Update the visible Feed immediately.
+       */
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                translatedText:
+                  updatedTranslatedText,
+              }
+            : p
+        )
+      );
+
+      setFilteredPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                translatedText:
+                  updatedTranslatedText,
+              }
+            : p
+        )
+      );
+    } catch (error) {
+      console.error(
+        "Inclura Feed Translation Error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Translation failed. Please try again."
+      );
+    } finally {
+      setTranslatingPosts((prev) => {
+        const next = {
+          ...prev,
+        };
+
+        delete next[postId];
+
+        return next;
+      });
+    }
+  }
+
+  function handleShare(postId) {
+    const url =
+      `${window.location.origin}/post/${postId}`;
+
+    navigator.clipboard
+      .writeText(url)
+      .then(() => {
+        alert("Post link copied!");
+      })
+      .catch((error) => {
+        console.error(
+          "Inclura Share Error:",
+          error
+        );
+
+        alert(
+          "Unable to copy post link."
+        );
+      });
+  }
 
   function getBadge(post) {
-  if (!post.verified) return null;
+    if (!post.verified) return null;
 
-  return getVerificationBadge(post.badgeType);
+    return getVerificationBadge(
+      post.badgeType
+    );
   }
 
   function getPremium(post) {
-  if (!post.premium) return null;
+    if (!post.premium) return null;
 
-  return getPremiumBadge(post.premiumTier);
-}
+    return getPremiumBadge(
+      post.premiumTier
+    );
+  }
 
   return (
     <div
@@ -405,270 +682,377 @@ function handleShare(postId) {
           </div>
         ) : (
           filteredPosts.map(
-            (post) => (
-              <div
-                key={post.id}
-                style={{
-                  background:
-                    "#0f172a",
-                  padding:
-                    "24px",
-                  borderRadius:
-                    "24px",
-                  marginBottom:
-                    "20px",
-                }}
-              >
+            (post) => {
+              const isTranslating =
+                Boolean(
+                  translatingPosts[
+                    post.id
+                  ]
+                );
+
+              const translated =
+                post.translatedText?.[
+                  userLanguage
+                ];
+
+              return (
                 <div
+                  key={post.id}
                   style={{
-                    display:
-                      "flex",
-                    justifyContent:
-                      "space-between",
-                    alignItems:
-                      "center",
+                    background:
+                      "#0f172a",
+                    padding:
+                      "24px",
+                    borderRadius:
+                      "24px",
                     marginBottom:
-                      "12px",
+                      "20px",
                   }}
                 >
-                  <div>
-                    <h3
-                      onClick={() =>
-                        navigate(
-                          `/user/${post.userId}`
-                        )
-                      }
-                      style={{
-                        cursor:
-                          "pointer",
-                        display:
-                          "flex",
-                        alignItems:
-                          "center",
-                        gap: "8px",
-                        margin:
-                          0,
-                      }}
-                    >
-                      {
-                        post.userName
-                      }
-
-                      {post.verified && (
-                        <span>
-                          {getBadge(
-                            post
-                          )}
-                        </span>
-                      )}
-
-                      {getPremium(
-                        post
-                      ) && (
-                        <span>
-                          {getPremium(
-                            post
-                          )}
-                        </span>
-                      )}
-                    </h3>
-
-                    {post.role && (
-                      <div
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      justifyContent:
+                        "space-between",
+                      alignItems:
+                        "center",
+                      marginBottom:
+                        "12px",
+                    }}
+                  >
+                    <div>
+                      <h3
+                        onClick={() =>
+                          navigate(
+                            `/user/${post.userId}`
+                          )
+                        }
                         style={{
-                          fontSize:
-                            "12px",
-                          color:
-                            "#94a3b8",
-                          marginTop:
-                            "4px",
+                          cursor:
+                            "pointer",
+                          display:
+                            "flex",
+                          alignItems:
+                            "center",
+                          gap: "8px",
+                          margin:
+                            0,
                         }}
                       >
                         {
-                          post.role
+                          post.userName
                         }
-                      </div>
+
+                        {post.verified && (
+                          <span>
+                            {getBadge(
+                              post
+                            )}
+                          </span>
+                        )}
+
+                        {getPremium(
+                          post
+                        ) && (
+                          <span>
+                            {getPremium(
+                              post
+                            )}
+                          </span>
+                        )}
+                      </h3>
+
+                      {post.role && (
+                        <div
+                          style={{
+                            fontSize:
+                              "12px",
+                            color:
+                              "#94a3b8",
+                            marginTop:
+                              "4px",
+                          }}
+                        >
+                          {
+                            post.role
+                          }
+                        </div>
+                      )}
+                    </div>
+
+                    <FollowButton
+                      targetUserId={
+                        post.userId
+                      }
+                    />
+                  </div>
+
+                  <p>
+                    {translated ||
+                      post.text}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      translatePost(
+                        post
+                      )
+                    }
+                    disabled={
+                      isTranslating
+                    }
+                    style={{
+                      marginTop:
+                        "10px",
+                      padding:
+                        "8px 14px",
+                      borderRadius:
+                        "12px",
+                      border:
+                        "none",
+                      background:
+                        isTranslating
+                          ? "#475569"
+                          : "#334155",
+                      color:
+                        "white",
+                      cursor:
+                        isTranslating
+                          ? "not-allowed"
+                          : "pointer",
+                    }}
+                  >
+                    {isTranslating
+                      ? "🌍 Translating..."
+                      : translated
+                      ? "🌍 Translated"
+                      : "🌍 Translate"}
+                  </button>
+
+                  {translated && (
+                    <small
+                      style={{
+                        display:
+                          "block",
+                        marginTop:
+                          "6px",
+                        opacity:
+                          0.7,
+                      }}
+                    >
+                      Translated to{" "}
+                      {
+                        userLanguage
+                      }
+                    </small>
+                  )}
+
+                  {post.imageUrl && (
+                    <img
+                      src={
+                        post.imageUrl
+                      }
+                      alt="Post"
+                      style={{
+                        width:
+                          "100%",
+                        borderRadius:
+                          "16px",
+                        marginTop:
+                          "12px",
+                      }}
+                    />
+                  )}
+
+                  {post.videoUrl && (
+                    <video
+                      controls
+                      style={{
+                        width:
+                          "100%",
+                        borderRadius:
+                          "16px",
+                        marginTop:
+                          "12px",
+                      }}
+                    >
+                      <source
+                        src={
+                          post.videoUrl
+                        }
+                        type="video/mp4"
+                      />
+                    </video>
+                  )}
+
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      gap: "10px",
+                      flexWrap:
+                        "wrap",
+                      marginTop:
+                        "16px",
+                    }}
+                  >
+                    {[
+                      "👍",
+                      "❤️",
+                      "😂",
+                      "😊",
+                      "😮",
+                      "😢",
+                      "👏",
+                      "👎",
+                    ].map(
+                      (emoji) => (
+                        <button
+                          key={
+                            emoji
+                          }
+                          type="button"
+                          onClick={() =>
+                            reactToPost(
+                              post.id,
+                              emoji
+                            )
+                          }
+                          style={{
+                            padding:
+                              "8px 12px",
+                            borderRadius:
+                              "20px",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          {
+                            emoji
+                          }{" "}
+                          {post
+                            .reactions?.[
+                            emoji
+                          ] ||
+                            0}
+                        </button>
+                      )
                     )}
                   </div>
 
-                  <FollowButton
-                    targetUserId={
-                      post.userId
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      gap: "12px",
+                      marginTop:
+                        "16px",
+                      flexWrap:
+                        "wrap",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/post/${post.id}`
+                        )
+                      }
+                    >
+                      💬 Comment
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(
+                          `/crosspost/${post.id}`
+                        )
+                      }
+                    >
+                      🔀 Cross-post
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        savePost(
+                          post
+                        )
+                      }
+                    >
+                      📌 Save
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleShare(
+                          post.id
+                        )
+                      }
+                    >
+                      🔗 Share
+                    </button>
+                  </div>
+
+                  <CommentBox
+                    postId={
+                      post.id
                     }
                   />
                 </div>
-
-                <p>
-  {post.translatedText?.[
-    userLanguage
-  ] || post.text}
-</p>
-
-  <button
-  onClick={() =>
-    translatePost(post)
-  }
-  style={{
-    marginTop: "10px",
-    padding: "8px 14px",
-    borderRadius: "12px",
-    border: "none",
-    background: "#334155",
-    color: "white",
-    cursor: "pointer",
-  }}
->
-  🌍 Translate
-</button>
-                
-                {post.imageUrl && (
-  <img
-    src={post.imageUrl}
-    alt="Post"
-    style={{
-      width: "100%",
-      borderRadius: "16px",
-    }}
-  />
-)}
-
-{post.videoUrl && (
-  <video
-    controls
-    style={{
-      width: "100%",
-      borderRadius: "16px",
-      marginTop: "12px",
-    }}
-  >
-    <source
-      src={post.videoUrl}
-      type="video/mp4"
-    />
-  </video>
-)}
-
-                <div
-  style={{
-    display: "flex",
-    gap: "10px",
-    flexWrap: "wrap",
-    marginTop: "16px",
-  }}
->
-  {[
-    "👍",
-    "❤️",
-    "😂",
-    "😊",
-    "😮",
-    "😢",
-    "👏",
-    "👎",
-  ].map((emoji) => (
-    <button
-      key={emoji}
-      onClick={() =>
-        reactToPost(
-          post.id,
-          emoji
-        )
-      }
-      
-      style={{
-        padding: "8px 12px",
-        borderRadius: "20px",
-        cursor: "pointer",
-      }}
-    >
-      {emoji}{" "}
-      {post.reactions?.[emoji] || 0}
-    </button>
-  ))}
-</div>
-                
-                <div
-                  style={{
-                    display:
-                      "flex",
-                    gap: "12px",
-                    marginTop:
-                      "16px",
-                  }}
-                >
-                  <button
-  onClick={() =>
-    navigate(
-      `/post/${post.id}`
-    )
-  }
->
-  💬 Comment
-</button>
-
-<button
-  onClick={() =>
-    navigate(
-      `/crosspost/${post.id}`
-    )
-  }
->
-  🔀 Cross-post
-</button>
-
-<button
-  onClick={() =>
-    savePost(post)
-  }
->
-  📌 Save
-</button>
-                  
-                    <button
-  onClick={() =>
-    handleShare(post.id)
-  }
->
-  🔗 Share
-</button>
-                  
-                </div>
-                <CommentBox
-                  postId={
-                    post.id
-                  }
-                />
-              </div>
-            )
+              );
+            }
           )
         )}
+
         {hasMore && (
-  <div
-    style={{
-      textAlign: "center",
-      marginTop: "24px",
-      marginBottom: "20px",
-    }}
-  >
-    <button
-      onClick={() => loadPosts(true)}
-      disabled={loading}
-      style={{
-        padding: "12px 24px",
-        borderRadius: "14px",
-        border: "none",
-        background: "#2563eb",
-        color: "#fff",
-        cursor: loading ? "not-allowed" : "pointer",
-      }}
-    >
-      {loading ? "Loading..." : "Load More Posts"}
-    </button>
-  </div>
-)}
+          <div
+            style={{
+              textAlign:
+                "center",
+              marginTop:
+                "24px",
+              marginBottom:
+                "20px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                loadPosts(true)
+              }
+              disabled={loading}
+              style={{
+                padding:
+                  "12px 24px",
+                borderRadius:
+                  "14px",
+                border:
+                  "none",
+                background:
+                  "#2563eb",
+                color:
+                  "#fff",
+                cursor:
+                  loading
+                    ? "not-allowed"
+                    : "pointer",
+              }}
+            >
+              {loading
+                ? "Loading..."
+                : "Load More Posts"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
 export default Feed;
+    
