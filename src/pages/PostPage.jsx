@@ -14,7 +14,10 @@ import { db } from "../firebase";
 import CommentBox from "../components/CommentBox";
 import FollowButton from "../components/FollowButton";
 
-import { translateText } from "../translation/textTranslator";
+import {
+  translateText,
+  saveTranslation,
+} from "../translation/textTranslator";
 
 function PostPage() {
   const { id } = useParams();
@@ -27,11 +30,20 @@ function PostPage() {
 
   const { t, i18n } = useTranslation();
 
-  const [translatedText, setTranslatedText] = useState("");
-  const [isTranslated, setIsTranslated] = useState(false);
-  const [translating, setTranslating] = useState(false);
+  const [translatedText, setTranslatedText] =
+    useState("");
 
-  const [reacting, setReacting] = useState(false);
+  const [translatedLanguage, setTranslatedLanguage] =
+    useState("");
+
+  const [isTranslated, setIsTranslated] =
+    useState(false);
+
+  const [translating, setTranslating] =
+    useState(false);
+
+  const [reacting, setReacting] =
+    useState(false);
 
   useEffect(() => {
     async function loadPost() {
@@ -59,29 +71,117 @@ function PostPage() {
     loadPost();
   }, [id]);
 
-  async function translatePost() {
-    if (!post?.text || translating) return;
+  /*
+   * Keep the displayed translation synchronized
+   * with the currently selected interface language.
+   *
+   * We deliberately do not automatically call the
+   * translation service here. The user still controls
+   * translation with the Translate button.
+   */
+  useEffect(() => {
+    const activeLanguage =
+      String(i18n.language || "en")
+        .trim()
+        .toLowerCase();
 
-    if (isTranslated) {
+    setIsTranslated(false);
+    setTranslatedText("");
+    setTranslatedLanguage("");
+
+    if (
+      !post ||
+      !activeLanguage
+    ) {
+      return;
+    }
+
+    const existingTranslation =
+      post.translatedText?.[
+        activeLanguage
+      ];
+
+    if (
+      typeof existingTranslation ===
+        "string" &&
+      existingTranslation.trim()
+    ) {
+      setTranslatedText(
+        existingTranslation.trim()
+      );
+
+      setTranslatedLanguage(
+        activeLanguage
+      );
+    }
+  }, [
+    i18n.language,
+    post,
+  ]);
+
+  async function translatePost() {
+    if (
+      !post?.text ||
+      translating
+    ) {
+      return;
+    }
+
+    const targetLanguage =
+      String(
+        i18n.language || "en"
+      )
+        .trim()
+        .toLowerCase();
+
+    if (!targetLanguage) {
+      return;
+    }
+
+    /*
+     * If this exact language is already being
+     * displayed, return to the original post.
+     */
+    if (
+      isTranslated &&
+      translatedLanguage ===
+        targetLanguage
+    ) {
       setIsTranslated(false);
+      return;
+    }
+
+    /*
+     * If the post already contains a translation
+     * for the currently selected language, use it
+     * immediately without another AI request.
+     */
+    const existingTranslation =
+      post.translatedText?.[
+        targetLanguage
+      ];
+
+    if (
+      typeof existingTranslation ===
+        "string" &&
+      existingTranslation.trim()
+    ) {
+      setTranslatedText(
+        existingTranslation.trim()
+      );
+
+      setTranslatedLanguage(
+        targetLanguage
+      );
+
+      setIsTranslated(true);
+
       return;
     }
 
     setTranslating(true);
 
     try {
-      const targetLanguage = (
-        i18n.language || "en"
-      )
-        .trim()
-        .toLowerCase();
-
-      if (!targetLanguage) {
-        throw new Error(
-          "Target language is not available."
-        );
-      }
-
       /*
        * If the post already declares its original
        * language and it matches the current language,
@@ -89,12 +189,23 @@ function PostPage() {
        */
       if (
         post.originalLanguage &&
-        post.originalLanguage
+        String(
+          post.originalLanguage
+        )
           .trim()
-          .toLowerCase() === targetLanguage
+          .toLowerCase() ===
+          targetLanguage
       ) {
-        setTranslatedText(post.text);
+        setTranslatedText(
+          post.text
+        );
+
+        setTranslatedLanguage(
+          targetLanguage
+        );
+
         setIsTranslated(true);
+
         return;
       }
 
@@ -109,24 +220,101 @@ function PostPage() {
        *
        * Cloudflare Pages Function.
        */
-      const result = await translateText({
-        sourceId: post.id,
-        sourceType: "post",
-        text: post.text,
-        targetLanguage,
-      });
+      const result =
+        await translateText({
+          sourceId: post.id,
+          sourceType: "post",
+          text: post.text,
+          targetLanguage,
+        });
 
       if (
         !result?.translatedText ||
-        typeof result.translatedText !== "string"
+        typeof result.translatedText !==
+          "string"
       ) {
         throw new Error(
           "Translation returned no translated text."
         );
       }
 
+      const newTranslation =
+        result.translatedText.trim();
+
+      if (!newTranslation) {
+        throw new Error(
+          "Translation service returned empty text."
+        );
+      }
+
+      /*
+       * Save the translation to the central
+       * Firestore translation cache.
+       *
+       * If this fails, the translation itself
+       * still remains usable.
+       */
+      try {
+        await saveTranslation({
+          sourceId: post.id,
+          sourceType: "post",
+          originalLanguage:
+            result.originalLanguage ||
+            post.originalLanguage ||
+            "",
+          targetLanguage,
+          translatedText:
+            newTranslation,
+          confidence:
+            result.confidence || 0,
+        });
+      } catch (cacheSaveError) {
+        console.error(
+          "Inclura Translation Cache Save Error:",
+          cacheSaveError
+        );
+      }
+
+      /*
+       * Persist the translation directly on
+       * the post as well, matching Feed.jsx.
+       */
+      const updatedTranslatedText = {
+        ...(post.translatedText || {}),
+        [targetLanguage]:
+          newTranslation,
+      };
+
+      try {
+        await updateDoc(
+          doc(db, "posts", post.id),
+          {
+            translatedText:
+              updatedTranslatedText,
+          }
+        );
+      } catch (postUpdateError) {
+        console.error(
+          "Inclura Post Translation Persistence Error:",
+          postUpdateError
+        );
+      }
+
+      /*
+       * Update local PostPage state immediately.
+       */
+      setPost((previousPost) => ({
+        ...previousPost,
+        translatedText:
+          updatedTranslatedText,
+      }));
+
       setTranslatedText(
-        result.translatedText
+        newTranslation
+      );
+
+      setTranslatedLanguage(
+        targetLanguage
       );
 
       setIsTranslated(true);
@@ -137,7 +325,13 @@ function PostPage() {
       );
 
       setTranslatedText("");
+      setTranslatedLanguage("");
       setIsTranslated(false);
+
+      alert(
+        error?.message ||
+          "Translation failed. Please try again."
+      );
     } finally {
       setTranslating(false);
     }
@@ -171,14 +365,19 @@ function PostPage() {
     switch (post.badgeType) {
       case "creator":
         return "🎥";
+
       case "organization":
         return "🏢";
+
       case "ngo":
         return "🤝";
+
       case "hospital":
         return "🏥";
+
       case "government":
         return "🏛️";
+
       default:
         return "✅";
     }
@@ -190,12 +389,16 @@ function PostPage() {
     switch (post.premiumTier) {
       case "silver":
         return "🥈";
+
       case "gold":
         return "🥇";
+
       case "platinum":
         return "💎";
+
       case "enterprise":
         return "🏆";
+
       default:
         return "⭐";
     }
@@ -207,16 +410,24 @@ function PostPage() {
     setReacting(true);
 
     try {
-      const ref = doc(db, "posts", id);
+      const ref = doc(
+        db,
+        "posts",
+        id
+      );
 
       await updateDoc(ref, {
-        [`reactions.${emoji}`]: increment(1),
-        creatorScore: increment(
-          scoreMap[emoji]
-        ),
+        [`reactions.${emoji}`]:
+          increment(1),
+
+        creatorScore:
+          increment(
+            scoreMap[emoji]
+          ),
       });
 
-      const snap = await getDoc(ref);
+      const snap =
+        await getDoc(ref);
 
       if (snap.exists()) {
         setPost({
@@ -260,8 +471,10 @@ function PostPage() {
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
+                justifyContent:
+                  "space-between",
+                alignItems:
+                  "center",
               }}
             >
               <div>
@@ -279,12 +492,16 @@ function PostPage() {
                 </h3>
 
                 {post.role && (
-                  <small>{post.role}</small>
+                  <small>
+                    {post.role}
+                  </small>
                 )}
               </div>
 
               <FollowButton
-                targetUserId={post.userId}
+                targetUserId={
+                  post.userId
+                }
               />
             </div>
 
@@ -302,8 +519,12 @@ function PostPage() {
 
               <button
                 type="button"
-                onClick={translatePost}
-                disabled={translating}
+                onClick={
+                  translatePost
+                }
+                disabled={
+                  translating
+                }
                 aria-label={
                   isTranslated
                     ? t("showOriginal")
@@ -320,12 +541,15 @@ function PostPage() {
               {isTranslated && (
                 <small
                   style={{
-                    display: "block",
-                    marginTop: "6px",
+                    display:
+                      "block",
+                    marginTop:
+                      "6px",
                     opacity: 0.7,
                   }}
                 >
-                  {t("translated")}
+                  {t("translated")}{" "}
+                  {translatedLanguage}
                 </small>
               )}
             </div>
@@ -336,7 +560,8 @@ function PostPage() {
                 alt=""
                 style={{
                   width: "100%",
-                  borderRadius: "16px",
+                  borderRadius:
+                    "16px",
                 }}
               />
             )}
@@ -346,11 +571,14 @@ function PostPage() {
                 controls
                 style={{
                   width: "100%",
-                  borderRadius: "16px",
+                  borderRadius:
+                    "16px",
                 }}
               >
                 <source
-                  src={post.videoUrl}
+                  src={
+                    post.videoUrl
+                  }
                   type="video/mp4"
                 />
               </video>
@@ -362,24 +590,34 @@ function PostPage() {
               style={{
                 display: "flex",
                 gap: "10px",
-                flexWrap: "wrap",
-                marginTop: "18px",
+                flexWrap:
+                  "wrap",
+                marginTop:
+                  "18px",
               }}
             >
-              {reactions.map((emoji) => (
-                <button
-                  key={emoji}
-                  type="button"
-                  onClick={() =>
-                    react(emoji)
-                  }
-                  disabled={reacting}
-                >
-                  {emoji}{" "}
-                  {post.reactions?.[emoji] ||
-                    0}
-                </button>
-              ))}
+              {reactions.map(
+                (emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() =>
+                      react(
+                        emoji
+                      )
+                    }
+                    disabled={
+                      reacting
+                    }
+                  >
+                    {emoji}{" "}
+                    {post
+                      .reactions?.[
+                      emoji
+                    ] || 0}
+                  </button>
+                )
+              )}
             </div>
 
             {/* ACTIONS */}
@@ -388,10 +626,13 @@ function PostPage() {
               style={{
                 display: "flex",
                 gap: "16px",
-                marginTop: "20px",
+                marginTop:
+                  "20px",
               }}
             >
-              <button type="button">
+              <button
+                type="button"
+              >
                 💬 Comment
               </button>
 
@@ -406,7 +647,9 @@ function PostPage() {
                 🔀 Cross-post
               </button>
 
-              <button type="button">
+              <button
+                type="button"
+              >
                 📌 Save
               </button>
             </div>
