@@ -26,6 +26,11 @@ import {
   storage,
 } from "../firebase";
 
+import {
+  translateText,
+  saveTranslation,
+} from "../translation/textTranslator";
+
 
 function ChatWindow({
   selectedChat,
@@ -56,6 +61,15 @@ function ChatWindow({
   const [speechSupported, setSpeechSupported] =
     useState(false);
 
+  const [translatingMessages, setTranslatingMessages] =
+    useState({});
+
+  const [messageTranslations, setMessageTranslations] =
+    useState({});
+
+  const [translatedMessages, setTranslatedMessages] =
+    useState({});
+
   const recognitionRef =
     useRef(null);
 
@@ -64,6 +78,18 @@ function ChatWindow({
 
   const typingTimeoutRef =
     useRef(null);
+
+
+  // ============================================================
+  // ACTIVE LANGUAGE
+  // ============================================================
+
+  const activeLanguage =
+    String(
+      i18n.language || "en"
+    )
+      .trim()
+      .toLowerCase();
 
 
   // ============================================================
@@ -77,6 +103,66 @@ function ChatWindow({
     });
 
   }, [messages]);
+
+
+  // ============================================================
+  // LOAD EXISTING MESSAGE TRANSLATIONS
+  // ============================================================
+
+  useEffect(() => {
+
+    const loadedTranslations = {};
+    const loadedTranslatedStates = {};
+
+    messages.forEach((message) => {
+
+      if (!message?.id) {
+        return;
+      }
+
+      if (
+        message.translatedText &&
+        typeof message.translatedText ===
+          "object"
+      ) {
+
+        loadedTranslations[message.id] = {
+          ...message.translatedText,
+        };
+
+        const existingTranslation =
+          message.translatedText[
+            activeLanguage
+          ];
+
+        if (
+          typeof existingTranslation ===
+            "string" &&
+          existingTranslation.trim()
+        ) {
+
+          loadedTranslatedStates[
+            message.id
+          ] = false;
+
+        }
+
+      }
+
+    });
+
+    setMessageTranslations(
+      loadedTranslations
+    );
+
+    setTranslatedMessages(
+      loadedTranslatedStates
+    );
+
+  }, [
+    messages,
+    activeLanguage,
+  ]);
 
 
   // ============================================================
@@ -96,7 +182,9 @@ function ChatWindow({
       window.webkitSpeechRecognition;
 
     setSpeechSupported(
-      Boolean(SpeechRecognition)
+      Boolean(
+        SpeechRecognition
+      )
     );
 
   }, []);
@@ -113,22 +201,30 @@ function ChatWindow({
       if (
         recognitionRef.current
       ) {
+
         try {
+
           recognitionRef.current.stop();
+
         } catch (error) {
+
           console.warn(
             "Speech recognition cleanup error:",
             error
           );
+
         }
+
       }
 
       if (
         typingTimeoutRef.current
       ) {
+
         clearTimeout(
           typingTimeoutRef.current
         );
+
       }
 
       if (
@@ -136,21 +232,29 @@ function ChatWindow({
         mediaRecorder.state !==
           "inactive"
       ) {
+
         try {
+
           mediaRecorder.stop();
+
         } catch (error) {
+
           console.warn(
             "Media recorder cleanup error:",
             error
           );
+
         }
+
       }
 
       if (
         typeof window !== "undefined" &&
         window.speechSynthesis
       ) {
+
         window.speechSynthesis.cancel();
+
       }
 
     };
@@ -170,7 +274,9 @@ function ChatWindow({
       !selectedChat ||
       !auth.currentUser
     ) {
+
       return;
+
     }
 
     try {
@@ -224,17 +330,23 @@ function ChatWindow({
     if (
       typingTimeoutRef.current
     ) {
+
       clearTimeout(
         typingTimeoutRef.current
       );
+
     }
 
-    if (value.trim().length > 0) {
+    if (
+      value.trim().length > 0
+    ) {
 
       typingTimeoutRef.current =
         setTimeout(() => {
 
-          updateTypingStatus(false);
+          updateTypingStatus(
+            false
+          );
 
         }, 1500);
 
@@ -255,7 +367,9 @@ function ChatWindow({
       !auth.currentUser ||
       !text.trim()
     ) {
+
       return;
+
     }
 
     const messageText =
@@ -301,9 +415,11 @@ function ChatWindow({
       if (
         typingTimeoutRef.current
       ) {
+
         clearTimeout(
           typingTimeoutRef.current
         );
+
       }
 
       setText("");
@@ -317,12 +433,269 @@ function ChatWindow({
 
       alert(
         error?.message ||
-        t("messageSendError")
+          t("messageSendError")
       );
 
     } finally {
 
       setIsSending(false);
+
+    }
+
+  }
+
+
+  // ============================================================
+  // TRANSLATE MESSAGE
+  // ============================================================
+
+  async function translateMessage(
+    message
+  ) {
+
+    if (
+      !message?.id ||
+      !message?.text ||
+      !activeLanguage
+    ) {
+
+      return;
+
+    }
+
+    const messageId =
+      message.id;
+
+    if (
+      translatingMessages[
+        messageId
+      ]
+    ) {
+
+      return;
+
+    }
+
+    const existingTranslation =
+      messageTranslations[
+        messageId
+      ]?.[
+        activeLanguage
+      ];
+
+    const displayedTranslation =
+      translatedMessages[
+        messageId
+      ];
+
+    /*
+     * If the current language already has
+     * a saved translation, toggle between
+     * the translation and the original.
+     */
+    if (
+      typeof existingTranslation ===
+        "string" &&
+      existingTranslation.trim()
+    ) {
+
+      setTranslatedMessages(
+        (previous) => ({
+          ...previous,
+          [messageId]:
+            !displayedTranslation,
+        })
+      );
+
+      return;
+
+    }
+
+    /*
+     * Mark only this message as translating.
+     */
+    setTranslatingMessages(
+      (previous) => ({
+        ...previous,
+        [messageId]: true,
+      })
+    );
+
+    try {
+
+      /*
+       * Use the same secure translation engine
+       * already proven on Feed and PostPage.
+       */
+      const result =
+        await translateText({
+          sourceId: messageId,
+          sourceType:
+            "message",
+          text: message.text,
+          targetLanguage:
+            activeLanguage,
+        });
+
+      if (
+        !result?.translatedText ||
+        typeof result.translatedText !==
+          "string"
+      ) {
+
+        throw new Error(
+          "Translation service returned no translated text."
+        );
+
+      }
+
+      const translatedText =
+        result.translatedText.trim();
+
+      if (!translatedText) {
+
+        throw new Error(
+          "Translation service returned empty text."
+        );
+
+      }
+
+      /*
+       * Save the translation to the central
+       * Firestore translation cache.
+       *
+       * A cache-save failure does not prevent
+       * the translation from being displayed.
+       */
+      try {
+
+        await saveTranslation({
+          sourceId:
+            messageId,
+
+          sourceType:
+            "message",
+
+          originalLanguage:
+            result.originalLanguage ||
+            message.originalLanguage ||
+            "",
+
+          targetLanguage:
+            activeLanguage,
+
+          translatedText,
+
+          confidence:
+            result.confidence || 0,
+        });
+
+      } catch (
+        cacheSaveError
+      ) {
+
+        console.error(
+          "Inclura Message Translation Cache Save Error:",
+          cacheSaveError
+        );
+
+      }
+
+      /*
+       * Keep all language translations together
+       * on the individual message.
+       */
+      const updatedTranslations = {
+        ...(messageTranslations[
+          messageId
+        ] || {}),
+        [activeLanguage]:
+          translatedText,
+      };
+
+      /*
+       * Persist the translation directly
+       * on the Firestore message.
+       */
+      try {
+
+        await updateDoc(
+          doc(
+            db,
+            "chats",
+            selectedChat.id,
+            "messages",
+            messageId
+          ),
+          {
+            translatedText:
+              updatedTranslations,
+          }
+        );
+
+      } catch (
+        messageUpdateError
+      ) {
+
+        console.error(
+          "Inclura Message Translation Persistence Error:",
+          messageUpdateError
+        );
+
+      }
+
+      /*
+       * Update local translation cache.
+       */
+      setMessageTranslations(
+        (previous) => ({
+          ...previous,
+          [messageId]:
+            updatedTranslations,
+        })
+      );
+
+      /*
+       * Immediately display the translation.
+       */
+      setTranslatedMessages(
+        (previous) => ({
+          ...previous,
+          [messageId]: true,
+        })
+      );
+
+    } catch (error) {
+
+      console.error(
+        "Inclura Message Translation Error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          t(
+            "messageTranslationError"
+          )
+      );
+
+    } finally {
+
+      setTranslatingMessages(
+        (previous) => {
+
+          const next = {
+            ...previous,
+          };
+
+          delete next[
+            messageId
+          ];
+
+          return next;
+
+        }
+      );
 
     }
 
@@ -341,17 +714,23 @@ function ChatWindow({
       !selectedChat ||
       !auth.currentUser
     ) {
+
       return;
+
     }
 
     const file =
       event.target.files?.[0];
 
     if (!file) {
+
       return;
+
     }
 
-    setIsUploadingImage(true);
+    setIsUploadingImage(
+      true
+    );
 
     try {
 
@@ -413,12 +792,14 @@ function ChatWindow({
 
       alert(
         error?.message ||
-        t("imageUploadError")
+          t("imageUploadError")
       );
 
     } finally {
 
-      setIsUploadingImage(false);
+      setIsUploadingImage(
+        false
+      );
 
     }
 
@@ -435,7 +816,9 @@ function ChatWindow({
       !selectedChat ||
       !auth.currentUser
     ) {
+
       return;
+
     }
 
     if (
@@ -444,10 +827,13 @@ function ChatWindow({
     ) {
 
       alert(
-        t("audioRecordingUnsupported")
+        t(
+          "audioRecordingUnsupported"
+        )
       );
 
       return;
+
     }
 
     try {
@@ -460,7 +846,9 @@ function ChatWindow({
         );
 
       const recorder =
-        new MediaRecorder(stream);
+        new MediaRecorder(
+          stream
+        );
 
       const chunks = [];
 
@@ -470,13 +858,14 @@ function ChatWindow({
           if (
             event.data.size > 0
           ) {
+
             chunks.push(
               event.data
             );
+
           }
 
         };
-
 
       recorder.onstop =
         async () => {
@@ -544,7 +933,9 @@ function ChatWindow({
 
             alert(
               error?.message ||
-              t("voiceMessageError")
+                t(
+                  "voiceMessageError"
+                )
             );
 
           } finally {
@@ -560,14 +951,15 @@ function ChatWindow({
 
         };
 
-
       recorder.start();
 
       setMediaRecorder(
         recorder
       );
 
-      setRecording(true);
+      setRecording(
+        true
+      );
 
     } catch (error) {
 
@@ -578,7 +970,9 @@ function ChatWindow({
 
       alert(
         error?.message ||
-        t("microphonePermissionRequired")
+          t(
+            "microphonePermissionRequired"
+          )
       );
 
     }
@@ -602,9 +996,13 @@ function ChatWindow({
 
     }
 
-    setMediaRecorder(null);
+    setMediaRecorder(
+      null
+    );
 
-    setRecording(false);
+    setRecording(
+      false
+    );
 
   }
 
@@ -640,7 +1038,9 @@ function ChatWindow({
     };
 
     return (
-      languageMap[i18n.language] ||
+      languageMap[
+        activeLanguage
+      ] ||
       "en-US"
     );
 
@@ -658,17 +1058,22 @@ function ChatWindow({
     ) {
 
       alert(
-        t("speechRecognitionUnsupported")
+        t(
+          "speechRecognitionUnsupported"
+        )
       );
 
       return;
+
     }
 
     if (
       typeof window ===
         "undefined"
     ) {
+
       return;
+
     }
 
     const SpeechRecognition =
@@ -676,7 +1081,9 @@ function ChatWindow({
       window.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
+
       return;
+
     }
 
     if (
@@ -684,12 +1091,16 @@ function ChatWindow({
     ) {
 
       try {
+
         recognitionRef.current.stop();
+
       } catch (error) {
+
         console.warn(
           "Existing speech recognition could not be stopped:",
           error
         );
+
       }
 
     }
@@ -775,7 +1186,9 @@ function ChatWindow({
         "undefined" ||
       !window.speechSynthesis
     ) {
+
       return;
+
     }
 
     window.speechSynthesis.cancel();
@@ -790,17 +1203,23 @@ function ChatWindow({
 
     utterance.onstart =
       () => {
+
         setSpeaking(true);
+
       };
 
     utterance.onend =
       () => {
+
         setSpeaking(false);
+
       };
 
     utterance.onerror =
       () => {
+
         setSpeaking(false);
+
       };
 
     window.speechSynthesis.speak(
@@ -875,7 +1294,9 @@ function ChatWindow({
           textAlign: "center",
         }}
       >
-        {t("selectConversation")}
+        {t(
+          "selectConversation"
+        )}
       </div>
     );
 
@@ -929,7 +1350,9 @@ function ChatWindow({
           {selectedChat.typing &&
           selectedChat.typingUser !==
             currentUserId
-            ? t("someoneIsTyping")
+            ? t(
+                "someoneIsTyping"
+              )
             : ""}
         </p>
 
@@ -957,231 +1380,326 @@ function ChatWindow({
             role="status"
             style={{
               color: "#94a3b8",
-              textAlign: "center",
+              textAlign:
+                "center",
               padding: "30px",
             }}
           >
-            {t("noMessagesYet")}
+            {t(
+              "noMessagesYet"
+            )}
           </div>
 
         ) : (
 
-          messages.map((msg) => {
+          messages.map(
+            (msg) => {
 
-            const isOwnMessage =
-              msg.senderId ===
-              currentUserId;
+              const isOwnMessage =
+                msg.senderId ===
+                currentUserId;
 
-            return (
-              <article
-                key={msg.id}
-                aria-label={
-                  isOwnMessage
-                    ? t("yourMessage")
-                    : t("receivedMessage")
-                }
-                style={{
-                  display: "flex",
-                  justifyContent:
+              const isTranslating =
+                Boolean(
+                  translatingMessages[
+                    msg.id
+                  ]
+                );
+
+              const translations =
+                messageTranslations[
+                  msg.id
+                ] ||
+                msg.translatedText ||
+                {};
+
+              const savedTranslation =
+                translations[
+                  activeLanguage
+                ];
+
+              const isShowingTranslation =
+                Boolean(
+                  translatedMessages[
+                    msg.id
+                  ]
+                );
+
+              const displayedText =
+                isShowingTranslation &&
+                typeof savedTranslation ===
+                  "string" &&
+                savedTranslation.trim()
+                  ? savedTranslation
+                  : msg.text;
+
+              return (
+                <article
+                  key={msg.id}
+                  aria-label={
                     isOwnMessage
-                      ? "flex-end"
-                      : "flex-start",
-                  marginBottom:
-                    "12px",
-                }}
-              >
-
-                <div
+                      ? t(
+                          "yourMessage"
+                        )
+                      : t(
+                          "receivedMessage"
+                        )
+                  }
                   style={{
-                    background:
+                    display: "flex",
+                    justifyContent:
                       isOwnMessage
-                        ? "#38bdf8"
-                        : "#1e293b",
-                    color: "white",
-                    padding: "12px",
-                    borderRadius:
-                      "16px",
-                    maxWidth:
-                      "70%",
+                        ? "flex-end"
+                        : "flex-start",
+                    marginBottom:
+                      "12px",
                   }}
                 >
 
-                  {/* TEXT MESSAGE */}
+                  <div
+                    style={{
+                      background:
+                        isOwnMessage
+                          ? "#38bdf8"
+                          : "#1e293b",
+                      color: "white",
+                      padding: "12px",
+                      borderRadius:
+                        "16px",
+                      maxWidth:
+                        "70%",
+                    }}
+                  >
 
-                  {msg.text && (
-                    <div>
-                      {msg.text}
-                    </div>
-                  )}
+                    {/* TEXT MESSAGE */}
 
+                    {msg.text && (
 
-                  {/* IMAGE MESSAGE */}
+                      <div>
 
-                  {msg.imageUrl && (
+                        {displayedText}
 
-                    <img
-                      src={msg.imageUrl}
-                      alt={
-                        msg.fileName ||
-                        t("sharedImage")
-                      }
-                      style={{
-                        width:
-                          "220px",
-                        maxWidth:
-                          "100%",
-                        borderRadius:
-                          "12px",
-                        marginTop:
-                          "8px",
-                      }}
-                    />
+                      </div>
 
-                  )}
+                    )}
 
 
-                  {/* AUDIO MESSAGE */}
+                    {/* IMAGE MESSAGE */}
 
-                  {msg.audioUrl && (
+                    {msg.imageUrl && (
 
-                    <audio
-                      controls
-                      preload="metadata"
-                      aria-label={t(
-                        "voiceMessage"
-                      )}
-                      style={{
-                        marginTop:
-                          "8px",
-                        width:
-                          "100%",
-                      }}
-                    >
-
-                      <source
+                      <img
                         src={
-                          msg.audioUrl
+                          msg.imageUrl
                         }
-                        type="audio/webm"
+                        alt={
+                          msg.fileName ||
+                          t(
+                            "sharedImage"
+                          )
+                        }
+                        style={{
+                          width:
+                            "220px",
+                          maxWidth:
+                            "100%",
+                          borderRadius:
+                            "12px",
+                          marginTop:
+                            "8px",
+                        }}
                       />
 
-                    </audio>
-
-                  )}
+                    )}
 
 
-                  {/* =================================================
-                      MESSAGE TRANSLATION HOOK
-                      =================================================
+                    {/* AUDIO MESSAGE */}
 
-                      The message schema remains compatible with
-                      future translatedMessage / translations data.
+                    {msg.audioUrl && (
 
-                      We do NOT falsely generate a translation here.
-                      The actual translation engine will be connected
-                      in the next messaging translation stage.
-                      ================================================= */}
-
-                  {msg.text && (
-
-                    <div
-                      style={{
-                        marginTop:
-                          "6px",
-                        display:
-                          "flex",
-                        gap:
-                          "8px",
-                        flexWrap:
-                          "wrap",
-                      }}
-                    >
-
-                      <button
-                        type="button"
+                      <audio
+                        controls
+                        preload="metadata"
                         aria-label={t(
-                          "translateMessage"
-                        )}
-                        title={t(
-                          "translateMessage"
+                          "voiceMessage"
                         )}
                         style={{
-                          background:
-                            "transparent",
-                          border:
-                            "none",
-                          color:
-                            isOwnMessage
-                              ? "#e0f2fe"
-                              : "#93c5fd",
-                          cursor:
-                            "pointer",
-                          padding:
-                            "2px 0",
-                          fontSize:
-                            "12px",
-                        }}
-                        onClick={() => {
-                          console.info(
-                            "Message translation will be connected to the Inclura translation engine.",
-                            msg.id
-                          );
+                          marginTop:
+                            "8px",
+                          width:
+                            "100%",
                         }}
                       >
-                        🌐 {t(
-                          "translateMessage"
-                        )}
-                      </button>
 
-                    </div>
+                        <source
+                          src={
+                            msg.audioUrl
+                          }
+                          type="audio/webm"
+                        />
 
-                  )}
+                      </audio>
+
+                    )}
 
 
-                  {/* MESSAGE STATUS */}
+                    {/* =================================================
+                        MESSAGE TRANSLATION
+                        ================================================= */}
 
-                  {isOwnMessage && (
+                    {msg.text && (
 
-                    <div
-                      aria-label={
-                        msg.status ===
+                      <div
+                        style={{
+                          marginTop:
+                            "6px",
+                          display:
+                            "flex",
+                          gap:
+                            "8px",
+                          flexWrap:
+                            "wrap",
+                        }}
+                      >
+
+                        <button
+                          type="button"
+                          aria-label={
+                            isTranslating
+                              ? t(
+                                  "translating"
+                                )
+                              : isShowingTranslation
+                              ? t(
+                                  "showOriginal"
+                                )
+                              : t(
+                                  "translateMessage"
+                                )
+                          }
+                          title={
+                            isTranslating
+                              ? t(
+                                  "translating"
+                                )
+                              : isShowingTranslation
+                              ? t(
+                                  "showOriginal"
+                                )
+                              : t(
+                                  "translateMessage"
+                                )
+                          }
+                          disabled={
+                            isTranslating
+                          }
+                          style={{
+                            background:
+                              "transparent",
+                            border:
+                              "none",
+                            color:
+                              isOwnMessage
+                                ? "#e0f2fe"
+                                : "#93c5fd",
+                            cursor:
+                              isTranslating
+                                ? "wait"
+                                : "pointer",
+                            padding:
+                              "2px 0",
+                            fontSize:
+                              "12px",
+                          }}
+                          onClick={() =>
+                            translateMessage(
+                              msg
+                            )
+                          }
+                        >
+                          {isTranslating
+                            ? `🌍 ${t(
+                                "translating"
+                              )}`
+                            : isShowingTranslation
+                            ? `🌍 ${t(
+                                "showOriginal"
+                              )}`
+                            : `🌍 ${t(
+                                "translateMessage"
+                              )}`}
+                        </button>
+
+                        {isShowingTranslation &&
+                          savedTranslation && (
+
+                            <span
+                              aria-live="polite"
+                              style={{
+                                fontSize:
+                                  "11px",
+                                opacity:
+                                  0.7,
+                              }}
+                            >
+                              {t(
+                                "translated"
+                              )}{" "}
+                              {activeLanguage}
+                            </span>
+
+                          )}
+
+                      </div>
+
+                    )}
+
+
+                    {/* MESSAGE STATUS */}
+
+                    {isOwnMessage && (
+
+                      <div
+                        aria-label={
+                          msg.status ===
+                          "read"
+                            ? t(
+                                "messageRead"
+                              )
+                            : t(
+                                "messageSent"
+                              )
+                        }
+                        style={{
+                          fontSize:
+                            "11px",
+                          color:
+                            "#cbd5e1",
+                          marginTop:
+                            "4px",
+                        }}
+                      >
+
+                        {msg.status ===
                         "read"
-                          ? t(
-                              "messageRead"
-                            )
-                          : t(
-                              "messageSent"
-                            )
-                      }
-                      style={{
-                        fontSize:
-                          "11px",
-                        color:
-                          "#cbd5e1",
-                        marginTop:
-                          "4px",
-                      }}
-                    >
+                          ? `✓✓ ${t(
+                              "read"
+                            )}`
+                          : `✓ ${t(
+                              "sent"
+                            )}`}
 
-                      {msg.status ===
-                      "read"
-                        ? `✓✓ ${t(
-                            "read"
-                          )}`
-                        : `✓ ${t(
-                            "sent"
-                          )}`}
+                      </div>
 
-                    </div>
+                    )}
 
-                  )}
+                  </div>
 
-                </div>
+                </article>
+              );
 
-              </article>
-            );
-
-          })
+            }
+          )
 
         )}
 
@@ -1217,7 +1735,9 @@ function ChatWindow({
             handleInputKeyDown
           }
           onBlur={() =>
-            updateTypingStatus(false)
+            updateTypingStatus(
+              false
+            )
           }
           placeholder={t(
             "typeMessage"
@@ -1230,7 +1750,8 @@ function ChatWindow({
           style={{
             width: "100%",
             padding: "12px",
-            borderRadius: "12px",
+            borderRadius:
+              "12px",
             border:
               "1px solid #374151",
             background:
@@ -1238,7 +1759,8 @@ function ChatWindow({
             color: "#fff",
             boxSizing:
               "border-box",
-            resize: "vertical",
+            resize:
+              "vertical",
             marginBottom:
               "10px",
           }}
@@ -1257,7 +1779,8 @@ function ChatWindow({
           style={{
             display: "flex",
             gap: "10px",
-            flexWrap: "wrap",
+            flexWrap:
+              "wrap",
           }}
         >
 
@@ -1278,8 +1801,12 @@ function ChatWindow({
           >
             🖼️{" "}
             {isUploadingImage
-              ? t("uploading")
-              : t("image")}
+              ? t(
+                  "uploading"
+                )
+              : t(
+                  "image"
+                )}
           </label>
 
           <input
@@ -1358,7 +1885,8 @@ function ChatWindow({
               "speechToText"
             )}
           >
-            🎙 {t(
+            🎙{" "}
+            {t(
               "speechToText"
             )}
           </button>
@@ -1413,8 +1941,12 @@ function ChatWindow({
             )}
           >
             {isSending
-              ? t("sending")
-              : t("send")}
+              ? t(
+                  "sending"
+                )
+              : t(
+                  "send"
+                )}
           </button>
 
         </div>
@@ -1428,4 +1960,3 @@ function ChatWindow({
 
 
 export default ChatWindow;
-        
