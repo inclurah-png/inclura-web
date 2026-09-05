@@ -40,14 +40,16 @@ function ChatWindow({
   const { t, i18n } =
     useTranslation();
 
+
+  // ============================================================
+  // MESSAGE STATE
+  // ============================================================
+
   const [text, setText] =
     useState("");
 
   const [recording, setRecording] =
     useState(false);
-
-  const [mediaRecorder, setMediaRecorder] =
-    useState(null);
 
   const [isSending, setIsSending] =
     useState(false);
@@ -55,10 +57,19 @@ function ChatWindow({
   const [isUploadingImage, setIsUploadingImage] =
     useState(false);
 
+  const [isUploadingAttachment, setIsUploadingAttachment] =
+    useState(false);
+
   const [speaking, setSpeaking] =
     useState(false);
 
   const [speechSupported, setSpeechSupported] =
+    useState(false);
+
+  const [showEmojiPicker, setShowEmojiPicker] =
+    useState(false);
+
+  const [showAttachmentMenu, setShowAttachmentMenu] =
     useState(false);
 
   const [translatingMessages, setTranslatingMessages] =
@@ -70,13 +81,33 @@ function ChatWindow({
   const [translatedMessages, setTranslatedMessages] =
     useState({});
 
+
+  // ============================================================
+  // REFS
+  // ============================================================
+
   const recognitionRef =
+    useRef(null);
+
+  const mediaRecorderRef =
+    useRef(null);
+
+  const mediaStreamRef =
     useRef(null);
 
   const messagesEndRef =
     useRef(null);
 
   const typingTimeoutRef =
+    useRef(null);
+
+  const imageInputRef =
+    useRef(null);
+
+  const videoInputRef =
+    useRef(null);
+
+  const documentInputRef =
     useRef(null);
 
 
@@ -90,6 +121,137 @@ function ChatWindow({
     )
       .trim()
       .toLowerCase();
+
+
+  // ============================================================
+  // EMOJI LIST
+  // ============================================================
+
+  const emojis = [
+    "😀",
+    "😃",
+    "😄",
+    "😁",
+    "😆",
+    "😅",
+    "😂",
+    "🤣",
+    "😊",
+    "😇",
+    "🙂",
+    "🙃",
+    "😉",
+    "😌",
+    "😍",
+    "🥰",
+    "😘",
+    "😗",
+    "😙",
+    "😚",
+    "😋",
+    "😛",
+    "😝",
+    "😜",
+    "🤪",
+    "🤨",
+    "🧐",
+    "🤓",
+    "😎",
+    "🤩",
+    "🥳",
+    "😏",
+    "😒",
+    "😞",
+    "😔",
+    "😟",
+    "😕",
+    "🙁",
+    "☹️",
+    "😣",
+    "😖",
+    "😫",
+    "😩",
+    "🥺",
+    "😢",
+    "😭",
+    "😤",
+    "😠",
+    "😡",
+    "🤬",
+    "🤯",
+    "😳",
+    "🥵",
+    "🥶",
+    "😱",
+    "😨",
+    "😰",
+    "😥",
+    "😓",
+    "🤗",
+    "🤔",
+    "🫡",
+    "🤭",
+    "🤫",
+    "🤥",
+    "😶",
+    "😐",
+    "😑",
+    "😬",
+    "🙄",
+    "😯",
+    "😦",
+    "😧",
+    "😮",
+    "😲",
+    "🥱",
+    "😴",
+    "🤤",
+    "😪",
+    "😵",
+    "🤐",
+    "🥴",
+    "🤢",
+    "🤮",
+    "🤧",
+    "😷",
+    "🤒",
+    "🤕",
+    "👍",
+    "👎",
+    "👌",
+    "✌️",
+    "🤞",
+    "🤟",
+    "🤘",
+    "🤙",
+    "👏",
+    "🙌",
+    "👐",
+    "🤝",
+    "🙏",
+    "❤️",
+    "🧡",
+    "💛",
+    "💚",
+    "💙",
+    "💜",
+    "🖤",
+    "🤍",
+    "🤎",
+    "💔",
+    "💕",
+    "💯",
+    "🔥",
+    "✨",
+    "🎉",
+    "🎊",
+    "⭐",
+    "🌟",
+    "💫",
+    "✅",
+    "❌",
+    "⚠️",
+  ];
 
 
   // ============================================================
@@ -191,7 +353,7 @@ function ChatWindow({
 
 
   // ============================================================
-  // CLEAN UP SPEECH, TYPING AND MEDIA
+  // CLEAN UP SPEECH, TYPING, RECORDING
   // ============================================================
 
   useEffect(() => {
@@ -215,7 +377,11 @@ function ChatWindow({
 
         }
 
+        recognitionRef.current =
+          null;
+
       }
+
 
       if (
         typingTimeoutRef.current
@@ -225,17 +391,21 @@ function ChatWindow({
           typingTimeoutRef.current
         );
 
+        typingTimeoutRef.current =
+          null;
+
       }
 
+
       if (
-        mediaRecorder &&
-        mediaRecorder.state !==
+        mediaRecorderRef.current &&
+        mediaRecorderRef.current.state !==
           "inactive"
       ) {
 
         try {
 
-          mediaRecorder.stop();
+          mediaRecorderRef.current.stop();
 
         } catch (error) {
 
@@ -248,6 +418,24 @@ function ChatWindow({
 
       }
 
+
+      if (
+        mediaStreamRef.current
+      ) {
+
+        mediaStreamRef.current
+          .getTracks()
+          .forEach(
+            (track) =>
+              track.stop()
+          );
+
+        mediaStreamRef.current =
+          null;
+
+      }
+
+
       if (
         typeof window !== "undefined" &&
         window.speechSynthesis
@@ -259,7 +447,7 @@ function ChatWindow({
 
     };
 
-  }, [mediaRecorder]);
+  }, []);
 
 
   // ============================================================
@@ -420,6 +608,9 @@ function ChatWindow({
           typingTimeoutRef.current
         );
 
+        typingTimeoutRef.current =
+          null;
+
       }
 
       setText("");
@@ -488,11 +679,7 @@ function ChatWindow({
         messageId
       ];
 
-    /*
-     * If the current language already has
-     * a saved translation, toggle between
-     * the translation and the original.
-     */
+
     if (
       typeof existingTranslation ===
         "string" &&
@@ -511,9 +698,7 @@ function ChatWindow({
 
     }
 
-    /*
-     * Mark only this message as translating.
-     */
+
     setTranslatingMessages(
       (previous) => ({
         ...previous,
@@ -523,10 +708,6 @@ function ChatWindow({
 
     try {
 
-      /*
-       * Use the same secure translation engine
-       * already proven on Feed and PostPage.
-       */
       const result =
         await translateText({
           sourceId: messageId,
@@ -560,13 +741,7 @@ function ChatWindow({
 
       }
 
-      /*
-       * Save the translation to the central
-       * Firestore translation cache.
-       *
-       * A cache-save failure does not prevent
-       * the translation from being displayed.
-       */
+
       try {
 
         await saveTranslation({
@@ -601,10 +776,7 @@ function ChatWindow({
 
       }
 
-      /*
-       * Keep all language translations together
-       * on the individual message.
-       */
+
       const updatedTranslations = {
         ...(messageTranslations[
           messageId
@@ -613,10 +785,7 @@ function ChatWindow({
           translatedText,
       };
 
-      /*
-       * Persist the translation directly
-       * on the Firestore message.
-       */
+
       try {
 
         await updateDoc(
@@ -644,9 +813,7 @@ function ChatWindow({
 
       }
 
-      /*
-       * Update local translation cache.
-       */
+
       setMessageTranslations(
         (previous) => ({
           ...previous,
@@ -655,9 +822,7 @@ function ChatWindow({
         })
       );
 
-      /*
-       * Immediately display the translation.
-       */
+
       setTranslatedMessages(
         (previous) => ({
           ...previous,
@@ -703,6 +868,71 @@ function ChatWindow({
 
 
   // ============================================================
+  // INSERT EMOJI
+  // ============================================================
+
+  function insertEmoji(
+    emoji
+  ) {
+
+    setText(
+      (currentText) =>
+        `${currentText}${emoji}`
+    );
+
+    setShowEmojiPicker(
+      false
+    );
+
+  }
+
+
+  // ============================================================
+  // OPEN IMAGE PICKER
+  // ============================================================
+
+  function openImagePicker() {
+
+    setShowAttachmentMenu(
+      false
+    );
+
+    imageInputRef.current?.click();
+
+  }
+
+
+  // ============================================================
+  // OPEN VIDEO PICKER
+  // ============================================================
+
+  function openVideoPicker() {
+
+    setShowAttachmentMenu(
+      false
+    );
+
+    videoInputRef.current?.click();
+
+  }
+
+
+  // ============================================================
+  // OPEN DOCUMENT PICKER
+  // ============================================================
+
+  function openDocumentPicker() {
+
+    setShowAttachmentMenu(
+      false
+    );
+
+    documentInputRef.current?.click();
+
+  }
+
+
+  // ============================================================
   // IMAGE UPLOAD
   // ============================================================
 
@@ -728,6 +958,7 @@ function ChatWindow({
 
     }
 
+
     setIsUploadingImage(
       true
     );
@@ -740,15 +971,18 @@ function ChatWindow({
           `chatImages/${auth.currentUser.uid}/${Date.now()}-${file.name}`
         );
 
+
       await uploadBytes(
         storageRef,
         file
       );
 
+
       const imageUrl =
         await getDownloadURL(
           storageRef
         );
+
 
       await addDoc(
         collection(
@@ -766,6 +1000,12 @@ function ChatWindow({
           fileName:
             file.name,
 
+          fileType:
+            file.type,
+
+          fileSize:
+            file.size,
+
           createdAt:
             serverTimestamp(),
 
@@ -780,6 +1020,7 @@ function ChatWindow({
             "image",
         }
       );
+
 
       event.target.value = "";
 
@@ -807,10 +1048,12 @@ function ChatWindow({
 
 
   // ============================================================
-  // START VOICE RECORDING
+  // VIDEO UPLOAD
   // ============================================================
 
-  async function startRecording() {
+  async function handleVideoUpload(
+    event
+  ) {
 
     if (
       !selectedChat ||
@@ -820,6 +1063,257 @@ function ChatWindow({
       return;
 
     }
+
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+
+      return;
+
+    }
+
+
+    setIsUploadingAttachment(
+      true
+    );
+
+    try {
+
+      const storageRef =
+        ref(
+          storage,
+          `chatVideos/${auth.currentUser.uid}/${Date.now()}-${file.name}`
+        );
+
+
+      await uploadBytes(
+        storageRef,
+        file
+      );
+
+
+      const videoUrl =
+        await getDownloadURL(
+          storageRef
+        );
+
+
+      await addDoc(
+        collection(
+          db,
+          "chats",
+          selectedChat.id,
+          "messages"
+        ),
+        {
+          senderId:
+            auth.currentUser.uid,
+
+          videoUrl,
+
+          fileName:
+            file.name,
+
+          fileType:
+            file.type,
+
+          fileSize:
+            file.size,
+
+          createdAt:
+            serverTimestamp(),
+
+          status:
+            "sent",
+
+          readBy: [
+            auth.currentUser.uid,
+          ],
+
+          messageType:
+            "video",
+        }
+      );
+
+
+      event.target.value = "";
+
+    } catch (error) {
+
+      console.error(
+        "Video upload error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          t("videoUploadError")
+      );
+
+    } finally {
+
+      setIsUploadingAttachment(
+        false
+      );
+
+    }
+
+  }
+
+
+  // ============================================================
+  // DOCUMENT / FILE UPLOAD
+  // ============================================================
+
+  async function handleDocumentUpload(
+    event
+  ) {
+
+    if (
+      !selectedChat ||
+      !auth.currentUser
+    ) {
+
+      return;
+
+    }
+
+    const file =
+      event.target.files?.[0];
+
+    if (!file) {
+
+      return;
+
+    }
+
+
+    const maximumFileSize =
+      50 * 1024 * 1024;
+
+
+    if (
+      file.size >
+      maximumFileSize
+    ) {
+
+      alert(
+        "This file is larger than the 50 MB messaging limit."
+      );
+
+      event.target.value = "";
+
+      return;
+
+    }
+
+
+    setIsUploadingAttachment(
+      true
+    );
+
+    try {
+
+      const storageRef =
+        ref(
+          storage,
+          `chatFiles/${auth.currentUser.uid}/${Date.now()}-${file.name}`
+        );
+
+
+      await uploadBytes(
+        storageRef,
+        file
+      );
+
+
+      const fileUrl =
+        await getDownloadURL(
+          storageRef
+        );
+
+
+      await addDoc(
+        collection(
+          db,
+          "chats",
+          selectedChat.id,
+          "messages"
+        ),
+        {
+          senderId:
+            auth.currentUser.uid,
+
+          fileUrl,
+
+          fileName:
+            file.name,
+
+          fileType:
+            file.type ||
+            "application/octet-stream",
+
+          fileSize:
+            file.size,
+
+          createdAt:
+            serverTimestamp(),
+
+          status:
+            "sent",
+
+          readBy: [
+            auth.currentUser.uid,
+          ],
+
+          messageType:
+            "file",
+        }
+      );
+
+
+      event.target.value = "";
+
+    } catch (error) {
+
+      console.error(
+        "Document upload error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          t("fileUploadError")
+      );
+
+    } finally {
+
+      setIsUploadingAttachment(
+        false
+      );
+
+    }
+
+  }
+
+
+  // ============================================================
+  // START VOICE RECORDING
+  // ============================================================
+
+  async function startRecording() {
+
+    if (
+      !selectedChat ||
+      !auth.currentUser ||
+      recording
+    ) {
+
+      return;
+
+    }
+
 
     if (
       !navigator.mediaDevices ||
@@ -836,6 +1330,23 @@ function ChatWindow({
 
     }
 
+
+    if (
+      typeof MediaRecorder ===
+        "undefined"
+    ) {
+
+      alert(
+        t(
+          "audioRecordingUnsupported"
+        )
+      );
+
+      return;
+
+    }
+
+
     try {
 
       const stream =
@@ -845,12 +1356,19 @@ function ChatWindow({
           }
         );
 
+
+      mediaStreamRef.current =
+        stream;
+
+
       const recorder =
         new MediaRecorder(
           stream
         );
 
+
       const chunks = [];
+
 
       recorder.ondataavailable =
         (event) => {
@@ -867,6 +1385,7 @@ function ChatWindow({
 
         };
 
+
       recorder.onstop =
         async () => {
 
@@ -876,9 +1395,12 @@ function ChatWindow({
               new Blob(
                 chunks,
                 {
-                  type: "audio/webm",
+                  type:
+                    recorder.mimeType ||
+                    "audio/webm",
                 }
               );
+
 
             const storageRef =
               ref(
@@ -886,15 +1408,18 @@ function ChatWindow({
                 `voiceNotes/${auth.currentUser.uid}/${Date.now()}.webm`
               );
 
+
             await uploadBytes(
               storageRef,
               audioBlob
             );
 
+
             const audioUrl =
               await getDownloadURL(
                 storageRef
               );
+
 
             await addDoc(
               collection(
@@ -908,6 +1433,15 @@ function ChatWindow({
                   auth.currentUser.uid,
 
                 audioUrl,
+
+                fileName:
+                  "Voice message",
+
+                fileType:
+                  audioBlob.type,
+
+                fileSize:
+                  audioBlob.size,
 
                 createdAt:
                   serverTimestamp(),
@@ -940,22 +1474,43 @@ function ChatWindow({
 
           } finally {
 
-            stream
-              .getTracks()
-              .forEach(
-                (track) =>
-                  track.stop()
-              );
+            if (
+              mediaStreamRef.current
+            ) {
+
+              mediaStreamRef.current
+                .getTracks()
+                .forEach(
+                  (track) =>
+                    track.stop()
+                );
+
+              mediaStreamRef.current =
+                null;
+
+            }
 
           }
 
         };
 
-      recorder.start();
 
-      setMediaRecorder(
-        recorder
-      );
+      recorder.onerror =
+        (error) => {
+
+          console.error(
+            "Media recorder error:",
+            error
+          );
+
+        };
+
+
+      mediaRecorderRef.current =
+        recorder;
+
+
+      recorder.start();
 
       setRecording(
         true
@@ -967,6 +1522,22 @@ function ChatWindow({
         "Recording error:",
         error
       );
+
+      if (
+        mediaStreamRef.current
+      ) {
+
+        mediaStreamRef.current
+          .getTracks()
+          .forEach(
+            (track) =>
+              track.stop()
+          );
+
+        mediaStreamRef.current =
+          null;
+
+      }
 
       alert(
         error?.message ||
@@ -986,19 +1557,23 @@ function ChatWindow({
 
   function stopRecording() {
 
+    const recorder =
+      mediaRecorderRef.current;
+
+
     if (
-      mediaRecorder &&
-      mediaRecorder.state !==
+      recorder &&
+      recorder.state !==
         "inactive"
     ) {
 
-      mediaRecorder.stop();
+      recorder.stop();
 
     }
 
-    setMediaRecorder(
-      null
-    );
+
+    mediaRecorderRef.current =
+      null;
 
     setRecording(
       false
@@ -1037,6 +1612,7 @@ function ChatWindow({
 
     };
 
+
     return (
       languageMap[
         activeLanguage
@@ -1067,6 +1643,7 @@ function ChatWindow({
 
     }
 
+
     if (
       typeof window ===
         "undefined"
@@ -1076,15 +1653,18 @@ function ChatWindow({
 
     }
 
+
     const SpeechRecognition =
       window.SpeechRecognition ||
       window.webkitSpeechRecognition;
+
 
     if (!SpeechRecognition) {
 
       return;
 
     }
+
 
     if (
       recognitionRef.current
@@ -1105,17 +1685,22 @@ function ChatWindow({
 
     }
 
+
     const recognition =
       new SpeechRecognition();
+
 
     recognition.lang =
       getSpeechRecognitionLanguage();
 
+
     recognition.interimResults =
       false;
 
+
     recognition.continuous =
       false;
+
 
     recognition.onresult =
       (event) => {
@@ -1125,6 +1710,7 @@ function ChatWindow({
             .results?.[0]?.[0]
             ?.transcript || "";
 
+
         setText(
           (currentText) =>
             currentText
@@ -1133,6 +1719,7 @@ function ChatWindow({
         );
 
       };
+
 
     recognition.onerror =
       (error) => {
@@ -1144,6 +1731,7 @@ function ChatWindow({
 
       };
 
+
     recognition.onend =
       () => {
 
@@ -1152,8 +1740,10 @@ function ChatWindow({
 
       };
 
+
     recognitionRef.current =
       recognition;
+
 
     try {
 
@@ -1191,15 +1781,19 @@ function ChatWindow({
 
     }
 
+
     window.speechSynthesis.cancel();
+
 
     const utterance =
       new SpeechSynthesisUtterance(
         value
       );
 
+
     utterance.lang =
       getSpeechRecognitionLanguage();
+
 
     utterance.onstart =
       () => {
@@ -1208,6 +1802,7 @@ function ChatWindow({
 
       };
 
+
     utterance.onend =
       () => {
 
@@ -1215,12 +1810,14 @@ function ChatWindow({
 
       };
 
+
     utterance.onerror =
       () => {
 
         setSpeaking(false);
 
       };
+
 
     window.speechSynthesis.speak(
       utterance
@@ -1273,6 +1870,59 @@ function ChatWindow({
 
 
   // ============================================================
+  // FORMAT FILE SIZE
+  // ============================================================
+
+  function formatFileSize(
+    bytes
+  ) {
+
+    if (
+      !bytes ||
+      bytes <= 0
+    ) {
+
+      return "";
+
+    }
+
+
+    const units = [
+      "B",
+      "KB",
+      "MB",
+      "GB",
+    ];
+
+
+    const index =
+      Math.min(
+        Math.floor(
+          Math.log(bytes) /
+            Math.log(1024)
+        ),
+        units.length - 1
+      );
+
+
+    const value =
+      bytes /
+      Math.pow(
+        1024,
+        index
+      );
+
+
+    return `${value.toFixed(
+      index === 0
+        ? 0
+        : 1
+    )} ${units[index]}`;
+
+  }
+
+
+  // ============================================================
   // NO CHAT SELECTED
   // ============================================================
 
@@ -1315,6 +1965,8 @@ function ChatWindow({
         flexDirection:
           "column",
         minWidth: 0,
+        minHeight: 0,
+        position: "relative",
       }}
     >
 
@@ -1330,11 +1982,19 @@ function ChatWindow({
           padding: "16px",
           borderBottom:
             "1px solid #1e293b",
+          flexShrink: 0,
         }}
       >
 
         <strong>
           {selectedChat.name ||
+            selectedChat.participantNames?.[
+              selectedChat.participants?.find(
+                (userId) =>
+                  userId !==
+                  currentUserId
+              )
+            ] ||
             t("conversation")}
         </strong>
 
@@ -1371,6 +2031,7 @@ function ChatWindow({
           flex: 1,
           padding: "20px",
           overflowY: "auto",
+          minHeight: 0,
         }}
       >
 
@@ -1433,6 +2094,7 @@ function ChatWindow({
                   ? savedTranslation
                   : msg.text;
 
+
               return (
                 <article
                   key={msg.id}
@@ -1467,7 +2129,11 @@ function ChatWindow({
                       borderRadius:
                         "16px",
                       maxWidth:
-                        "70%",
+                        "80%",
+                      minWidth:
+                        "80px",
+                      overflow:
+                        "hidden",
                     }}
                   >
 
@@ -1475,10 +2141,15 @@ function ChatWindow({
 
                     {msg.text && (
 
-                      <div>
-
+                      <div
+                        style={{
+                          whiteSpace:
+                            "pre-wrap",
+                          wordBreak:
+                            "break-word",
+                        }}
+                      >
                         {displayedText}
-
                       </div>
 
                     )}
@@ -1499,6 +2170,8 @@ function ChatWindow({
                           )
                         }
                         style={{
+                          display:
+                            "block",
                           width:
                             "220px",
                           maxWidth:
@@ -1509,6 +2182,145 @@ function ChatWindow({
                             "8px",
                         }}
                       />
+
+                    )}
+
+
+                    {/* VIDEO MESSAGE */}
+
+                    {msg.videoUrl && (
+
+                      <video
+                        controls
+                        preload="metadata"
+                        style={{
+                          display:
+                            "block",
+                          width:
+                            "360px",
+                          maxWidth:
+                            "100%",
+                          borderRadius:
+                            "12px",
+                          marginTop:
+                            "8px",
+                        }}
+                      >
+
+                        <source
+                          src={
+                            msg.videoUrl
+                          }
+                          type={
+                            msg.fileType ||
+                            "video/mp4"
+                          }
+                        />
+
+                        Your browser does not
+                        support video playback.
+
+                      </video>
+
+                    )}
+
+
+                    {/* DOCUMENT / FILE MESSAGE */}
+
+                    {msg.fileUrl && (
+
+                      <a
+                        href={
+                          msg.fileUrl
+                        }
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={
+                          msg.fileName
+                            ? `Open ${msg.fileName}`
+                            : t(
+                                "sharedFile"
+                              )
+                        }
+                        style={{
+                          display:
+                            "flex",
+                          alignItems:
+                            "center",
+                          gap:
+                            "12px",
+                          marginTop:
+                            "8px",
+                          padding:
+                            "12px",
+                          borderRadius:
+                            "12px",
+                          background:
+                            "rgba(15, 23, 42, 0.45)",
+                          color:
+                            "white",
+                          textDecoration:
+                            "none",
+                          wordBreak:
+                            "break-word",
+                        }}
+                      >
+
+                        <span
+                          aria-hidden="true"
+                          style={{
+                            fontSize:
+                              "28px",
+                            flexShrink:
+                              0,
+                          }}
+                        >
+                          📄
+                        </span>
+
+                        <span
+                          style={{
+                            minWidth:
+                              0,
+                          }}
+                        >
+
+                          <strong
+                            style={{
+                              display:
+                                "block",
+                            }}
+                          >
+                            {
+                              msg.fileName ||
+                              t(
+                                "sharedFile"
+                              )
+                            }
+                          </strong>
+
+                          {msg.fileSize && (
+                            <small
+                              style={{
+                                display:
+                                  "block",
+                                marginTop:
+                                  "3px",
+                                opacity:
+                                  0.7,
+                              }}
+                            >
+                              {
+                                formatFileSize(
+                                  msg.fileSize
+                                )
+                              }
+                            </small>
+                          )}
+
+                        </span>
+
+                      </a>
 
                     )}
 
@@ -1535,7 +2347,10 @@ function ChatWindow({
                           src={
                             msg.audioUrl
                           }
-                          type="audio/webm"
+                          type={
+                            msg.fileType ||
+                            "audio/webm"
+                          }
                         />
 
                       </audio>
@@ -1543,9 +2358,7 @@ function ChatWindow({
                     )}
 
 
-                    {/* =================================================
-                        MESSAGE TRANSLATION
-                        ================================================= */}
+                    {/* MESSAGE TRANSLATION */}
 
                     {msg.text && (
 
@@ -1559,6 +2372,8 @@ function ChatWindow({
                             "8px",
                           flexWrap:
                             "wrap",
+                          alignItems:
+                            "center",
                         }}
                       >
 
@@ -1712,6 +2527,243 @@ function ChatWindow({
 
 
       {/* ========================================================
+          EMOJI PICKER
+          ======================================================== */}
+
+      {showEmojiPicker && (
+
+        <div
+          role="dialog"
+          aria-label="Emoji picker"
+          style={{
+            position:
+              "absolute",
+            left:
+              "16px",
+            bottom:
+              "145px",
+            width:
+              "min(340px, calc(100% - 32px))",
+            maxHeight:
+              "280px",
+            overflowY:
+              "auto",
+            background:
+              "#0f172a",
+            border:
+              "1px solid #334155",
+            borderRadius:
+              "16px",
+            padding:
+              "12px",
+            boxSizing:
+              "border-box",
+            zIndex:
+              50,
+            boxShadow:
+              "0 20px 50px rgba(0,0,0,0.45)",
+          }}
+        >
+
+          <div
+            style={{
+              display:
+                "grid",
+              gridTemplateColumns:
+                "repeat(8, 1fr)",
+              gap:
+                "4px",
+            }}
+          >
+
+            {emojis.map(
+              (emoji) => (
+
+                <button
+                  key={
+                    emoji
+                  }
+                  type="button"
+                  onClick={() =>
+                    insertEmoji(
+                      emoji
+                    )
+                  }
+                  aria-label={
+                    `Insert ${emoji}`
+                  }
+                  style={{
+                    border:
+                      "none",
+                    background:
+                      "transparent",
+                    borderRadius:
+                      "8px",
+                    padding:
+                      "7px 2px",
+                    cursor:
+                      "pointer",
+                    fontSize:
+                      "21px",
+                  }}
+                >
+                  {emoji}
+                </button>
+
+              )
+            )}
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* ========================================================
+          ATTACHMENT MENU
+          ======================================================== */}
+
+      {showAttachmentMenu && (
+
+        <div
+          role="menu"
+          aria-label="Attachment options"
+          style={{
+            position:
+              "absolute",
+            left:
+              "16px",
+            bottom:
+              "82px",
+            width:
+              "230px",
+            background:
+              "#0f172a",
+            border:
+              "1px solid #334155",
+            borderRadius:
+              "16px",
+            padding:
+              "8px",
+            zIndex:
+              60,
+            boxShadow:
+              "0 20px 50px rgba(0,0,0,0.45)",
+          }}
+        >
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={
+              openImagePicker
+            }
+            disabled={
+              isUploadingImage ||
+              isUploadingAttachment
+            }
+            style={{
+              width:
+                "100%",
+              border:
+                "none",
+              background:
+                "transparent",
+              color:
+                "white",
+              padding:
+                "12px",
+              borderRadius:
+                "10px",
+              textAlign:
+                "left",
+              cursor:
+                "pointer",
+              fontSize:
+                "14px",
+            }}
+          >
+            🖼️{" "}
+            {t(
+              "image"
+            )}
+          </button>
+
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={
+              openVideoPicker
+            }
+            disabled={
+              isUploadingAttachment
+            }
+            style={{
+              width:
+                "100%",
+              border:
+                "none",
+              background:
+                "transparent",
+              color:
+                "white",
+              padding:
+                "12px",
+              borderRadius:
+                "10px",
+              textAlign:
+                "left",
+              cursor:
+                "pointer",
+              fontSize:
+                "14px",
+            }}
+          >
+            🎥 Video
+          </button>
+
+
+          <button
+            type="button"
+            role="menuitem"
+            onClick={
+              openDocumentPicker
+            }
+            disabled={
+              isUploadingAttachment
+            }
+            style={{
+              width:
+                "100%",
+              border:
+                "none",
+              background:
+                "transparent",
+              color:
+                "white",
+              padding:
+                "12px",
+              borderRadius:
+                "10px",
+              textAlign:
+                "left",
+              cursor:
+                "pointer",
+              fontSize:
+                "14px",
+            }}
+          >
+            📄 Document / File
+          </button>
+
+        </div>
+
+      )}
+
+
+      {/* ========================================================
           MESSAGE COMPOSER
           ======================================================== */}
 
@@ -1720,14 +2772,21 @@ function ChatWindow({
           "messageComposer"
         )}
         style={{
-          padding: "16px",
+          padding:
+            "16px",
           borderTop:
             "1px solid #1e293b",
+          flexShrink:
+            0,
+          position:
+            "relative",
         }}
       >
 
         <textarea
-          value={text}
+          value={
+            text
+          }
           onChange={
             handleInputChange
           }
@@ -1746,17 +2805,22 @@ function ChatWindow({
             "typeMessage"
           )}
           rows={3}
-          disabled={isSending}
+          disabled={
+            isSending
+          }
           style={{
-            width: "100%",
-            padding: "12px",
+            width:
+              "100%",
+            padding:
+              "12px",
             borderRadius:
               "12px",
             border:
               "1px solid #374151",
             background:
               "#111827",
-            color: "#fff",
+            color:
+              "#fff",
             boxSizing:
               "border-box",
             resize:
@@ -1765,6 +2829,109 @@ function ChatWindow({
               "10px",
           }}
         />
+
+
+        {/* ======================================================
+            HIDDEN FILE INPUTS
+            ====================================================== */}
+
+        <input
+          ref={
+            imageInputRef
+          }
+          id="chat-image-upload"
+          type="file"
+          accept="image/*"
+          onChange={
+            handleImageUpload
+          }
+          disabled={
+            isUploadingImage ||
+            isUploadingAttachment
+          }
+          aria-label={t(
+            "shareImage"
+          )}
+          style={{
+            display:
+              "none",
+          }}
+        />
+
+
+        <input
+          ref={
+            videoInputRef
+          }
+          id="chat-video-upload"
+          type="file"
+          accept="video/*"
+          onChange={
+            handleVideoUpload
+          }
+          disabled={
+            isUploadingAttachment
+          }
+          aria-label="Share video"
+          style={{
+            display:
+              "none",
+          }}
+        />
+
+
+        <input
+          ref={
+            documentInputRef
+          }
+          id="chat-document-upload"
+          type="file"
+          accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar,application/pdf,text/plain,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+          onChange={
+            handleDocumentUpload
+          }
+          disabled={
+            isUploadingAttachment
+          }
+          aria-label="Share document or file"
+          style={{
+            display:
+              "none",
+          }}
+        />
+
+
+        {/* ======================================================
+            UPLOAD STATUS
+            ====================================================== */}
+
+        {(isUploadingImage ||
+          isUploadingAttachment) && (
+
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              marginBottom:
+                "10px",
+              padding:
+                "9px 12px",
+              borderRadius:
+                "10px",
+              background:
+                "#172554",
+              color:
+                "#bfdbfe",
+              fontSize:
+                "13px",
+            }}
+          >
+            {isUploadingImage
+              ? "Uploading image..."
+              : "Uploading attachment..."}
+          </div>
+
+        )}
 
 
         {/* ======================================================
@@ -1777,62 +2944,111 @@ function ChatWindow({
             "messageTools"
           )}
           style={{
-            display: "flex",
-            gap: "10px",
+            display:
+              "flex",
+            gap:
+              "8px",
             flexWrap:
               "wrap",
+            alignItems:
+              "center",
           }}
         >
 
-          {/* IMAGE UPLOAD */}
+          {/* EMOJI */}
 
-          <label
-            htmlFor="chat-image-upload"
+          <button
+            type="button"
+            onClick={() => {
+
+              setShowEmojiPicker(
+                (previous) =>
+                  !previous
+              );
+
+              setShowAttachmentMenu(
+                false
+              );
+
+            }}
+            aria-expanded={
+              showEmojiPicker
+            }
+            aria-label="Open emoji picker"
+            title="Emoji"
+            disabled={
+              isSending
+            }
             style={{
+              border:
+                "1px solid #334155",
+              background:
+                showEmojiPicker
+                  ? "#1e3a5f"
+                  : "#111827",
+              color:
+                "white",
+              borderRadius:
+                "10px",
+              padding:
+                "9px 11px",
               cursor:
-                isUploadingImage
-                  ? "wait"
-                  : "pointer",
-              opacity:
-                isUploadingImage
-                  ? 0.6
-                  : 1,
+                "pointer",
+              fontSize:
+                "18px",
             }}
           >
-            🖼️{" "}
-            {isUploadingImage
-              ? t(
-                  "uploading"
-                )
-              : t(
-                  "image"
-                )}
-          </label>
+            😊
+          </button>
 
-          <input
-            id="chat-image-upload"
-            type="file"
-            accept="image/*"
-            onChange={
-              handleImageUpload
-            }
-            disabled={
-              isUploadingImage
-            }
-            aria-label={t(
-              "shareImage"
-            )}
-            style={{
-              position:
-                "absolute",
-              width: "1px",
-              height: "1px",
-              overflow:
-                "hidden",
-              clip:
-                "rect(0, 0, 0, 0)",
+
+          {/* ATTACHMENT SOURCE */}
+
+          <button
+            type="button"
+            onClick={() => {
+
+              setShowAttachmentMenu(
+                (previous) =>
+                  !previous
+              );
+
+              setShowEmojiPicker(
+                false
+              );
+
             }}
-          />
+            aria-expanded={
+              showAttachmentMenu
+            }
+            aria-haspopup="menu"
+            aria-label="Open attachment options"
+            title="Attach file"
+            disabled={
+              isUploadingImage ||
+              isUploadingAttachment
+            }
+            style={{
+              border:
+                "1px solid #334155",
+              background:
+                showAttachmentMenu
+                  ? "#1e3a5f"
+                  : "#111827",
+              color:
+                "white",
+              borderRadius:
+                "10px",
+              padding:
+                "9px 11px",
+              cursor:
+                "pointer",
+              fontSize:
+                "18px",
+            }}
+          >
+            📎
+          </button>
 
 
           {/* VOICE RECORDING */}
@@ -1857,8 +3073,26 @@ function ChatWindow({
                   )
             }
             disabled={
-              isSending
+              isSending ||
+              isUploadingAttachment ||
+              isUploadingImage
             }
+            style={{
+              border:
+                "1px solid #334155",
+              background:
+                recording
+                  ? "#7f1d1d"
+                  : "#111827",
+              color:
+                "white",
+              borderRadius:
+                "10px",
+              padding:
+                "9px 11px",
+              cursor:
+                "pointer",
+            }}
           >
             {recording
               ? `⏹ ${t(
@@ -1884,11 +3118,27 @@ function ChatWindow({
             aria-label={t(
               "speechToText"
             )}
-          >
-            🎙{" "}
-            {t(
+            title={t(
               "speechToText"
             )}
+            style={{
+              border:
+                "1px solid #334155",
+              background:
+                "#111827",
+              color:
+                "white",
+              borderRadius:
+                "10px",
+              padding:
+                "9px 11px",
+              cursor:
+                speechSupported
+                  ? "pointer"
+                  : "not-allowed",
+            }}
+          >
+            🎙
           </button>
 
 
@@ -1914,14 +3164,33 @@ function ChatWindow({
                     "readAloud"
                   )
             }
+            title={
+              speaking
+                ? t(
+                    "stopReadingAloud"
+                  )
+                : t(
+                    "readAloud"
+                  )
+            }
+            style={{
+              border:
+                "1px solid #334155",
+              background:
+                "#111827",
+              color:
+                "white",
+              borderRadius:
+                "10px",
+              padding:
+                "9px 11px",
+              cursor:
+                "pointer",
+            }}
           >
             {speaking
-              ? `⏹ ${t(
-                  "stop"
-                )}`
-              : `📝 ${t(
-                  "readAloud"
-                )}`}
+              ? "⏹"
+              : "🔊"}
           </button>
 
 
@@ -1939,6 +3208,27 @@ function ChatWindow({
             aria-label={t(
               "send"
             )}
+            style={{
+              border:
+                "none",
+              background:
+                "#38bdf8",
+              color:
+                "#020617",
+              borderRadius:
+                "10px",
+              padding:
+                "10px 16px",
+              cursor:
+                text.trim() &&
+                !isSending
+                  ? "pointer"
+                  : "not-allowed",
+              fontWeight:
+                "800",
+              marginLeft:
+                "auto",
+            }}
           >
             {isSending
               ? t(
