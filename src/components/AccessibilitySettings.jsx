@@ -16,6 +16,8 @@ function AccessibilitySettings() {
 
     voiceEnabled,
     setVoiceEnabled,
+
+    accessibilityNeeds,
   } = useAccessibility();
 
   const row = {
@@ -36,6 +38,82 @@ function AccessibilitySettings() {
     background: "#1e293b",
     color: "white",
   };
+
+  const checkboxRow = {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    padding: "10px 0",
+  };
+
+  const normalizedNeeds =
+    Array.isArray(accessibilityNeeds)
+      ? accessibilityNeeds.map((need) =>
+          String(need).toLowerCase()
+        )
+      : [];
+
+  const hasNeed = (...keywords) =>
+    normalizedNeeds.some((need) =>
+      keywords.some((keyword) =>
+        need.includes(keyword)
+      )
+    );
+
+  const profileOptions = [
+    {
+      label: "Blind / Visual Impairment",
+      checked: hasNeed(
+        "blind",
+        "visual",
+        "low vision"
+      ),
+    },
+    {
+      label: "Deaf / Hearing Impairment",
+      checked: hasNeed(
+        "deaf",
+        "hearing",
+        "hard of hearing"
+      ),
+    },
+    {
+      label: "Wheelchair / Mobility Impairment",
+      checked: hasNeed(
+        "wheelchair",
+        "mobility"
+      ),
+    },
+    {
+      label: "Speech Impairment / Non-Verbal",
+      checked: hasNeed(
+        "speech",
+        "non-verbal",
+        "nonverbal"
+      ),
+    },
+    {
+      label: "Dyslexia",
+      checked: hasNeed(
+        "dyslexia"
+      ),
+    },
+    {
+      label: "ADHD",
+      checked: hasNeed(
+        "adhd"
+      ),
+    },
+    {
+      label: "Autism / Neurodivergence",
+      checked: hasNeed(
+        "autism",
+        "neurodivergent",
+        "neurodivers"
+      ),
+    },
+  ];
+
   return (
     <div
       style={{
@@ -58,25 +136,66 @@ function AccessibilitySettings() {
             )
           }
           style={selectStyle}
+          aria-label="Select language"
         >
           <option value="en">
             English
-          </option>
-
-          <option value="fr">
-            Français
           </option>
 
           <option value="es">
             Español
           </option>
 
+          <option value="fr">
+            Français
+          </option>
+
+          <option value="pt">
+            Português
+          </option>
+
           <option value="ar">
             العربية
           </option>
 
+          <option value="zh">
+            简体中文
+          </option>
+
+          <option value="zh-TW">
+            繁體中文
+          </option>
+
+          <option value="ja">
+            日本語
+          </option>
+
+          <option value="de">
+            Deutsch
+          </option>
+
+          <option value="hi">
+            हिन्दी
+          </option>
+
+          <option value="ru">
+            Русский
+          </option>
+
+          <option value="it">
+            Italiano
+          </option>
+
+          <option value="nl">
+            Nederlands
+          </option>
+
+          <option value="sw">
+            Kiswahili
+          </option>
+
           <option value="yo">
-            Yoruba
+            Yorùbá
           </option>
 
           <option value="ig">
@@ -85,6 +204,38 @@ function AccessibilitySettings() {
 
           <option value="ha">
             Hausa
+          </option>
+
+          <option value="pcm">
+            Nigerian Pidgin
+          </option>
+
+          <option value="ko">
+            한국어
+          </option>
+
+          <option value="vi">
+            Tiếng Việt
+          </option>
+
+          <option value="th">
+            ไทย
+          </option>
+
+          <option value="id">
+            Bahasa Indonesia
+          </option>
+
+          <option value="ms">
+            Bahasa Melayu
+          </option>
+
+          <option value="bn">
+            বাংলা
+          </option>
+
+          <option value="tr">
+            Türkçe
           </option>
         </select>
       </div>
@@ -112,6 +263,7 @@ function AccessibilitySettings() {
           style={{
             width: "100%",
           }}
+          aria-label="Font size"
         />
 
         <p>
@@ -134,6 +286,7 @@ function AccessibilitySettings() {
               e.target.checked
             )
           }
+          aria-label="High contrast"
         />
       </div>
 
@@ -152,6 +305,7 @@ function AccessibilitySettings() {
               e.target.checked
             )
           }
+          aria-label="Reduce motion"
         />
       </div>
 
@@ -170,8 +324,10 @@ function AccessibilitySettings() {
               e.target.checked
             )
           }
+          aria-label="Voice guidance"
         />
-        </div>
+      </div>
+
       <hr
         style={{
           border: "1px solid #334155",
@@ -179,9 +335,11 @@ function AccessibilitySettings() {
         }}
       />
 
+      {/* Accessibility Profile */}
+
       <h3
         style={{
-          marginBottom: "16px",
+          marginBottom: "8px",
         }}
       >
         ♿ Accessibility Profile
@@ -192,65 +350,103 @@ function AccessibilitySettings() {
           color: "#94a3b8",
           fontSize: "14px",
           marginBottom: "18px",
+          lineHeight: "1.5",
         }}
       >
-        These options will later synchronize with
-        your Inclura profile to personalize your
-        experience.
+        Your saved accessibility needs
+        are shown below. These settings
+        help Inclura personalize
+        communication, media, navigation,
+        translation, and accessibility
+        features.
       </p>
 
       <div
         style={{
           display: "grid",
-          gap: "12px",
+          gap: "4px",
         }}
       >
-        {[
-          "Blind",
-          "Low Vision",
-          "Deaf",
-          "Hard of Hearing",
-          "Wheelchair",
-          "Dyslexia",
-          "ADHD",
-          "Autism",
-        ].map((item) => (
-          <label
-            key={item}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-            }}
-          >
-            <input
-              type="checkbox"
-              disabled
-            />
+        {profileOptions.map(
+          (item) => (
+            <label
+              key={item.label}
+              style={checkboxRow}
+            >
+              <input
+                type="checkbox"
+                checked={item.checked}
+                disabled
+                readOnly
+                aria-label={
+                  item.label
+                }
+              />
 
-            {item}
-          </label>
-        ))}
+              <span>
+                {item.label}
+              </span>
+            </label>
+          )
+        )}
       </div>
+
+      {/* Profile Source Notice */}
 
       <div
         style={{
-          marginTop: "24px",
+          marginTop: "20px",
           padding: "14px",
           background: "#1e293b",
           borderRadius: "12px",
           fontSize: "14px",
-          color: "#94a3b8",
+          color: "#cbd5e1",
+          lineHeight: "1.5",
         }}
       >
-        🚧 Profile synchronization, AI assistance,
-        captions, OCR, multilingual translation,
-        and voice navigation will be connected in
-        later phases.
+        <strong>
+          Profile needs
+        </strong>
+        <br />
+        Accessibility needs are managed
+        from your Inclura profile. This
+        panel displays the needs currently
+        saved to your account.
+      </div>
+
+      {/* Accessibility Roadmap */}
+
+      <div
+        style={{
+          marginTop: "16px",
+          padding: "14px",
+          background: "#172033",
+          borderRadius: "12px",
+          fontSize: "13px",
+          color: "#94a3b8",
+          lineHeight: "1.5",
+        }}
+      >
+        <strong
+          style={{
+            color: "#e2e8f0",
+          }}
+        >
+          Inclura accessibility
+        </strong>
+        <br />
+        Your accessibility profile will
+        guide features such as screen
+        reader support, read-aloud,
+        speech-to-text, text-to-speech,
+        captions and transcripts,
+        accessible media, sign-language
+        communication, and Braille
+        terminology.
       </div>
     </div>
   );
 }
 
 export default AccessibilitySettings;
-        
+            
