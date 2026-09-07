@@ -11,7 +11,7 @@ import {
 
 import {
   doc,
-  getDoc,
+  onSnapshot,
 } from "firebase/firestore";
 
 import {
@@ -20,96 +20,118 @@ import {
 } from "../firebase";
 
 const AuthContext =
-createContext();
+  createContext();
 
 export function AuthProvider({
-children,
+  children,
 }) {
-const [user, setUser] =
-useState(null);
+  const [user, setUser] =
+    useState(null);
 
-const [userProfile, setUserProfile] =
-useState(null);
+  const [
+    userProfile,
+    setUserProfile,
+  ] = useState(null);
 
-const [loading, setLoading] =
-useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-useEffect(() => {
+  useEffect(() => {
+    let unsubscribeProfile =
+      null;
 
-  const unsubscribe =
-    onAuthStateChanged(
-      auth,
+    const unsubscribeAuth =
+      onAuthStateChanged(
+        auth,
+        (currentUser) => {
+          setUser(
+            currentUser
+          );
 
-      async (currentUser) => {
-
-        setUser(currentUser);
-
-        if (currentUser) {
-
-          try {
-
-            const profileRef =
-              doc(
-                db,
-                "users",
-                currentUser.uid
-              );
-
-            const profileSnap =
-              await getDoc(profileRef);
-
-            if (
-              profileSnap.exists()
-            ) {
-
-              setUserProfile(
-                profileSnap.data()
-              );
-
-            } else {
-
-              setUserProfile(null);
-
-            }
-
-          } catch (error) {
-
-            console.log(error);
-
-            setUserProfile(null);
-
+          if (
+            unsubscribeProfile
+          ) {
+            unsubscribeProfile();
+            unsubscribeProfile =
+              null;
           }
 
-        } else {
+          if (!currentUser) {
+            setUserProfile(null);
+            setLoading(false);
+            return;
+          }
 
-          setUserProfile(null);
+          setLoading(true);
 
+          const profileRef =
+            doc(
+              db,
+              "users",
+              currentUser.uid
+            );
+
+          unsubscribeProfile =
+            onSnapshot(
+              profileRef,
+              (profileSnap) => {
+                if (
+                  profileSnap.exists()
+                ) {
+                  setUserProfile(
+                    profileSnap.data()
+                  );
+                } else {
+                  setUserProfile(
+                    null
+                  );
+                }
+
+                setLoading(false);
+              },
+              (error) => {
+                console.log(
+                  "User profile listener error:",
+                  error
+                );
+
+                setUserProfile(
+                  null
+                );
+
+                setLoading(false);
+              }
+            );
         }
+      );
 
-        setLoading(false);
-
+    return () => {
+      if (
+        unsubscribeProfile
+      ) {
+        unsubscribeProfile();
       }
 
-    );
+      unsubscribeAuth();
+    };
+  }, []);
 
-  return () => unsubscribe();
-
-}, []);
-
-return (
-<AuthContext.Provider
-  value={{
-    user,
-    userProfile,
-    loading,
-  }}
->
-  {!loading && children}
-</AuthContext.Provider>
-);
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        userProfile,
+        loading,
+      }}
+    >
+      {!loading &&
+        children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-return useContext(AuthContext);
+  return useContext(
+    AuthContext
+  );
 }
-
