@@ -181,6 +181,18 @@ export function AccessibilityProvider({
         ? userProfile.accessibilityNeeds
         : [];
 
+    /*
+     * TEMPORARY DIAGNOSTIC
+     *
+     * This tells us exactly what
+     * AccessibilityProvider receives
+     * from AuthContext.
+     */
+    console.log(
+      "Inclura AccessibilityProvider - accessibilityNeeds received:",
+      savedNeeds
+    );
+
     setAccessibilityNeeds(
       savedNeeds
     );
