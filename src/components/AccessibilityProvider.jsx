@@ -81,6 +81,35 @@ function buildAccessibilityProfile(
     profile.nonVerbal = true;
   }
 
+  if (
+    needs.some(
+      (need) =>
+        need.includes("dyslexia")
+    )
+  ) {
+    profile.neurodivergent = true;
+  }
+
+  if (
+    needs.some(
+      (need) =>
+        need.includes("adhd")
+    )
+  ) {
+    profile.neurodivergent = true;
+  }
+
+  if (
+    needs.some(
+      (need) =>
+        need.includes("autism") ||
+        need.includes("neurodivergent") ||
+        need.includes("neurodivers")
+    )
+  ) {
+    profile.neurodivergent = true;
+  }
+
   if (needs.length === 0) {
     profile.noDisability = true;
   } else {
@@ -124,7 +153,19 @@ export function AccessibilityProvider({
   );
 
   useEffect(() => {
-    if (!userProfile) return;
+    /*
+     * When the user is signed out or
+     * the profile is unavailable, reset
+     * accessibility state to defaults.
+     */
+    if (!userProfile) {
+      setAccessibilityNeeds([]);
+      setAccessibilityProfile(
+        DEFAULT_ACCESSIBILITY_PROFILE
+      );
+
+      return;
+    }
 
     // Restore language
     if (userProfile.language) {
@@ -134,7 +175,10 @@ export function AccessibilityProvider({
     }
 
     // Restore font size
-    if (userProfile.fontScale) {
+    if (
+      userProfile.fontScale !==
+      undefined
+    ) {
       setFontScale(
         userProfile.fontScale
       );
@@ -171,36 +215,31 @@ export function AccessibilityProvider({
     }
 
     /*
-     * Restore the existing accessibilityNeeds
-     * array used by EditProfile.
+     * AuthContext is the source of truth
+     * for the current user's Firestore
+     * profile.
+     *
+     * Always create a fresh accessibility
+     * needs array from the current profile.
      */
     const savedNeeds =
       Array.isArray(
         userProfile.accessibilityNeeds
       )
-        ? userProfile.accessibilityNeeds
+        ? [
+            ...userProfile.accessibilityNeeds,
+          ]
         : [];
-
-    /*
-     * TEMPORARY DIAGNOSTIC
-     *
-     * This tells us exactly what
-     * AccessibilityProvider receives
-     * from AuthContext.
-     */
-    console.log(
-      "Inclura AccessibilityProvider - accessibilityNeeds received:",
-      savedNeeds
-    );
 
     setAccessibilityNeeds(
       savedNeeds
     );
 
     /*
-     * Preserve an existing accessibility
-     * profile when present, while also
-     * deriving its flags from accessibilityNeeds.
+     * Preserve any explicitly stored
+     * accessibility profile values while
+     * deriving the profile flags from the
+     * saved accessibility needs.
      */
     const savedProfile =
       userProfile.accessibility &&
@@ -209,11 +248,14 @@ export function AccessibilityProvider({
         ? userProfile.accessibility
         : {};
 
-    setAccessibilityProfile(
+    const nextAccessibilityProfile =
       buildAccessibilityProfile(
         savedNeeds,
         savedProfile
-      )
+      );
+
+    setAccessibilityProfile(
+      nextAccessibilityProfile
     );
   }, [userProfile]);
 
@@ -278,4 +320,4 @@ export function useAccessibility() {
   }
 
   return context;
-}
+      }
