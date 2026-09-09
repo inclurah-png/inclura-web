@@ -114,6 +114,31 @@ function AccessibilitySettings() {
     },
   ];
 
+  /*
+   * TEMPORARY DIAGNOSTIC
+   *
+   * AuthContext records the exact
+   * accessibilityNeeds it receives from
+   * Firestore in this temporary object.
+   */
+  const authDiagnostic =
+    window.__incluraAuthDiagnostic || null;
+
+  const authDiagnosticNeeds =
+    authDiagnostic &&
+    Array.isArray(
+      authDiagnostic.accessibilityNeeds
+    )
+      ? authDiagnostic.accessibilityNeeds
+      : [];
+
+  const diagnosticText =
+    authDiagnosticNeeds.length > 0
+      ? authDiagnosticNeeds.join(
+          ", "
+        )
+      : "None";
+
   return (
     <div
       style={{
@@ -391,6 +416,54 @@ function AccessibilitySettings() {
         )}
       </div>
 
+      {/* TEMPORARY AUTHCONTEXT DIAGNOSTIC */}
+
+      <div
+        style={{
+          marginTop: "20px",
+          padding: "14px",
+          background: "#172033",
+          border:
+            "1px solid #475569",
+          borderRadius: "12px",
+          fontSize: "14px",
+          color: "#e2e8f0",
+          lineHeight: "1.5",
+        }}
+      >
+        <strong>
+          Temporary profile diagnostic
+        </strong>
+
+        <br />
+
+        AuthContext received:
+
+        <br />
+
+        <span
+          style={{
+            color: "#38bdf8",
+            fontWeight: "700",
+          }}
+        >
+          {diagnosticText}
+        </span>
+
+        <br />
+
+        <span
+          style={{
+            color: "#94a3b8",
+            fontSize: "12px",
+          }}
+        >
+          This diagnostic is temporary and
+          will be removed after we identify
+          the synchronization issue.
+        </span>
+      </div>
+
       {/* Profile Source Notice */}
 
       <div
@@ -407,7 +480,9 @@ function AccessibilitySettings() {
         <strong>
           Profile needs
         </strong>
+
         <br />
+
         Accessibility needs are managed
         from your Inclura profile. This
         panel displays the needs currently
@@ -434,7 +509,9 @@ function AccessibilitySettings() {
         >
           Inclura accessibility
         </strong>
+
         <br />
+
         Your accessibility profile will
         guide features such as screen
         reader support, read-aloud,
@@ -449,4 +526,3 @@ function AccessibilitySettings() {
 }
 
 export default AccessibilitySettings;
-            
