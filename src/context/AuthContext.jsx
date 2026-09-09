@@ -59,6 +59,17 @@ export function AuthProvider({
           if (!currentUser) {
             setUserProfile(null);
             setLoading(false);
+
+            /*
+             * Temporary Android diagnostic.
+             */
+            window.__incluraAuthDiagnostic =
+              {
+                signedIn: false,
+                accessibilityNeeds: [],
+                userProfile: null,
+              };
+
             return;
           }
 
@@ -78,13 +89,48 @@ export function AuthProvider({
                 if (
                   profileSnap.exists()
                 ) {
+                  const profileData =
+                    profileSnap.data();
+
                   setUserProfile(
-                    profileSnap.data()
+                    profileData
                   );
+
+                  /*
+                   * Temporary Android diagnostic.
+                   *
+                   * This records exactly what
+                   * AuthContext receives from
+                   * Firestore.
+                   */
+                  window.__incluraAuthDiagnostic =
+                    {
+                      signedIn: true,
+                      profileExists: true,
+                      accessibilityNeeds:
+                        Array.isArray(
+                          profileData.accessibilityNeeds
+                        )
+                          ? profileData.accessibilityNeeds
+                          : [],
+                      userProfile:
+                        profileData,
+                    };
                 } else {
                   setUserProfile(
                     null
                   );
+
+                  /*
+                   * Temporary Android diagnostic.
+                   */
+                  window.__incluraAuthDiagnostic =
+                    {
+                      signedIn: true,
+                      profileExists: false,
+                      accessibilityNeeds: [],
+                      userProfile: null,
+                    };
                 }
 
                 setLoading(false);
@@ -98,6 +144,20 @@ export function AuthProvider({
                 setUserProfile(
                   null
                 );
+
+                /*
+                 * Temporary Android diagnostic.
+                 */
+                window.__incluraAuthDiagnostic =
+                  {
+                    signedIn: true,
+                    profileExists: false,
+                    accessibilityNeeds: [],
+                    userProfile: null,
+                    error:
+                      error?.message ||
+                      "Profile listener error",
+                  };
 
                 setLoading(false);
               }
