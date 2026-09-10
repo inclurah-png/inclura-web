@@ -1,4 +1,4 @@
-import {
+   import {
   useEffect,
   useRef,
   useState,
@@ -31,6 +31,10 @@ import {
   saveTranslation,
 } from "../translation/textTranslator";
 
+import {
+  useAccessibility,
+} from "../context/AccessibilityProvider";
+
 
 function ChatWindow({
   selectedChat,
@@ -39,6 +43,20 @@ function ChatWindow({
 
   const { t, i18n } =
     useTranslation();
+
+  const {
+    accessibilityProfile,
+    voiceEnabled,
+  } = useAccessibility();
+
+
+  // ============================================================
+  // ACCESSIBILITY PROFILE
+  // ============================================================
+
+  const visualImpairmentEnabled =
+    accessibilityProfile?.blindLowVision ===
+    true;
 
 
   // ============================================================
@@ -108,6 +126,26 @@ function ChatWindow({
     useRef(null);
 
   const documentInputRef =
+    useRef(null);
+
+  /*
+   * Tracks messages that have already been
+   * seen by this ChatWindow instance.
+   *
+   * This prevents existing messages from
+   * being read aloud when the conversation
+   * first opens.
+   */
+  const seenMessageIdsRef =
+    useRef(new Set());
+
+  /*
+   * Tracks the currently selected
+   * conversation so the seen-message
+   * tracking can reset when the user
+   * switches chats.
+   */
+  const trackedChatIdRef =
     useRef(null);
 
 
@@ -265,6 +303,227 @@ function ChatWindow({
     });
 
   }, [messages]);
+
+
+  // ============================================================
+  // RESET MESSAGE TRACKING WHEN CHAT CHANGES
+  // ============================================================
+
+  useEffect(() => {
+
+    const chatId =
+      selectedChat?.id || null;
+
+    if (
+      trackedChatIdRef.current !==
+      chatId
+    ) {
+
+      trackedChatIdRef.current =
+        chatId;
+
+      seenMessageIdsRef.current =
+        new Set(
+          messages
+            .filter(
+              (message) =>
+                Boolean(message?.id)
+            )
+            .map(
+              (message) =>
+                message.id
+            )
+        );
+
+    }
+
+  }, [
+    selectedChat?.id,
+    messages,
+  ]);
+
+
+  // ============================================================
+  // PROFILE-DRIVEN READ ALOUD
+  // ============================================================
+
+  useEffect(() => {
+
+    /*
+     * Read-aloud is intentionally controlled
+     * by BOTH the accessibility profile and
+     * the user's Voice Guidance setting.
+     *
+     * Selecting Visual Impairment alone does
+     * not automatically produce audio.
+     */
+    if (
+      !visualImpairmentEnabled ||
+      !voiceEnabled
+    ) {
+
+      return;
+
+    }
+
+    if (
+      typeof window === "undefined" ||
+      !window.speechSynthesis
+    ) {
+
+      return;
+
+    }
+
+    const currentUserId =
+      auth.currentUser?.uid;
+
+    if (!currentUserId) {
+
+      return;
+
+    }
+
+    const newMessages =
+      messages.filter(
+        (message) => {
+
+          if (
+            !message?.id ||
+            !message?.text
+          ) {
+
+            return false;
+
+          }
+
+          if (
+            seenMessageIdsRef.current.has(
+              message.id
+            )
+          ) {
+
+            return false;
+
+          }
+
+          return (
+            message.senderId !==
+            currentUserId
+          );
+
+        }
+      );
+
+    /*
+     * Mark all newly observed messages
+     * as seen before speaking so a React
+     * re-render cannot cause duplicate
+     * announcements.
+     */
+    messages.forEach(
+      (message) => {
+
+        if (
+          message?.id
+        ) {
+
+          seenMessageIdsRef.current.add(
+            message.id
+          );
+
+        }
+
+      }
+    );
+
+    if (
+      newMessages.length === 0
+    ) {
+
+      return;
+
+    }
+
+    /*
+     * Read only the newest newly received
+     * text message.
+     *
+     * If several messages arrive together,
+     * reading only the newest prevents a
+     * long queue of speech from being created.
+     */
+    const latestMessage =
+      newMessages[
+        newMessages.length - 1
+      ];
+
+    const messageText =
+      latestMessage.text.trim();
+
+    if (!messageText) {
+
+      return;
+
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        messageText
+      );
+
+    const languageMap = {
+      en: "en-US",
+      yo: "yo-NG",
+      ig: "ig-NG",
+      ha: "ha-NG",
+      fr: "fr-FR",
+      es: "es-ES",
+      pt: "pt-PT",
+      sw: "sw-KE",
+      ar: "ar-SA",
+      zh: "zh-CN",
+    };
+
+    utterance.lang =
+      languageMap[
+        activeLanguage
+      ] ||
+      "en-US";
+
+    utterance.onstart =
+      () => {
+
+        setSpeaking(true);
+
+      };
+
+    utterance.onend =
+      () => {
+
+        setSpeaking(false);
+
+      };
+
+    utterance.onerror =
+      () => {
+
+        setSpeaking(false);
+
+      };
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+
+  }, [
+    messages,
+    visualImpairmentEnabled,
+    voiceEnabled,
+    activeLanguage,
+  ]);
 
 
   // ============================================================
@@ -2027,6 +2286,8 @@ function ChatWindow({
         aria-label={t(
           "messages"
         )}
+        aria-live="polite"
+        aria-relevant="additions"
         style={{
           flex: 1,
           padding: "20px",
@@ -2193,6 +2454,10 @@ function ChatWindow({
                       <video
                         controls
                         preload="metadata"
+                        aria-label={
+                          msg.fileName ||
+                          "Shared video"
+                        }
                         style={{
                           display:
                             "block",
@@ -3250,3 +3515,5 @@ function ChatWindow({
 
 
 export default ChatWindow;
+
+         
