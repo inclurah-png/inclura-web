@@ -17,106 +17,142 @@ const DEFAULT_ACCESSIBILITY_PROFILE = {
   nonVerbal: false,
   motorImpaired: false,
   neurodivergent: false,
-  noDisability: false,
+  noDisability: true,
 };
 
-function buildAccessibilityProfile(
-  accessibilityNeeds = [],
-  existingProfile = {}
+function normalizeAccessibilityNeeds(
+  accessibilityNeeds
 ) {
-  const needs = Array.isArray(
-    accessibilityNeeds
-  )
-    ? accessibilityNeeds.map((need) =>
-        String(need).toLowerCase()
+  if (
+    Array.isArray(
+      accessibilityNeeds
+    )
+  ) {
+    return accessibilityNeeds
+      .filter(
+        (need) =>
+          need !== null &&
+          need !== undefined
       )
-    : [];
+      .map((need) =>
+        String(need).trim()
+      )
+      .filter(Boolean);
+  }
 
-  const profile = {
+  if (
+    typeof accessibilityNeeds ===
+    "string"
+  ) {
+    return accessibilityNeeds
+      .split(",")
+      .map((need) =>
+        need.trim()
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function buildAccessibilityProfile(
+  accessibilityNeeds = []
+) {
+  const needs =
+    normalizeAccessibilityNeeds(
+      accessibilityNeeds
+    ).map((need) =>
+      need.toLowerCase()
+    );
+
+  const hasNeed = (patterns) =>
+    needs.some((need) =>
+      patterns.some((pattern) =>
+        need.includes(pattern)
+      )
+    );
+
+  const blindLowVision =
+    hasNeed([
+      "visual impairment",
+      "visually impaired",
+      "blind",
+      "blindness",
+      "low vision",
+    ]);
+
+  const deaf =
+    hasNeed([
+      "hearing impairment",
+      "hearing impaired",
+      "hard of hearing",
+      "deaf",
+      "deafness",
+    ]);
+
+  const mobilityImpaired =
+    hasNeed([
+      "mobility impairment",
+      "mobility impaired",
+      "wheelchair",
+      "motor impairment",
+      "motor impaired",
+      "physical disability",
+    ]);
+
+  const nonVerbal =
+    hasNeed([
+      "speech impairment",
+      "speech impaired",
+      "non-verbal",
+      "nonverbal",
+      "unable to speak",
+    ]);
+
+  const neurodivergent =
+    hasNeed([
+      "dyslexia",
+      "adhd",
+      "autism",
+      "autistic",
+      "neurodivergent",
+      "neurodivers",
+    ]);
+
+  const noDisability =
+    needs.length === 0 ||
+    hasNeed([
+      "no disability",
+      "none",
+      "no accessibility needs",
+    ]);
+
+  return {
     ...DEFAULT_ACCESSIBILITY_PROFILE,
-    ...existingProfile,
+
+    deaf,
+
+    blindLowVision,
+
+    wheelchair: hasNeed([
+      "wheelchair",
+    ]),
+
+    nonVerbal,
+
+    motorImpaired:
+      mobilityImpaired,
+
+    neurodivergent,
+
+    noDisability:
+      noDisability &&
+      !blindLowVision &&
+      !deaf &&
+      !mobilityImpaired &&
+      !nonVerbal &&
+      !neurodivergent,
   };
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("visual") ||
-        need.includes("blind") ||
-        need.includes("low vision")
-    )
-  ) {
-    profile.blindLowVision = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("hearing") ||
-        need.includes("deaf")
-    )
-  ) {
-    profile.deaf = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("mobility") ||
-        need.includes("wheelchair") ||
-        need.includes("motor")
-    )
-  ) {
-    profile.wheelchair = true;
-    profile.motorImpaired = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("speech") ||
-        need.includes("non-verbal") ||
-        need.includes("nonverbal")
-    )
-  ) {
-    profile.nonVerbal = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("dyslexia")
-    )
-  ) {
-    profile.neurodivergent = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("adhd")
-    )
-  ) {
-    profile.neurodivergent = true;
-  }
-
-  if (
-    needs.some(
-      (need) =>
-        need.includes("autism") ||
-        need.includes("neurodivergent") ||
-        need.includes("neurodivers")
-    )
-  ) {
-    profile.neurodivergent = true;
-  }
-
-  if (needs.length === 0) {
-    profile.noDisability = true;
-  } else {
-    profile.noDisability = false;
-  }
-
-  return profile;
 }
 
 export function AccessibilityProvider({
@@ -154,9 +190,12 @@ export function AccessibilityProvider({
 
   useEffect(() => {
     /*
-     * When the user is signed out or
-     * the profile is unavailable, reset
-     * accessibility state to defaults.
+     * AuthContext is the source of truth
+     * for the signed-in user's profile.
+     *
+     * When the user signs out or the
+     * profile is unavailable, reset all
+     * accessibility profile information.
      */
     if (!userProfile) {
       setAccessibilityNeeds([]);
@@ -164,94 +203,120 @@ export function AccessibilityProvider({
         DEFAULT_ACCESSIBILITY_PROFILE
       );
 
+      setLanguage("en");
+      setFontScale(1);
+      setHighContrast(false);
+      setReducedMotion(false);
+      setVoiceEnabled(false);
+
       return;
     }
 
-    // Restore language
-    if (userProfile.language) {
+    /*
+     * Restore saved language preference.
+     */
+    if (
+      userProfile.language
+    ) {
       setLanguage(
         userProfile.language
       );
     }
 
-    // Restore font size
+    /*
+     * Restore saved font scale.
+     */
     if (
       userProfile.fontScale !==
-      undefined
+      undefined &&
+      userProfile.fontScale !==
+      null
     ) {
       setFontScale(
         userProfile.fontScale
       );
     }
 
-    // Restore high contrast
+    /*
+     * Restore saved high contrast
+     * preference.
+     */
     if (
       userProfile.highContrast !==
-      undefined
+      undefined &&
+      userProfile.highContrast !==
+      null
     ) {
       setHighContrast(
-        userProfile.highContrast
-      );
-    }
-
-    // Restore reduced motion
-    if (
-      userProfile.reducedMotion !==
-      undefined
-    ) {
-      setReducedMotion(
-        userProfile.reducedMotion
-      );
-    }
-
-    // Restore voice guidance
-    if (
-      userProfile.voiceEnabled !==
-      undefined
-    ) {
-      setVoiceEnabled(
-        userProfile.voiceEnabled
+        Boolean(
+          userProfile.highContrast
+        )
       );
     }
 
     /*
-     * AuthContext is the source of truth
-     * for the current user's Firestore
-     * profile.
+     * Restore saved reduced motion
+     * preference.
+     */
+    if (
+      userProfile.reducedMotion !==
+      undefined &&
+      userProfile.reducedMotion !==
+      null
+    ) {
+      setReducedMotion(
+        Boolean(
+          userProfile.reducedMotion
+        )
+      );
+    }
+
+    /*
+     * Restore saved voice guidance
+     * preference.
+     */
+    if (
+      userProfile.voiceEnabled !==
+      undefined &&
+      userProfile.voiceEnabled !==
+      null
+    ) {
+      setVoiceEnabled(
+        Boolean(
+          userProfile.voiceEnabled
+        )
+      );
+    }
+
+    /*
+     * accessibilityNeeds comes directly
+     * from Edit Profile / Firestore
+     * through AuthContext.
      *
-     * Always create a fresh accessibility
-     * needs array from the current profile.
+     * This is the authoritative source
+     * for the user's accessibility needs.
      */
     const savedNeeds =
-      Array.isArray(
+      normalizeAccessibilityNeeds(
         userProfile.accessibilityNeeds
-      )
-        ? [
-            ...userProfile.accessibilityNeeds,
-          ]
-        : [];
+      );
 
     setAccessibilityNeeds(
       savedNeeds
     );
 
     /*
-     * Preserve any explicitly stored
-     * accessibility profile values while
-     * deriving the profile flags from the
-     * saved accessibility needs.
+     * Build the active accessibility
+     * capabilities from the user's
+     * currently selected needs.
+     *
+     * We deliberately do NOT allow an
+     * older stored accessibility object
+     * to override these values.
      */
-    const savedProfile =
-      userProfile.accessibility &&
-      typeof userProfile.accessibility ===
-        "object"
-        ? userProfile.accessibility
-        : {};
-
     const nextAccessibilityProfile =
       buildAccessibilityProfile(
-        savedNeeds,
-        savedProfile
+        savedNeeds
       );
 
     setAccessibilityProfile(
@@ -320,4 +385,4 @@ export function useAccessibility() {
   }
 
   return context;
-      }
+}
