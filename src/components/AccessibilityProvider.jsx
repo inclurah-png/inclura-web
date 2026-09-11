@@ -56,7 +56,7 @@ function normalizeAccessibilityNeeds(
 }
 
 function buildAccessibilityProfile(
-  accessibilityNeeds = []
+  accessibilityNeeds
 ) {
   const needs =
     normalizeAccessibilityNeeds(
@@ -90,14 +90,19 @@ function buildAccessibilityProfile(
       "deafness",
     ]);
 
-  const mobilityImpaired =
+  const wheelchair =
+    hasNeed([
+      "wheelchair",
+    ]);
+
+  const motorImpaired =
     hasNeed([
       "mobility impairment",
       "mobility impaired",
-      "wheelchair",
       "motor impairment",
       "motor impaired",
       "physical disability",
+      "wheelchair",
     ]);
 
   const nonVerbal =
@@ -123,25 +128,20 @@ function buildAccessibilityProfile(
     needs.length === 0 ||
     hasNeed([
       "no disability",
-      "none",
       "no accessibility needs",
+      "none",
     ]);
 
   return {
-    ...DEFAULT_ACCESSIBILITY_PROFILE,
-
     deaf,
 
     blindLowVision,
 
-    wheelchair: hasNeed([
-      "wheelchair",
-    ]),
+    wheelchair,
 
     nonVerbal,
 
-    motorImpaired:
-      mobilityImpaired,
+    motorImpaired,
 
     neurodivergent,
 
@@ -149,7 +149,7 @@ function buildAccessibilityProfile(
       noDisability &&
       !blindLowVision &&
       !deaf &&
-      !mobilityImpaired &&
+      !motorImpaired &&
       !nonVerbal &&
       !neurodivergent,
   };
@@ -158,8 +158,20 @@ function buildAccessibilityProfile(
 export function AccessibilityProvider({
   children,
 }) {
-  const { userProfile } =
+  /*
+   * AuthProvider is the parent provider,
+   * so useAuth() is available here.
+   *
+   * Keep this defensive so a temporary
+   * unavailable auth context cannot crash
+   * the entire application.
+   */
+  const authContext =
     useAuth();
+
+  const userProfile =
+    authContext?.userProfile ||
+    null;
 
   const [language, setLanguage] =
     useState("en");
@@ -190,12 +202,11 @@ export function AccessibilityProvider({
 
   useEffect(() => {
     /*
-     * AuthContext is the source of truth
-     * for the signed-in user's profile.
+     * No authenticated profile yet.
      *
-     * When the user signs out or the
-     * profile is unavailable, reset all
-     * accessibility profile information.
+     * Reset only the accessibility
+     * profile data. AuthContext remains
+     * responsible for authentication.
      */
     if (!userProfile) {
       setAccessibilityNeeds([]);
@@ -203,20 +214,16 @@ export function AccessibilityProvider({
         DEFAULT_ACCESSIBILITY_PROFILE
       );
 
-      setLanguage("en");
-      setFontScale(1);
-      setHighContrast(false);
-      setReducedMotion(false);
-      setVoiceEnabled(false);
-
       return;
     }
 
     /*
-     * Restore saved language preference.
+     * Restore saved language.
      */
     if (
-      userProfile.language
+      typeof userProfile.language ===
+      "string" &&
+      userProfile.language.trim()
     ) {
       setLanguage(
         userProfile.language
@@ -227,10 +234,12 @@ export function AccessibilityProvider({
      * Restore saved font scale.
      */
     if (
-      userProfile.fontScale !==
-      undefined &&
-      userProfile.fontScale !==
-      null
+      typeof userProfile.fontScale ===
+      "number" &&
+      Number.isFinite(
+        userProfile.fontScale
+      ) &&
+      userProfile.fontScale > 0
     ) {
       setFontScale(
         userProfile.fontScale
@@ -238,63 +247,46 @@ export function AccessibilityProvider({
     }
 
     /*
-     * Restore saved high contrast
-     * preference.
+     * Restore high contrast.
      */
     if (
-      userProfile.highContrast !==
-      undefined &&
-      userProfile.highContrast !==
-      null
+      typeof userProfile.highContrast ===
+      "boolean"
     ) {
       setHighContrast(
-        Boolean(
-          userProfile.highContrast
-        )
+        userProfile.highContrast
       );
     }
 
     /*
-     * Restore saved reduced motion
-     * preference.
+     * Restore reduced motion.
      */
     if (
-      userProfile.reducedMotion !==
-      undefined &&
-      userProfile.reducedMotion !==
-      null
+      typeof userProfile.reducedMotion ===
+      "boolean"
     ) {
       setReducedMotion(
-        Boolean(
-          userProfile.reducedMotion
-        )
+        userProfile.reducedMotion
       );
     }
 
     /*
-     * Restore saved voice guidance
-     * preference.
+     * Restore voice guidance.
      */
     if (
-      userProfile.voiceEnabled !==
-      undefined &&
-      userProfile.voiceEnabled !==
-      null
+      typeof userProfile.voiceEnabled ===
+      "boolean"
     ) {
       setVoiceEnabled(
-        Boolean(
-          userProfile.voiceEnabled
-        )
+        userProfile.voiceEnabled
       );
     }
 
     /*
-     * accessibilityNeeds comes directly
-     * from Edit Profile / Firestore
-     * through AuthContext.
-     *
-     * This is the authoritative source
-     * for the user's accessibility needs.
+     * Edit Profile / Firestore
+     * accessibilityNeeds is the source
+     * of truth for the user's selected
+     * accessibility requirements.
      */
     const savedNeeds =
       normalizeAccessibilityNeeds(
@@ -306,21 +298,17 @@ export function AccessibilityProvider({
     );
 
     /*
-     * Build the active accessibility
-     * capabilities from the user's
-     * currently selected needs.
-     *
-     * We deliberately do NOT allow an
-     * older stored accessibility object
-     * to override these values.
+     * Convert the saved requirements
+     * into capabilities used throughout
+     * Inclura.
      */
-    const nextAccessibilityProfile =
+    const nextProfile =
       buildAccessibilityProfile(
         savedNeeds
       );
 
     setAccessibilityProfile(
-      nextAccessibilityProfile
+      nextProfile
     );
   }, [userProfile]);
 
@@ -363,7 +351,7 @@ export function AccessibilityProvider({
           minHeight: "100%",
           transition: reducedMotion
             ? "none"
-            : "all .3s ease",
+            : "all 0.3s ease",
         }}
       >
         {children}
