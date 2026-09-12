@@ -1,5 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -32,45 +35,87 @@ import {
   saveTranslation,
 } from "../translation/textTranslator";
 
+import {
+  useAccessibility,
+} from "../context/AccessibilityProvider";
+
 function Feed() {
   const [posts, setPosts] = useState([]);
-  const [lastVisible, setLastVisible] = useState(null);
+  const [lastVisible, setLastVisible] =
+    useState(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] =
+    useState(false);
 
-  const [hasMore, setHasMore] = useState(true);
+  const [hasMore, setHasMore] =
+    useState(true);
 
-  const [filteredPosts, setFilteredPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] =
+    useState([]);
 
-  const [userLanguage, setUserLanguage] = useState("en");
+  const [userLanguage, setUserLanguage] =
+    useState("en");
 
-  const [translatingPosts, setTranslatingPosts] = useState({});
+  const [translatingPosts, setTranslatingPosts] =
+    useState({});
+
+  /*
+   * Accessibility state for Feed posts.
+   */
+  const [
+    openAccessibilityPost,
+    setOpenAccessibilityPost,
+  ] = useState(null);
+
+  const [
+    largeTextPosts,
+    setLargeTextPosts,
+  ] = useState({});
+
+  const [
+    highContrastPosts,
+    setHighContrastPosts,
+  ] = useState({});
+
+  const [
+    textOnlyPosts,
+    setTextOnlyPosts,
+  ] = useState({});
+
+  const [
+    captionPosts,
+    setCaptionPosts,
+  ] = useState({});
+
+  const [
+    speakingPostId,
+    setSpeakingPostId,
+  ] = useState(null);
 
   const navigate = useNavigate();
 
-  const { i18n } = useTranslation();
+  const { i18n, t } =
+    useTranslation();
+
+  const {
+    accessibilityProfile,
+    accessibilityNeeds,
+    voiceEnabled,
+    highContrast,
+    reducedMotion,
+  } = useAccessibility();
 
   const POSTS_PER_PAGE = 15;
 
   /*
-   * Keep Feed language synchronized with
-   * the active application language.
-   *
-   * This is important because the previous
-   * implementation only loaded the user's
-   * preferred language once from Firestore.
-   *
-   * Now, when the user changes:
-   *
-   * English → Yoruba
-   * Yoruba → Spanish
-   * Spanish → Igbo
-   *
-   * the Feed immediately follows i18n.language.
+   * Keep Feed language synchronized
+   * with the active application language.
    */
   useEffect(() => {
     const activeLanguage =
-      String(i18n.language || "en")
+      String(
+        i18n.language || "en"
+      )
         .trim()
         .toLowerCase();
 
@@ -86,7 +131,24 @@ function Feed() {
     loadPosts(false);
   }, []);
 
-  async function loadPosts(loadMore = false) {
+  /*
+   * Stop speech when Feed unmounts.
+   */
+  useEffect(() => {
+    return () => {
+      if (
+        typeof window !==
+          "undefined" &&
+        "speechSynthesis" in window
+      ) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  async function loadPosts(
+    loadMore = false
+  ) {
     if (loading) return;
 
     setLoading(true);
@@ -94,33 +156,61 @@ function Feed() {
     try {
       let q;
 
-      if (loadMore && lastVisible) {
+      if (
+        loadMore &&
+        lastVisible
+      ) {
         q = query(
-          collection(db, "posts"),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(POSTS_PER_PAGE)
+          collection(
+            db,
+            "posts"
+          ),
+          orderBy(
+            "createdAt",
+            "desc"
+          ),
+          startAfter(
+            lastVisible
+          ),
+          limit(
+            POSTS_PER_PAGE
+          )
         );
       } else {
         q = query(
-          collection(db, "posts"),
-          orderBy("createdAt", "desc"),
-          limit(POSTS_PER_PAGE)
+          collection(
+            db,
+            "posts"
+          ),
+          orderBy(
+            "createdAt",
+            "desc"
+          ),
+          limit(
+            POSTS_PER_PAGE
+          )
         );
       }
 
-      const snapshot = await getDocs(q);
+      const snapshot =
+        await getDocs(q);
 
       const fetchedPosts =
-        snapshot.docs.map((postDoc) => ({
-          id: postDoc.id,
-          ...postDoc.data(),
-        }));
+        snapshot.docs.map(
+          (postDoc) => ({
+            id: postDoc.id,
+            ...postDoc.data(),
+          })
+        );
 
-      if (snapshot.docs.length > 0) {
+      if (
+        snapshot.docs.length >
+        0
+      ) {
         setLastVisible(
           snapshot.docs[
-            snapshot.docs.length - 1
+            snapshot.docs.length -
+              1
           ]
         );
       }
@@ -134,13 +224,19 @@ function Feed() {
 
       if (loadMore) {
         setPosts((prev) => {
-          const existingIds = new Set(
-            prev.map((p) => p.id)
-          );
+          const existingIds =
+            new Set(
+              prev.map(
+                (p) => p.id
+              )
+            );
 
           const newPosts =
             fetchedPosts.filter(
-              (p) => !existingIds.has(p.id)
+              (p) =>
+                !existingIds.has(
+                  p.id
+                )
             );
 
           return [
@@ -149,23 +245,34 @@ function Feed() {
           ];
         });
 
-        setFilteredPosts((prev) => {
-          const existingIds = new Set(
-            prev.map((p) => p.id)
-          );
+        setFilteredPosts(
+          (prev) => {
+            const existingIds =
+              new Set(
+                prev.map(
+                  (p) => p.id
+                )
+              );
 
-          const newPosts =
-            fetchedPosts.filter(
-              (p) => !existingIds.has(p.id)
-            );
+            const newPosts =
+              fetchedPosts.filter(
+                (p) =>
+                  !existingIds.has(
+                    p.id
+                  )
+              );
 
-          return [
-            ...prev,
-            ...newPosts,
-          ];
-        });
+            return [
+              ...prev,
+              ...newPosts,
+            ];
+          }
+        );
       } else {
-        setPosts(fetchedPosts);
+        setPosts(
+          fetchedPosts
+        );
+
         setFilteredPosts(
           fetchedPosts
         );
@@ -187,19 +294,24 @@ function Feed() {
 
       if (!user) return;
 
-      const userRef = doc(
-        db,
-        "users",
-        user.uid
-      );
+      const userRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
       const userSnap =
-        await getDoc(userRef);
+        await getDoc(
+          userRef
+        );
 
       const savedPosts =
         userSnap.exists()
-          ? userSnap.data()
-              .savedPosts || []
+          ? userSnap
+              .data()
+              .savedPosts ||
+            []
           : [];
 
       if (
@@ -207,23 +319,39 @@ function Feed() {
           post.id
         )
       ) {
-        await updateDoc(userRef, {
-          savedPosts:
-            arrayRemove(
-              post.id
-            ),
-        });
+        await updateDoc(
+          userRef,
+          {
+            savedPosts:
+              arrayRemove(
+                post.id
+              ),
+          }
+        );
 
-        alert("Post removed");
+        alert(
+          t(
+            "feed.postRemoved",
+            "Post removed"
+          )
+        );
       } else {
-        await updateDoc(userRef, {
-          savedPosts:
-            arrayUnion(
-              post.id
-            ),
-        });
+        await updateDoc(
+          userRef,
+          {
+            savedPosts:
+              arrayUnion(
+                post.id
+              ),
+          }
+        );
 
-        alert("Post saved");
+        alert(
+          t(
+            "feed.postSaved",
+            "Post saved"
+          )
+        );
       }
     } catch (err) {
       console.error(
@@ -232,7 +360,10 @@ function Feed() {
       );
 
       alert(
-        "Unable to save post."
+        t(
+          "feed.saveError",
+          "Unable to save post."
+        )
       );
     }
   }
@@ -247,16 +378,23 @@ function Feed() {
     if (!user) return;
 
     try {
-      const postRef = doc(
-        db,
-        "posts",
-        postId
-      );
+      const postRef =
+        doc(
+          db,
+          "posts",
+          postId
+        );
 
       const postSnap =
-        await getDoc(postRef);
+        await getDoc(
+          postRef
+        );
 
-      if (!postSnap.exists()) return;
+      if (
+        !postSnap.exists()
+      ) {
+        return;
+      }
 
       const post =
         postSnap.data();
@@ -334,27 +472,31 @@ function Feed() {
       }
 
       reactions[emoji] =
-        (reactions[emoji] || 0) +
-        1;
+        (reactions[emoji] ||
+          0) + 1;
 
       creatorScore +=
         scoreMap[emoji] || 0;
 
-      await updateDoc(postRef, {
-        reactions,
-        creatorScore,
-        userReactions: {
-          ...(post.userReactions ||
-            {}),
-          [user.uid]: emoji,
-        },
-      });
-
-      const creatorRef = doc(
-        db,
-        "users",
-        post.userId
+      await updateDoc(
+        postRef,
+        {
+          reactions,
+          creatorScore,
+          userReactions: {
+            ...(post.userReactions ||
+              {}),
+            [user.uid]: emoji,
+          },
+        }
       );
+
+      const creatorRef =
+        doc(
+          db,
+          "users",
+          post.userId
+        );
 
       await updateDoc(
         creatorRef,
@@ -373,28 +515,31 @@ function Feed() {
                 userReactions: {
                   ...(p.userReactions ||
                     {}),
-                  [user.uid]: emoji,
+                  [user.uid]:
+                    emoji,
                 },
               }
             : p
         )
       );
 
-      setFilteredPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                reactions,
-                creatorScore,
-                userReactions: {
-                  ...(p.userReactions ||
-                    {}),
-                  [user.uid]: emoji,
-                },
-              }
-            : p
-        )
+      setFilteredPosts(
+        (prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  reactions,
+                  creatorScore,
+                  userReactions: {
+                    ...(p.userReactions ||
+                      {}),
+                    [user.uid]:
+                      emoji,
+                  },
+                }
+              : p
+          )
       );
     } catch (error) {
       console.error(
@@ -404,25 +549,27 @@ function Feed() {
     }
   }
 
-  async function translatePost(post) {
-    if (!post?.id || !post?.text) {
+  async function translatePost(
+    post
+  ) {
+    if (
+      !post?.id ||
+      !post?.text
+    ) {
       return;
     }
 
-    const postId = post.id;
+    const postId =
+      post.id;
 
-    /*
-     * Prevent duplicate requests for
-     * this specific post.
-     */
-    if (translatingPosts[postId]) {
+    if (
+      translatingPosts[
+        postId
+      ]
+    ) {
       return;
     }
 
-    /*
-     * Always read the current active
-     * application language.
-     */
     const targetLanguage =
       String(
         i18n.language ||
@@ -436,11 +583,6 @@ function Feed() {
       return;
     }
 
-    /*
-     * If this post already has a translation
-     * for the active language, nothing needs
-     * to be sent to Gemini again.
-     */
     if (
       post.translatedText?.[
         targetLanguage
@@ -449,10 +591,12 @@ function Feed() {
       return;
     }
 
-    setTranslatingPosts((prev) => ({
-      ...prev,
-      [postId]: true,
-    }));
+    setTranslatingPosts(
+      (prev) => ({
+        ...prev,
+        [postId]: true,
+      })
+    );
 
     try {
       console.log(
@@ -463,19 +607,6 @@ function Feed() {
         }
       );
 
-      /*
-       * Always translate from the original
-       * post text.
-       *
-       * We do NOT translate:
-       *
-       * Spanish → Yoruba → Igbo
-       *
-       * Instead, if the original post is
-       * English, every requested language
-       * is generated directly from the
-       * original English text.
-       */
       const result =
         await translateText({
           sourceId: postId,
@@ -503,10 +634,6 @@ function Feed() {
         );
       }
 
-      /*
-       * Save to the central translation
-       * collection for cache/reuse.
-       */
       try {
         await saveTranslation({
           sourceId: postId,
@@ -519,38 +646,35 @@ function Feed() {
           confidence:
             result.confidence || 0,
         });
-      } catch (cacheSaveError) {
-        /*
-         * Translation succeeded even if
-         * the optional cache write fails.
-         */
+      } catch (
+        cacheSaveError
+      ) {
         console.error(
           "Inclura Translation Cache Save Error:",
           cacheSaveError
         );
       }
 
-      const updatedTranslatedText = {
-        ...(post.translatedText || {}),
-        [targetLanguage]:
-          translatedText,
-      };
+      const updatedTranslatedText =
+        {
+          ...(post.translatedText ||
+            {}),
+          [targetLanguage]:
+            translatedText,
+        };
 
-      /*
-       * Persist the translation on the
-       * post as well.
-       */
       await updateDoc(
-        doc(db, "posts", postId),
+        doc(
+          db,
+          "posts",
+          postId
+        ),
         {
           translatedText:
             updatedTranslatedText,
         }
       );
 
-      /*
-       * Immediately update the visible Feed.
-       */
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -563,16 +687,17 @@ function Feed() {
         )
       );
 
-      setFilteredPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                translatedText:
-                  updatedTranslatedText,
+      setFilteredPosts(
+        (prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  translatedText:
+                    updatedTranslatedText,
               }
             : p
-        )
+          )
       );
     } catch (error) {
       console.error(
@@ -582,29 +707,225 @@ function Feed() {
 
       alert(
         error?.message ||
-          "Translation failed. Please try again."
+          t(
+            "feed.translationFailed",
+            "Translation failed. Please try again."
+          )
       );
     } finally {
-      setTranslatingPosts((prev) => {
-        const next = {
-          ...prev,
-        };
+      setTranslatingPosts(
+        (prev) => {
+          const next = {
+            ...prev,
+          };
 
-        delete next[postId];
+          delete next[
+            postId
+          ];
 
-        return next;
-      });
+          return next;
+        }
+      );
     }
   }
 
-  function handleShare(postId) {
+  /*
+   * Read an existing Feed post aloud.
+   *
+   * This is intentionally explicit.
+   * We do NOT automatically read every
+   * old Feed post merely because Voice
+   * Guidance is enabled.
+   */
+  function readPostAloud(post) {
+    if (
+      !post ||
+      typeof window ===
+        "undefined" ||
+      !(
+        "speechSynthesis" in
+        window
+      )
+    ) {
+      return;
+    }
+
+    const translated =
+      post.translatedText?.[
+        userLanguage
+      ];
+
+    const text =
+      String(
+        translated ||
+          post.text ||
+          ""
+      ).trim();
+
+    if (!text) {
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        text
+      );
+
+    utterance.lang =
+      getSpeechLanguage(
+        userLanguage
+      );
+
+    utterance.rate = 0.9;
+
+    utterance.pitch = 1;
+
+    utterance.volume = 1;
+
+    utterance.onstart = () => {
+      setSpeakingPostId(
+        post.id
+      );
+    };
+
+    utterance.onend = () => {
+      setSpeakingPostId(
+        null
+      );
+    };
+
+    utterance.onerror = () => {
+      setSpeakingPostId(
+        null
+      );
+    };
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+  }
+
+  function stopReading() {
+    if (
+      typeof window !==
+        "undefined" &&
+      "speechSynthesis" in
+        window
+    ) {
+      window.speechSynthesis.cancel();
+    }
+
+    setSpeakingPostId(
+      null
+    );
+  }
+
+  function getSpeechLanguage(
+    language
+  ) {
+    const languageMap = {
+      en: "en-US",
+      es: "es-ES",
+      fr: "fr-FR",
+      pt: "pt-PT",
+      ar: "ar-SA",
+      zh: "zh-CN",
+      "zh-tw": "zh-TW",
+      ja: "ja-JP",
+      de: "de-DE",
+      hi: "hi-IN",
+      ru: "ru-RU",
+      it: "it-IT",
+      nl: "nl-NL",
+      sw: "sw-KE",
+      yo: "yo-NG",
+      ig: "ig-NG",
+      ha: "ha-NG",
+      pcm: "en-NG",
+      ko: "ko-KR",
+      vi: "vi-VN",
+      th: "th-TH",
+      id: "id-ID",
+      ms: "ms-MY",
+      bn: "bn-BD",
+      tr: "tr-TR",
+    };
+
+    return (
+      languageMap[
+        String(
+          language || "en"
+        ).toLowerCase()
+      ] ||
+      "en-US"
+    );
+  }
+
+  function toggleLargeText(
+    postId
+  ) {
+    setLargeTextPosts(
+      (prev) => ({
+        ...prev,
+        [postId]:
+          !prev[postId],
+      })
+    );
+  }
+
+  function toggleHighContrast(
+    postId
+  ) {
+    setHighContrastPosts(
+      (prev) => ({
+        ...prev,
+        [postId]:
+          !prev[postId],
+      })
+    );
+  }
+
+  function toggleTextOnly(
+    postId
+  ) {
+    setTextOnlyPosts(
+      (prev) => ({
+        ...prev,
+        [postId]:
+          !prev[postId],
+      })
+    );
+  }
+
+  function toggleCaptions(
+    postId
+  ) {
+    setCaptionPosts(
+      (prev) => ({
+        ...prev,
+        [postId]:
+          !prev[postId],
+      })
+    );
+  }
+
+  function handleShare(
+    postId
+  ) {
     const url =
       `${window.location.origin}/post/${postId}`;
 
     navigator.clipboard
       .writeText(url)
       .then(() => {
-        alert("Post link copied!");
+        alert(
+          t(
+            "feed.linkCopied",
+            "Post link copied!"
+          )
+        );
       })
       .catch((error) => {
         console.error(
@@ -613,13 +934,18 @@ function Feed() {
         );
 
         alert(
-          "Unable to copy post link."
+          t(
+            "feed.shareError",
+            "Unable to copy post link."
+          )
         );
       });
   }
 
   function getBadge(post) {
-    if (!post.verified) return null;
+    if (!post.verified) {
+      return null;
+    }
 
     return getVerificationBadge(
       post.badgeType
@@ -627,10 +953,29 @@ function Feed() {
   }
 
   function getPremium(post) {
-    if (!post.premium) return null;
+    if (!post.premium) {
+      return null;
+    }
 
     return getPremiumBadge(
       post.premiumTier
+    );
+  }
+
+  function getAccessibilityLabel() {
+    if (
+      accessibilityNeeds?.length >
+      0
+    ) {
+      return t(
+        "feed.accessibility",
+        "Accessibility"
+      );
+    }
+
+    return t(
+      "feed.accessibility",
+      "Accessibility"
     );
   }
 
@@ -667,7 +1012,10 @@ function Feed() {
                 "center",
             }}
           >
-            No posts yet
+            {t(
+              "feed.noPosts",
+              "No posts yet"
+            )}
           </div>
         ) : (
           filteredPosts.map(
@@ -684,18 +1032,82 @@ function Feed() {
                   userLanguage
                 ];
 
+              const isAccessibilityOpen =
+                openAccessibilityPost ===
+                post.id;
+
+              const isLargeText =
+                Boolean(
+                  largeTextPosts[
+                    post.id
+                  ]
+                );
+
+              const isPostHighContrast =
+                Boolean(
+                  highContrastPosts[
+                    post.id
+                  ]
+                ) ||
+                highContrast;
+
+              const isTextOnly =
+                Boolean(
+                  textOnlyPosts[
+                    post.id
+                  ]
+                );
+
+              const hasCaptions =
+                Boolean(
+                  post.captionUrl ||
+                    post.captionsUrl ||
+                    post.subtitleUrl ||
+                    post.subtitlesUrl ||
+                    post.transcript ||
+                    post.transcriptText
+                );
+
+              const showCaptions =
+                Boolean(
+                  captionPosts[
+                    post.id
+                  ]
+                );
+
+              const signLanguageUrl =
+                post.signLanguageUrl ||
+                post.signLanguageVideoUrl ||
+                post.signLanguageMediaUrl ||
+                null;
+
+              const displayedText =
+                translated ||
+                post.text ||
+                "";
+
               return (
                 <div
                   key={post.id}
                   style={{
                     background:
-                      "#0f172a",
+                      isPostHighContrast
+                        ? "#000000"
+                        : "#0f172a",
+                    color:
+                      isPostHighContrast
+                        ? "#ffffff"
+                        : "inherit",
                     padding:
                       "24px",
                     borderRadius:
                       "24px",
                     marginBottom:
                       "20px",
+                    transition:
+                      reducedMotion
+                        ? "none"
+                        : "all 0.2s ease",
                   }}
                 >
                   <div
@@ -708,6 +1120,7 @@ function Feed() {
                         "center",
                       marginBottom:
                         "12px",
+                      gap: "12px",
                     }}
                   >
                     <div>
@@ -717,6 +1130,28 @@ function Feed() {
                             `/user/${post.userId}`
                           )
                         }
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(
+                          event
+                        ) => {
+                          if (
+                            event.key ===
+                              "Enter" ||
+                            event.key ===
+                              " "
+                          ) {
+                            event.preventDefault();
+
+                            navigate(
+                              `/user/${post.userId}`
+                            );
+                          }
+                        }}
+                        aria-label={t(
+                          "feed.openProfile",
+                          "Open user profile"
+                        )}
                         style={{
                           cursor:
                             "pointer",
@@ -734,7 +1169,12 @@ function Feed() {
                         }
 
                         {post.verified && (
-                          <span>
+                          <span
+                            aria-label={t(
+                              "feed.verified",
+                              "Verified"
+                            )}
+                          >
                             {getBadge(
                               post
                             )}
@@ -744,7 +1184,12 @@ function Feed() {
                         {getPremium(
                           post
                         ) && (
-                          <span>
+                          <span
+                            aria-label={t(
+                              "feed.premium",
+                              "Premium"
+                            )}
+                          >
                             {getPremium(
                               post
                             )}
@@ -758,7 +1203,9 @@ function Feed() {
                             fontSize:
                               "12px",
                             color:
-                              "#94a3b8",
+                              isPostHighContrast
+                                ? "#ffffff"
+                                : "#94a3b8",
                             marginTop:
                               "4px",
                           }}
@@ -777,10 +1224,438 @@ function Feed() {
                     />
                   </div>
 
-                  <p>
-                    {translated ||
-                      post.text}
-                  </p>
+                  <div
+                    style={{
+                      display:
+                        "flex",
+                      gap: "8px",
+                      flexWrap:
+                        "wrap",
+                      marginBottom:
+                        "12px",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOpenAccessibilityPost(
+                          isAccessibilityOpen
+                            ? null
+                            : post.id
+                        );
+                      }}
+                      aria-expanded={
+                        isAccessibilityOpen
+                      }
+                      aria-controls={`accessibility-${post.id}`}
+                      aria-label={getAccessibilityLabel()}
+                      style={{
+                        padding:
+                          "8px 12px",
+                        borderRadius:
+                          "12px",
+                        border:
+                          "1px solid #64748b",
+                        background:
+                          isAccessibilityOpen
+                            ? "#2563eb"
+                            : "#334155",
+                        color:
+                          "#ffffff",
+                        cursor:
+                          "pointer",
+                        fontWeight:
+                          "600",
+                      }}
+                    >
+                      ♿{" "}
+                      {getAccessibilityLabel()}
+                    </button>
+                  </div>
+
+                  {isAccessibilityOpen && (
+                    <div
+                      id={`accessibility-${post.id}`}
+                      role="region"
+                      aria-label={t(
+                        "feed.accessibilityOptions",
+                        "Post accessibility options"
+                      )}
+                      style={{
+                        background:
+                          isPostHighContrast
+                            ? "#111111"
+                            : "#1e293b",
+                        color:
+                          "#ffffff",
+                        border:
+                          "1px solid #475569",
+                        borderRadius:
+                          "16px",
+                        padding:
+                          "16px",
+                        marginBottom:
+                          "16px",
+                      }}
+                    >
+                      <div
+                        style={{
+                          fontWeight:
+                            "700",
+                          marginBottom:
+                            "12px",
+                        }}
+                      >
+                        {t(
+                          "feed.accessibilityForPost",
+                          "Accessibility for this post"
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          display:
+                            "flex",
+                          gap: "10px",
+                          flexWrap:
+                            "wrap",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() =>
+                            readPostAloud(
+                              post
+                            )
+                          }
+                          aria-label={t(
+                            "feed.readAloud",
+                            "Read post aloud"
+                          )}
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderRadius:
+                              "12px",
+                            border:
+                              "none",
+                            background:
+                              "#2563eb",
+                            color:
+                              "#ffffff",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          🔊{" "}
+                          {t(
+                            "feed.readAloud",
+                            "Read aloud"
+                          )}
+                        </button>
+
+                        {speakingPostId ===
+                          post.id && (
+                          <button
+                            type="button"
+                            onClick={
+                              stopReading
+                            }
+                            aria-label={t(
+                              "feed.stopReading",
+                              "Stop reading"
+                            )}
+                            style={{
+                              padding:
+                                "9px 12px",
+                              borderRadius:
+                                "12px",
+                              border:
+                                "none",
+                              background:
+                                "#dc2626",
+                              color:
+                                "#ffffff",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            ⏹{" "}
+                            {t(
+                              "feed.stopReading",
+                              "Stop reading"
+                            )}
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleLargeText(
+                              post.id
+                            )
+                          }
+                          aria-pressed={
+                            isLargeText
+                          }
+                          aria-label={t(
+                            "feed.largeText",
+                            "Large text"
+                          )}
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderRadius:
+                              "12px",
+                            border:
+                              "none",
+                            background:
+                              isLargeText
+                                ? "#16a34a"
+                                : "#334155",
+                            color:
+                              "#ffffff",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          🔎{" "}
+                          {t(
+                            "feed.largeText",
+                            "Large text"
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleHighContrast(
+                              post.id
+                            )
+                          }
+                          aria-pressed={
+                            isPostHighContrast
+                          }
+                          aria-label={t(
+                            "feed.highContrast",
+                            "High contrast"
+                          )}
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderRadius:
+                              "12px",
+                            border:
+                              "none",
+                            background:
+                              isPostHighContrast
+                                ? "#ffffff"
+                                : "#334155",
+                            color:
+                              isPostHighContrast
+                                ? "#000000"
+                                : "#ffffff",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          ◐{" "}
+                          {t(
+                            "feed.highContrast",
+                            "High contrast"
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleTextOnly(
+                              post.id
+                            )
+                          }
+                          aria-pressed={
+                            isTextOnly
+                          }
+                          aria-label={t(
+                            "feed.textOnly",
+                            "Text only"
+                          )}
+                          style={{
+                            padding:
+                              "9px 12px",
+                            borderRadius:
+                              "12px",
+                            border:
+                              "none",
+                            background:
+                              isTextOnly
+                                ? "#16a34a"
+                                : "#334155",
+                            color:
+                              "#ffffff",
+                            cursor:
+                              "pointer",
+                          }}
+                        >
+                          📝{" "}
+                          {t(
+                            "feed.textOnly",
+                            "Text only"
+                          )}
+                        </button>
+
+                        {hasCaptions && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleCaptions(
+                                post.id
+                              )
+                            }
+                            aria-pressed={
+                              showCaptions
+                            }
+                            aria-label={t(
+                              "feed.captions",
+                              "Captions and transcript"
+                            )}
+                            style={{
+                              padding:
+                                "9px 12px",
+                              borderRadius:
+                                "12px",
+                              border:
+                                "none",
+                              background:
+                                showCaptions
+                                  ? "#16a34a"
+                                  : "#334155",
+                              color:
+                                "#ffffff",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            📝{" "}
+                            {t(
+                              "feed.captions",
+                              "Captions"
+                            )}
+                          </button>
+                        )}
+
+                        {signLanguageUrl && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              window.open(
+                                signLanguageUrl,
+                                "_blank",
+                                "noopener,noreferrer"
+                              )
+                            }
+                            aria-label={t(
+                              "feed.signLanguage",
+                              "Open sign language support"
+                            )}
+                            style={{
+                              padding:
+                                "9px 12px",
+                              borderRadius:
+                                "12px",
+                              border:
+                                "none",
+                              background:
+                                "#334155",
+                              color:
+                                "#ffffff",
+                              cursor:
+                                "pointer",
+                            }}
+                          >
+                            🤟{" "}
+                            {t(
+                              "feed.signLanguage",
+                              "Sign language"
+                            )}
+                          </button>
+                        )}
+                      </div>
+
+                      <div
+                        style={{
+                          marginTop:
+                            "14px",
+                          fontSize:
+                            "13px",
+                          opacity:
+                            0.85,
+                        }}
+                      >
+                        {accessibilityProfile?.blindLowVision &&
+                          t(
+                            "feed.visualAccessibilityActive",
+                            "Visual accessibility is active for your profile."
+                          )}
+
+                        {accessibilityProfile?.deaf &&
+                          t(
+                            "feed.hearingAccessibilityActive",
+                            "Hearing accessibility is active for your profile."
+                          )}
+
+                        {accessibilityProfile?.wheelchair ||
+                        accessibilityProfile?.motorImpaired
+                          ? t(
+                              "feed.motorAccessibilityActive",
+                              "Motor accessibility is active for your profile."
+                            )
+                          : null}
+
+                        {accessibilityProfile?.nonVerbal &&
+                          t(
+                            "feed.nonVerbalAccessibilityActive",
+                            "Non-verbal accessibility is active for your profile."
+                          )}
+
+                        {accessibilityProfile?.neurodivergent &&
+                          t(
+                            "feed.neurodivergentAccessibilityActive",
+                            "Neurodivergent accessibility is active for your profile."
+                          )}
+
+                        {!accessibilityProfile?.blindLowVision &&
+                          !accessibilityProfile?.deaf &&
+                          !accessibilityProfile?.wheelchair &&
+                          !accessibilityProfile?.motorImpaired &&
+                          !accessibilityProfile?.nonVerbal &&
+                          !accessibilityProfile?.neurodivergent &&
+                          t(
+                            "feed.generalAccessibilityOptions",
+                            "Accessibility options are available for this post."
+                          )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    style={{
+                      fontSize:
+                        isLargeText
+                          ? "1.35rem"
+                          : undefined,
+                      lineHeight:
+                        isLargeText
+                          ? 1.7
+                          : 1.5,
+                    }}
+                  >
+                    <p>
+                      {
+                        displayedText
+                      }
+                    </p>
+                  </div>
 
                   <button
                     type="button"
@@ -814,10 +1689,19 @@ function Feed() {
                     }}
                   >
                     {isTranslating
-                      ? "🌍 Translating..."
+                      ? `🌍 ${t(
+                          "feed.translating",
+                          "Translating..."
+                        )}`
                       : translated
-                      ? "🌍 Translated"
-                      : "🌍 Translate"}
+                      ? `🌍 ${t(
+                          "feed.translated",
+                          "Translated"
+                        )}`
+                      : `🌍 ${t(
+                          "feed.translate",
+                          "Translate"
+                        )}`}
                   </button>
 
                   {translated && (
@@ -831,50 +1715,214 @@ function Feed() {
                           0.7,
                       }}
                     >
-                      Translated to{" "}
+                      {t(
+                        "feed.translatedTo",
+                        "Translated to"
+                      )}{" "}
                       {
                         userLanguage
                       }
                     </small>
                   )}
 
-                  {post.imageUrl && (
-                    <img
-                      src={
-                        post.imageUrl
-                      }
-                      alt="Post"
-                      style={{
-                        width:
-                          "100%",
-                        borderRadius:
-                          "16px",
-                        marginTop:
-                          "12px",
-                      }}
-                    />
-                  )}
-
-                  {post.videoUrl && (
-                    <video
-                      controls
-                      style={{
-                        width:
-                          "100%",
-                        borderRadius:
-                          "16px",
-                        marginTop:
-                          "12px",
-                      }}
-                    >
-                      <source
+                  {!isTextOnly &&
+                    post.imageUrl && (
+                      <img
                         src={
-                          post.videoUrl
+                          post.imageUrl
                         }
-                        type="video/mp4"
+                        alt={
+                          post.imageAlt ||
+                          t(
+                            "feed.postImage",
+                            "Post image"
+                          )
+                        }
+                        style={{
+                          width:
+                            "100%",
+                          borderRadius:
+                            "16px",
+                          marginTop:
+                            "12px",
+                        }}
                       />
-                    </video>
-                  )}
+                    )}
+
+                  {!isTextOnly &&
+                    post.videoUrl && (
+                      <div>
+                        <video
+                          controls
+                          aria-label={t(
+                            "feed.postVideo",
+                            "Post video"
+                          )}
+                          style={{
+                            width:
+                              "100%",
+                            borderRadius:
+                              "16px",
+                            marginTop:
+                              "12px",
+                          }}
+                        >
+                          <source
+                            src={
+                              post.videoUrl
+                            }
+                            type="video/mp4"
+                          />
+
+                          {post.captionUrl && (
+                            <track
+                              kind="captions"
+                              src={
+                                post.captionUrl
+                              }
+                              srcLang={
+                                userLanguage
+                              }
+                              label={t(
+                                "feed.captions",
+                                "Captions"
+                              )}
+                              default={
+                                showCaptions
+                              }
+                            />
+                          )}
+
+                          {post.captionsUrl && (
+                            <track
+                              kind="captions"
+                              src={
+                                post.captionsUrl
+                              }
+                              srcLang={
+                                userLanguage
+                              }
+                              label={t(
+                                "feed.captions",
+                                "Captions"
+                              )}
+                              default={
+                                showCaptions
+                              }
+                            />
+                          )}
+
+                          {post.subtitleUrl && (
+                            <track
+                              kind="subtitles"
+                              src={
+                                post.subtitleUrl
+                              }
+                              srcLang={
+                                userLanguage
+                              }
+                              label={t(
+                                "feed.subtitles",
+                                "Subtitles"
+                              )}
+                              default={
+                                showCaptions
+                              }
+                            />
+                          )}
+                        </video>
+
+                        {showCaptions &&
+                          post.transcript && (
+                            <div
+                              role="region"
+                              aria-label={t(
+                                "feed.transcript",
+                                "Video transcript"
+                              )}
+                              style={{
+                                marginTop:
+                                  "10px",
+                                padding:
+                                  "12px",
+                                borderRadius:
+                                  "12px",
+                                background:
+                                  isPostHighContrast
+                                    ? "#ffffff"
+                                    : "#0f172a",
+                                color:
+                                  isPostHighContrast
+                                    ? "#000000"
+                                    : "#ffffff",
+                              }}
+                            >
+                              <strong>
+                                {t(
+                                  "feed.transcript",
+                                  "Transcript"
+                                )}
+                              </strong>
+
+                              <div
+                                style={{
+                                  marginTop:
+                                    "6px",
+                                }}
+                              >
+                                {
+                                  post.transcript
+                                }
+                              </div>
+                            </div>
+                          )}
+
+                        {showCaptions &&
+                          post.transcriptText && (
+                            <div
+                              role="region"
+                              aria-label={t(
+                                "feed.transcript",
+                                "Video transcript"
+                              )}
+                              style={{
+                                marginTop:
+                                  "10px",
+                                padding:
+                                  "12px",
+                                borderRadius:
+                                  "12px",
+                                background:
+                                  isPostHighContrast
+                                    ? "#ffffff"
+                                    : "#0f172a",
+                                color:
+                                  isPostHighContrast
+                                    ? "#000000"
+                                    : "#ffffff",
+                              }}
+                            >
+                              <strong>
+                                {t(
+                                  "feed.transcript",
+                                  "Transcript"
+                                )}
+                              </strong>
+
+                              <div
+                                style={{
+                                  marginTop:
+                                    "6px",
+                                }}
+                              >
+                                {
+                                  post.transcriptText
+                                }
+                              </div>
+                            </div>
+                          )}
+                      </div>
+                    )}
 
                   <div
                     style={{
@@ -909,6 +1957,10 @@ function Feed() {
                               emoji
                             )
                           }
+                          aria-label={`${t(
+                            "feed.reactWith",
+                            "React with"
+                          )} ${emoji}`}
                           style={{
                             padding:
                               "8px 12px",
@@ -950,7 +2002,11 @@ function Feed() {
                         )
                       }
                     >
-                      💬 Comment
+                      💬{" "}
+                      {t(
+                        "feed.comment",
+                        "Comment"
+                      )}
                     </button>
 
                     <button
@@ -961,7 +2017,11 @@ function Feed() {
                         )
                       }
                     >
-                      🔀 Cross-post
+                      🔀{" "}
+                      {t(
+                        "feed.crossPost",
+                        "Cross-post"
+                      )}
                     </button>
 
                     <button
@@ -972,7 +2032,11 @@ function Feed() {
                         )
                       }
                     >
-                      📌 Save
+                      📌{" "}
+                      {t(
+                        "feed.save",
+                        "Save"
+                      )}
                     </button>
 
                     <button
@@ -983,7 +2047,11 @@ function Feed() {
                         )
                       }
                     >
-                      🔗 Share
+                      🔗{" "}
+                      {t(
+                        "feed.share",
+                        "Share"
+                      )}
                     </button>
                   </div>
 
@@ -1014,7 +2082,13 @@ function Feed() {
               onClick={() =>
                 loadPosts(true)
               }
-              disabled={loading}
+              disabled={
+                loading
+              }
+              aria-label={t(
+                "feed.loadMore",
+                "Load more posts"
+              )}
               style={{
                 padding:
                   "12px 24px",
@@ -1033,8 +2107,14 @@ function Feed() {
               }}
             >
               {loading
-                ? "Loading..."
-                : "Load More Posts"}
+                ? t(
+                    "feed.loading",
+                    "Loading..."
+                  )
+                : t(
+                    "feed.loadMore",
+                    "Load More Posts"
+                  )}
             </button>
           </div>
         )}
