@@ -44,23 +44,29 @@ import { evaluateAccessibilityAnalytics } from "./AccessibilityAnalyticsEngine";
 import { evaluateAccessibilityIntegration } from "./AccessibilityIntegrationEngine";
 import { evaluateAccessibilityPersonalization } from "./AccessibilityPersonalizationEngine";
 
-export function evaluateAccessibilityManager(request) {
+export function evaluateAccessibilityManager(
+  request = {}
+) {
+  const accessibility =
+    evaluateAccessibility(request);
 
   return {
+    engine:
+      "Accessibility Manager",
 
-    engine: "Accessibility Manager",
-
-    accessibility:
-      evaluateAccessibility(request),
+    accessibility,
 
     profile:
-      evaluateAccessibilityProfile(request),
+      evaluateAccessibilityProfile(
+        request
+      ),
 
     preferences:
-      evaluateAccessibilityPreference(request),
+      evaluateAccessibilityPreference(
+        request
+      ),
 
     visual: {
-
       blind:
         evaluateBlindSupport(request),
 
@@ -68,30 +74,32 @@ export function evaluateAccessibilityManager(request) {
         evaluateLowVision(request),
 
       colorBlind:
-        evaluateColorBlindSupport(request),
+        evaluateColorBlindSupport(
+          request
+        ),
 
       screenReader:
         evaluateScreenReader(request),
 
       braille:
         evaluateBraille(request),
-
     },
 
     navigation: {
-
       voice:
         evaluateVoiceNavigation(request),
 
       keyboard:
-        evaluateKeyboardNavigation(request),
-
+        evaluateKeyboardNavigation(
+          request
+        ),
     },
 
     motor: {
-
       accessibility:
-        evaluateMotorAccessibility(request),
+        evaluateMotorAccessibility(
+          request
+        ),
 
       switchControl:
         evaluateSwitchControl(request),
@@ -100,14 +108,16 @@ export function evaluateAccessibilityManager(request) {
         evaluateEyeTracking(request),
 
       gestureControl:
-        evaluateGestureControl(request),
-
+        evaluateGestureControl(
+          request
+        ),
     },
 
     hearing: {
-
       accessibility:
-        evaluateHearingAccessibility(request),
+        evaluateHearingAccessibility(
+          request
+        ),
 
       deaf:
         evaluateDeafSupport(request),
@@ -116,23 +126,29 @@ export function evaluateAccessibilityManager(request) {
         evaluateCaption(request),
 
       transcription:
-        evaluateLiveTranscription(request),
+        evaluateLiveTranscription(
+          request
+        ),
 
       signLanguage:
         evaluateSignLanguage(request),
-
     },
 
     speech:
-      evaluateSpeechAccessibility(request),
+      evaluateSpeechAccessibility(
+        request
+      ),
 
     cognitive: {
-
       accessibility:
-        evaluateCognitiveAccessibility(request),
+        evaluateCognitiveAccessibility(
+          request
+        ),
 
       dyslexia:
-        evaluateDyslexiaSupport(request),
+        evaluateDyslexiaSupport(
+          request
+        ),
 
       autism:
         evaluateAutismSupport(request),
@@ -141,32 +157,39 @@ export function evaluateAccessibilityManager(request) {
         evaluateADHDSupport(request),
 
       simplifiedReading:
-        evaluateSimplifiedReading(request),
+        evaluateSimplifiedReading(
+          request
+        ),
 
       easyLanguage:
         evaluateEasyLanguage(request),
-
     },
 
     quality: {
-
       audit:
-        evaluateAccessibilityAudit(request),
+        evaluateAccessibilityAudit(
+          request
+        ),
 
       compliance:
-        evaluateAccessibilityCompliance(request),
+        evaluateAccessibilityCompliance(
+          request
+        ),
 
       analytics:
-        evaluateAccessibilityAnalytics(request),
-
+        evaluateAccessibilityAnalytics(
+          request
+        ),
     },
 
     integration:
-      evaluateAccessibilityIntegration(request),
+      evaluateAccessibilityIntegration(
+        request
+      ),
 
     personalization:
-      evaluateAccessibilityPersonalization(request),
-
+      evaluateAccessibilityPersonalization(
+        request
+      ),
   };
-
 }
