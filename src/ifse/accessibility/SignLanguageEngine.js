@@ -3,20 +3,64 @@
 // Sign Language Engine
 // =======================================================
 
-export function evaluateSignLanguage(request) {
+export function evaluateSignLanguage(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const deafNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "deaf" ||
+        need === "deaf support" ||
+        need === "hearing impairment" ||
+        need === "hearing disability" ||
+        need === "hearing accessibility" ||
+        need === "sign language"
+    );
 
   const enabled =
-    request.signLanguage === true ||
-    (request.accessibilityNeeds || []).includes("deaf");
+    source.signLanguage === true ||
+    deafNeed;
 
   return {
 
-    engine: "Sign Language Engine",
+    engine:
+      "Sign Language Engine",
 
     enabled,
 
     preferredLanguage:
-      request.preferredSignLanguage || "International Sign",
+      typeof source.preferredSignLanguage === "string" &&
+      source.preferredSignLanguage.trim()
+        ? source.preferredSignLanguage.trim()
+        : "International Sign",
 
     supportedLanguages: {
 
@@ -50,27 +94,37 @@ export function evaluateSignLanguage(request) {
 
     features: {
 
-      signLanguageInterpreter: enabled,
+      signLanguageInterpreter:
+        enabled,
 
-      aiSignLanguageTranslation: enabled,
+      aiSignLanguageTranslation:
+        enabled,
 
-      signLanguageAvatar: enabled,
+      signLanguageAvatar:
+        enabled,
 
-      signLanguageDictionary: enabled,
+      signLanguageDictionary:
+        enabled,
 
-      videoSigningSupport: enabled,
+      videoSigningSupport:
+        enabled,
 
-      liveSigningSupport: enabled,
+      liveSigningSupport:
+        enabled,
 
-      educationalSigning: enabled,
+      educationalSigning:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
