@@ -3,38 +3,87 @@
 // Blind Support Engine
 // =======================================================
 
-export function evaluateBlindSupport(request) {
+export function evaluateBlindSupport(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("blind");
+    normalizedNeeds.some(
+      (need) =>
+        need === "blind" ||
+        need === "blindness" ||
+        need === "blind support" ||
+        need === "blind user" ||
+        need === "blind users" ||
+        need === "visually blind" ||
+        need === "visual blindness" ||
+        need === "total blindness"
+    );
 
   return {
 
-    engine: "Blind Support Engine",
+    engine:
+      "Blind Support Engine",
 
     enabled,
 
     features: {
 
-      screenReader: enabled,
+      screenReader:
+        enabled,
 
-      braille: enabled,
+      braille:
+        enabled,
 
-      voiceNavigation: enabled,
+      voiceNavigation:
+        enabled,
 
-      imageDescriptions: enabled,
+      imageDescriptions:
+        enabled,
 
-      audioFeedback: enabled,
+      audioFeedback:
+        enabled,
 
-      keyboardNavigation: enabled,
+      keyboardNavigation:
+        enabled,
 
     },
 
-    score: enabled ? 100 : 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
