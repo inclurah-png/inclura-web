@@ -3,53 +3,108 @@
 // Motor Accessibility Engine
 // =======================================================
 
-export function evaluateMotorAccessibility(request) {
+export function evaluateMotorAccessibility(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const motorNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "motor impairment" ||
+        need === "motorimpairment" ||
+        need === "motor disability" ||
+        need === "motor accessibility" ||
+        need === "mobility impairment" ||
+        need === "mobility disability" ||
+        need === "physical disability"
+    );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("motorImpairment");
+    motorNeed;
 
   return {
 
-    engine: "Motor Accessibility Engine",
+    engine:
+      "Motor Accessibility Engine",
 
     enabled,
 
     profile: {
 
       motorImpairment:
-        (request.accessibilityNeeds || []).includes("motorImpairment"),
+        enabled,
 
     },
 
     features: {
 
-      keyboardNavigation: enabled,
+      keyboardNavigation:
+        enabled,
 
-      voiceNavigation: enabled,
+      voiceNavigation:
+        enabled,
 
-      switchControl: enabled,
+      switchControl:
+        enabled,
 
-      eyeTracking: enabled,
+      eyeTracking:
+        enabled,
 
-      gestureControl: enabled,
+      gestureControl:
+        enabled,
 
-      dwellClick: enabled,
+      dwellClick:
+        enabled,
 
-      stickyKeys: enabled,
+      stickyKeys:
+        enabled,
 
-      slowKeys: enabled,
+      slowKeys:
+        enabled,
 
-      repeatKeys: enabled,
+      repeatKeys:
+        enabled,
 
-      customizableInput: enabled,
+      customizableInput:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
