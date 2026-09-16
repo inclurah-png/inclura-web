@@ -3,68 +3,132 @@
 // Autism Support Engine
 // =======================================================
 
-export function evaluateAutismSupport(request) {
+export function evaluateAutismSupport(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const autismNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "autism" ||
+        need === "autism spectrum" ||
+        need === "autism spectrum disorder" ||
+        need === "autistic" ||
+        need === "autism support"
+    );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("autism");
+    source.autismSupport === true ||
+    source.autism === true ||
+    autismNeed;
 
   return {
 
-    engine: "Autism Support Engine",
+    engine:
+      "Autism Support Engine",
 
     enabled,
 
     features: {
 
-      predictableNavigation: enabled,
+      predictableNavigation:
+        enabled,
 
-      simplifiedInterface: enabled,
+      simplifiedInterface:
+        enabled,
 
-      reducedAnimations: enabled,
+      reducedAnimations:
+        enabled,
 
-      sensoryFriendlyMode: enabled,
+      sensoryFriendlyMode:
+        enabled,
 
-      consistentLayouts: enabled,
+      consistentLayouts:
+        enabled,
 
-      customizableColors: enabled,
+      customizableColors:
+        enabled,
 
-      lowStimulusMode: enabled,
+      lowStimulusMode:
+        enabled,
 
-      focusMode: enabled,
+      focusMode:
+        enabled,
 
-      visualSchedules: enabled,
+      visualSchedules:
+        enabled,
 
-      routineReminders: enabled,
+      routineReminders:
+        enabled,
 
-      socialCommunicationSupport: enabled,
+      socialCommunicationSupport:
+        enabled,
 
-      emotionRecognitionAssistance: enabled,
+      emotionRecognitionAssistance:
+        enabled,
 
-      visualInstructions: enabled,
+      visualInstructions:
+        enabled,
 
-      stepByStepGuidance: enabled,
+      stepByStepGuidance:
+        enabled,
 
-      customizableNotifications: enabled,
+      customizableNotifications:
+        enabled,
 
     },
 
     sensorySupport: {
 
-      flashingContentReduction: enabled,
+      flashingContentReduction:
+        enabled,
 
-      soundReduction: enabled,
+      soundReduction:
+        enabled,
 
-      vibrationControl: enabled,
+      vibrationControl:
+        enabled,
 
-      brightnessAdjustment: enabled,
+      brightnessAdjustment:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
