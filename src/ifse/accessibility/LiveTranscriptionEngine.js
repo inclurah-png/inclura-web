@@ -3,64 +3,125 @@
 // Live Transcription Engine
 // =======================================================
 
-export function evaluateLiveTranscription(request) {
+export function evaluateLiveTranscription(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const hearingNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "deaf" ||
+        need === "deaf support" ||
+        need === "hard of hearing" ||
+        need === "hearing impairment" ||
+        need === "hearing disability" ||
+        need === "hearing accessibility" ||
+        need === "live transcription" ||
+        need === "transcription"
+    );
 
   const enabled =
-    request.liveTranscription === true ||
-    (request.accessibilityNeeds || []).includes("deaf") ||
-    (request.accessibilityNeeds || []).includes("hardOfHearing");
+    source.liveTranscription === true ||
+    hearingNeed;
 
   return {
 
-    engine: "Live Transcription Engine",
+    engine:
+      "Live Transcription Engine",
 
     enabled,
 
     features: {
 
-      realtimeSpeechToText: enabled,
+      realtimeSpeechToText:
+        enabled,
 
-      multilingualTranscription: enabled,
+      multilingualTranscription:
+        enabled,
 
-      speakerIdentification: enabled,
+      speakerIdentification:
+        enabled,
 
-      punctuationRestoration: enabled,
+      punctuationRestoration:
+        enabled,
 
-      timestampSupport: enabled,
+      timestampSupport:
+        enabled,
 
-      transcriptDownload: enabled,
+      transcriptDownload:
+        enabled,
 
-      transcriptSearch: enabled,
+      transcriptSearch:
+        enabled,
 
-      transcriptHistory: enabled,
+      transcriptHistory:
+        enabled,
 
-      offlineTranscription: enabled,
+      offlineTranscription:
+        enabled,
 
     },
 
     supportedSources: {
 
-      voiceCalls: true,
+      voiceCalls:
+        true,
 
-      videoCalls: true,
+      videoCalls:
+        true,
 
-      liveStreams: true,
+      liveStreams:
+        true,
 
-      audioPosts: true,
+      audioPosts:
+        true,
 
-      meetings: true,
+      meetings:
+        true,
 
-      podcasts: true,
+      podcasts:
+        true,
 
-      voiceMessages: true,
+      voiceMessages:
+        true,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
