@@ -3,70 +3,135 @@
 // ADHD Support Engine
 // =======================================================
 
-export function evaluateADHDSupport(request) {
+export function evaluateADHDSupport(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const adhdNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "adhd" ||
+        need === "adhd support" ||
+        need === "attention deficit hyperactivity disorder" ||
+        need === "attention deficit" ||
+        need === "executive function support"
+    );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("adhd");
+    source.adhdSupport === true ||
+    source.adhd === true ||
+    adhdNeed;
 
   return {
 
-    engine: "ADHD Support Engine",
+    engine:
+      "ADHD Support Engine",
 
     enabled,
 
     features: {
 
-      focusMode: enabled,
+      focusMode:
+        enabled,
 
-      distractionReduction: enabled,
+      distractionReduction:
+        enabled,
 
-      notificationFiltering: enabled,
+      notificationFiltering:
+        enabled,
 
-      taskBreakdown: enabled,
+      taskBreakdown:
+        enabled,
 
-      stepByStepGuidance: enabled,
+      stepByStepGuidance:
+        enabled,
 
-      visualTimers: enabled,
+      visualTimers:
+        enabled,
 
-      focusSessions: enabled,
+      focusSessions:
+        enabled,
 
-      reminderScheduling: enabled,
+      reminderScheduling:
+        enabled,
 
-      executiveFunctionSupport: enabled,
+      executiveFunctionSupport:
+        enabled,
 
-      priorityHighlighting: enabled,
+      priorityHighlighting:
+        enabled,
 
-      readingFocusTools: enabled,
+      readingFocusTools:
+        enabled,
 
-      progressTracking: enabled,
+      progressTracking:
+        enabled,
 
-      customizableWorkspace: enabled,
+      customizableWorkspace:
+        enabled,
 
-      quickResume: enabled,
+      quickResume:
+        enabled,
 
-      routineBuilder: enabled,
+      routineBuilder:
+        enabled,
 
     },
 
     productivitySupport: {
 
-      pomodoroTimer: enabled,
+      pomodoroTimer:
+        enabled,
 
-      smartReminders: enabled,
+      smartReminders:
+        enabled,
 
-      habitTracking: enabled,
+      habitTracking:
+        enabled,
 
-      goalTracking: enabled,
+      goalTracking:
+        enabled,
 
-      calendarIntegration: enabled,
+      calendarIntegration:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
