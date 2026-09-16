@@ -3,70 +3,131 @@
 // Easy Language Engine
 // =======================================================
 
-export function evaluateEasyLanguage(request) {
+export function evaluateEasyLanguage(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const cognitiveNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "cognitive disability" ||
+        need === "cognitive impairment" ||
+        need === "cognitive accessibility" ||
+        need === "dyslexia" ||
+        need === "autism" ||
+        need === "adhd" ||
+        need === "easy language" ||
+        need === "plain language"
+    );
 
   const enabled =
-    request.easyLanguage === true ||
-    (request.accessibilityNeeds || []).includes("cognitiveDisability") ||
-    (request.accessibilityNeeds || []).includes("dyslexia") ||
-    (request.accessibilityNeeds || []).includes("autism") ||
-    (request.accessibilityNeeds || []).includes("adhd");
+    source.easyLanguage === true ||
+    cognitiveNeed;
 
   return {
 
-    engine: "Easy Language Engine",
+    engine:
+      "Easy Language Engine",
 
     enabled,
 
     features: {
 
-      aiPlainLanguage: enabled,
+      aiPlainLanguage:
+        enabled,
 
-      sentenceSimplification: enabled,
+      sentenceSimplification:
+        enabled,
 
-      vocabularySimplification: enabled,
+      vocabularySimplification:
+        enabled,
 
-      conceptExplanation: enabled,
+      conceptExplanation:
+        enabled,
 
-      abbreviationExpansion: enabled,
+      abbreviationExpansion:
+        enabled,
 
-      difficultWordDefinitions: enabled,
+      difficultWordDefinitions:
+        enabled,
 
-      multilingualEasyLanguage: enabled,
+      multilingualEasyLanguage:
+        enabled,
 
-      creatorContentPreservation: true,
+      creatorContentPreservation:
+        true,
 
-      toggleOriginalContent: true,
+      toggleOriginalContent:
+        true,
 
-      userControlledTranslation: true,
+      userControlledTranslation:
+        true,
 
     },
 
     supportedContent: {
 
-      posts: true,
+      posts:
+        true,
 
-      comments: true,
+      comments:
+        true,
 
-      messages: true,
+      messages:
+        true,
 
-      marketplace: true,
+      marketplace:
+        true,
 
-      documentation: true,
+      documentation:
+        true,
 
-      learningContent: true,
+      learningContent:
+        true,
 
-      verificationForms: true,
+      verificationForms:
+        true,
 
-      announcements: true,
+      announcements:
+        true,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
