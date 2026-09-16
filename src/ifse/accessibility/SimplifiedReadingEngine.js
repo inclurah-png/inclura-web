@@ -3,79 +3,144 @@
 // Simplified Reading Engine
 // =======================================================
 
-export function evaluateSimplifiedReading(request) {
+export function evaluateSimplifiedReading(request = {}) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const cognitiveNeed =
+    normalizedNeeds.some(
+      (need) =>
+        need === "cognitive disability" ||
+        need === "cognitive impairment" ||
+        need === "cognitive accessibility" ||
+        need === "dyslexia" ||
+        need === "autism" ||
+        need === "adhd" ||
+        need === "simplified reading" ||
+        need === "easy language"
+    );
 
   const enabled =
-    request.simplifiedReading === true ||
-    (request.accessibilityNeeds || []).includes("cognitiveDisability") ||
-    (request.accessibilityNeeds || []).includes("dyslexia") ||
-    (request.accessibilityNeeds || []).includes("autism") ||
-    (request.accessibilityNeeds || []).includes("adhd");
+    source.simplifiedReading === true ||
+    cognitiveNeed;
 
   return {
 
-    engine: "Simplified Reading Engine",
+    engine:
+      "Simplified Reading Engine",
 
     enabled,
 
     features: {
 
-      plainLanguage: enabled,
+      plainLanguage:
+        enabled,
 
-      shortSentences: enabled,
+      shortSentences:
+        enabled,
 
-      paragraphChunking: enabled,
+      paragraphChunking:
+        enabled,
 
-      keyPointHighlighting: enabled,
+      keyPointHighlighting:
+        enabled,
 
-      readingSummaries: enabled,
+      readingSummaries:
+        enabled,
 
-      progressiveDisclosure: enabled,
+      progressiveDisclosure:
+        enabled,
 
-      simplifiedNavigation: enabled,
+      simplifiedNavigation:
+        enabled,
 
-      visualReadingGuides: enabled,
+      visualReadingGuides:
+        enabled,
 
-      adjustableReadingWidth: enabled,
+      adjustableReadingWidth:
+        enabled,
 
-      customizableReadingLayout: enabled,
+      customizableReadingLayout:
+        enabled,
 
-      distractionFreeReading: enabled,
+      distractionFreeReading:
+        enabled,
 
-      imageAssistedReading: enabled,
+      imageAssistedReading:
+        enabled,
 
-      glossarySupport: enabled,
+      glossarySupport:
+        enabled,
 
-      aiContentSimplification: enabled,
+      aiContentSimplification:
+        enabled,
 
     },
 
     supportedContent: {
 
-      posts: true,
+      posts:
+        true,
 
-      articles: true,
+      articles:
+        true,
 
-      messages: true,
+      messages:
+        true,
 
-      comments: true,
+      comments:
+        true,
 
-      documentation: true,
+      documentation:
+        true,
 
-      educationalContent: true,
+      educationalContent:
+        true,
 
-      verificationForms: true,
+      verificationForms:
+        true,
 
-      marketplaceDescriptions: true,
+      marketplaceDescriptions:
+        true,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
-    }
+}
