@@ -3,65 +3,144 @@
 // Cognitive Accessibility Engine
 // =======================================================
 
-export function evaluateCognitiveAccessibility(request) {
+export function evaluateCognitiveAccessibility(
+  request = {}
+) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const rawNeeds =
+    source.accessibilityNeeds;
+
+  const needs = Array.isArray(rawNeeds)
+    ? rawNeeds
+    : typeof rawNeeds === "string"
+      ? rawNeeds.split(",")
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[-_]+/g, " ")
+            .replace(/\s+/g, " ")
+      );
+
+  const cognitiveDisability =
+    normalizedNeeds.some(
+      (need) =>
+        need === "cognitive disability" ||
+        need === "cognitive impairment" ||
+        need === "cognitive accessibility"
+    );
+
+  const dyslexia =
+    normalizedNeeds.some(
+      (need) =>
+        need === "dyslexia" ||
+        need === "dyslexia support"
+    );
+
+  const autism =
+    normalizedNeeds.some(
+      (need) =>
+        need === "autism" ||
+        need === "autism spectrum" ||
+        need === "autism spectrum disorder" ||
+        need === "autistic"
+    );
+
+  const adhd =
+    normalizedNeeds.some(
+      (need) =>
+        need === "adhd" ||
+        need === "adhd support" ||
+        need === "attention deficit" ||
+        need ===
+          "attention deficit hyperactivity disorder"
+    );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("cognitiveDisability") ||
-    (request.accessibilityNeeds || []).includes("dyslexia") ||
-    (request.accessibilityNeeds || []).includes("autism") ||
-    (request.accessibilityNeeds || []).includes("adhd");
+    cognitiveDisability ||
+    dyslexia ||
+    autism ||
+    adhd;
 
   return {
 
-    engine: "Cognitive Accessibility Engine",
+    engine:
+      "Cognitive Accessibility Engine",
 
     enabled,
 
     profile: {
 
       cognitiveDisability:
-        (request.accessibilityNeeds || []).includes("cognitiveDisability"),
+        cognitiveDisability,
 
       dyslexia:
-        (request.accessibilityNeeds || []).includes("dyslexia"),
+        dyslexia,
 
       autism:
-        (request.accessibilityNeeds || []).includes("autism"),
+        autism,
 
       adhd:
-        (request.accessibilityNeeds || []).includes("adhd"),
+        adhd,
 
     },
 
     features: {
 
-      simplifiedReading: enabled,
+      simplifiedReading:
+        enabled,
 
-      easyLanguage: enabled,
+      easyLanguage:
+        enabled,
 
-      distractionReduction: enabled,
+      distractionReduction:
+        enabled,
 
-      readingAssistance: enabled,
+      readingAssistance:
+        enabled,
 
-      focusMode: enabled,
+      focusMode:
+        enabled,
 
-      memorySupport: enabled,
+      memorySupport:
+        enabled,
 
-      stepByStepGuidance: enabled,
+      stepByStepGuidance:
+        enabled,
 
-      predictableNavigation: enabled,
+      predictableNavigation:
+        enabled,
 
-      visualSchedules: enabled,
+      visualSchedules:
+        enabled,
 
-      personalizedLearningSupport: enabled,
+      personalizedLearningSupport:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
