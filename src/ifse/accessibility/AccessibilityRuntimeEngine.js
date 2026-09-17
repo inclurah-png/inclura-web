@@ -1,21 +1,55 @@
-import { evaluateAccessibilityProfile } from "./AccessibilityProfileEngine";
-import { evaluateAccessibilityPreference } from "./AccessibilityPreferenceEngine";
+import {
+  evaluateAccessibilityProfile,
+} from "./AccessibilityProfileEngine";
 
-import { evaluateBlindSupport } from "./BlindSupportEngine";
-import { evaluateLowVision } from "./LowVisionEngine";
-import { evaluateColorBlindSupport } from "./ColorBlindSupportEngine";
+import {
+  evaluateAccessibilityPreference,
+} from "./AccessibilityPreferenceEngine";
 
-import { evaluateScreenReader } from "./ScreenReaderEngine";
-import { evaluateBraille } from "./BrailleEngine";
+import {
+  evaluateBlindSupport,
+} from "./BlindSupportEngine";
 
-import { evaluateVoiceNavigation } from "./VoiceNavigationEngine";
-import { evaluateKeyboardNavigation } from "./KeyboardNavigationEngine";
+import {
+  evaluateLowVision,
+} from "./LowVisionEngine";
 
-import { evaluateHearingAccessibility } from "./HearingAccessibilityEngine";
-import { evaluateSpeechAccessibility } from "./SpeechAccessibilityEngine";
+import {
+  evaluateColorBlindSupport,
+} from "./ColorBlindSupportEngine";
 
-import { evaluateMotorAccessibility } from "./MotorAccessibilityEngine";
-import { evaluateCognitiveAccessibility } from "./CognitiveAccessibilityEngine";
+import {
+  evaluateScreenReader,
+} from "./ScreenReaderEngine";
+
+import {
+  evaluateBraille,
+} from "./BrailleEngine";
+
+import {
+  evaluateVoiceNavigation,
+} from "./VoiceNavigationEngine";
+
+import {
+  evaluateKeyboardNavigation,
+} from "./KeyboardNavigationEngine";
+
+import {
+  evaluateHearingAccessibility,
+} from "./HearingAccessibilityEngine";
+
+import {
+  evaluateSpeechAccessibility,
+} from "./SpeechAccessibilityEngine";
+
+import {
+  evaluateMotorAccessibility,
+} from "./MotorAccessibilityEngine";
+
+import {
+  evaluateCognitiveAccessibility,
+} from "./CognitiveAccessibilityEngine";
+
 // =======================================================
 // Inclura Fortress Security Engine (IFSE)
 // Accessibility Runtime Engine
@@ -34,19 +68,33 @@ let runtimeState = {
   lastUpdated: null,
 
 };
+
 const runtimeListeners = [];
 
-export function initializeAccessibilityRuntime(user) {
+
+export function initializeAccessibilityRuntime(
+  user = null
+) {
+
+  const normalizedUser =
+    user && typeof user === "object"
+      ? user
+      : null;
 
   runtimeState.initialized = true;
 
-  runtimeState.currentUser = user;
+  runtimeState.currentUser =
+    normalizedUser;
 
-  runtimeState.lastUpdated = new Date().toISOString();
+  runtimeState.lastUpdated =
+    new Date().toISOString();
+
+  notifyAccessibilityListeners();
 
   return runtimeState;
 
 }
+
 
 export function getAccessibilityRuntime() {
 
@@ -54,33 +102,61 @@ export function getAccessibilityRuntime() {
 
 }
 
-export function updateAccessibilityRuntime(update) {
+
+export function updateAccessibilityRuntime(
+  update = {}
+) {
+
+  const normalizedUpdate =
+    update && typeof update === "object"
+      ? update
+      : {};
 
   runtimeState = {
 
     ...runtimeState,
 
-    ...update,
+    ...normalizedUpdate,
 
-    lastUpdated: new Date().toISOString(),
+    lastUpdated:
+      new Date().toISOString(),
 
   };
+
   notifyAccessibilityListeners();
-  
+
   return runtimeState;
 
 }
-export function subscribeAccessibility(listener) {
+
+
+export function subscribeAccessibility(
+  listener
+) {
+
+  if (
+    typeof listener !== "function"
+  ) {
+
+    return () => {};
+
+  }
 
   runtimeListeners.push(listener);
 
   return () => {
 
-    const index = runtimeListeners.indexOf(listener);
+    const index =
+      runtimeListeners.indexOf(
+        listener
+      );
 
     if (index >= 0) {
 
-      runtimeListeners.splice(index, 1);
+      runtimeListeners.splice(
+        index,
+        1
+      );
 
     }
 
@@ -88,15 +164,31 @@ export function subscribeAccessibility(listener) {
 
 }
 
+
 export function notifyAccessibilityListeners() {
 
-  runtimeListeners.forEach((listener) => {
+  runtimeListeners.forEach(
+    (listener) => {
 
-    listener(runtimeState);
+      try {
 
-  });
+        listener(runtimeState);
+
+      } catch (error) {
+
+        console.error(
+          "IFSE Accessibility Runtime listener error:",
+          error
+        );
+
+      }
+
+    }
+  );
 
 }
+
+
 export function shutdownAccessibilityRuntime() {
 
   runtimeState = {
@@ -112,62 +204,126 @@ export function shutdownAccessibilityRuntime() {
     lastUpdated: null,
 
   };
-return runtimeState;
-  }
 
-  export function loadAccessibilityModules(user) {
+  notifyAccessibilityListeners();
+
+  return runtimeState;
+
+}
+
+
+export function loadAccessibilityModules(
+  user = null
+) {
+
+  const normalizedUser =
+    user && typeof user === "object"
+      ? user
+      : runtimeState.currentUser;
+
+  const profile =
+    evaluateAccessibilityProfile(
+      normalizedUser
+    );
+
+  const preferences =
+    evaluateAccessibilityPreference(
+      normalizedUser
+    );
+
+  const blindSupport =
+    evaluateBlindSupport(
+      normalizedUser
+    );
+
+  const lowVision =
+    evaluateLowVision(
+      normalizedUser
+    );
+
+  const colorBlindSupport =
+    evaluateColorBlindSupport(
+      normalizedUser
+    );
+
+  const screenReader =
+    evaluateScreenReader(
+      normalizedUser
+    );
+
+  const braille =
+    evaluateBraille(
+      normalizedUser
+    );
+
+  const voiceNavigation =
+    evaluateVoiceNavigation(
+      normalizedUser
+    );
+
+  const keyboardNavigation =
+    evaluateKeyboardNavigation(
+      normalizedUser
+    );
+
+  const hearingAccessibility =
+    evaluateHearingAccessibility(
+      normalizedUser
+    );
+
+  const speechAccessibility =
+    evaluateSpeechAccessibility(
+      normalizedUser
+    );
+
+  const motorAccessibility =
+    evaluateMotorAccessibility(
+      normalizedUser
+    );
+
+  const cognitiveAccessibility =
+    evaluateCognitiveAccessibility(
+      normalizedUser
+    );
 
   runtimeState.accessibilityProfile =
-    evaluateAccessibilityProfile(user);
+    profile;
 
   runtimeState.activeModules = {
 
-    profile:
-      evaluateAccessibilityProfile(user),
+    profile,
 
-    preferences:
-      evaluateAccessibilityPreference(user),
+    preferences,
 
-    blindSupport:
-      evaluateBlindSupport(user),
+    blindSupport,
 
-    lowVision:
-      evaluateLowVision(user),
+    lowVision,
 
-    colorBlindSupport:
-      evaluateColorBlindSupport(user),
+    colorBlindSupport,
 
-    screenReader:
-      evaluateScreenReader(user),
+    screenReader,
 
-    braille:
-      evaluateBraille(user),
+    braille,
 
-    voiceNavigation:
-      evaluateVoiceNavigation(user),
+    voiceNavigation,
 
-    keyboardNavigation:
-      evaluateKeyboardNavigation(user),
+    keyboardNavigation,
 
-    hearingAccessibility:
-      evaluateHearingAccessibility(user),
+    hearingAccessibility,
 
-    speechAccessibility:
-      evaluateSpeechAccessibility(user),
+    speechAccessibility,
 
-    motorAccessibility:
-      evaluateMotorAccessibility(user),
+    motorAccessibility,
 
-    cognitiveAccessibility:
-      evaluateCognitiveAccessibility(user),
+    cognitiveAccessibility,
 
   };
 
   runtimeState.lastUpdated =
     new Date().toISOString();
-    
-notifyAccessibilityListeners();
-    
+
+  notifyAccessibilityListeners();
+
   return runtimeState;
 
-  }
+}
