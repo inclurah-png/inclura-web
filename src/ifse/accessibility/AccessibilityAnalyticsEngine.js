@@ -3,61 +3,83 @@
 // Accessibility Analytics Engine
 // =======================================================
 
-export function evaluateAccessibilityAnalytics(request) {
+export function evaluateAccessibilityAnalytics(
+  request = {}
+) {
 
   return {
 
-    engine: "Accessibility Analytics Engine",
+    engine:
+      "Accessibility Analytics Engine",
 
-    enabled: true,
+    enabled:
+      true,
 
     metrics: {
 
-      accessibilityProfiles: true,
+      accessibilityProfiles:
+        true,
 
-      featureUsage: true,
+      featureUsage:
+        true,
 
-      accessibilityAuditResults: true,
+      accessibilityAuditResults:
+        true,
 
-      complianceReports: true,
+      complianceReports:
+        true,
 
-      accessibilityErrorTrends: true,
+      accessibilityErrorTrends:
+        true,
 
-      accessibilityImprovementTrends: true,
+      accessibilityImprovementTrends:
+        true,
 
-      assistiveTechnologyUsage: true,
+      assistiveTechnologyUsage:
+        true,
 
-      contentAccessibilityScore: true,
+      contentAccessibilityScore:
+        true,
 
-      platformAccessibilityScore: true,
+      platformAccessibilityScore:
+        true,
 
     },
 
     dashboards: {
 
-      administratorDashboard: true,
+      administratorDashboard:
+        true,
 
-      developerDashboard: true,
+      developerDashboard:
+        true,
 
-      accessibilityDashboard: true,
+      accessibilityDashboard:
+        true,
 
     },
 
     privacy: {
 
-      anonymizedStatistics: true,
+      anonymizedStatistics:
+        true,
 
-      noPersonalAccessibilityDisclosure: true,
+      noPersonalAccessibilityDisclosure:
+        true,
 
-      aggregatedReportingOnly: true,
+      aggregatedReportingOnly:
+        true,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
-    issues: [],
+    issues:
+      [],
 
   };
 
