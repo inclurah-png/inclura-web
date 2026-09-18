@@ -3,55 +3,109 @@
 // Eye Tracking Engine
 // =======================================================
 
-export function evaluateEyeTracking(request) {
+export function evaluateEyeTracking(
+  request = {}
+) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const needs =
+    Array.isArray(
+      source.accessibilityNeeds
+    )
+      ? source.accessibilityNeeds
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+      );
 
   const enabled =
-    request.eyeTracking === true ||
-    (request.accessibilityNeeds || []).includes("motorImpairment");
+    source.eyeTracking === true ||
+    source.eyeTrackingEnabled === true ||
+    normalizedNeeds.some(
+      (need) =>
+        need === "motorimpairment" ||
+        need === "motor impairment" ||
+        need === "motor disability" ||
+        need === "motor accessibility" ||
+        need === "eye tracking" ||
+        need === "gaze control" ||
+        need === "gaze navigation"
+    );
 
   return {
 
-    engine: "Eye Tracking Engine",
+    engine:
+      "Eye Tracking Engine",
 
     enabled,
 
     features: {
 
-      gazeNavigation: enabled,
+      gazeNavigation:
+        enabled,
 
-      dwellClick: enabled,
+      dwellClick:
+        enabled,
 
-      eyeKeyboard: enabled,
+      eyeKeyboard:
+        enabled,
 
-      gazeScrolling: enabled,
+      gazeScrolling:
+        enabled,
 
-      gazeSelection: enabled,
+      gazeSelection:
+        enabled,
 
-      focusTracking: enabled,
+      focusTracking:
+        enabled,
 
-      calibrationSupport: enabled,
+      calibrationSupport:
+        enabled,
 
-      blinkActivation: enabled,
+      blinkActivation:
+        enabled,
 
-      smoothPointerControl: enabled,
+      smoothPointerControl:
+        enabled,
 
     },
 
     compatibility: {
 
-      tobii: true,
+      tobii:
+        true,
 
-      windowsEyeControl: true,
+      windowsEyeControl:
+        true,
 
-      webGaze: true,
+      webGaze:
+        true,
 
-      futureDevices: true,
+      futureDevices:
+        true,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
     issues: [],
 
