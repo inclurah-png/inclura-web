@@ -3,65 +3,124 @@
 // Gesture Control Engine
 // =======================================================
 
-export function evaluateGestureControl(request) {
+export function evaluateGestureControl(
+  request = {}
+) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const needs =
+    Array.isArray(
+      source.accessibilityNeeds
+    )
+      ? source.accessibilityNeeds
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+      );
 
   const enabled =
-    request.gestureControl === true ||
-    (request.accessibilityNeeds || []).includes("motorImpairment");
+    source.gestureControl === true ||
+    source.gestureControlEnabled === true ||
+    normalizedNeeds.some(
+      (need) =>
+        need === "motorimpairment" ||
+        need === "motor impairment" ||
+        need === "motor disability" ||
+        need === "motor accessibility" ||
+        need === "gesture control" ||
+        need === "gesture navigation" ||
+        need === "hand control"
+    );
 
   return {
 
-    engine: "Gesture Control Engine",
+    engine:
+      "Gesture Control Engine",
 
     enabled,
 
     features: {
 
-      handGestureRecognition: enabled,
+      handGestureRecognition:
+        enabled,
 
-      touchFreeNavigation: enabled,
+      touchFreeNavigation:
+        enabled,
 
-      airGestures: enabled,
+      airGestures:
+        enabled,
 
-      facialGestureSupport: enabled,
+      facialGestureSupport:
+        enabled,
 
-      customGestures: enabled,
+      customGestures:
+        enabled,
 
-      gestureShortcuts: enabled,
+      gestureShortcuts:
+        enabled,
 
-      gestureConfirmation: enabled,
+      gestureConfirmation:
+        enabled,
 
-      gestureCalibration: enabled,
+      gestureCalibration:
+        enabled,
 
-      cameraBasedControl: enabled,
+      cameraBasedControl:
+        enabled,
 
-      offlineGestureRecognition: enabled,
+      offlineGestureRecognition:
+        enabled,
 
     },
 
     supportedActions: {
 
-      scroll: enabled,
+      scroll:
+        enabled,
 
-      click: enabled,
+      click:
+        enabled,
 
-      select: enabled,
+      select:
+        enabled,
 
-      back: enabled,
+      back:
+        enabled,
 
-      home: enabled,
+      home:
+        enabled,
 
-      zoom: enabled,
+      zoom:
+        enabled,
 
-      mediaControl: enabled,
+      mediaControl:
+        enabled,
 
-      emergencyShortcut: enabled,
+      emergencyShortcut:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
     issues: [],
 
