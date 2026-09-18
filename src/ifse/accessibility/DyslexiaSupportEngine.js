@@ -3,62 +3,119 @@
 // Dyslexia Support Engine
 // =======================================================
 
-export function evaluateDyslexiaSupport(request) {
+export function evaluateDyslexiaSupport(
+  request = {}
+) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const needs =
+    Array.isArray(
+      source.accessibilityNeeds
+    )
+      ? source.accessibilityNeeds
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+      );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("dyslexia");
+    source.dyslexiaSupport === true ||
+    source.dyslexia === true ||
+    normalizedNeeds.some(
+      (need) =>
+        need === "dyslexia" ||
+        need === "dyslexic" ||
+        need === "dyslexia support" ||
+        need === "reading difficulty" ||
+        need === "reading difficulties"
+    );
 
   return {
 
-    engine: "Dyslexia Support Engine",
+    engine:
+      "Dyslexia Support Engine",
 
     enabled,
 
     features: {
 
-      dyslexiaFriendlyFonts: enabled,
+      dyslexiaFriendlyFonts:
+        enabled,
 
-      adjustableLetterSpacing: enabled,
+      adjustableLetterSpacing:
+        enabled,
 
-      adjustableWordSpacing: enabled,
+      adjustableWordSpacing:
+        enabled,
 
-      adjustableLineSpacing: enabled,
+      adjustableLineSpacing:
+        enabled,
 
-      readingRuler: enabled,
+      readingRuler:
+        enabled,
 
-      syllableHighlighting: enabled,
+      syllableHighlighting:
+        enabled,
 
-      wordHighlighting: enabled,
+      wordHighlighting:
+        enabled,
 
-      sentenceHighlighting: enabled,
+      sentenceHighlighting:
+        enabled,
 
-      synchronizedTextToSpeech: enabled,
+      synchronizedTextToSpeech:
+        enabled,
 
-      aiReadingAssistant: enabled,
+      aiReadingAssistant:
+        enabled,
 
-      readingProgressTracking: enabled,
+      readingProgressTracking:
+        enabled,
 
-      pronunciationSupport: enabled,
+      pronunciationSupport:
+        enabled,
 
-      simplifiedLayout: enabled,
+      simplifiedLayout:
+        enabled,
 
-      customizableReadingTheme: enabled,
+      customizableReadingTheme:
+        enabled,
 
     },
 
     recommendations: {
 
-      font: "OpenDyslexic",
+      font:
+        "OpenDyslexic",
 
-      spacing: "comfortable",
+      spacing:
+        "comfortable",
 
-      theme: "highContrast",
+      theme:
+        "highContrast",
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
     issues: [],
 
