@@ -3,40 +3,89 @@
 // Deaf Support Engine
 // =======================================================
 
-export function evaluateDeafSupport(request) {
+export function evaluateDeafSupport(
+  request = {}
+) {
+
+  const source =
+    request && typeof request === "object"
+      ? request
+      : {};
+
+  const needs =
+    Array.isArray(
+      source.accessibilityNeeds
+    )
+      ? source.accessibilityNeeds
+      : [];
+
+  const normalizedNeeds =
+    needs
+      .filter(
+        (need) =>
+          typeof need === "string"
+      )
+      .map(
+        (need) =>
+          need
+            .trim()
+            .toLowerCase()
+            .replace(/[_-]+/g, " ")
+      );
 
   const enabled =
-    (request.accessibilityNeeds || []).includes("deaf");
+    source.deafSupport === true ||
+    source.deaf === true ||
+    normalizedNeeds.some(
+      (need) =>
+        need === "deaf" ||
+        need === "deafness" ||
+        need === "deaf support" ||
+        need === "hearing impaired" ||
+        need === "hearing impairment" ||
+        need === "deaf or hard of hearing"
+    );
 
   return {
 
-    engine: "Deaf Support Engine",
+    engine:
+      "Deaf Support Engine",
 
     enabled,
 
     features: {
 
-      captions: enabled,
+      captions:
+        enabled,
 
-      liveTranscription: enabled,
+      liveTranscription:
+        enabled,
 
-      signLanguage: enabled,
+      signLanguage:
+        enabled,
 
-      speechToText: enabled,
+      speechToText:
+        enabled,
 
-      visualNotifications: enabled,
+      visualNotifications:
+        enabled,
 
-      vibrationAlerts: enabled,
+      vibrationAlerts:
+        enabled,
 
-      textMessagingPriority: enabled,
+      textMessagingPriority:
+        enabled,
 
-      mediaCaptionRequired: enabled,
+      mediaCaptionRequired:
+        enabled,
 
     },
 
-    score: 100,
+    score:
+      100,
 
-    passed: true,
+    passed:
+      true,
 
     issues: [],
 
