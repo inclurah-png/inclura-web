@@ -8,8 +8,88 @@ import {
 
 import { useAuth } from "./AuthContext";
 
+import {
+  initializeUserAccessibility,
+} from "../ifse/accessibility/AccessibilityAuthenticationIntegration";
+
+import {
+  getAccessibilityRuntime,
+  subscribeAccessibility,
+  shutdownAccessibilityRuntime,
+} from "../ifse/accessibility/AccessibilityRuntimeEngine";
+
 const AccessibilityContext =
   createContext();
+
+const LANGUAGE_MAP = {
+  en: "en-US",
+  yo: "yo-NG",
+  ig: "ig-NG",
+  ha: "ha-NG",
+  pcm: "en-NG",
+  fr: "fr-FR",
+  es: "es-ES",
+  pt: "pt-PT",
+  sw: "sw-KE",
+  ar: "ar-SA",
+  zh: "zh-CN",
+  "zh-TW": "zh-TW",
+  ja: "ja-JP",
+  de: "de-DE",
+  hi: "hi-IN",
+  ru: "ru-RU",
+  it: "it-IT",
+  nl: "nl-NL",
+  ko: "ko-KR",
+  vi: "vi-VN",
+  th: "th-TH",
+  id: "id-ID",
+  ms: "ms-MY",
+  bn: "bn-BD",
+  tr: "tr-TR",
+};
+
+function normalizeAccessibilityNeeds(
+  accessibilityNeeds
+) {
+  if (
+    Array.isArray(
+      accessibilityNeeds
+    )
+  ) {
+    return accessibilityNeeds
+      .filter(
+        (need) =>
+          need !== null &&
+          need !== undefined
+      )
+      .map((need) =>
+        String(need).trim()
+      )
+      .filter(Boolean);
+  }
+
+  if (
+    typeof accessibilityNeeds ===
+    "string"
+  ) {
+    return accessibilityNeeds
+      .split(",")
+      .map((need) =>
+        need.trim()
+      )
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function normalizeNeed(need) {
+  return String(need)
+    .trim()
+    .toLowerCase()
+    .replace(/[_-]+/g, " ");
+}
 
 export function AccessibilityProvider({
   children,
@@ -36,41 +116,38 @@ export function AccessibilityProvider({
   const [speaking, setSpeaking] =
     useState(false);
 
+  const [
+    ifseAccessibilityRuntime,
+    setIfseAccessibilityRuntime,
+  ] = useState(
+    () =>
+      getAccessibilityRuntime()
+  );
+
   /*
-   * AuthContext is the single source of
-   * truth for the user's saved profile.
-   *
-   * Do NOT create another Firestore
-   * listener here.
+   * AuthContext remains the source
+   * of truth for saved accessibility
+   * requirements.
    */
   const accessibilityNeeds =
     useMemo(() => {
-      if (
-        !Array.isArray(
-          userProfile?.accessibilityNeeds
-        )
-      ) {
-        return [];
-      }
-
-      return userProfile.accessibilityNeeds;
+      return normalizeAccessibilityNeeds(
+        userProfile?.accessibilityNeeds
+      );
     }, [
       userProfile?.accessibilityNeeds,
     ]);
 
   /*
-   * Normalize profile needs so that
-   * different wording/capitalization
-   * can still activate the correct
-   * accessibility capability.
+   * Normalize accessibility requirements
+   * so different capitalization,
+   * separators, and wording can be
+   * interpreted consistently.
    */
   const normalizedNeeds =
     useMemo(() => {
       return accessibilityNeeds.map(
-        (need) =>
-          String(need)
-            .trim()
-            .toLowerCase()
+        normalizeNeed
       );
     }, [
       accessibilityNeeds,
@@ -83,63 +160,84 @@ export function AccessibilityProvider({
       (need) =>
         keywords.some((keyword) =>
           need.includes(
-            String(keyword)
-              .toLowerCase()
+            normalizeNeed(keyword)
           )
         )
     );
   };
 
   /*
-   * Accessibility capabilities derived
-   * from the user's saved profile.
+   * Application-facing accessibility
+   * profile.
+   *
+   * The detailed IFSE engines remain
+   * responsible for deeper accessibility
+   * evaluation. This profile preserves
+   * the existing React API used by
+   * application components.
    */
   const accessibilityProfile =
     useMemo(() => {
       return {
         blind: hasNeed(
-          "blind"
+          "blind",
+          "blindness"
         ),
 
         lowVision: hasNeed(
           "low vision",
           "visual impairment",
-          "visual"
+          "visual impairment",
+          "low-vision"
         ),
 
         deaf: hasNeed(
-          "deaf"
+          "deaf",
+          "deafness"
         ),
 
         hardOfHearing: hasNeed(
           "hard of hearing",
           "hearing impairment",
-          "hearing"
+          "hearing impaired"
         ),
 
         wheelchair: hasNeed(
-          "wheelchair",
+          "wheelchair"
+        ),
+
+        motorImpaired: hasNeed(
           "mobility impairment",
-          "mobility"
+          "mobility impaired",
+          "motor impairment",
+          "motor impaired",
+          "physical disability",
+          "wheelchair"
         ),
 
         speechImpairment: hasNeed(
           "speech impairment",
+          "speech impaired",
+          "speech disability",
           "non-verbal",
           "nonverbal",
-          "speech"
+          "unable to speak",
+          "communication impairment"
         ),
 
         dyslexia: hasNeed(
-          "dyslexia"
+          "dyslexia",
+          "dyslexic"
         ),
 
         adhd: hasNeed(
-          "adhd"
+          "adhd",
+          "attention deficit"
         ),
 
         autism: hasNeed(
           "autism",
+          "autistic",
           "neurodivergent",
           "neurodivers"
         ),
@@ -149,13 +247,153 @@ export function AccessibilityProvider({
     ]);
 
   /*
+   * Synchronize React with the live
+   * IFSE accessibility runtime.
+   */
+  useEffect(() => {
+    const unsubscribe =
+      subscribeAccessibility(
+        (runtimeState) => {
+          setIfseAccessibilityRuntime(
+            runtimeState
+          );
+        }
+      );
+
+    setIfseAccessibilityRuntime(
+      getAccessibilityRuntime()
+    );
+
+    return unsubscribe;
+  }, []);
+
+  /*
+   * Restore saved accessibility
+   * preferences from AuthContext.
+   *
+   * AuthContext remains the single
+   * persistence source. This provider
+   * does not create another Firestore
+   * listener.
+   */
+  useEffect(() => {
+    if (!userProfile) {
+      setAccessibilityNeeds([]);
+
+      setLanguage("en");
+      setFontScale(1);
+      setHighContrast(false);
+      setReducedMotion(false);
+      setVoiceEnabled(false);
+
+      shutdownAccessibilityRuntime();
+
+      return;
+    }
+
+    if (
+      typeof userProfile.language ===
+        "string" &&
+      userProfile.language.trim()
+    ) {
+      setLanguage(
+        userProfile.language
+      );
+    }
+
+    if (
+      typeof userProfile.fontScale ===
+        "number" &&
+      Number.isFinite(
+        userProfile.fontScale
+      ) &&
+      userProfile.fontScale > 0
+    ) {
+      setFontScale(
+        userProfile.fontScale
+      );
+    }
+
+    if (
+      typeof userProfile.highContrast ===
+      "boolean"
+    ) {
+      setHighContrast(
+        userProfile.highContrast
+      );
+    }
+
+    if (
+      typeof userProfile.reducedMotion ===
+      "boolean"
+    ) {
+      setReducedMotion(
+        userProfile.reducedMotion
+      );
+    }
+
+    if (
+      typeof userProfile.voiceEnabled ===
+      "boolean"
+    ) {
+      setVoiceEnabled(
+        userProfile.voiceEnabled
+      );
+    }
+  }, [
+    userProfile,
+  ]);
+
+  /*
+   * Connect the application-facing
+   * accessibility state to IFSE.
+   *
+   * IFSE receives the complete current
+   * accessibility request so its
+   * specialized engines can evaluate
+   * and activate the appropriate
+   * modules.
+   */
+  useEffect(() => {
+    if (!userProfile) {
+      return;
+    }
+
+    const runtimeRequest = {
+      ...userProfile,
+
+      language,
+
+      fontScale,
+
+      highContrast,
+
+      reducedMotion,
+
+      voiceEnabled,
+
+      accessibilityNeeds,
+    };
+
+    void initializeUserAccessibility(
+      runtimeRequest
+    );
+  }, [
+    userProfile,
+    language,
+    fontScale,
+    highContrast,
+    reducedMotion,
+    voiceEnabled,
+    accessibilityNeeds,
+  ]);
+
+  /*
    * Browser speech support.
    *
-   * This uses the Android device's available
-   * SpeechSynthesis engine. The provider
-   * exposes the capability so ChatWindow,
-   * Feed, notifications, and other features
-   * can use the same accessibility service.
+   * This remains the application's
+   * immediate Android/browser speech
+   * accessibility service.
    */
   const speechSupported =
     typeof window !== "undefined" &&
@@ -164,8 +402,8 @@ export function AccessibilityProvider({
       window;
 
   /*
-   * Stop any active speech when the
-   * provider is unmounted.
+   * Cancel active browser speech
+   * when the provider unmounts.
    */
   useEffect(() => {
     return () => {
@@ -179,8 +417,9 @@ export function AccessibilityProvider({
   }, []);
 
   /*
-   * Keep the speaking state synchronized
-   * with the browser speech engine.
+   * Keep speaking state synchronized
+   * with browser speech events where
+   * the browser exposes them.
    */
   useEffect(() => {
     if (
@@ -202,12 +441,6 @@ export function AccessibilityProvider({
       setSpeaking(false);
     };
 
-    /*
-     * speechSynthesis does not expose
-     * universal global events consistently
-     * across browsers, so this listener is
-     * intentionally defensive.
-     */
     window.speechSynthesis.addEventListener(
       "start",
       handleSpeechStart
@@ -244,15 +477,12 @@ export function AccessibilityProvider({
   ]);
 
   /*
-   * Speak text using the user's active
-   * Inclura language.
+   * Central browser speech service.
    *
-   * This function deliberately does NOT
-   * automatically speak every message.
-   *
-   * It provides a central, reusable
-   * accessibility speech service that
-   * user-facing controls can invoke.
+   * It does not automatically speak
+   * every message or notification.
+   * User-facing accessibility controls
+   * explicitly invoke this function.
    */
   function speakText(
     text,
@@ -273,40 +503,12 @@ export function AccessibilityProvider({
       return false;
     }
 
-    const languageMap = {
-      en: "en-US",
-      yo: "yo-NG",
-      ig: "ig-NG",
-      ha: "ha-NG",
-      pcm: "en-NG",
-      fr: "fr-FR",
-      es: "es-ES",
-      pt: "pt-PT",
-      sw: "sw-KE",
-      ar: "ar-SA",
-      zh: "zh-CN",
-      "zh-TW": "zh-TW",
-      ja: "ja-JP",
-      de: "de-DE",
-      hi: "hi-IN",
-      ru: "ru-RU",
-      it: "it-IT",
-      nl: "nl-NL",
-      ko: "ko-KR",
-      vi: "vi-VN",
-      th: "th-TH",
-      id: "id-ID",
-      ms: "ms-MY",
-      bn: "bn-BD",
-      tr: "tr-TR",
-    };
-
     const requestedLanguage =
       options.language ||
       language;
 
     const speechLanguage =
-      languageMap[
+      LANGUAGE_MAP[
         requestedLanguage
       ] ||
       "en-US";
@@ -381,20 +583,16 @@ export function AccessibilityProvider({
   }
 
   /*
-   * Voice guidance can be enabled either
-   * explicitly through Accessibility
-   * Settings or by an accessibility profile
-   * that requires stronger visual assistance.
+   * Users with blindness or low vision
+   * receive effective voice capability
+   * even when the manual voice toggle
+   * has not been enabled.
    */
   const effectiveVoiceEnabled =
     voiceEnabled ||
     accessibilityProfile.blind ||
     accessibilityProfile.lowVision;
 
-  /*
-   * The provider exposes both the raw
-   * preference and the effective capability.
-   */
   const value = {
     language,
     setLanguage,
@@ -422,6 +620,11 @@ export function AccessibilityProvider({
 
     accessibilityProfile,
     setAccessibilityProfile,
+
+    /*
+     * Live IFSE accessibility state.
+     */
+    ifseAccessibilityRuntime,
   };
 
   return (
