@@ -7,6 +7,16 @@ import {
 
 import { useAuth } from "./AuthContext";
 
+import {
+  initializeUserAccessibility,
+} from "../ifse/accessibility/AccessibilityAuthenticationIntegration";
+
+import {
+  getAccessibilityRuntime,
+  subscribeAccessibility,
+  shutdownAccessibilityRuntime,
+} from "../ifse/accessibility/AccessibilityRuntimeEngine";
+
 const AccessibilityContext =
   createContext();
 
@@ -134,17 +144,11 @@ function buildAccessibilityProfile(
 
   return {
     deaf,
-
     blindLowVision,
-
     wheelchair,
-
     nonVerbal,
-
     motorImpaired,
-
     neurodivergent,
-
     noDisability:
       noDisability &&
       !blindLowVision &&
@@ -158,14 +162,6 @@ function buildAccessibilityProfile(
 export function AccessibilityProvider({
   children,
 }) {
-  /*
-   * AuthProvider is the parent provider,
-   * so useAuth() is available here.
-   *
-   * Keep this defensive so a temporary
-   * unavailable auth context cannot crash
-   * the entire application.
-   */
   const authContext =
     useAuth();
 
@@ -200,29 +196,53 @@ export function AccessibilityProvider({
     DEFAULT_ACCESSIBILITY_PROFILE
   );
 
+  const [
+    ifseAccessibilityRuntime,
+    setIfseAccessibilityRuntime,
+  ] = useState(
+    () => getAccessibilityRuntime()
+  );
+
+  /*
+   * Keep the React provider synchronized
+   * with the IFSE accessibility runtime.
+   */
   useEffect(() => {
-    /*
-     * No authenticated profile yet.
-     *
-     * Reset only the accessibility
-     * profile data. AuthContext remains
-     * responsible for authentication.
-     */
+    const unsubscribe =
+      subscribeAccessibility(
+        (runtimeState) => {
+          setIfseAccessibilityRuntime(
+            runtimeState
+          );
+        }
+      );
+
+    setIfseAccessibilityRuntime(
+      getAccessibilityRuntime()
+    );
+
+    return unsubscribe;
+  }, []);
+
+  /*
+   * Restore accessibility settings
+   * from the authenticated user profile.
+   */
+  useEffect(() => {
     if (!userProfile) {
       setAccessibilityNeeds([]);
       setAccessibilityProfile(
         DEFAULT_ACCESSIBILITY_PROFILE
       );
 
+      shutdownAccessibilityRuntime();
+
       return;
     }
 
-    /*
-     * Restore saved language.
-     */
     if (
       typeof userProfile.language ===
-      "string" &&
+        "string" &&
       userProfile.language.trim()
     ) {
       setLanguage(
@@ -230,12 +250,9 @@ export function AccessibilityProvider({
       );
     }
 
-    /*
-     * Restore saved font scale.
-     */
     if (
       typeof userProfile.fontScale ===
-      "number" &&
+        "number" &&
       Number.isFinite(
         userProfile.fontScale
       ) &&
@@ -246,48 +263,33 @@ export function AccessibilityProvider({
       );
     }
 
-    /*
-     * Restore high contrast.
-     */
     if (
       typeof userProfile.highContrast ===
-      "boolean"
+        "boolean"
     ) {
       setHighContrast(
         userProfile.highContrast
       );
     }
 
-    /*
-     * Restore reduced motion.
-     */
     if (
       typeof userProfile.reducedMotion ===
-      "boolean"
+        "boolean"
     ) {
       setReducedMotion(
         userProfile.reducedMotion
       );
     }
 
-    /*
-     * Restore voice guidance.
-     */
     if (
       typeof userProfile.voiceEnabled ===
-      "boolean"
+        "boolean"
     ) {
       setVoiceEnabled(
         userProfile.voiceEnabled
       );
     }
 
-    /*
-     * Edit Profile / Firestore
-     * accessibilityNeeds is the source
-     * of truth for the user's selected
-     * accessibility requirements.
-     */
     const savedNeeds =
       normalizeAccessibilityNeeds(
         userProfile.accessibilityNeeds
@@ -297,11 +299,6 @@ export function AccessibilityProvider({
       savedNeeds
     );
 
-    /*
-     * Convert the saved requirements
-     * into capabilities used throughout
-     * Inclura.
-     */
     const nextProfile =
       buildAccessibilityProfile(
         savedNeeds
@@ -311,6 +308,49 @@ export function AccessibilityProvider({
       nextProfile
     );
   }, [userProfile]);
+
+  /*
+   * Synchronize the current React
+   * accessibility state with IFSE.
+   *
+   * The user profile remains the source
+   * of truth for persisted requirements,
+   * while the current React state supplies
+   * the latest runtime preferences.
+   */
+  useEffect(() => {
+    if (!userProfile) {
+      return;
+    }
+
+    const runtimeRequest = {
+      ...userProfile,
+
+      language,
+
+      fontScale,
+
+      highContrast,
+
+      reducedMotion,
+
+      voiceEnabled,
+
+      accessibilityNeeds,
+    };
+
+    void initializeUserAccessibility(
+      runtimeRequest
+    );
+  }, [
+    userProfile,
+    language,
+    fontScale,
+    highContrast,
+    reducedMotion,
+    voiceEnabled,
+    accessibilityNeeds,
+  ]);
 
   const value = {
     language,
@@ -333,6 +373,13 @@ export function AccessibilityProvider({
 
     accessibilityProfile,
     setAccessibilityProfile,
+
+    /*
+     * Expose the live IFSE accessibility
+     * runtime to components that need
+     * detailed module information.
+     */
+    ifseAccessibilityRuntime,
   };
 
   return (
