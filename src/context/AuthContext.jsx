@@ -1,4 +1,4 @@
-import {
+      import {
   createContext,
   useContext,
   useEffect,
@@ -21,6 +21,57 @@ import {
 
 const AuthContext =
   createContext();
+
+function buildUserProfile(
+  currentUser,
+  profileData = {}
+) {
+  if (!currentUser) {
+    return null;
+  }
+
+  const firestoreProfile =
+    profileData &&
+    typeof profileData === "object"
+      ? profileData
+      : {};
+
+  return {
+    ...firestoreProfile,
+
+    /*
+     * Firebase Authentication remains
+     * the fallback identity source when
+     * the Firestore profile is incomplete.
+     */
+    uid:
+      firestoreProfile.uid ||
+      currentUser.uid,
+
+    displayName:
+      firestoreProfile.displayName ||
+      firestoreProfile.fullName ||
+      firestoreProfile.name ||
+      currentUser.displayName ||
+      "",
+
+    email:
+      firestoreProfile.email ||
+      currentUser.email ||
+      "",
+
+    photoURL:
+      firestoreProfile.photoURL ||
+      firestoreProfile.profilePhoto ||
+      currentUser.photoURL ||
+      "",
+
+    phoneNumber:
+      firestoreProfile.phoneNumber ||
+      currentUser.phoneNumber ||
+      "",
+  };
+}
 
 export function AuthProvider({
   children,
@@ -63,6 +114,20 @@ export function AuthProvider({
             return;
           }
 
+          /*
+           * Firebase Auth already gives us
+           * the authenticated identity.
+           *
+           * Make that available immediately
+           * while the Firestore application
+           * profile is being loaded.
+           */
+          setUserProfile(
+            buildUserProfile(
+              currentUser
+            )
+          );
+
           setLoading(true);
 
           const profileRef =
@@ -76,20 +141,17 @@ export function AuthProvider({
             onSnapshot(
               profileRef,
               (profileSnap) => {
-                if (
+                const profileData =
                   profileSnap.exists()
-                ) {
-                  const profileData =
-                    profileSnap.data();
+                    ? profileSnap.data()
+                    : {};
 
-                  setUserProfile(
+                setUserProfile(
+                  buildUserProfile(
+                    currentUser,
                     profileData
-                  );
-                } else {
-                  setUserProfile(
-                    null
-                  );
-                }
+                  )
+                );
 
                 setLoading(false);
               },
@@ -99,8 +161,16 @@ export function AuthProvider({
                   error
                 );
 
+                /*
+                 * Do not throw away the
+                 * authenticated user's identity
+                 * simply because the Firestore
+                 * profile listener failed.
+                 */
                 setUserProfile(
-                  null
+                  buildUserProfile(
+                    currentUser
+                  )
                 );
 
                 setLoading(false);
