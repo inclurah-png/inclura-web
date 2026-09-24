@@ -1,4 +1,4 @@
-      import {
+import {
   createContext,
   useContext,
   useEffect,
@@ -22,6 +22,148 @@ import {
 const AuthContext =
   createContext();
 
+function isPlaceholderName(
+  value
+) {
+  if (
+    typeof value !== "string"
+  ) {
+    return true;
+  }
+
+  const normalized =
+    value
+      .trim()
+      .toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  return [
+    "inclura user",
+    "inclura member",
+    "user",
+    "member",
+    "friend",
+  ].includes(
+    normalized
+  );
+}
+
+function resolveDisplayName(
+  currentUser,
+  profileData
+) {
+  const profile =
+    profileData &&
+    typeof profileData === "object"
+      ? profileData
+      : {};
+
+  const firstName =
+    typeof profile.firstName ===
+    "string"
+      ? profile.firstName.trim()
+      : "";
+
+  const lastName =
+    typeof profile.lastName ===
+    "string"
+      ? profile.lastName.trim()
+      : "";
+
+  const fullNameFromParts =
+    `${firstName} ${lastName}`.trim();
+
+  /*
+   * Prefer an actual first-name/last-name
+   * combination when available.
+   */
+  if (
+    fullNameFromParts &&
+    !isPlaceholderName(
+      fullNameFromParts
+    )
+  ) {
+    return fullNameFromParts;
+  }
+
+  const profileFullName =
+    typeof profile.fullName ===
+    "string"
+      ? profile.fullName.trim()
+      : "";
+
+  if (
+    profileFullName &&
+    !isPlaceholderName(
+      profileFullName
+    )
+  ) {
+    return profileFullName;
+  }
+
+  const profileName =
+    typeof profile.name ===
+    "string"
+      ? profile.name.trim()
+      : "";
+
+  if (
+    profileName &&
+    !isPlaceholderName(
+      profileName
+    )
+  ) {
+    return profileName;
+  }
+
+  const authDisplayName =
+    typeof currentUser?.displayName ===
+    "string"
+      ? currentUser.displayName.trim()
+      : "";
+
+  if (
+    authDisplayName &&
+    !isPlaceholderName(
+      authDisplayName
+    )
+  ) {
+    return authDisplayName;
+  }
+
+  const profileDisplayName =
+    typeof profile.displayName ===
+    "string"
+      ? profile.displayName.trim()
+      : "";
+
+  if (
+    profileDisplayName &&
+    !isPlaceholderName(
+      profileDisplayName
+    )
+  ) {
+    return profileDisplayName;
+  }
+
+  /*
+   * Last-resort identity fallback.
+   */
+  const email =
+    currentUser?.email ||
+    profile.email ||
+    "";
+
+  if (email) {
+    return email.split("@")[0];
+  }
+
+  return "Inclura User";
+}
+
 function buildUserProfile(
   currentUser,
   profileData = {}
@@ -36,24 +178,25 @@ function buildUserProfile(
       ? profileData
       : {};
 
+  const resolvedDisplayName =
+    resolveDisplayName(
+      currentUser,
+      firestoreProfile
+    );
+
   return {
     ...firestoreProfile,
 
-    /*
-     * Firebase Authentication remains
-     * the fallback identity source when
-     * the Firestore profile is incomplete.
-     */
     uid:
       firestoreProfile.uid ||
       currentUser.uid,
 
     displayName:
-      firestoreProfile.displayName ||
+      resolvedDisplayName,
+
+    fullName:
       firestoreProfile.fullName ||
-      firestoreProfile.name ||
-      currentUser.displayName ||
-      "",
+      resolvedDisplayName,
 
     email:
       firestoreProfile.email ||
@@ -115,12 +258,8 @@ export function AuthProvider({
           }
 
           /*
-           * Firebase Auth already gives us
-           * the authenticated identity.
-           *
-           * Make that available immediately
-           * while the Firestore application
-           * profile is being loaded.
+           * Provide authenticated identity
+           * immediately while Firestore loads.
            */
           setUserProfile(
             buildUserProfile(
@@ -162,10 +301,9 @@ export function AuthProvider({
                 );
 
                 /*
-                 * Do not throw away the
-                 * authenticated user's identity
-                 * simply because the Firestore
-                 * profile listener failed.
+                 * Preserve authenticated
+                 * identity even if Firestore
+                 * temporarily fails.
                  */
                 setUserProfile(
                   buildUserProfile(
