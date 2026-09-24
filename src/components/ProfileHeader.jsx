@@ -27,11 +27,147 @@ import {
   storage,
 } from "../firebase";
 
+function isPlaceholderName(
+  value
+) {
+  if (
+    typeof value !== "string"
+  ) {
+    return true;
+  }
+
+  const normalized =
+    value
+      .trim()
+      .toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  return [
+    "inclura user",
+    "inclura member",
+    "user",
+    "member",
+    "friend",
+  ].includes(
+    normalized
+  );
+}
+
+function resolveProfileName(
+  profile
+) {
+  const currentUser =
+    auth.currentUser;
+
+  const firstName =
+    typeof profile?.firstName ===
+    "string"
+      ? profile.firstName.trim()
+      : "";
+
+  const lastName =
+    typeof profile?.lastName ===
+    "string"
+      ? profile.lastName.trim()
+      : "";
+
+  const nameFromParts =
+    `${firstName} ${lastName}`.trim();
+
+  if (
+    nameFromParts &&
+    !isPlaceholderName(
+      nameFromParts
+    )
+  ) {
+    return nameFromParts;
+  }
+
+  const fullName =
+    typeof profile?.fullName ===
+    "string"
+      ? profile.fullName.trim()
+      : "";
+
+  if (
+    fullName &&
+    !isPlaceholderName(
+      fullName
+    )
+  ) {
+    return fullName;
+  }
+
+  const profileName =
+    typeof profile?.name ===
+    "string"
+      ? profile.name.trim()
+      : "";
+
+  if (
+    profileName &&
+    !isPlaceholderName(
+      profileName
+    )
+  ) {
+    return profileName;
+  }
+
+  const displayName =
+    typeof profile?.displayName ===
+    "string"
+      ? profile.displayName.trim()
+      : "";
+
+  if (
+    displayName &&
+    !isPlaceholderName(
+      displayName
+    )
+  ) {
+    return displayName;
+  }
+
+  const authDisplayName =
+    typeof currentUser?.displayName ===
+    "string"
+      ? currentUser.displayName.trim()
+      : "";
+
+  if (
+    authDisplayName &&
+    !isPlaceholderName(
+      authDisplayName
+    )
+  ) {
+    return authDisplayName;
+  }
+
+  const email =
+    currentUser?.email ||
+    profile?.email ||
+    "";
+
+  if (email) {
+    return email.split("@")[0];
+  }
+
+  return "Inclura User";
+}
+
 function ProfileHeader({
   profile,
 }) {
   const fileInputRef =
     useRef(null);
+
+  const profileName =
+    resolveProfileName(
+      profile
+    );
 
   async function uploadPhoto(
     e
@@ -78,54 +214,73 @@ function ProfileHeader({
       alert(error.message);
     }
   }
-  
+
   const getDaysLeft = () => {
-  if (!profile?.premiumExpiryDate) return null;
+    if (
+      !profile?.premiumExpiryDate
+    ) {
+      return null;
+    }
 
-  const expiry = profile.premiumExpiryDate.toDate();
-  const diff = expiry - new Date();
+    const expiry =
+      profile.premiumExpiryDate.toDate();
 
-  return Math.max(
-    0,
-    Math.ceil(diff / (1000 * 60 * 60 * 24))
-  );
-};
+    const diff =
+      expiry - new Date();
+
+    return Math.max(
+      0,
+      Math.ceil(
+        diff /
+          (1000 *
+            60 *
+            60 *
+            24)
+      )
+    );
+  };
 
   const getBadge = () => {
-  if (!profile?.verified) return null;
+    if (!profile?.verified) {
+      return null;
+    }
 
-  const migratedType = migrateVerificationId(
-    profile.badgeType
-  );
+    const migratedType =
+      migrateVerificationId(
+        profile.badgeType
+      );
 
-  return getVerificationBadge(migratedType);
-};
+    return getVerificationBadge(
+      migratedType
+    );
+  };
 
   const getPremium = () => {
-  if (!profile?.premium) return null;
+    if (!profile?.premium) {
+      return null;
+    }
 
-  return getPremiumBadge(profile.premiumTier);
-};
+    return getPremiumBadge(
+      profile.premiumTier
+    );
+  };
 
-    const verificationMeta =
-  profile?.verified
-    ? getVerificationMetadata(
-        migrateVerificationId(
-          profile.badgeType
+  const verificationMeta =
+    profile?.verified
+      ? getVerificationMetadata(
+          migrateVerificationId(
+            profile.badgeType
+          )
         )
-      )
-    : null;
-    
+      : null;
+
   return (
     <div
       style={{
-        background:
-          "#0f172a",
-        borderRadius:
-          "24px",
+        background: "#0f172a",
+        borderRadius: "24px",
         padding: "24px",
-        marginBottom:
-          "24px",
+        marginBottom: "24px",
         color: "white",
       }}
     >
@@ -133,165 +288,200 @@ function ProfileHeader({
         style={{
           display: "flex",
           gap: "20px",
-          alignItems:
-            "center",
+          alignItems: "center",
           flexWrap: "wrap",
         }}
       >
         <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  }}
->
-  <img
-    src={
-      profile?.profilePhoto ||
-      "https://via.placeholder.com/120"
-    }
-    alt="Profile"
-    style={{
-      width: "120px",
-      height: "120px",
-      borderRadius: "50%",
-      objectFit: "cover",
-      border: "4px solid #38bdf8",
-    }}
-  />
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+          }}
+        >
+          <img
+            src={
+              profile?.profilePhoto ||
+              profile?.photoURL ||
+              auth.currentUser?.photoURL ||
+              "https://via.placeholder.com/120"
+            }
+            alt={`${profileName} profile`}
+            style={{
+              width: "120px",
+              height: "120px",
+              borderRadius: "50%",
+              objectFit: "cover",
+              border:
+                "4px solid #38bdf8",
+            }}
+          />
 
-  <button
-    onClick={() =>
-      fileInputRef.current?.click()
-    }
-    style={{
-      marginTop: "10px",
-      padding: "8px 14px",
-      borderRadius: "12px",
-      border: "none",
-      background: "#38bdf8",
-      color: "white",
-      cursor: "pointer",
-    }}
-  >
-    📷 Change Photo
-  </button>
+          <button
+            onClick={() =>
+              fileInputRef.current?.click()
+            }
+            style={{
+              marginTop: "10px",
+              padding: "8px 14px",
+              borderRadius: "12px",
+              border: "none",
+              background: "#38bdf8",
+              color: "white",
+              cursor: "pointer",
+            }}
+          >
+            📷 Change Photo
+          </button>
 
-  <input
-    type="file"
-    accept="image/*"
-    ref={fileInputRef}
-    onChange={uploadPhoto}
-    style={{
-      display: "none",
-    }}
-  />
-</div>
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={uploadPhoto}
+            style={{
+              display: "none",
+            }}
+          />
+        </div>
 
         <div>
           <h2>
-  {profile?.fullName || "Inclura User"}
-</h2>
+            {profileName}
+          </h2>
 
-<div
-  style={{
-    display: "flex",
-    gap: "8px",
-    flexWrap: "wrap",
-    marginBottom: "10px",
-  }}
->
-  {profile?.verified && (
-    <div
-      style={{
-        background: "#16a34a",
-        color: "white",
-        padding: "6px 12px",
-        borderRadius: "999px",
-        fontSize: "13px",
-        fontWeight: "700",
-      }}
-    >
-      {getBadge()}
-    </div>
-  )}
+          <div
+            style={{
+              display: "flex",
+              gap: "8px",
+              flexWrap: "wrap",
+              marginBottom: "10px",
+            }}
+          >
+            {profile?.verified && (
+              <div
+                style={{
+                  background:
+                    "#16a34a",
+                  color: "white",
+                  padding:
+                    "6px 12px",
+                  borderRadius:
+                    "999px",
+                  fontSize:
+                    "13px",
+                  fontWeight:
+                    "700",
+                }}
+              >
+                {getBadge()}
+              </div>
+            )}
 
-  {verificationMeta && (
-    <div
-      style={{
-        background: "#1e293b",
-        color: "#38bdf8",
-        padding: "6px 12px",
-        borderRadius: "999px",
-        fontSize: "13px",
-        fontWeight: "700",
-      }}
-    >
-      🛡️ Trust Level {verificationMeta.trustLevel}
-    </div>
-  )}
+            {verificationMeta && (
+              <div
+                style={{
+                  background:
+                    "#1e293b",
+                  color:
+                    "#38bdf8",
+                  padding:
+                    "6px 12px",
+                  borderRadius:
+                    "999px",
+                  fontSize:
+                    "13px",
+                  fontWeight:
+                    "700",
+                }}
+              >
+                🛡️ Trust Level{" "}
+                {
+                  verificationMeta.trustLevel
+                }
+              </div>
+            )}
 
-  {profile?.premium && (
-  <>
-    <div
-      style={{
-        background: "#f59e0b",
-        color: "white",
-        padding: "6px 12px",
-        borderRadius: "999px",
-      }}
-    >
-      {getPremium()}
-    </div>
+            {profile?.premium && (
+              <>
+                <div
+                  style={{
+                    background:
+                      "#f59e0b",
+                    color: "white",
+                    padding:
+                      "6px 12px",
+                    borderRadius:
+                      "999px",
+                  }}
+                >
+                  {getPremium()}
+                </div>
 
-    {getVerificationMetadata(profile.premiumTier)?.trustLevel && (
-      <div
-        style={{
-          background: "#78350f",
-          color: "#facc15",
-          padding: "6px 12px",
-          borderRadius: "999px",
-          fontSize: "13px",
-          fontWeight: "700",
-        }}
-      >
-        ⭐ Premium Trust Level{" "}
-        {getVerificationMetadata(profile.premiumTier).trustLevel}
-      </div>
-    )}
-  </>
-)}
+                {getVerificationMetadata(
+                  profile.premiumTier
+                )?.trustLevel && (
+                  <div
+                    style={{
+                      background:
+                        "#78350f",
+                      color:
+                        "#facc15",
+                      padding:
+                        "6px 12px",
+                      borderRadius:
+                        "999px",
+                      fontSize:
+                        "13px",
+                      fontWeight:
+                        "700",
+                    }}
+                  >
+                    ⭐ Premium Trust Level{" "}
+                    {
+                      getVerificationMetadata(
+                        profile.premiumTier
+                      ).trustLevel
+                    }
+                  </div>
+                )}
+              </>
+            )}
 
-  {profile?.premium && (
-    <div
-      style={{
-        background: "#334155",
-        color: "white",
-        padding: "6px 12px",
-        borderRadius: "999px",
-      }}
-    >
-      ⏳ {getDaysLeft()} days left
-    </div>
-  )}
-</div>
+            {profile?.premium && (
+              <div
+                style={{
+                  background:
+                    "#334155",
+                  color: "white",
+                  padding:
+                    "6px 12px",
+                  borderRadius:
+                    "999px",
+                }}
+              >
+                ⏳{" "}
+                {getDaysLeft()}{" "}
+                days left
+              </div>
+            )}
+          </div>
 
-<p
-  style={{
-    color: "#94a3b8",
-  }}
->
-  {profile?.bio || "No bio yet"}
-</p>
+          <p
+            style={{
+              color: "#94a3b8",
+            }}
+          >
+            {profile?.bio ||
+              "No bio yet"}
+          </p>
 
           <div
             style={{
               display: "flex",
               gap: "10px",
-              flexWrap:
-                "wrap",
-              marginTop:
-                "10px",
+              flexWrap: "wrap",
+              marginTop: "10px",
             }}
           >
             <span
@@ -314,8 +504,7 @@ function ProfileHeader({
               style={tag}
             >
               ⭐ XP:{" "}
-              {profile?.xp ||
-                0}
+              {profile?.xp || 0}
             </span>
           </div>
         </div>
