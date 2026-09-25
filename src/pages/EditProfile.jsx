@@ -6,6 +6,10 @@ import {
   doc,
   getDoc,
   updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
 } from "firebase/firestore";
 
 import {
@@ -15,6 +19,102 @@ import {
 } from "firebase/storage";
 
 import { useNavigate } from "react-router-dom";
+
+function isPlaceholderName(value) {
+  if (typeof value !== "string") {
+    return true;
+  }
+
+  const normalized = value.trim().toLowerCase();
+
+  if (!normalized) {
+    return true;
+  }
+
+  return [
+    "inclura user",
+    "inclura member",
+    "user",
+    "member",
+    "friend",
+  ].includes(normalized);
+}
+
+function getValidName(value) {
+  if (
+    typeof value !== "string" ||
+    !value.trim() ||
+    isPlaceholderName(value)
+  ) {
+    return "";
+  }
+
+  return value.trim();
+}
+
+async function recoverNameFromPosts(userId) {
+  try {
+    if (!userId) {
+      return "";
+    }
+
+    const postsQuery = query(
+      collection(db, "posts"),
+      where("userId", "==", userId)
+    );
+
+    const postsSnapshot =
+      await getDocs(postsQuery);
+
+    let recoveredName = "";
+
+    let latestTimestamp = -Infinity;
+
+    postsSnapshot.forEach((postDoc) => {
+      const post = postDoc.data();
+
+      const postName =
+        getValidName(post?.userName);
+
+      if (!postName) {
+        return;
+      }
+
+      let timestamp = 0;
+
+      if (
+        post?.createdAt &&
+        typeof post.createdAt.toMillis ===
+          "function"
+      ) {
+        timestamp =
+          post.createdAt.toMillis();
+      } else if (
+        post?.createdAt instanceof Date
+      ) {
+        timestamp =
+          post.createdAt.getTime();
+      }
+
+      if (
+        !recoveredName ||
+        timestamp >= latestTimestamp
+      ) {
+        recoveredName = postName;
+        latestTimestamp = timestamp;
+      }
+    });
+
+    return recoveredName;
+  } catch (error) {
+    console.log(
+      "Unable to recover profile name from posts:",
+      error
+    );
+
+    return "";
+  }
+}
 
 function EditProfile() {
   const [fullName, setFullName] =
@@ -31,11 +131,11 @@ function EditProfile() {
 
   const [category, setCategory] =
     useState("");
-  
+
   const [
-  preferredLanguage,
-  setPreferredLanguage,
-] = useState("en");
+    preferredLanguage,
+    setPreferredLanguage,
+  ] = useState("en");
 
   const [photoURL, setPhotoURL] =
     useState("");
@@ -53,54 +153,147 @@ function EditProfile() {
 
   useEffect(() => {
     async function loadProfile() {
-      const user =
-        auth.currentUser;
+      try {
+        const user =
+          auth.currentUser;
 
-      if (!user) return;
+        if (!user) {
+          return;
+        }
 
-      const snap =
-        await getDoc(
+        const profileRef =
           doc(
             db,
             "users",
             user.uid
-          )
-        );
+          );
 
-      if (snap.exists()) {
-        const data =
-          snap.data();
+        const snap =
+          await getDoc(profileRef);
+
+        let data = {};
+
+        if (snap.exists()) {
+          data = snap.data() || {};
+        }
+
+        /*
+         * --------------------------------------------------
+         * STEP 1
+         * Try the authoritative users.fullName field.
+         * --------------------------------------------------
+         */
+
+        let resolvedName =
+          getValidName(
+            data?.fullName
+          );
+
+        /*
+         * --------------------------------------------------
+         * STEP 2
+         * If users.fullName is missing, recover the name
+         * from an existing post created by this user.
+         *
+         * Existing posts already contain:
+         *
+         * userName: "ADEBAMIJI ADEOKUN"
+         *
+         * This allows us to restore the profile without
+         * hard-coding a personal name into the application.
+         * --------------------------------------------------
+         */
+
+        if (!resolvedName) {
+          resolvedName =
+            await recoverNameFromPosts(
+              user.uid
+            );
+        }
+
+        /*
+         * --------------------------------------------------
+         * STEP 3
+         * If the name was not found in posts, use Firebase
+         * Authentication's displayName if it is real.
+         * --------------------------------------------------
+         */
+
+        if (!resolvedName) {
+          resolvedName =
+            getValidName(
+              user.displayName
+            );
+        }
+
+        /*
+         * --------------------------------------------------
+         * STEP 4
+         * Final fallback to the email username.
+         *
+         * We deliberately do NOT use "Inclura User" here
+         * because that would hide the actual missing-name
+         * problem again.
+         * --------------------------------------------------
+         */
+
+        if (!resolvedName) {
+          const email =
+            user.email ||
+            data?.email ||
+            "";
+
+          if (email) {
+            resolvedName =
+              email
+                .split("@")[0]
+                .trim();
+          }
+        }
 
         setFullName(
-          data.fullName || ""
+          resolvedName
         );
 
         setLocation(
-          data.location || ""
+          data?.location || ""
         );
 
         setPhoneNumber(
-          data.phoneNumber || ""
+          data?.phoneNumber || ""
         );
 
         setBio(
-          data.bio || ""
+          data?.bio || ""
         );
 
         setCategory(
-          data.category || ""
+          data?.category || ""
         );
 
         setPreferredLanguage(
-  data.preferredLanguage || "en"
-);
+          data?.preferredLanguage ||
+            "en"
+        );
 
         setPhotoURL(
-          data.photoURL || ""
+          data?.photoURL ||
+            data?.profilePhoto ||
+            user.photoURL ||
+            ""
         );
 
         setAccessibilityNeeds(
-          data.accessibilityNeeds || []
+          Array.isArray(
+            data?.accessibilityNeeds
+          )
+            ? data.accessibilityNeeds
+            : []
+        );
+      } catch (error) {
+        console.log(
+          "Load profile error:",
+          error
         );
       }
     }
@@ -112,13 +305,22 @@ function EditProfile() {
     e
   ) {
     const file =
-      e.target.files[0];
+      e.target.files?.[0];
 
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     try {
       const user =
         auth.currentUser;
+
+      if (!user) {
+        alert(
+          "Please login again."
+        );
+        return;
+      }
 
       const storageRef =
         ref(
@@ -153,25 +355,90 @@ function EditProfile() {
       const user =
         auth.currentUser;
 
-      if (!user) return;
+      if (!user) {
+        alert(
+          "Please login again."
+        );
+        return;
+      }
+
+      const cleanedName =
+        fullName.trim();
+
+      if (!cleanedName) {
+        alert(
+          "Please enter your full name."
+        );
+        return;
+      }
+
+      const profileRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
       await updateDoc(
-  doc(
-    db,
-    "users",
-    user.uid
-  ),
-  {
-    fullName,
-    location,
-    phoneNumber,
-    bio,
-    category,
-    preferredLanguage,
-    accessibilityNeeds,
-    photoURL,
-  }
-);
+        profileRef,
+        {
+          fullName:
+            cleanedName,
+
+          location:
+            location.trim(),
+
+          phoneNumber:
+            phoneNumber.trim(),
+
+          bio:
+            bio.trim(),
+
+          category,
+
+          preferredLanguage,
+
+          accessibilityNeeds,
+
+          photoURL,
+
+          /*
+           * Keep profilePhoto synchronized
+           * with photoURL because other parts
+           * of Inclura currently use profilePhoto.
+           */
+          profilePhoto:
+            photoURL,
+        }
+      );
+
+      /*
+       * Keep Firebase Authentication's
+       * displayName synchronized when possible.
+       *
+       * The Firestore fullName remains the
+       * application's authoritative profile name.
+       */
+      try {
+        const {
+          updateProfile,
+        } = await import(
+          "firebase/auth"
+        );
+
+        await updateProfile(
+          user,
+          {
+            displayName:
+              cleanedName,
+          }
+        );
+      } catch (authError) {
+        console.log(
+          "Firebase Auth display name sync skipped:",
+          authError
+        );
+      }
 
       alert(
         "Profile updated successfully"
@@ -179,6 +446,11 @@ function EditProfile() {
 
       navigate("/profile");
     } catch (error) {
+      console.log(
+        "Save profile error:",
+        error
+      );
+
       alert(error.message);
     } finally {
       setLoading(false);
@@ -326,7 +598,8 @@ function EditProfile() {
           }
           style={{
             ...inputStyle,
-            height: "120px",
+            height:
+              "120px",
           }}
         />
 
@@ -338,7 +611,8 @@ function EditProfile() {
             )
           }
           style={{
-            width: "100%",
+            width:
+              "100%",
             padding:
               "16px",
             marginBottom:
@@ -359,63 +633,99 @@ function EditProfile() {
             Select Category
           </option>
 
-          <option>
+          <option value="Creator">
             Creator
           </option>
 
-          <option>
+          <option value="Caregiver">
             Caregiver
           </option>
 
-          <option>
+          <option value="Employer">
             Employer
           </option>
 
-          <option>
+          <option value="Job Seeker">
             Job Seeker
           </option>
 
-          <option>
+          <option value="Volunteer">
             Volunteer
           </option>
 
-          <option>
+          <option value="Organization">
             Organization
           </option>
 
-          <option>
+          <option value="Advocate">
             Advocate
           </option>
         </select>
 
         <select
-  value={preferredLanguage}
-  onChange={(e) =>
-    setPreferredLanguage(
-      e.target.value
-    )
-  }
-  style={{
-    width: "100%",
-    padding: "16px",
-    marginBottom: "16px",
-    borderRadius: "14px",
-    border: "1px solid #334155",
-    background: "#ffffff",
-    color: "#000000",
-    boxSizing: "border-box",
-  }}
->
-  <option value="en">English</option>
-  <option value="fr">French</option>
-  <option value="es">Spanish</option>
-  <option value="pt">Portuguese</option>
-  <option value="ar">Arabic</option>
-  <option value="sw">Swahili</option>
-  <option value="ha">Hausa</option>
-  <option value="yo">Yoruba</option>
-  <option value="ig">Igbo</option>
-</select>
+          value={
+            preferredLanguage
+          }
+          onChange={(e) =>
+            setPreferredLanguage(
+              e.target.value
+            )
+          }
+          style={{
+            width:
+              "100%",
+            padding:
+              "16px",
+            marginBottom:
+              "16px",
+            borderRadius:
+              "14px",
+            border:
+              "1px solid #334155",
+            background:
+              "#ffffff",
+            color:
+              "#000000",
+            boxSizing:
+              "border-box",
+          }}
+        >
+          <option value="en">
+            English
+          </option>
+
+          <option value="fr">
+            French
+          </option>
+
+          <option value="es">
+            Spanish
+          </option>
+
+          <option value="pt">
+            Portuguese
+          </option>
+
+          <option value="ar">
+            Arabic
+          </option>
+
+          <option value="sw">
+            Swahili
+          </option>
+
+          <option value="ha">
+            Hausa
+          </option>
+
+          <option value="yo">
+            Yoruba
+          </option>
+
+          <option value="ig">
+            Igbo
+          </option>
+        </select>
 
         <div
           style={{
@@ -450,7 +760,9 @@ function EditProfile() {
                       )
                     }
                   />
+
                   {" "}
+
                   {need}
                 </label>
               </div>
@@ -479,29 +791,41 @@ function EditProfile() {
 }
 
 const inputStyle = {
-  width: "100%",
-  padding: "16px",
-  marginBottom: "16px",
-  borderRadius: "14px",
+  width:
+    "100%",
+  padding:
+    "16px",
+  marginBottom:
+    "16px",
+  borderRadius:
+    "14px",
   border:
     "1px solid #334155",
   background:
     "#1e293b",
-  color: "white",
+  color:
+    "white",
   boxSizing:
     "border-box",
 };
 
 const buttonStyle = {
-  width: "100%",
-  padding: "16px",
-  borderRadius: "14px",
-  border: "none",
+  width:
+    "100%",
+  padding:
+    "16px",
+  borderRadius:
+    "14px",
+  border:
+    "none",
   background:
     "#38bdf8",
-  color: "white",
-  fontWeight: "700",
-  cursor: "pointer",
+  color:
+    "white",
+  fontWeight:
+    "700",
+  cursor:
+    "pointer",
 };
 
 export default EditProfile;
