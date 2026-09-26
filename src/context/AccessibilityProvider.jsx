@@ -4,6 +4,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useCallback,
 } from "react";
 
 import { useAuth } from "./AuthContext";
@@ -17,6 +18,15 @@ import {
   subscribeAccessibility,
   shutdownAccessibilityRuntime,
 } from "../ifse/accessibility/AccessibilityRuntimeEngine";
+
+import {
+  doc,
+  updateDoc,
+} from "firebase/firestore";
+
+import {
+  db,
+} from "../firebase";
 
 const AccessibilityContext =
   createContext();
@@ -95,23 +105,30 @@ export function AccessibilityProvider({
   children,
 }) {
   const {
+    user,
     userProfile,
   } = useAuth();
 
-  const [language, setLanguage] =
+  const [language, setLanguageState] =
     useState("en");
 
-  const [fontScale, setFontScale] =
+  const [fontScale, setFontScaleState] =
     useState(1);
 
-  const [highContrast, setHighContrast] =
-    useState(false);
+  const [
+    highContrast,
+    setHighContrastState,
+  ] = useState(false);
 
-  const [reducedMotion, setReducedMotion] =
-    useState(false);
+  const [
+    reducedMotion,
+    setReducedMotionState,
+  ] = useState(false);
 
-  const [voiceEnabled, setVoiceEnabled] =
-    useState(false);
+  const [
+    voiceEnabled,
+    setVoiceEnabledState,
+  ] = useState(false);
 
   const [speaking, setSpeaking] =
     useState(false);
@@ -125,10 +142,11 @@ export function AccessibilityProvider({
   );
 
   /*
-   * AuthContext remains the source
-   * of truth for saved accessibility
-   * requirements.
+   * --------------------------------------------------
+   * SAVED ACCESSIBILITY NEEDS
+   * --------------------------------------------------
    */
+
   const accessibilityNeeds =
     useMemo(() => {
       return normalizeAccessibilityNeeds(
@@ -138,12 +156,6 @@ export function AccessibilityProvider({
       userProfile?.accessibilityNeeds,
     ]);
 
-  /*
-   * Normalize accessibility requirements
-   * so different capitalization,
-   * separators, and wording can be
-   * interpreted consistently.
-   */
   const normalizedNeeds =
     useMemo(() => {
       return accessibilityNeeds.map(
@@ -153,29 +165,26 @@ export function AccessibilityProvider({
       accessibilityNeeds,
     ]);
 
-  const hasNeed = (
-    ...keywords
-  ) => {
-    return normalizedNeeds.some(
-      (need) =>
-        keywords.some((keyword) =>
-          need.includes(
-            normalizeNeed(keyword)
+  const hasNeed = useCallback(
+    (...keywords) => {
+      return normalizedNeeds.some(
+        (need) =>
+          keywords.some((keyword) =>
+            need.includes(
+              normalizeNeed(keyword)
+            )
           )
-        )
-    );
-  };
+      );
+    },
+    [normalizedNeeds]
+  );
 
   /*
-   * Application-facing accessibility
-   * profile.
-   *
-   * The detailed IFSE engines remain
-   * responsible for deeper accessibility
-   * evaluation. This profile preserves
-   * the existing React API used by
-   * application components.
+   * --------------------------------------------------
+   * APPLICATION ACCESSIBILITY PROFILE
+   * --------------------------------------------------
    */
+
   const accessibilityProfile =
     useMemo(() => {
       return {
@@ -186,7 +195,6 @@ export function AccessibilityProvider({
 
         lowVision: hasNeed(
           "low vision",
-          "visual impairment",
           "visual impairment",
           "low-vision"
         ),
@@ -243,13 +251,376 @@ export function AccessibilityProvider({
         ),
       };
     }, [
-      normalizedNeeds,
+      hasNeed,
     ]);
 
   /*
-   * Synchronize React with the live
-   * IFSE accessibility runtime.
+   * --------------------------------------------------
+   * FIRESTORE ACCESSIBILITY PERSISTENCE
+   * --------------------------------------------------
    */
+
+  const saveAccessibilitySetting =
+    useCallback(
+      async (
+        field,
+        value
+      ) => {
+        const uid =
+          user?.uid;
+
+        if (!uid) {
+          return false;
+        }
+
+        try {
+          await updateDoc(
+            doc(
+              db,
+              "users",
+              uid
+            ),
+            {
+              [field]: value,
+            }
+          );
+
+          return true;
+        } catch (error) {
+          console.error(
+            `Unable to save accessibility setting "${field}":`,
+            error
+          );
+
+          return false;
+        }
+      },
+      [user?.uid]
+    );
+
+  /*
+   * --------------------------------------------------
+   * ACCESSIBILITY SETTERS
+   *
+   * These update the interface immediately AND
+   * persist the setting to the user's Firestore
+   * profile.
+   * --------------------------------------------------
+   */
+
+  const setLanguage =
+    useCallback(
+      (value) => {
+        const normalizedLanguage =
+          typeof value === "string" &&
+          value.trim()
+            ? value.trim()
+            : "en";
+
+        setLanguageState(
+          normalizedLanguage
+        );
+
+        /*
+         * The Edit Profile system historically
+         * uses preferredLanguage, while older
+         * accessibility data may use language.
+         *
+         * Keep both synchronized.
+         */
+        void saveAccessibilitySetting(
+          "language",
+          normalizedLanguage
+        );
+
+        void saveAccessibilitySetting(
+          "preferredLanguage",
+          normalizedLanguage
+        );
+      },
+      [
+        saveAccessibilitySetting,
+      ]
+    );
+
+  const setFontScale =
+    useCallback(
+      (value) => {
+        const numericValue =
+          Number(value);
+
+        if (
+          !Number.isFinite(
+            numericValue
+          )
+        ) {
+          return;
+        }
+
+        const normalizedValue =
+          Math.min(
+            1.6,
+            Math.max(
+              0.8,
+              numericValue
+            )
+          );
+
+        setFontScaleState(
+          normalizedValue
+        );
+
+        void saveAccessibilitySetting(
+          "fontScale",
+          normalizedValue
+        );
+      },
+      [
+        saveAccessibilitySetting,
+      ]
+    );
+
+  const setHighContrast =
+    useCallback(
+      (value) => {
+        const normalizedValue =
+          Boolean(value);
+
+        setHighContrastState(
+          normalizedValue
+        );
+
+        void saveAccessibilitySetting(
+          "highContrast",
+          normalizedValue
+        );
+      },
+      [
+        saveAccessibilitySetting,
+      ]
+    );
+
+  const setReducedMotion =
+    useCallback(
+      (value) => {
+        const normalizedValue =
+          Boolean(value);
+
+        setReducedMotionState(
+          normalizedValue
+        );
+
+        void saveAccessibilitySetting(
+          "reducedMotion",
+          normalizedValue
+        );
+      },
+      [
+        saveAccessibilitySetting,
+      ]
+    );
+
+  const setVoiceEnabled =
+    useCallback(
+      (value) => {
+        const normalizedValue =
+          Boolean(value);
+
+        setVoiceEnabledState(
+          normalizedValue
+        );
+
+        void saveAccessibilitySetting(
+          "voiceEnabled",
+          normalizedValue
+        );
+      },
+      [
+        saveAccessibilitySetting,
+      ]
+    );
+
+  /*
+   * --------------------------------------------------
+   * COMPATIBILITY SETTER
+   *
+   * AccessibilitySettings and older components may
+   * expect setAccessibilityProfile to exist.
+   *
+   * The previous provider exposed this name without
+   * defining it, which could cause a runtime error.
+   *
+   * This implementation converts profile flags into
+   * the existing accessibilityNeeds model.
+   * --------------------------------------------------
+   */
+
+  const setAccessibilityProfile =
+    useCallback(
+      async (profileUpdate = {}) => {
+        if (
+          !profileUpdate ||
+          typeof profileUpdate !==
+            "object"
+        ) {
+          return;
+        }
+
+        const nextNeeds = [
+          ...accessibilityNeeds,
+        ];
+
+        const mappings = [
+          {
+            key: "blind",
+            values: [
+              "Blind",
+            ],
+          },
+          {
+            key: "lowVision",
+            values: [
+              "Low Vision",
+            ],
+          },
+          {
+            key: "deaf",
+            values: [
+              "Deaf",
+            ],
+          },
+          {
+            key: "hardOfHearing",
+            values: [
+              "Hard of Hearing",
+            ],
+          },
+          {
+            key: "wheelchair",
+            values: [
+              "Wheelchair",
+            ],
+          },
+          {
+            key: "motorImpaired",
+            values: [
+              "Mobility Impairment",
+            ],
+          },
+          {
+            key: "speechImpairment",
+            values: [
+              "Speech Impairment",
+            ],
+          },
+          {
+            key: "dyslexia",
+            values: [
+              "Dyslexia",
+            ],
+          },
+          {
+            key: "adhd",
+            values: [
+              "ADHD",
+            ],
+          },
+          {
+            key: "autism",
+            values: [
+              "Autism",
+            ],
+          },
+        ];
+
+        mappings.forEach(
+          ({
+            key,
+            values,
+          }) => {
+            if (
+              typeof profileUpdate[
+                key
+              ] !== "boolean"
+            ) {
+              return;
+            }
+
+            values.forEach(
+              (needValue) => {
+                const existingIndex =
+                  nextNeeds.findIndex(
+                    (need) =>
+                      normalizeNeed(
+                        need
+                      ) ===
+                      normalizeNeed(
+                        needValue
+                      )
+                  );
+
+                if (
+                  profileUpdate[
+                    key
+                  ]
+                ) {
+                  if (
+                    existingIndex <
+                    0
+                  ) {
+                    nextNeeds.push(
+                      needValue
+                    );
+                  }
+                } else if (
+                  existingIndex >=
+                  0
+                ) {
+                  nextNeeds.splice(
+                    existingIndex,
+                    1
+                  );
+                }
+              }
+            );
+          }
+        );
+
+        if (
+          user?.uid
+        ) {
+          try {
+            await updateDoc(
+              doc(
+                db,
+                "users",
+                user.uid
+              ),
+              {
+                accessibilityNeeds:
+                  nextNeeds,
+              }
+            );
+          } catch (error) {
+            console.error(
+              "Unable to save accessibility profile:",
+              error
+            );
+          }
+        }
+      },
+      [
+        accessibilityNeeds,
+        user?.uid,
+      ]
+    );
+
+  /*
+   * --------------------------------------------------
+   * IFSE RUNTIME SUBSCRIPTION
+   * --------------------------------------------------
+   */
+
   useEffect(() => {
     const unsubscribe =
       subscribeAccessibility(
@@ -268,38 +639,42 @@ export function AccessibilityProvider({
   }, []);
 
   /*
-   * Restore saved accessibility
-   * preferences from AuthContext.
-   *
-   * AuthContext remains the single
-   * persistence source. This provider
-   * does not create another Firestore
-   * listener.
+   * --------------------------------------------------
+   * RESTORE SAVED ACCESSIBILITY SETTINGS
+   * --------------------------------------------------
    */
+
   useEffect(() => {
     if (!userProfile) {
-      setAccessibilityNeeds([]);
-
-      setLanguage("en");
-      setFontScale(1);
-      setHighContrast(false);
-      setReducedMotion(false);
-      setVoiceEnabled(false);
+      setLanguageState("en");
+      setFontScaleState(1);
+      setHighContrastState(false);
+      setReducedMotionState(false);
+      setVoiceEnabledState(false);
 
       shutdownAccessibilityRuntime();
 
       return;
     }
 
-    if (
+    /*
+     * Support both language and the existing
+     * preferredLanguage profile field.
+     */
+    const savedLanguage =
       typeof userProfile.language ===
         "string" &&
       userProfile.language.trim()
-    ) {
-      setLanguage(
-        userProfile.language
-      );
-    }
+        ? userProfile.language
+        : typeof userProfile.preferredLanguage ===
+            "string" &&
+          userProfile.preferredLanguage.trim()
+        ? userProfile.preferredLanguage
+        : "en";
+
+    setLanguageState(
+      savedLanguage
+    );
 
     if (
       typeof userProfile.fontScale ===
@@ -309,51 +684,61 @@ export function AccessibilityProvider({
       ) &&
       userProfile.fontScale > 0
     ) {
-      setFontScale(
-        userProfile.fontScale
+      setFontScaleState(
+        Math.min(
+          1.6,
+          Math.max(
+            0.8,
+            userProfile.fontScale
+          )
+        )
       );
+    } else {
+      setFontScaleState(1);
     }
 
     if (
       typeof userProfile.highContrast ===
       "boolean"
     ) {
-      setHighContrast(
+      setHighContrastState(
         userProfile.highContrast
       );
+    } else {
+      setHighContrastState(false);
     }
 
     if (
       typeof userProfile.reducedMotion ===
       "boolean"
     ) {
-      setReducedMotion(
+      setReducedMotionState(
         userProfile.reducedMotion
       );
+    } else {
+      setReducedMotionState(false);
     }
 
     if (
       typeof userProfile.voiceEnabled ===
       "boolean"
     ) {
-      setVoiceEnabled(
+      setVoiceEnabledState(
         userProfile.voiceEnabled
       );
+    } else {
+      setVoiceEnabledState(false);
     }
   }, [
     userProfile,
   ]);
 
   /*
-   * Connect the application-facing
-   * accessibility state to IFSE.
-   *
-   * IFSE receives the complete current
-   * accessibility request so its
-   * specialized engines can evaluate
-   * and activate the appropriate
-   * modules.
+   * --------------------------------------------------
+   * SEND COMPLETE ACCESSIBILITY STATE TO IFSE
+   * --------------------------------------------------
    */
+
   useEffect(() => {
     if (!userProfile) {
       return;
@@ -389,22 +774,17 @@ export function AccessibilityProvider({
   ]);
 
   /*
-   * Browser speech support.
-   *
-   * This remains the application's
-   * immediate Android/browser speech
-   * accessibility service.
+   * --------------------------------------------------
+   * BROWSER SPEECH SUPPORT
+   * --------------------------------------------------
    */
+
   const speechSupported =
     typeof window !== "undefined" &&
     "speechSynthesis" in window &&
     "SpeechSynthesisUtterance" in
       window;
 
-  /*
-   * Cancel active browser speech
-   * when the provider unmounts.
-   */
   useEffect(() => {
     return () => {
       if (
@@ -416,11 +796,6 @@ export function AccessibilityProvider({
     };
   }, []);
 
-  /*
-   * Keep speaking state synchronized
-   * with browser speech events where
-   * the browser exposes them.
-   */
   useEffect(() => {
     if (
       !speechSupported ||
@@ -477,13 +852,11 @@ export function AccessibilityProvider({
   ]);
 
   /*
-   * Central browser speech service.
-   *
-   * It does not automatically speak
-   * every message or notification.
-   * User-facing accessibility controls
-   * explicitly invoke this function.
+   * --------------------------------------------------
+   * SPEECH SERVICE
+   * --------------------------------------------------
    */
+
   function speakText(
     text,
     options = {}
@@ -583,15 +956,21 @@ export function AccessibilityProvider({
   }
 
   /*
-   * Users with blindness or low vision
-   * receive effective voice capability
-   * even when the manual voice toggle
-   * has not been enabled.
+   * --------------------------------------------------
+   * EFFECTIVE VOICE ACCESSIBILITY
+   * --------------------------------------------------
    */
+
   const effectiveVoiceEnabled =
     voiceEnabled ||
     accessibilityProfile.blind ||
     accessibilityProfile.lowVision;
+
+  /*
+   * --------------------------------------------------
+   * CONTEXT VALUE
+   * --------------------------------------------------
+   */
 
   const value = {
     language,
@@ -621,9 +1000,6 @@ export function AccessibilityProvider({
     accessibilityProfile,
     setAccessibilityProfile,
 
-    /*
-     * Live IFSE accessibility state.
-     */
     ifseAccessibilityRuntime,
   };
 
@@ -633,7 +1009,8 @@ export function AccessibilityProvider({
     >
       <div
         style={{
-          fontSize: `${fontScale}rem`,
+          fontSize:
+            `${fontScale}rem`,
 
           background:
             highContrast
@@ -645,7 +1022,8 @@ export function AccessibilityProvider({
               ? "#ffffff"
               : undefined,
 
-          minHeight: "100%",
+          minHeight:
+            "100%",
 
           transition:
             reducedMotion
