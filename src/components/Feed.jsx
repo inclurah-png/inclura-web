@@ -109,17 +109,22 @@ function Feed() {
    * the active application language.
    */
   useEffect(() => {
-    const activeLanguage =
-      String(
-        i18n.language || "en"
-      )
-        .trim()
-        .toLowerCase();
+  const activeLanguage =
+    String(
+      i18n.resolvedLanguage ||
+        i18n.language ||
+        "en"
+    )
+      .trim()
+      .toLowerCase();
 
-    setUserLanguage(
-      activeLanguage || "en"
-    );
-  }, [i18n.language]);
+  setUserLanguage(
+    activeLanguage || "en"
+  );
+}, [
+  i18n.resolvedLanguage,
+  i18n.language,
+]);
 
   /*
    * Load the initial Feed.
@@ -574,13 +579,14 @@ function Feed() {
     }
 
     const targetLanguage =
-      String(
-        i18n.language ||
-          userLanguage ||
-          "en"
-      )
-        .trim()
-        .toLowerCase();
+  String(
+    i18n.resolvedLanguage ||
+      i18n.language ||
+      userLanguage ||
+      "en"
+  )
+    .trim()
+    .toLowerCase();
 
     if (!targetLanguage) {
       return;
@@ -813,11 +819,18 @@ function Feed() {
     }
 
     const text =
-      post.translatedText?.[
-        userLanguage
-      ] ||
-      post.text ||
-      "";
+  post.translatedText?.[
+    String(
+      i18n.resolvedLanguage ||
+        i18n.language ||
+        userLanguage ||
+        "en"
+    )
+      .trim()
+      .toLowerCase()
+  ] ||
+  post.text ||
+  "";
 
     if (!text.trim()) {
       return;
@@ -863,12 +876,22 @@ function Feed() {
         tr: "tr-TR",
       };
 
-    utterance.lang =
-      speechLanguageMap[
-        userLanguage
-      ] ||
+    const speechLanguage =
+  String(
+    i18n.resolvedLanguage ||
+      i18n.language ||
       userLanguage ||
-      "en-US";
+      "en"
+  )
+    .trim()
+    .toLowerCase();
+
+utterance.lang =
+  speechLanguageMap[
+    speechLanguage
+  ] ||
+  speechLanguage ||
+  "en-US";
 
     utterance.rate =
       0.9;
@@ -1059,10 +1082,17 @@ function Feed() {
                 );
 
               const translated =
-                post
-                  .translatedText?.[
-                  userLanguage
-                ];
+  post
+    .translatedText?.[
+    String(
+      i18n.resolvedLanguage ||
+        i18n.language ||
+        userLanguage ||
+        "en"
+    )
+      .trim()
+      .toLowerCase()
+  ];
 
               const currentAccessibility =
                 getPostAccessibility(
@@ -1273,8 +1303,15 @@ function Feed() {
                     >
                       Translated to{" "}
                       {
-                        userLanguage
-                      }
+  String(
+    i18n.resolvedLanguage ||
+      i18n.language ||
+      userLanguage ||
+      "en"
+  )
+    .trim()
+    .toLowerCase()
+}
                     </small>
                   )}
 
@@ -1289,12 +1326,21 @@ function Feed() {
                       isTranslating
                     }
                     aria-label={
-                      isTranslating
-                        ? "Translating post"
-                        : translated
-                        ? `Post translated to ${userLanguage}`
-                        : "Translate this post"
-                    }
+  isTranslating
+    ? "Translating post"
+    : translated
+    ? `Post translated to ${
+        String(
+          i18n.resolvedLanguage ||
+            i18n.language ||
+            userLanguage ||
+            "en"
+        )
+          .trim()
+          .toLowerCase()
+      }`
+    : "Translate this post"
+}
                     style={{
                       marginTop:
                         "10px",
