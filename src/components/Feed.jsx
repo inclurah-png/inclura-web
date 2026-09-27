@@ -121,6 +121,10 @@ function Feed() {
   setUserLanguage(
     activeLanguage || "en"
   );
+
+  setFilteredPosts((prev) =>
+    [...prev]
+  );
 }, [
   i18n.resolvedLanguage,
   i18n.language,
