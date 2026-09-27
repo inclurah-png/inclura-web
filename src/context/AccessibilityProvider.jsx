@@ -28,6 +28,8 @@ import {
   db,
 } from "../firebase";
 
+import i18n from "../i18n";
+
 const AccessibilityContext =
   createContext();
 
@@ -302,9 +304,10 @@ export function AccessibilityProvider({
    * --------------------------------------------------
    * ACCESSIBILITY SETTERS
    *
-   * These update the interface immediately AND
-   * persist the setting to the user's Firestore
-   * profile.
+   * The application language is synchronized with
+   * i18next so accessibility language changes and
+   * application translation always use the same
+   * active language.
    * --------------------------------------------------
    */
 
@@ -320,6 +323,21 @@ export function AccessibilityProvider({
         setLanguageState(
           normalizedLanguage
         );
+
+        /*
+         * Keep i18next synchronized with the
+         * accessibility language.
+         */
+        void i18n
+          .changeLanguage(
+            normalizedLanguage
+          )
+          .catch((error) => {
+            console.error(
+              "Unable to change application language:",
+              error
+            );
+          });
 
         /*
          * The Edit Profile system historically
@@ -443,15 +461,6 @@ export function AccessibilityProvider({
   /*
    * --------------------------------------------------
    * COMPATIBILITY SETTER
-   *
-   * AccessibilitySettings and older components may
-   * expect setAccessibilityProfile to exist.
-   *
-   * The previous provider exposed this name without
-   * defining it, which could cause a runtime error.
-   *
-   * This implementation converts profile flags into
-   * the existing accessibilityNeeds model.
    * --------------------------------------------------
    */
 
@@ -675,6 +684,27 @@ export function AccessibilityProvider({
     setLanguageState(
       savedLanguage
     );
+
+    /*
+     * Keep the global i18next language
+     * synchronized when the saved profile
+     * language is restored.
+     */
+    if (
+      i18n.language !==
+      savedLanguage
+    ) {
+      void i18n
+        .changeLanguage(
+          savedLanguage
+        )
+        .catch((error) => {
+          console.error(
+            "Unable to restore application language:",
+            error
+          );
+        });
+    }
 
     if (
       typeof userProfile.fontScale ===
