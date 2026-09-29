@@ -71,8 +71,6 @@ function Feed() {
     voiceEnabled,
     fontScale,
     highContrast,
-    setFontScale,
-    setHighContrast,
   } = useAccessibility();
 
   /*
@@ -106,29 +104,54 @@ function Feed() {
 
   /*
    * Keep Feed language synchronized with
-   * the active application language.
+   * the actual i18next language.
+   *
+   * The languageChanged listener is important
+   * for posts that were already loaded before
+   * the user changed the language.
    */
   useEffect(() => {
-  const activeLanguage =
-    String(
+    function syncFeedLanguage(language) {
+      const activeLanguage =
+        String(
+          language ||
+            i18n.resolvedLanguage ||
+            i18n.language ||
+            "en"
+        )
+          .trim()
+          .toLowerCase();
+
+      setUserLanguage(
+        activeLanguage || "en"
+      );
+    }
+
+    syncFeedLanguage(
       i18n.resolvedLanguage ||
         i18n.language ||
         "en"
-    )
-      .trim()
-      .toLowerCase();
+    );
 
-  setUserLanguage(
-    activeLanguage || "en"
-  );
+    const handleLanguageChanged =
+      (language) => {
+        syncFeedLanguage(
+          language
+        );
+      };
 
-  setFilteredPosts((prev) =>
-    [...prev]
-  );
-}, [
-  i18n.resolvedLanguage,
-  i18n.language,
-]);
+    i18n.on(
+      "languageChanged",
+      handleLanguageChanged
+    );
+
+    return () => {
+      i18n.off(
+        "languageChanged",
+        handleLanguageChanged
+      );
+    };
+  }, [i18n]);
 
   /*
    * Load the initial Feed.
@@ -582,25 +605,74 @@ function Feed() {
       return;
     }
 
+    /*
+     * Resolve the language at the exact
+     * moment the Translate button is pressed.
+     */
     const targetLanguage =
-  String(
-    i18n.resolvedLanguage ||
-      i18n.language ||
-      userLanguage ||
-      "en"
-  )
-    .trim()
-    .toLowerCase();
+      String(
+        i18n.resolvedLanguage ||
+          i18n.language ||
+          userLanguage ||
+          "en"
+      )
+        .trim()
+        .toLowerCase();
 
     if (!targetLanguage) {
       return;
     }
 
-    if (
+    /*
+     * Use an existing translation for
+     * the CURRENT language when available.
+     */
+    const existingTranslation =
       post.translatedText?.[
         targetLanguage
-      ]
+      ];
+
+    if (
+      typeof existingTranslation ===
+        "string" &&
+      existingTranslation.trim()
     ) {
+      const existingText =
+        existingTranslation.trim();
+
+      const existingTranslations =
+        {
+          ...(post.translatedText ||
+            {}),
+          [targetLanguage]:
+            existingText,
+        };
+
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                translatedText:
+                  existingTranslations,
+              }
+            : p
+        )
+      );
+
+      setFilteredPosts(
+        (prev) =>
+          prev.map((p) =>
+            p.id === postId
+              ? {
+                  ...p,
+                  translatedText:
+                    existingTranslations,
+              }
+              : p
+          )
+      );
+
       return;
     }
 
@@ -617,6 +689,10 @@ function Feed() {
         {
           postId,
           targetLanguage,
+          i18nLanguage:
+            i18n.language,
+          resolvedLanguage:
+            i18n.resolvedLanguage,
         }
       );
 
@@ -714,7 +790,7 @@ function Feed() {
                   ...p,
                   translatedText:
                     updatedTranslatedText,
-                }
+              }
               : p
           )
       );
@@ -797,10 +873,6 @@ function Feed() {
   /*
    * Read a post aloud using the
    * Android/browser speech engine.
-   *
-   * A direct user click starts the speech,
-   * which is important because Android
-   * browsers may block unsolicited speech.
    */
   function readPostAloud(
     post
@@ -822,19 +894,22 @@ function Feed() {
       return;
     }
 
+    const speechLanguage =
+      String(
+        i18n.resolvedLanguage ||
+          i18n.language ||
+          userLanguage ||
+          "en"
+      )
+        .trim()
+        .toLowerCase();
+
     const text =
-  post.translatedText?.[
-    String(
-      i18n.resolvedLanguage ||
-        i18n.language ||
-        userLanguage ||
-        "en"
-    )
-      .trim()
-      .toLowerCase()
-  ] ||
-  post.text ||
-  "";
+      post.translatedText?.[
+        speechLanguage
+      ] ||
+      post.text ||
+      "";
 
     if (!text.trim()) {
       return;
@@ -847,10 +922,6 @@ function Feed() {
         text
       );
 
-    /*
-     * Map common Inclura language
-     * codes to speech language codes.
-     */
     const speechLanguageMap =
       {
         en: "en-US",
@@ -880,22 +951,12 @@ function Feed() {
         tr: "tr-TR",
       };
 
-    const speechLanguage =
-  String(
-    i18n.resolvedLanguage ||
-      i18n.language ||
-      userLanguage ||
-      "en"
-  )
-    .trim()
-    .toLowerCase();
-
-utterance.lang =
-  speechLanguageMap[
-    speechLanguage
-  ] ||
-  speechLanguage ||
-  "en-US";
+    utterance.lang =
+      speechLanguageMap[
+        speechLanguage
+      ] ||
+      speechLanguage ||
+      "en-US";
 
     utterance.rate =
       0.9;
@@ -993,30 +1054,18 @@ utterance.lang =
     );
   }
 
-  /*
-   * Whether the current profile has
-   * visual accessibility needs.
-   */
   const visualImpairmentEnabled =
     Boolean(
       accessibilityProfile
         ?.blindLowVision
     );
 
-  /*
-   * Whether the current profile has
-   * hearing-related needs.
-   */
   const hearingNeedEnabled =
     Boolean(
       accessibilityProfile
         ?.deaf
     );
 
-  /*
-   * Whether the current profile has
-   * mobility-related needs.
-   */
   const mobilityNeedEnabled =
     Boolean(
       accessibilityProfile
@@ -1025,10 +1074,6 @@ utterance.lang =
           ?.motorImpaired
     );
 
-  /*
-   * Whether the current profile has
-   * neurodivergent needs.
-   */
   const neurodivergentEnabled =
     Boolean(
       accessibilityProfile
@@ -1085,18 +1130,21 @@ utterance.lang =
                   ]
                 );
 
+              const currentLanguage =
+                String(
+                  i18n.resolvedLanguage ||
+                    i18n.language ||
+                    userLanguage ||
+                    "en"
+                )
+                  .trim()
+                  .toLowerCase();
+
               const translated =
-  post
-    .translatedText?.[
-    String(
-      i18n.resolvedLanguage ||
-        i18n.language ||
-        userLanguage ||
-        "en"
-    )
-      .trim()
-      .toLowerCase()
-  ];
+                post
+                  .translatedText?.[
+                  currentLanguage
+                ];
 
               const currentAccessibility =
                 getPostAccessibility(
@@ -1123,7 +1171,7 @@ utterance.lang =
               return (
                 <div
                   key={
-                    post.id
+                    `${post.id}-${currentLanguage}`
                   }
                   style={{
                     background:
@@ -1307,15 +1355,8 @@ utterance.lang =
                     >
                       Translated to{" "}
                       {
-  String(
-    i18n.resolvedLanguage ||
-      i18n.language ||
-      userLanguage ||
-      "en"
-  )
-    .trim()
-    .toLowerCase()
-}
+                        currentLanguage
+                      }
                     </small>
                   )}
 
@@ -1330,21 +1371,12 @@ utterance.lang =
                       isTranslating
                     }
                     aria-label={
-  isTranslating
-    ? "Translating post"
-    : translated
-    ? `Post translated to ${
-        String(
-          i18n.resolvedLanguage ||
-            i18n.language ||
-            userLanguage ||
-            "en"
-        )
-          .trim()
-          .toLowerCase()
-      }`
-    : "Translate this post"
-}
+                      isTranslating
+                        ? "Translating post"
+                        : translated
+                        ? `Post translated to ${currentLanguage}`
+                        : "Translate this post"
+                    }
                     style={{
                       marginTop:
                         "10px",
@@ -1373,14 +1405,6 @@ utterance.lang =
                       : "🌍 Translate"}
                   </button>
 
-                  {/*
-                   * ==================================================
-                   * PER-POST ACCESSIBILITY CONTROL
-                   * ==================================================
-                   *
-                   * This appears under EVERY post,
-                   * including old posts loaded from Firestore.
-                   */}
                   <div
                     style={{
                       marginTop:
