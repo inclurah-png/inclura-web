@@ -36,6 +36,22 @@ import {
   useAccessibility,
 } from "../context/AccessibilityProvider";
 
+function normalizeFeedLanguage(code = "") {
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  if (
+    normalized === "zh-tw" ||
+    normalized === "zh-hant"
+  ) {
+    return "zh-TW";
+  }
+
+  return normalized || "en";
+}
+
 function Feed() {
   const [posts, setPosts] = useState([]);
   const [lastVisible, setLastVisible] =
@@ -111,20 +127,17 @@ function Feed() {
    * userLanguage immediately.
    */
   useEffect(() => {
-    const activeLanguage =
-      String(
-        i18n.language ||
-          "en"
-      )
-        .trim()
-        .toLowerCase();
-
-    setUserLanguage(
-      activeLanguage || "en"
+  const activeLanguage =
+    normalizeFeedLanguage(
+      i18n.language
     );
-  }, [
-    i18n.language,
-  ]);
+
+  setUserLanguage(
+    activeLanguage
+  );
+}, [
+  i18n.language,
+]);
 
   /*
    * Load the initial Feed.
@@ -584,16 +597,13 @@ function Feed() {
      * is pressed.
      */
     const targetLanguage =
-      String(
-        i18n.language ||
-          "en"
-      )
-        .trim()
-        .toLowerCase();
+  normalizeFeedLanguage(
+    i18n.language
+  );
 
-    if (!targetLanguage) {
-      return;
-    }
+if (!targetLanguage) {
+  return;
+}
 
     /*
      * If this post already has a translation
@@ -601,9 +611,16 @@ function Feed() {
      * use it immediately.
      */
     const existingTranslation =
-      post.translatedText?.[
-        targetLanguage
-      ];
+  post.translatedText?.[
+    targetLanguage
+  ] ||
+  (
+    targetLanguage === "zh-TW"
+      ? post.translatedText?.[
+          "zh-tw"
+        ]
+      : null
+  );
 
     if (
       typeof existingTranslation ===
@@ -732,14 +749,19 @@ function Feed() {
        * and add/update only the selected
        * language.
        */
-      const updatedTranslatedText =
-        {
-          ...(post.translatedText ||
-            {}),
-          [targetLanguage]:
-            translatedText,
-        };
+      const currentPost =
+  posts.find(
+    (current) =>
+      current.id === postId
+  ) || post;
 
+const updatedTranslatedText =
+  {
+    ...(currentPost.translatedText ||
+      {}),
+    [targetLanguage]:
+      translatedText,
+  };
       /*
        * Persist the translation to the
        * Firestore post.
@@ -1132,11 +1154,23 @@ function Feed() {
                * language changes without
                * refreshing the page.
                */
-              const translated =
-                post
-                  .translatedText?.[
-                  userLanguage
-                ];
+              const displayLanguage =
+  normalizeFeedLanguage(
+    i18n.language
+  );
+
+const translated =
+  post
+    .translatedText?.[
+    displayLanguage
+  ] ||
+  (
+    displayLanguage === "zh-TW"
+      ? post.translatedText?.[
+          "zh-tw"
+        ]
+      : null
+  );
 
               const currentAccessibility =
                 getPostAccessibility(
