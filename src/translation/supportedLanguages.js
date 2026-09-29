@@ -41,15 +41,15 @@ export const SUPPORTED_LANGUAGES = [
   },
   {
     code: "zh",
-    name: "Chinese (Simplified)",
-    nativeName: "简体中文",
+    name: "Chinese",
+    nativeName: "中文",
     voice: true,
     speech: true,
     rtl: false,
   },
   {
     code: "zh-TW",
-    name: "Chinese (Traditional)",
+    name: "Traditional Chinese",
     nativeName: "繁體中文",
     voice: true,
     speech: true,
@@ -138,7 +138,7 @@ export const SUPPORTED_LANGUAGES = [
   {
     code: "pcm",
     name: "Nigerian Pidgin",
-    nativeName: "Naija",
+    nativeName: "Naijá Pidgin",
     voice: true,
     speech: true,
     rtl: false,
@@ -201,8 +201,57 @@ export const SUPPORTED_LANGUAGES = [
   },
 ];
 
+/**
+ * Normalize language codes for consistent comparisons.
+ *
+ * Examples:
+ * zh-tw  -> zh-TW
+ * zh_tw  -> zh-TW
+ * zh_hant -> zh-TW
+ * EN     -> en
+ */
+export function normalizeLanguageCode(code = "") {
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  if (
+    normalized === "zh-tw" ||
+    normalized === "zh-hant"
+  ) {
+    return "zh-TW";
+  }
+
+  return normalized;
+}
+
+/**
+ * Return language metadata by code.
+ *
+ * Matching is case-insensitive and handles normalized
+ * Traditional Chinese language codes.
+ */
 export function getLanguage(code) {
-  return SUPPORTED_LANGUAGES.find(
-    (lang) => lang.code === code
+  const normalizedCode =
+    normalizeLanguageCode(code);
+
+  if (!normalizedCode) {
+    return null;
+  }
+
+  return (
+    SUPPORTED_LANGUAGES.find(
+      (language) =>
+        normalizeLanguageCode(language.code) ===
+        normalizedCode
+    ) || null
   );
-    }
+}
+
+/**
+ * Check whether a language code is supported.
+ */
+export function isSupportedLanguage(code) {
+  return Boolean(getLanguage(code));
+}
