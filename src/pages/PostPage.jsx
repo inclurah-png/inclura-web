@@ -19,38 +19,119 @@ import {
   saveTranslation,
 } from "../translation/textTranslator";
 
+function normalizePostLanguage(code = "") {
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  if (
+    normalized === "zh-tw" ||
+    normalized === "zh-hant"
+  ) {
+    return "zh-TW";
+  }
+
+  return normalized || "en";
+}
+
+function getPostTranslation(
+  post,
+  language
+) {
+  if (!post?.translatedText) {
+    return "";
+  }
+
+  const normalizedLanguage =
+    normalizePostLanguage(
+      language
+    );
+
+  const directTranslation =
+    post.translatedText?.[
+      normalizedLanguage
+    ];
+
+  if (
+    typeof directTranslation ===
+      "string" &&
+    directTranslation.trim()
+  ) {
+    return directTranslation.trim();
+  }
+
+  if (
+    normalizedLanguage ===
+    "zh-TW"
+  ) {
+    const legacyTranslation =
+      post.translatedText?.[
+        "zh-tw"
+      ];
+
+    if (
+      typeof legacyTranslation ===
+        "string" &&
+      legacyTranslation.trim()
+    ) {
+      return legacyTranslation.trim();
+    }
+  }
+
+  return "";
+}
+
 function PostPage() {
   const { id } = useParams();
 
   const navigate = useNavigate();
 
-  const [post, setPost] = useState(null);
+  const [post, setPost] =
+    useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
 
-  const { t, i18n } = useTranslation();
+  const { t, i18n } =
+    useTranslation();
 
-  const [translatedText, setTranslatedText] =
-    useState("");
+  const [
+    translatedText,
+    setTranslatedText,
+  ] = useState("");
 
-  const [translatedLanguage, setTranslatedLanguage] =
-    useState("");
+  const [
+    translatedLanguage,
+    setTranslatedLanguage,
+  ] = useState("");
 
-  const [isTranslated, setIsTranslated] =
-    useState(false);
+  const [
+    isTranslated,
+    setIsTranslated,
+  ] = useState(false);
 
-  const [translating, setTranslating] =
-    useState(false);
+  const [
+    translating,
+    setTranslating,
+  ] = useState(false);
 
-  const [reacting, setReacting] =
-    useState(false);
+  const [
+    reacting,
+    setReacting,
+  ] = useState(false);
 
   useEffect(() => {
     async function loadPost() {
       try {
-        const ref = doc(db, "posts", id);
+        const ref = doc(
+          db,
+          "posts",
+          id
+        );
 
-        const snap = await getDoc(ref);
+        const snap =
+          await getDoc(ref);
 
         if (snap.exists()) {
           setPost({
@@ -75,44 +156,49 @@ function PostPage() {
    * Keep the displayed translation synchronized
    * with the currently selected interface language.
    *
-   * We deliberately do not automatically call the
-   * translation service here. The user still controls
-   * translation with the Translate button.
+   * Changing language does not call the translation
+   * service. It only uses a translation that already
+   * exists on the loaded post.
    */
   useEffect(() => {
     const activeLanguage =
-      String(i18n.language || "en")
-        .trim()
-        .toLowerCase();
+      normalizePostLanguage(
+        i18n.language
+      );
 
     setIsTranslated(false);
     setTranslatedText("");
     setTranslatedLanguage("");
 
-    if (
-      !post ||
-      !activeLanguage
-    ) {
+    if (!post) {
       return;
     }
 
     const existingTranslation =
-      post.translatedText?.[
+      getPostTranslation(
+        post,
         activeLanguage
-      ];
+      );
 
     if (
-      typeof existingTranslation ===
-        "string" &&
-      existingTranslation.trim()
+      existingTranslation
     ) {
       setTranslatedText(
-        existingTranslation.trim()
+        existingTranslation
       );
 
       setTranslatedLanguage(
         activeLanguage
       );
+
+      /*
+       * This is important:
+       * if a translation for the newly
+       * selected language already exists,
+       * display it immediately without
+       * requiring a page refresh.
+       */
+      setIsTranslated(true);
     }
   }, [
     i18n.language,
@@ -128,11 +214,9 @@ function PostPage() {
     }
 
     const targetLanguage =
-      String(
-        i18n.language || "en"
-      )
-        .trim()
-        .toLowerCase();
+      normalizePostLanguage(
+        i18n.language
+      );
 
     if (!targetLanguage) {
       return;
@@ -148,6 +232,7 @@ function PostPage() {
         targetLanguage
     ) {
       setIsTranslated(false);
+
       return;
     }
 
@@ -157,17 +242,16 @@ function PostPage() {
      * immediately without another AI request.
      */
     const existingTranslation =
-      post.translatedText?.[
+      getPostTranslation(
+        post,
         targetLanguage
-      ];
+      );
 
     if (
-      typeof existingTranslation ===
-        "string" &&
-      existingTranslation.trim()
+      existingTranslation
     ) {
       setTranslatedText(
-        existingTranslation.trim()
+        existingTranslation
       );
 
       setTranslatedLanguage(
@@ -187,13 +271,14 @@ function PostPage() {
        * language and it matches the current language,
        * no AI translation is required.
        */
+      const originalLanguage =
+        normalizePostLanguage(
+          post.originalLanguage
+        );
+
       if (
         post.originalLanguage &&
-        String(
-          post.originalLanguage
-        )
-          .trim()
-          .toLowerCase() ===
+        originalLanguage ===
           targetLanguage
       ) {
         setTranslatedText(
@@ -222,9 +307,12 @@ function PostPage() {
        */
       const result =
         await translateText({
-          sourceId: post.id,
-          sourceType: "post",
-          text: post.text,
+          sourceId:
+            post.id,
+          sourceType:
+            "post",
+          text:
+            post.text,
           targetLanguage,
         });
 
@@ -251,13 +339,16 @@ function PostPage() {
        * Save the translation to the central
        * Firestore translation cache.
        *
-       * If this fails, the translation itself
-       * still remains usable.
+       * A cache failure must not prevent the
+       * successful translation from appearing
+       * on the page.
        */
       try {
         await saveTranslation({
-          sourceId: post.id,
-          sourceType: "post",
+          sourceId:
+            post.id,
+          sourceType:
+            "post",
           originalLanguage:
             result.originalLanguage ||
             post.originalLanguage ||
@@ -266,9 +357,14 @@ function PostPage() {
           translatedText:
             newTranslation,
           confidence:
-            result.confidence || 0,
+            typeof result.confidence ===
+            "number"
+              ? result.confidence
+              : 0,
         });
-      } catch (cacheSaveError) {
+      } catch (
+        cacheSaveError
+      ) {
         console.error(
           "Inclura Translation Cache Save Error:",
           cacheSaveError
@@ -276,38 +372,49 @@ function PostPage() {
       }
 
       /*
-       * Persist the translation directly on
-       * the post as well, matching Feed.jsx.
+       * Preserve every existing translation and
+       * add/update only the currently selected
+       * language.
        */
-      const updatedTranslatedText = {
-        ...(post.translatedText || {}),
-        [targetLanguage]:
-          newTranslation,
-      };
+      const updatedTranslatedText =
+        {
+          ...(post.translatedText ||
+            {}),
+          [targetLanguage]:
+            newTranslation,
+        };
 
-      try {
-        await updateDoc(
-          doc(db, "posts", post.id),
-          {
-            translatedText:
-              updatedTranslatedText,
-          }
-        );
-      } catch (postUpdateError) {
-        console.error(
-          "Inclura Post Translation Persistence Error:",
-          postUpdateError
-        );
-      }
+      /*
+       * Persist the translation directly on
+       * the Firestore post.
+       *
+       * Unlike the previous version, a Firestore
+       * persistence failure is not silently ignored.
+       * We should not present the operation as fully
+       * successful when the post could not be saved.
+       */
+      await updateDoc(
+        doc(
+          db,
+          "posts",
+          post.id
+        ),
+        {
+          translatedText:
+            updatedTranslatedText,
+        }
+      );
 
       /*
        * Update local PostPage state immediately.
        */
-      setPost((previousPost) => ({
-        ...previousPost,
-        translatedText:
-          updatedTranslatedText,
-      }));
+      setPost(
+        (previousPost) => ({
+          ...previousPost,
+          translatedText:
+            updatedTranslatedText,
+        })
+      );
 
       setTranslatedText(
         newTranslation
@@ -360,7 +467,9 @@ function PostPage() {
   };
 
   function getBadge(post) {
-    if (!post?.verified) return null;
+    if (!post?.verified) {
+      return null;
+    }
 
     switch (post.badgeType) {
       case "creator":
@@ -384,7 +493,9 @@ function PostPage() {
   }
 
   function getPremium(post) {
-    if (!post?.premium) return null;
+    if (!post?.premium) {
+      return null;
+    }
 
     switch (post.premiumTier) {
       case "silver":
@@ -405,7 +516,9 @@ function PostPage() {
   }
 
   async function react(emoji) {
-    if (reacting) return;
+    if (reacting) {
+      return;
+    }
 
     setReacting(true);
 
@@ -416,15 +529,18 @@ function PostPage() {
         id
       );
 
-      await updateDoc(ref, {
-        [`reactions.${emoji}`]:
-          increment(1),
+      await updateDoc(
+        ref,
+        {
+          [`reactions.${emoji}`]:
+            increment(1),
 
-        creatorScore:
-          increment(
-            scoreMap[emoji]
-          ),
-      });
+          creatorScore:
+            increment(
+              scoreMap[emoji]
+            ),
+        }
+      );
 
       const snap =
         await getDoc(ref);
@@ -448,29 +564,40 @@ function PostPage() {
   return (
     <div
       style={{
-        maxWidth: "720px",
-        margin: "0 auto",
-        padding: "24px",
+        maxWidth:
+          "720px",
+        margin:
+          "0 auto",
+        padding:
+          "24px",
       }}
     >
       {loading ? (
-        <p>Loading...</p>
+        <p>
+          Loading...
+        </p>
       ) : !post ? (
-        <p>Post not found.</p>
+        <p>
+          Post not found.
+        </p>
       ) : (
         <>
           {/* HEADER */}
 
           <div
             style={{
-              background: "#0f172a",
-              borderRadius: "24px",
-              padding: "24px",
+              background:
+                "#0f172a",
+              borderRadius:
+                "24px",
+              padding:
+                "24px",
             }}
           >
             <div
               style={{
-                display: "flex",
+                display:
+                  "flex",
                 justifyContent:
                   "space-between",
                 alignItems:
@@ -480,7 +607,8 @@ function PostPage() {
               <div>
                 <h3
                   style={{
-                    cursor: "pointer",
+                    cursor:
+                      "pointer",
                   }}
                   onClick={() =>
                     navigate(
@@ -488,12 +616,16 @@ function PostPage() {
                     )
                   }
                 >
-                  {post.userName}
+                  {
+                    post.userName
+                  }
                 </h3>
 
                 {post.role && (
                   <small>
-                    {post.role}
+                    {
+                      post.role
+                    }
                   </small>
                 )}
               </div>
@@ -507,7 +639,8 @@ function PostPage() {
 
             <div
               style={{
-                marginTop: "16px",
+                marginTop:
+                  "16px",
               }}
             >
               <p>
@@ -527,15 +660,25 @@ function PostPage() {
                 }
                 aria-label={
                   isTranslated
-                    ? t("showOriginal")
-                    : t("translatePost")
+                    ? t(
+                        "showOriginal"
+                      )
+                    : t(
+                        "translatePost"
+                      )
                 }
               >
                 {translating
-                  ? t("translating")
+                  ? t(
+                      "translating"
+                    )
                   : isTranslated
-                  ? t("showOriginal")
-                  : t("translatePost")}
+                  ? t(
+                      "showOriginal"
+                    )
+                  : t(
+                      "translatePost"
+                    )}
               </button>
 
               {isTranslated && (
@@ -545,21 +688,31 @@ function PostPage() {
                       "block",
                     marginTop:
                       "6px",
-                    opacity: 0.7,
+                    opacity:
+                      0.7,
                   }}
                 >
-                  {t("translated")}{" "}
-                  {translatedLanguage}
+                  {
+                    t(
+                      "translated"
+                    )
+                  }{" "}
+                  {
+                    translatedLanguage
+                  }
                 </small>
               )}
             </div>
 
             {post.imageUrl && (
               <img
-                src={post.imageUrl}
+                src={
+                  post.imageUrl
+                }
                 alt=""
                 style={{
-                  width: "100%",
+                  width:
+                    "100%",
                   borderRadius:
                     "16px",
                 }}
@@ -570,7 +723,8 @@ function PostPage() {
               <video
                 controls
                 style={{
-                  width: "100%",
+                  width:
+                    "100%",
                   borderRadius:
                     "16px",
                 }}
@@ -588,8 +742,10 @@ function PostPage() {
 
             <div
               style={{
-                display: "flex",
-                gap: "10px",
+                display:
+                  "flex",
+                gap:
+                  "10px",
                 flexWrap:
                   "wrap",
                 marginTop:
@@ -599,7 +755,9 @@ function PostPage() {
               {reactions.map(
                 (emoji) => (
                   <button
-                    key={emoji}
+                    key={
+                      emoji
+                    }
                     type="button"
                     onClick={() =>
                       react(
@@ -610,11 +768,16 @@ function PostPage() {
                       reacting
                     }
                   >
-                    {emoji}{" "}
-                    {post
-                      .reactions?.[
+                    {
                       emoji
-                    ] || 0}
+                    }{" "}
+                    {
+                      post
+                        .reactions?.[
+                        emoji
+                      ] ||
+                      0
+                    }
                   </button>
                 )
               )}
@@ -624,8 +787,10 @@ function PostPage() {
 
             <div
               style={{
-                display: "flex",
-                gap: "16px",
+                display:
+                  "flex",
+                gap:
+                  "16px",
                 marginTop:
                   "20px",
               }}
@@ -658,7 +823,9 @@ function PostPage() {
           {/* COMMENTS */}
 
           <CommentBox
-            postId={post.id}
+            postId={
+              post.id
+            }
           />
         </>
       )}
