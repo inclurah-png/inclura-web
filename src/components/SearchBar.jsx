@@ -1,76 +1,66 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function SearchBar({
-posts = [],
-onResults,
+  posts = [],
+  onResults,
 }) {
+  const [query, setQuery] = useState("");
 
-const [query, setQuery] =
-useState("");
+  useEffect(() => {
+    const searchValue = query.trim().toLowerCase();
 
-function handleSearch(value) {
+    if (!searchValue) {
+      onResults(posts);
+      return;
+    }
 
-setQuery(value);
+    const filtered = posts.filter((post) => {
+      const text =
+        post.text?.toLowerCase() || "";
 
-const filtered =
-posts.filter((post) => {
+      const user =
+        post.userName?.toLowerCase() || "";
 
-const text =
-post.text?.toLowerCase() || "";
+      return (
+        text.includes(searchValue) ||
+        user.includes(searchValue)
+      );
+    });
 
-const user =
-post.userName?.toLowerCase() || "";
+    onResults(filtered);
+  }, [posts, query, onResults]);
 
-return (
-text.includes(
-value.toLowerCase()
-) ||
-user.includes(
-value.toLowerCase()
-)
-);
+  function handleSearch(value) {
+    setQuery(value);
+  }
 
-});
-
-onResults(filtered);
-
-}
-
-return (
-
-<div
-style={{
-marginBottom: "24px",
-}}
->
-
-<input
-type="text"
-placeholder="Search posts or users..."
-value={query}
-onChange={(e) =>
-handleSearch(
-e.target.value
-)
-}
-style={{
-width: "100%",
-padding: "16px",
-borderRadius: "18px",
-border: "1px solid #334155",
-background: "#0f172a",
-color: "white",
-fontSize: "15px",
-outline: "none",
-boxSizing: "border-box",
-}}
-/>
-
-</div>
-
-);
-
+  return (
+    <div
+      style={{
+        marginBottom: "24px",
+      }}
+    >
+      <input
+        type="text"
+        placeholder="Search posts or users..."
+        value={query}
+        onChange={(e) =>
+          handleSearch(e.target.value)
+        }
+        style={{
+          width: "100%",
+          padding: "16px",
+          borderRadius: "18px",
+          border: "1px solid #334155",
+          background: "#0f172a",
+          color: "white",
+          fontSize: "15px",
+          outline: "none",
+          boxSizing: "border-box",
+        }}
+      />
+    </div>
+  );
 }
 
 export default SearchBar;
