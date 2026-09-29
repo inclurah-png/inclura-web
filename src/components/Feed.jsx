@@ -106,52 +106,25 @@ function Feed() {
    * Keep Feed language synchronized with
    * the actual i18next language.
    *
-   * The languageChanged listener is important
-   * for posts that were already loaded before
-   * the user changed the language.
+   * This is the previously working pattern:
+   * when i18n.language changes, Feed updates
+   * userLanguage immediately.
    */
   useEffect(() => {
-    function syncFeedLanguage(language) {
-      const activeLanguage =
-        String(
-          language ||
-            i18n.resolvedLanguage ||
-            i18n.language ||
-            "en"
-        )
-          .trim()
-          .toLowerCase();
-
-      setUserLanguage(
-        activeLanguage || "en"
-      );
-    }
-
-    syncFeedLanguage(
-      i18n.resolvedLanguage ||
+    const activeLanguage =
+      String(
         i18n.language ||
-        "en"
+          "en"
+      )
+        .trim()
+        .toLowerCase();
+
+    setUserLanguage(
+      activeLanguage || "en"
     );
-
-    const handleLanguageChanged =
-      (language) => {
-        syncFeedLanguage(
-          language
-        );
-      };
-
-    i18n.on(
-      "languageChanged",
-      handleLanguageChanged
-    );
-
-    return () => {
-      i18n.off(
-        "languageChanged",
-        handleLanguageChanged
-      );
-    };
-  }, [i18n]);
+  }, [
+    i18n.language,
+  ]);
 
   /*
    * Load the initial Feed.
@@ -606,14 +579,13 @@ function Feed() {
     }
 
     /*
-     * Resolve the language at the exact
-     * moment the Translate button is pressed.
+     * Use the live i18next language
+     * at the exact moment Translate
+     * is pressed.
      */
     const targetLanguage =
       String(
-        i18n.resolvedLanguage ||
-          i18n.language ||
-          userLanguage ||
+        i18n.language ||
           "en"
       )
         .trim()
@@ -624,8 +596,9 @@ function Feed() {
     }
 
     /*
-     * Use an existing translation for
-     * the CURRENT language when available.
+     * If this post already has a translation
+     * for the currently selected language,
+     * use it immediately.
      */
     const existingTranslation =
       post.translatedText?.[
@@ -640,7 +613,7 @@ function Feed() {
       const existingText =
         existingTranslation.trim();
 
-      const existingTranslations =
+      const updatedTranslations =
         {
           ...(post.translatedText ||
             {}),
@@ -654,7 +627,7 @@ function Feed() {
             ? {
                 ...p,
                 translatedText:
-                  existingTranslations,
+                  updatedTranslations,
               }
             : p
         )
@@ -667,7 +640,7 @@ function Feed() {
               ? {
                   ...p,
                   translatedText:
-                    existingTranslations,
+                    updatedTranslations,
               }
               : p
           )
@@ -691,8 +664,6 @@ function Feed() {
           targetLanguage,
           i18nLanguage:
             i18n.language,
-          resolvedLanguage:
-            i18n.resolvedLanguage,
         }
       );
 
@@ -726,6 +697,12 @@ function Feed() {
         );
       }
 
+      /*
+       * Save the translation cache.
+       * A cache failure must not prevent
+       * the Feed from displaying the
+       * successful translation.
+       */
       try {
         await saveTranslation({
           sourceId:
@@ -750,6 +727,11 @@ function Feed() {
         );
       }
 
+      /*
+       * Preserve all existing translations
+       * and add/update only the selected
+       * language.
+       */
       const updatedTranslatedText =
         {
           ...(post.translatedText ||
@@ -758,6 +740,10 @@ function Feed() {
             translatedText,
         };
 
+      /*
+       * Persist the translation to the
+       * Firestore post.
+       */
       await updateDoc(
         doc(
           db,
@@ -770,6 +756,14 @@ function Feed() {
         }
       );
 
+      /*
+       * Immediately update both Feed
+       * collections in React state.
+       *
+       * This is the important part that
+       * allows the already-loaded post to
+       * change without refreshing.
+       */
       setPosts((prev) =>
         prev.map((p) =>
           p.id === postId
@@ -790,7 +784,7 @@ function Feed() {
                   ...p,
                   translatedText:
                     updatedTranslatedText,
-              }
+                }
               : p
           )
       );
@@ -896,8 +890,7 @@ function Feed() {
 
     const speechLanguage =
       String(
-        i18n.resolvedLanguage ||
-          i18n.language ||
+        i18n.language ||
           userLanguage ||
           "en"
       )
@@ -1130,20 +1123,19 @@ function Feed() {
                   ]
                 );
 
-              const currentLanguage =
-                String(
-                  i18n.resolvedLanguage ||
-                    i18n.language ||
-                    userLanguage ||
-                    "en"
-                )
-                  .trim()
-                  .toLowerCase();
-
+              /*
+               * Use the synchronized
+               * userLanguage state.
+               *
+               * This is the same pattern
+               * that previously allowed
+               * language changes without
+               * refreshing the page.
+               */
               const translated =
                 post
                   .translatedText?.[
-                  currentLanguage
+                  userLanguage
                 ];
 
               const currentAccessibility =
@@ -1171,7 +1163,7 @@ function Feed() {
               return (
                 <div
                   key={
-                    `${post.id}-${currentLanguage}`
+                    post.id
                   }
                   style={{
                     background:
@@ -1355,7 +1347,7 @@ function Feed() {
                     >
                       Translated to{" "}
                       {
-                        currentLanguage
+                        userLanguage
                       }
                     </small>
                   )}
@@ -1374,7 +1366,7 @@ function Feed() {
                       isTranslating
                         ? "Translating post"
                         : translated
-                        ? `Post translated to ${currentLanguage}`
+                        ? `Post translated to ${userLanguage}`
                         : "Translate this post"
                     }
                     style={{
