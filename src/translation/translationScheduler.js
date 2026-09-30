@@ -1,14 +1,18 @@
-import { updateTranslationAnalytics } from "./translationAnalytics";
+import {
+  updateTranslationAnalytics,
+} from "./translationAnalytics";
 
 /**
  * Translation Background Scheduler
  *
- * This will later:
+ * Current responsibilities:
+ * - Refresh translation analytics
+ *
+ * Future responsibilities:
  * - Process queued translations
  * - Generate subtitles
  * - Generate AI voice
  * - Warm translation cache
- * - Refresh analytics
  */
 export async function runTranslationScheduler() {
   try {
@@ -16,21 +20,30 @@ export async function runTranslationScheduler() {
       "Translation Scheduler Started..."
     );
 
-    // Future:
-    // processQueuedTranslations();
-    // generateMissingVoices();
-    // generateMissingSubtitles();
-    // warmPopularTranslationCache();
-
-    await updateTranslationAnalytics();
+    const analytics =
+      await updateTranslationAnalytics();
 
     console.log(
       "Translation Scheduler Completed."
     );
+
+    return {
+      success: true,
+      analytics,
+    };
   } catch (error) {
     console.error(
       "Translation Scheduler Error:",
       error
     );
+
+    /*
+     * Do not silently report success when
+     * the scheduled translation operation
+     * failed.
+     */
+    throw error;
   }
 }
+
+export default runTranslationScheduler;
