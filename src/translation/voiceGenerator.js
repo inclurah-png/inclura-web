@@ -1,26 +1,73 @@
 /**
  * AI Voice Generator
- * Provider:
- * Piper (later)
+ *
+ * Current provider:
+ * Piper (planned)
+ *
+ * The actual voice-generation service is not
+ * connected yet. This module provides the
+ * normalized interface for future integration.
  */
+
+function normalizeLanguageCode(code = "") {
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  if (
+    normalized === "zh-tw" ||
+    normalized === "zh-hant"
+  ) {
+    return "zh-TW";
+  }
+
+  return normalized || "en";
+}
+
+function normalizeVoice(voice = "default") {
+  const normalized =
+    String(voice)
+      .trim()
+      .toLowerCase();
+
+  return normalized || "default";
+}
 
 export async function generateVoice({
   text,
-  language,
+  language = "en",
   voice = "default",
 }) {
-  if (!text) {
-    throw new Error("Missing text.");
+  const sourceText =
+    typeof text === "string"
+      ? text.trim()
+      : "";
+
+  if (!sourceText) {
+    throw new Error(
+      "Missing text."
+    );
   }
+
+  const normalizedLanguage =
+    normalizeLanguageCode(
+      language
+    );
+
+  const normalizedVoice =
+    normalizeVoice(voice);
 
   return {
     success: true,
 
     provider: "Piper",
 
-    language,
+    language:
+      normalizedLanguage,
 
-    voice,
+    voice:
+      normalizedVoice,
 
     audioUrl: "",
 
@@ -34,54 +81,129 @@ export async function generateVoice({
 
 export function getAvailableVoices() {
   return {
-    en: ["male", "female"],
+    en: [
+      "male",
+      "female",
+    ],
 
-    yo: ["male", "female"],
+    yo: [
+      "male",
+      "female",
+    ],
 
-    ig: ["male", "female"],
+    ig: [
+      "male",
+      "female",
+    ],
 
-    ha: ["male", "female"],
+    ha: [
+      "male",
+      "female",
+    ],
 
-    pcm: ["male", "female"],
+    pcm: [
+      "male",
+      "female",
+    ],
 
-    fr: ["male", "female"],
+    fr: [
+      "male",
+      "female",
+    ],
 
-    es: ["male", "female"],
+    es: [
+      "male",
+      "female",
+    ],
 
-    ar: ["male", "female"],
+    ar: [
+      "male",
+      "female",
+    ],
 
-    de: ["male", "female"],
+    de: [
+      "male",
+      "female",
+    ],
 
-    pt: ["male", "female"],
+    pt: [
+      "male",
+      "female",
+    ],
 
-    sw: ["male", "female"],
+    sw: [
+      "male",
+      "female",
+    ],
 
-    zh: ["male", "female"],
+    zh: [
+      "male",
+      "female",
+    ],
 
-    "zh-TW": ["male", "female"],
+    "zh-TW": [
+      "male",
+      "female",
+    ],
 
-    ja: ["male", "female"],
+    ja: [
+      "male",
+      "female",
+    ],
 
-    hi: ["male", "female"],
+    hi: [
+      "male",
+      "female",
+    ],
 
-    ru: ["male", "female"],
+    ru: [
+      "male",
+      "female",
+    ],
 
-    ko: ["male", "female"],
+    ko: [
+      "male",
+      "female",
+    ],
 
-    vi: ["male", "female"],
+    vi: [
+      "male",
+      "female",
+    ],
 
-    th: ["male", "female"],
+    th: [
+      "male",
+      "female",
+    ],
 
-    id: ["male", "female"],
+    id: [
+      "male",
+      "female",
+    ],
 
-    ms: ["male", "female"],
+    ms: [
+      "male",
+      "female",
+    ],
 
-    bn: ["male", "female"],
+    bn: [
+      "male",
+      "female",
+    ],
 
-    tr: ["male", "female"],
+    tr: [
+      "male",
+      "female",
+    ],
 
-    it: ["male", "female"],
+    it: [
+      "male",
+      "female",
+    ],
 
-    nl: ["male", "female"],
+    nl: [
+      "male",
+      "female",
+    ],
   };
 }
