@@ -1,62 +1,157 @@
 /**
  * Subtitle Generator
- * Generates subtitle structures.
- * Later connects with Whisper timestamps.
+ *
+ * Current status:
+ * Subtitle generation from Whisper
+ * timestamps is not connected yet.
+ *
+ * The SRT and WebVTT export utilities
+ * are available for completed subtitle
+ * blocks.
  */
 
+/**
+ * Generates subtitle structures.
+ *
+ * The actual Whisper timestamp integration
+ * should be connected through the secure
+ * backend once the transcription endpoint
+ * is available.
+ */
 export async function generateSubtitles({
   transcript,
   language,
 }) {
-  if (!transcript) {
-    throw new Error("Transcript required.");
+  if (
+    typeof transcript !==
+      "string" ||
+    !transcript.trim()
+  ) {
+    throw new Error(
+      "Transcript required."
+    );
   }
 
-  return {
-    success: true,
+  const normalizedLanguage =
+    language
+      ? String(language)
+          .trim()
+          .toLowerCase()
+          .replace(/_/g, "-")
+      : "auto";
 
-    language,
-
-    provider: "Whisper",
-
-    subtitles: [],
-
-    srtUrl: "",
-
-    vttUrl: "",
-
-    captionJson: [],
-  };
+  /*
+   * Whisper timestamp generation is not
+   * connected yet.
+   *
+   * Do not return success:true with an
+   * empty subtitle array because that
+   * falsely indicates that subtitles
+   * were generated.
+   */
+  throw new Error(
+    "Subtitle generation service is not connected yet."
+  );
 }
 
 /**
- * Converts subtitle blocks to SRT
+ * Converts subtitle blocks to SRT.
+ *
+ * Expected subtitle structure:
+ *
+ * {
+ *   start: "00:00:01,000",
+ *   end: "00:00:03,000",
+ *   text: "Example subtitle"
+ * }
  */
+export function exportSRT(
+  subtitles = []
+) {
+  if (
+    !Array.isArray(
+      subtitles
+    )
+  ) {
+    throw new Error(
+      "Subtitles must be an array."
+    );
+  }
 
-export function exportSRT(subtitles = []) {
   return subtitles
     .map((line, index) => {
+      if (
+        !line ||
+        typeof line.text !==
+          "string"
+      ) {
+        return "";
+      }
+
+      const start =
+        line.start || "00:00:00,000";
+
+      const end =
+        line.end || "00:00:00,000";
+
       return `${index + 1}
-${line.start} --> ${line.end}
-${line.text}
+${start} --> ${end}
+${line.text.trim()}
 `;
     })
+    .filter(Boolean)
     .join("\n");
 }
 
 /**
- * Converts subtitle blocks to WebVTT
+ * Converts subtitle blocks to WebVTT.
+ *
+ * Expected subtitle structure:
+ *
+ * {
+ *   start: "00:00:01.000",
+ *   end: "00:00:03.000",
+ *   text: "Example subtitle"
+ * }
  */
+export function exportVTT(
+  subtitles = []
+) {
+  if (
+    !Array.isArray(
+      subtitles
+    )
+  ) {
+    throw new Error(
+      "Subtitles must be an array."
+    );
+  }
 
-export function exportVTT(subtitles = []) {
-  return (
-    "WEBVTT\n\n" +
+  const blocks =
     subtitles
       .map((line) => {
-        return `${line.start} --> ${line.end}
-${line.text}
+        if (
+          !line ||
+          typeof line.text !==
+            "string"
+        ) {
+          return "";
+        }
+
+        const start =
+          line.start ||
+          "00:00:00.000";
+
+        const end =
+          line.end ||
+          "00:00:00.000";
+
+        return `${start} --> ${end}
+${line.text.trim()}
 `;
       })
-      .join("\n")
-  );
+      .filter(Boolean)
+      .join("\n");
+
+  return `WEBVTT\n\n${blocks}`;
 }
