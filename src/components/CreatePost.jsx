@@ -19,7 +19,10 @@ import {
 
 import { storage } from "../firebase";
 
-import { useState, useRef } from "react";
+import {
+  useState,
+  useRef,
+} from "react";
 
 import {
   collection,
@@ -33,6 +36,95 @@ import {
   db,
   auth,
 } from "../firebase";
+
+import {
+  detectLanguage,
+} from "../translation/languageDetector";
+
+function normalizeLanguageCode(
+  code = ""
+) {
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  if (
+    normalized === "zh-tw" ||
+    normalized === "zh-hant"
+  ) {
+    return "zh-TW";
+  }
+
+  return normalized || "en";
+}
+
+function getProfileName(
+  profile,
+  user
+) {
+  const fullName =
+    typeof profile?.fullName ===
+    "string"
+      ? profile.fullName.trim()
+      : "";
+
+  if (fullName) {
+    return fullName;
+  }
+
+  const profileDisplayName =
+    typeof profile?.displayName ===
+    "string"
+      ? profile.displayName.trim()
+      : "";
+
+  if (profileDisplayName) {
+    return profileDisplayName;
+  }
+
+  const profileName =
+    typeof profile?.name ===
+    "string"
+      ? profile.name.trim()
+      : "";
+
+  if (profileName) {
+    return profileName;
+  }
+
+  const firstName =
+    typeof profile?.firstName ===
+    "string"
+      ? profile.firstName.trim()
+      : "";
+
+  const lastName =
+    typeof profile?.lastName ===
+    "string"
+      ? profile.lastName.trim()
+      : "";
+
+  const combinedName =
+    `${firstName} ${lastName}`
+      .trim();
+
+  if (combinedName) {
+    return combinedName;
+  }
+
+  const authDisplayName =
+    typeof user?.displayName ===
+    "string"
+      ? user.displayName.trim()
+      : "";
+
+  if (authDisplayName) {
+    return authDisplayName;
+  }
+
+  return "";
+}
 
 function CreatePost() {
   const [postText, setPostText] =
@@ -57,8 +149,11 @@ function CreatePost() {
     useRef(null);
 
   async function handlePost() {
+    const cleanPostText =
+      postText.trim();
+
     if (
-      !postText.trim() &&
+      !cleanPostText &&
       !imageFile &&
       !videoFile
     ) {
@@ -81,60 +176,146 @@ function CreatePost() {
         return;
       }
 
-      const userRef = doc(
-        db,
-        "users",
-        user.uid
-      );
+      const userRef =
+        doc(
+          db,
+          "users",
+          user.uid
+        );
 
       const userSnap =
-        await getDoc(userRef);
+        await getDoc(
+          userRef
+        );
 
       const profile =
-        userSnap.data();
+        userSnap.exists()
+          ? userSnap.data()
+          : {};
 
-let imageUrl = "";
-let videoUrl = "";
+      /*
+       * The profile fullName is the
+       * authoritative post author name.
+       *
+       * Never save the fake
+       * "Inclura User" placeholder.
+       */
+      const userName =
+        getProfileName(
+          profile,
+          user
+        );
 
-if (imageFile) {
-  const imageRef = ref(
-    storage,
-    `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
-  );
+      if (!userName) {
+        alert(
+          "Your profile name is not available yet. Please complete your profile name and try again."
+        );
+        return;
+      }
 
-  await uploadBytes(imageRef, imageFile);
+      /*
+       * Detect the language of the actual
+       * post text rather than storing "auto".
+       *
+       * This allows a post created in one
+       * language to remain associated with
+       * its true original language even when
+       * the user later changes the interface
+       * language.
+       */
+      let detectedLanguage = {
+        code: "en",
+        language: "English",
+        confidence: 0,
+      };
 
-  imageUrl = await getDownloadURL(imageRef);
-}
+      if (cleanPostText) {
+        try {
+          detectedLanguage =
+            await detectLanguage(
+              cleanPostText
+            );
+        } catch (languageError) {
+          console.warn(
+            "Inclura Post Language Detection Warning:",
+            languageError
+          );
+        }
+      }
 
-if (videoFile) {
-  const videoRef = ref(
-    storage,
-    `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
-  );
+      const originalLanguage =
+        normalizeLanguageCode(
+          detectedLanguage?.code ||
+            "en"
+        );
 
-  await uploadBytes(videoRef, videoFile);
+      let imageUrl = "";
+      let videoUrl = "";
 
-  videoUrl = await getDownloadURL(videoRef);
-}
+      if (imageFile) {
+        const imageRef =
+          ref(
+            storage,
+            `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
+          );
+
+        await uploadBytes(
+          imageRef,
+          imageFile
+        );
+
+        imageUrl =
+          await getDownloadURL(
+            imageRef
+          );
+      }
+
+      if (videoFile) {
+        const videoRef =
+          ref(
+            storage,
+            `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
+          );
+
+        await uploadBytes(
+          videoRef,
+          videoFile
+        );
+
+        videoUrl =
+          await getDownloadURL(
+            videoRef
+          );
+      }
 
       await addDoc(
-  collection(db, "posts"),
-  {
-    text: postText,
+        collection(
+          db,
+          "posts"
+        ),
+        {
+          text:
+            cleanPostText,
 
-    language: "auto",
+          /*
+           * Preserve the existing language
+           * field for compatibility while
+           * storing the real detected language.
+           */
+          language:
+            originalLanguage,
 
-    translatedText: {},
+          originalLanguage:
+            originalLanguage,
 
-    category,
+          translatedText: {},
 
-    userId: user.uid,
+          category,
 
-          userName:
-            profile?.fullName ||
-            user.displayName ||
-            "Inclura User",
+          userId:
+            user.uid,
+
+          userName,
 
           profilePhoto:
             profile?.profilePhoto ||
@@ -149,30 +330,30 @@ if (videoFile) {
             [],
 
           verified:
-  profile?.verified ||
-  false,
+            profile?.verified ||
+            false,
 
-badgeType:
-  migrateVerificationId(
-    profile?.badgeType
-  ),
+          badgeType:
+            migrateVerificationId(
+              profile?.badgeType
+            ),
 
-verificationMetadata:
-  profile?.verified
-    ? getVerificationMetadata(
-        migrateVerificationId(
-          profile?.badgeType
-        )
-      )
-    : null,
+          verificationMetadata:
+            profile?.verified
+              ? getVerificationMetadata(
+                  migrateVerificationId(
+                    profile?.badgeType
+                  )
+                )
+              : null,
 
-premium:
-  profile?.premium ||
-  false,
+          premium:
+            profile?.premium ||
+            false,
 
-premiumTier:
-  profile?.premiumTier ||
-  "",
+          premiumTier:
+            profile?.premiumTier ||
+            "",
 
           imageUrl,
 
@@ -182,50 +363,77 @@ premiumTier:
 
           comments: [],
 
-              reactions: {
-  "👍": 0,
-  "❤️": 0,
-  "😂": 0,
-  "😊": 0,
-  "😮": 0,
-  "😢": 0,
-  "👏": 0,
-  "👎": 0,
-},
+          reactions: {
+            "👍": 0,
+            "❤️": 0,
+            "😂": 0,
+            "😊": 0,
+            "😮": 0,
+            "😢": 0,
+            "👏": 0,
+            "👎": 0,
+          },
 
-userReactions: {},
+          userReactions: {},
 
-creatorScore: 0,
+          creatorScore: 0,
 
-commentCount: 0,
+          commentCount: 0,
 
-crossPosts: 0,
+          crossPosts: 0,
 
-saveCount: 0,
-              
+          saveCount: 0,
+
           createdAt:
             serverTimestamp(),
         }
       );
-      
-      // ---------------------------
-// Update Creator Economy
-// ---------------------------
 
-if (videoFile) {
-  await addVideoPost(user.uid);
-} else {
-  await addTextPost(user.uid);
-}
+      // ---------------------------
+      // Update Creator Economy
+      // ---------------------------
+
+      if (videoFile) {
+        await addVideoPost(
+          user.uid
+        );
+      } else {
+        await addTextPost(
+          user.uid
+        );
+      }
+
+      setPostText("");
       setImageFile(null);
       setVideoFile(null);
+
+      if (
+        imageInputRef.current
+      ) {
+        imageInputRef.current.value =
+          "";
+      }
+
+      if (
+        videoInputRef.current
+      ) {
+        videoInputRef.current.value =
+          "";
+      }
 
       alert(
         "Post created successfully!"
       );
     } catch (error) {
-      console.log(error);
-      alert(error.message);
+      console.error(
+        "Inclura Create Post Error:",
+        error
+      );
+
+      alert(
+        error?.message ||
+          "Unable to create post."
+      );
     } finally {
       setLoading(false);
     }
@@ -256,23 +464,31 @@ if (videoFile) {
   return (
     <div
       style={{
-        background: "#0f172a",
-        padding: "20px",
-        borderRadius: "20px",
-        marginBottom: "24px",
-        color: "white",
+        background:
+          "#0f172a",
+        padding:
+          "20px",
+        borderRadius:
+          "20px",
+        marginBottom:
+          "24px",
+        color:
+          "white",
       }}
     >
       <h3
         style={{
-          marginBottom: "16px",
+          marginBottom:
+            "16px",
         }}
       >
         ✍ Create Post
       </h3>
 
       <textarea
-        value={postText}
+        value={
+          postText
+        }
         onChange={(e) =>
           setPostText(
             e.target.value
@@ -280,16 +496,22 @@ if (videoFile) {
         }
         placeholder="Share something with the Inclura community..."
         style={{
-          width: "100%",
-          minHeight: "120px",
-          borderRadius: "14px",
+          width:
+            "100%",
+          minHeight:
+            "120px",
+          borderRadius:
+            "14px",
           border:
             "1px solid #334155",
           background:
             "#1e293b",
-          color: "white",
-          padding: "14px",
-          resize: "vertical",
+          color:
+            "white",
+          padding:
+            "14px",
+          resize:
+            "vertical",
           boxSizing:
             "border-box",
         }}
@@ -298,45 +520,63 @@ if (videoFile) {
       {imageFile && (
         <div
           style={{
-            marginTop: "14px",
-            color: "#38bdf8",
+            marginTop:
+              "14px",
+            color:
+              "#38bdf8",
           }}
         >
-          📷 {imageFile.name}
+          📷{" "}
+          {
+            imageFile.name
+          }
         </div>
       )}
 
       {videoFile && (
         <div
           style={{
-            marginTop: "10px",
-            color: "#38bdf8",
+            marginTop:
+              "10px",
+            color:
+              "#38bdf8",
           }}
         >
-          🎥 {videoFile.name}
+          🎥{" "}
+          {
+            videoFile.name
+          }
         </div>
       )}
 
       <div
         style={{
-          display: "flex",
-          gap: "10px",
-          marginTop: "14px",
-          flexWrap: "wrap",
+          display:
+            "flex",
+          gap:
+            "10px",
+          marginTop:
+            "14px",
+          flexWrap:
+            "wrap",
         }}
       >
         <select
-          value={category}
+          value={
+            category
+          }
           onChange={(e) =>
             setCategory(
               e.target.value
             )
           }
           style={{
-            padding: "10px",
+            padding:
+              "10px",
             borderRadius:
               "12px",
-            border: "none",
+            border:
+              "none",
           }}
         >
           <option>
@@ -365,7 +605,10 @@ if (videoFile) {
         </select>
 
         <button
-          style={actionBtn}
+          type="button"
+          style={
+            actionBtn
+          }
           onClick={() =>
             imageInputRef.current?.click()
           }
@@ -374,7 +617,10 @@ if (videoFile) {
         </button>
 
         <button
-          style={actionBtn}
+          type="button"
+          style={
+            actionBtn
+          }
           onClick={() =>
             videoInputRef.current?.click()
           }
@@ -383,7 +629,10 @@ if (videoFile) {
         </button>
 
         <button
-          style={actionBtn}
+          type="button"
+          style={
+            actionBtn
+          }
         >
           ♿ Accessibility
         </button>
@@ -392,41 +641,56 @@ if (videoFile) {
       <input
         type="file"
         accept="image/*"
-        ref={imageInputRef}
+        ref={
+          imageInputRef
+        }
         onChange={
           handleImageSelect
         }
         style={{
-          display: "none",
+          display:
+            "none",
         }}
       />
 
       <input
         type="file"
         accept="video/*"
-        ref={videoInputRef}
+        ref={
+          videoInputRef
+        }
         onChange={
           handleVideoSelect
         }
         style={{
-          display: "none",
+          display:
+            "none",
         }}
       />
 
       <button
-        onClick={handlePost}
-        disabled={loading}
+        type="button"
+        onClick={
+          handlePost
+        }
+        disabled={
+          loading
+        }
         style={{
-          marginTop: "16px",
+          marginTop:
+            "16px",
           background:
             "#38bdf8",
-          border: "none",
-          color: "white",
+          border:
+            "none",
+          color:
+            "white",
           padding:
             "12px 18px",
           borderRadius:
             "12px",
-          cursor: "pointer",
+          cursor:
+            "pointer",
           fontWeight:
             "bold",
         }}
@@ -440,13 +704,18 @@ if (videoFile) {
 }
 
 const actionBtn = {
-  background: "#1e293b",
+  background:
+    "#1e293b",
   border:
     "1px solid #334155",
-  color: "white",
-  padding: "10px 14px",
-  borderRadius: "12px",
-  cursor: "pointer",
+  color:
+    "white",
+  padding:
+    "10px 14px",
+  borderRadius:
+    "12px",
+  cursor:
+    "pointer",
 };
 
 export default CreatePost;
