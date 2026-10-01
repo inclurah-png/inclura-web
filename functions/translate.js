@@ -13,7 +13,8 @@
 //
 // Response:
 // {
-//   "translatedText": "Bawo"
+//   "translatedText": "Bawo",
+//   "targetLanguage": "yo"
 // }
 //
 // Translation engine:
@@ -55,7 +56,6 @@ function jsonResponse(
 function normalizeLanguage(
   code
 ) {
-
   if (!code) {
     return "";
   }
@@ -63,16 +63,15 @@ function normalizeLanguage(
   const value =
     String(code)
       .trim()
-      .toLowerCase();
-
+      .toLowerCase()
+      .replace(/_/g, "-");
 
   if (
     value === "zh-tw" ||
-    value === "zh_hant"
+    value === "zh-hant"
   ) {
     return "zh-TW";
   }
-
 
   return value;
 }
@@ -88,14 +87,14 @@ function normalizeLanguage(
 // =======================================================
 
 const LANGUAGE_NAMES = {
-
   en: "English",
   es: "Spanish",
   fr: "French",
   pt: "Portuguese",
   ar: "Arabic",
   zh: "Simplified Chinese",
-  "zh-TW": "Traditional Chinese",
+  "zh-TW":
+    "Traditional Chinese",
   ja: "Japanese",
   de: "German",
   hi: "Hindi",
@@ -164,9 +163,7 @@ const GEMINI_MODEL =
 export async function onRequestPost(
   context
 ) {
-
   try {
-
     // ---------------------------------------------------
     // Check Gemini secret
     // ---------------------------------------------------
@@ -174,17 +171,15 @@ export async function onRequestPost(
     const apiKey =
       context.env.GEMINI_API_KEY;
 
-
     if (!apiKey) {
-
       return jsonResponse(
         {
           error:
             "Gemini API key is not configured.",
+
           code:
             "GEMINI_API_KEY_NOT_CONFIGURED",
         },
-
         500
       );
     }
@@ -197,30 +192,53 @@ export async function onRequestPost(
     let body;
 
     try {
-
       body =
         await context.request.json();
-
     } catch {
-
       return jsonResponse(
         {
           error:
             "Invalid JSON request.",
+
           code:
             "INVALID_JSON",
         },
-
         400
       );
     }
 
 
+    // ---------------------------------------------------
+    // Validate JSON body
+    // ---------------------------------------------------
+
+    if (
+      !body ||
+      typeof body !== "object" ||
+      Array.isArray(body)
+    ) {
+      return jsonResponse(
+        {
+          error:
+            "Translation request body must be a JSON object.",
+
+          code:
+            "INVALID_REQUEST_BODY",
+        },
+        400
+      );
+    }
+
+
+    // ---------------------------------------------------
+    // Read translation input
+    // ---------------------------------------------------
+
     const text =
-      typeof body.text === "string"
+      typeof body.text ===
+        "string"
         ? body.text.trim()
         : "";
-
 
     const target =
       normalizeLanguage(
@@ -236,15 +254,14 @@ export async function onRequestPost(
       !text ||
       !target
     ) {
-
       return jsonResponse(
         {
           error:
             "Text and target language are required.",
+
           code:
             "INVALID_TRANSLATION_REQUEST",
         },
-
         400
       );
     }
@@ -257,15 +274,14 @@ export async function onRequestPost(
     if (
       text.length > 5000
     ) {
-
       return jsonResponse(
         {
           error:
             "Text is too long. Maximum length is 5000 characters.",
+
           code:
             "TEXT_TOO_LONG",
         },
-
         413
       );
     }
@@ -280,15 +296,14 @@ export async function onRequestPost(
         target
       )
     ) {
-
       return jsonResponse(
         {
           error:
             `Unsupported target language: ${target}`,
+
           code:
             "UNSUPPORTED_TARGET_LANGUAGE",
         },
-
         400
       );
     }
@@ -308,12 +323,6 @@ export async function onRequestPost(
 
     // ---------------------------------------------------
     // Translation instruction
-    // ---------------------------------------------------
-    //
-    // The model is instructed to return ONLY the
-    // translation. This prevents explanations,
-    // quotation marks, labels, or extra commentary
-    // from being inserted into Inclura posts.
     // ---------------------------------------------------
 
     const prompt = `
@@ -354,7 +363,8 @@ ${text}
       await fetch(
         endpoint,
         {
-          method: "POST",
+          method:
+            "POST",
 
           headers: {
             "Content-Type":
@@ -379,7 +389,6 @@ ${text}
                 ],
 
                 generationConfig: {
-
                   temperature:
                     0.1,
 
@@ -399,19 +408,13 @@ ${text}
     const raw =
       await response.text();
 
-
     let data;
 
-
     try {
-
       data =
         JSON.parse(raw);
-
     } catch {
-
       data = null;
-
     }
 
 
@@ -422,17 +425,14 @@ ${text}
     if (
       !response.ok
     ) {
-
       console.error(
         "Gemini Translation Error:",
         response.status,
         data || raw
       );
 
-
       let errorMessage =
         "Gemini translation request failed.";
-
 
       if (
         data &&
@@ -440,11 +440,9 @@ ${text}
         typeof data.error.message ===
           "string"
       ) {
-
         errorMessage =
           data.error.message;
       }
-
 
       return jsonResponse(
         {
@@ -457,24 +455,35 @@ ${text}
           providerStatus:
             response.status,
         },
-
         502
       );
     }
 
 
     // ---------------------------------------------------
-    // Extract translated text
+    // Extract Gemini text
     // ---------------------------------------------------
 
+    const parts =
+      Array.isArray(
+        data?.candidates?.[0]
+          ?.content?.parts
+      )
+        ? data.candidates[0]
+            .content.parts
+        : [];
+
     const translatedText =
-      data &&
-      data.candidates &&
-      data.candidates[0] &&
-      data.candidates[0].content &&
-      data.candidates[0].content.parts &&
-      data.candidates[0].content.parts[0] &&
-      data.candidates[0].content.parts[0].text;
+      parts
+        .map(
+          (part) =>
+            typeof part?.text ===
+            "string"
+              ? part.text
+              : ""
+        )
+        .filter(Boolean)
+        .join("");
 
 
     // ---------------------------------------------------
@@ -482,16 +491,12 @@ ${text}
     // ---------------------------------------------------
 
     if (
-      typeof translatedText !==
-        "string" ||
       !translatedText.trim()
     ) {
-
       console.error(
         "Gemini returned no translated text:",
         data
       );
-
 
       return jsonResponse(
         {
@@ -501,7 +506,6 @@ ${text}
           code:
             "EMPTY_TRANSLATION_RESPONSE",
         },
-
         502
       );
     }
@@ -525,18 +529,13 @@ ${text}
         provider:
           "Google Gemini API",
       },
-
       200
     );
-
-
   } catch (err) {
-
     console.error(
       "Inclura Translation Gateway Error:",
       err
     );
-
 
     return jsonResponse(
       {
@@ -548,7 +547,6 @@ ${text}
         code:
           "TRANSLATION_GATEWAY_ERROR",
       },
-
       500
     );
   }
