@@ -52,8 +52,74 @@ function normalizeFeedLanguage(code = "") {
   return normalized || "en";
 }
 
+function getPostTranslation(
+  post,
+  language
+) {
+  if (!post) {
+    return "";
+  }
+
+  const normalizedLanguage =
+    normalizeFeedLanguage(language);
+
+  const translations =
+    post.translatedText || {};
+
+  const directTranslation =
+    translations[
+      normalizedLanguage
+    ];
+
+  if (
+    typeof directTranslation ===
+      "string" &&
+    directTranslation.trim()
+  ) {
+    return directTranslation.trim();
+  }
+
+  if (
+    normalizedLanguage === "zh-TW"
+  ) {
+    const legacyTranslation =
+      translations["zh-tw"];
+
+    if (
+      typeof legacyTranslation ===
+        "string" &&
+      legacyTranslation.trim()
+    ) {
+      return legacyTranslation.trim();
+    }
+  }
+
+  return "";
+}
+
+function isPlaceholderUserName(
+  name
+) {
+  const normalized =
+    String(name || "")
+      .trim()
+      .toLowerCase();
+
+  return (
+    !normalized ||
+    normalized ===
+      "inclura user" ||
+    normalized ===
+      "inclura-user" ||
+    normalized ===
+      "inclura_user"
+  );
+}
+
 function Feed() {
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] =
+    useState([]);
+
   const [lastVisible, setLastVisible] =
     useState(null);
 
@@ -66,21 +132,26 @@ function Feed() {
   const [filteredPosts, setFilteredPosts] =
     useState([]);
 
-  const [userLanguage, setUserLanguage] =
-    useState("en");
-
   const [
     translatingPosts,
     setTranslatingPosts,
   ] = useState({});
 
-  /*
-   * Accessibility state
-   *
-   * The user's selected accessibility
-   * needs come from Edit Profile through
-   * AuthContext -> AccessibilityProvider.
-   */
+  const [
+    postAccessibility,
+    setPostAccessibility,
+  ] = useState({});
+
+  const [
+    accessibilityPostId,
+    setAccessibilityPostId,
+  ] = useState(null);
+
+  const [
+    hydratedAuthors,
+    setHydratedAuthors,
+  ] = useState({});
+
   const {
     accessibilityNeeds,
     accessibilityProfile,
@@ -89,29 +160,8 @@ function Feed() {
     highContrast,
   } = useAccessibility();
 
-  /*
-   * Track which post has its accessibility
-   * menu open.
-   */
-  const [
-    accessibilityPostId,
-    setAccessibilityPostId,
-  ] = useState(null);
-
-  /*
-   * Per-post temporary accessibility
-   * presentation settings.
-   *
-   * These affect how the post is displayed
-   * without changing the user's permanent
-   * Edit Profile choices.
-   */
-  const [
-    postAccessibility,
-    setPostAccessibility,
-  ] = useState({});
-
-  const navigate = useNavigate();
+  const navigate =
+    useNavigate();
 
   const { i18n } =
     useTranslation();
@@ -119,25 +169,16 @@ function Feed() {
   const POSTS_PER_PAGE = 15;
 
   /*
-   * Keep Feed language synchronized with
-   * the actual i18next language.
+   * The Feed always reads the current
+   * i18next language directly.
    *
-   * This is the previously working pattern:
-   * when i18n.language changes, Feed updates
-   * userLanguage immediately.
+   * No separate language state is used
+   * for translation rendering.
    */
-  useEffect(() => {
   const activeLanguage =
     normalizeFeedLanguage(
       i18n.language
     );
-
-  setUserLanguage(
-    activeLanguage
-  );
-}, [
-  i18n.language,
-]);
 
   /*
    * Load the initial Feed.
@@ -152,7 +193,8 @@ function Feed() {
   useEffect(() => {
     return () => {
       if (
-        typeof window !== "undefined" &&
+        typeof window !==
+          "undefined" &&
         window.speechSynthesis
       ) {
         window.speechSynthesis.cancel();
@@ -160,10 +202,210 @@ function Feed() {
     };
   }, []);
 
+  /*
+   * When the selected language changes,
+   * Feed re-renders immediately.
+   *
+   * Existing translations already stored
+   * on the loaded post become visible
+   * without refreshing the page.
+   */
+  useEffect(() => {
+    setFilteredPosts(
+      (currentFilteredPosts) =>
+        currentFilteredPosts.map(
+          (post) => ({
+            ...post,
+          })
+        )
+    );
+  }, [activeLanguage]);
+
+  /*
+   * Load current author profile names for
+   * older posts that contain the historical
+   * Inclura User placeholder.
+   *
+   * New posts created by the corrected
+   * CreatePost.jsx will already contain
+   * their real author name.
+   */
+  useEffect(() => {
+    hydrateMissingAuthors(
+      posts
+    );
+  }, [posts]);
+
+  async function hydrateMissingAuthors(
+    currentPosts
+  ) {
+    const postsNeedingAuthors =
+      currentPosts.filter(
+        (post) =>
+          post?.userId &&
+          isPlaceholderUserName(
+            post.userName
+          ) &&
+          !hydratedAuthors[
+            post.userId
+          ]
+      );
+
+    if (
+      postsNeedingAuthors.length ===
+      0
+    ) {
+      return;
+    }
+
+    const uniqueUserIds = [
+      ...new Set(
+        postsNeedingAuthors.map(
+          (post) =>
+            post.userId
+        )
+      ),
+    ];
+
+    const authorUpdates = {};
+
+    await Promise.all(
+      uniqueUserIds.map(
+        async (userId) => {
+          try {
+            const userSnap =
+              await getDoc(
+                doc(
+                  db,
+                  "users",
+                  userId
+                )
+              );
+
+            if (
+              !userSnap.exists()
+            ) {
+              authorUpdates[
+                userId
+              ] = null;
+              return;
+            }
+
+            const profile =
+              userSnap.data();
+
+            const fullName =
+              profile.fullName ||
+              profile.displayName ||
+              profile.name ||
+              [
+                profile.firstName,
+                profile.lastName,
+              ]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
+
+            authorUpdates[
+              userId
+            ] =
+              typeof fullName ===
+                "string" &&
+              fullName.trim()
+                ? fullName.trim()
+                : null;
+          } catch (error) {
+            console.error(
+              "Inclura Author Profile Load Error:",
+              error
+            );
+
+            authorUpdates[
+              userId
+            ] = null;
+          }
+        }
+      )
+    );
+
+    setHydratedAuthors(
+      (previous) => ({
+        ...previous,
+        ...authorUpdates,
+      })
+    );
+
+    setPosts(
+      (previousPosts) =>
+        previousPosts.map(
+          (post) => {
+            const authorName =
+              authorUpdates[
+                post.userId
+              ];
+
+            if (
+              !authorName
+            ) {
+              return post;
+            }
+
+            if (
+              !isPlaceholderUserName(
+                post.userName
+              )
+            ) {
+              return post;
+            }
+
+            return {
+              ...post,
+              userName:
+                authorName,
+            };
+          }
+        )
+    );
+
+    setFilteredPosts(
+      (previousPosts) =>
+        previousPosts.map(
+          (post) => {
+            const authorName =
+              authorUpdates[
+                post.userId
+              ];
+
+            if (
+              !authorName
+            ) {
+              return post;
+            }
+
+            if (
+              !isPlaceholderUserName(
+                post.userName
+              )
+            ) {
+              return post;
+            }
+
+            return {
+              ...post,
+              userName:
+                authorName,
+            };
+          }
+        )
+    );
+  }
+
   async function loadPosts(
     loadMore = false
   ) {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
 
     setLoading(true);
 
@@ -237,47 +479,51 @@ function Feed() {
       }
 
       if (loadMore) {
-        setPosts((prev) => {
-          const existingIds =
-            new Set(
-              prev.map(
-                (p) => p.id
-              )
-            );
-
-          const newPosts =
-            fetchedPosts.filter(
-              (p) =>
-                !existingIds.has(
-                  p.id
-                )
-            );
-
-          return [
-            ...prev,
-            ...newPosts,
-          ];
-        });
-
-        setFilteredPosts(
-          (prev) => {
+        setPosts(
+          (previousPosts) => {
             const existingIds =
               new Set(
-                prev.map(
-                  (p) => p.id
+                previousPosts.map(
+                  (post) =>
+                    post.id
                 )
               );
 
             const newPosts =
               fetchedPosts.filter(
-                (p) =>
+                (post) =>
                   !existingIds.has(
-                    p.id
+                    post.id
                   )
               );
 
             return [
-              ...prev,
+              ...previousPosts,
+              ...newPosts,
+            ];
+          }
+        );
+
+        setFilteredPosts(
+          (previousPosts) => {
+            const existingIds =
+              new Set(
+                previousPosts.map(
+                  (post) =>
+                    post.id
+                )
+              );
+
+            const newPosts =
+              fetchedPosts.filter(
+                (post) =>
+                  !existingIds.has(
+                    post.id
+                  )
+              );
+
+            return [
+              ...previousPosts,
               ...newPosts,
             ];
           }
@@ -308,7 +554,9 @@ function Feed() {
       const user =
         auth.currentUser;
 
-      if (!user) return;
+      if (!user) {
+        return;
+      }
 
       const userRef =
         doc(
@@ -363,10 +611,10 @@ function Feed() {
           "Post saved"
         );
       }
-    } catch (err) {
+    } catch (error) {
       console.error(
         "Inclura Save Post Error:",
-        err
+        error
       );
 
       alert(
@@ -382,7 +630,9 @@ function Feed() {
     const user =
       auth.currentUser;
 
-    if (!user) return;
+    if (!user) {
+      return;
+    }
 
     try {
       const postRef =
@@ -427,37 +677,30 @@ function Feed() {
           post.reactions?.[
             "👍"
           ] || 0,
-
         "❤️":
           post.reactions?.[
             "❤️"
           ] || 0,
-
         "😂":
           post.reactions?.[
             "😂"
           ] || 0,
-
         "😊":
           post.reactions?.[
             "😊"
           ] || 0,
-
         "😮":
           post.reactions?.[
             "😮"
           ] || 0,
-
         "😢":
           post.reactions?.[
             "😢"
           ] || 0,
-
         "👏":
           post.reactions?.[
             "👏"
           ] || 0,
-
         "👎":
           post.reactions?.[
             "👎"
@@ -512,55 +755,50 @@ function Feed() {
         }
       );
 
-      const creatorRef =
-        doc(
-          db,
-          "users",
-          post.userId
+      if (
+        post.userId
+      ) {
+        const creatorRef =
+          doc(
+            db,
+            "users",
+            post.userId
+          );
+
+        await updateDoc(
+          creatorRef,
+          {
+            creatorScore,
+          }
         );
+      }
 
-      await updateDoc(
-        creatorRef,
-        {
-          creatorScore,
-        }
-      );
+      const updateReactionState =
+        (previousPosts) =>
+          previousPosts.map(
+            (currentPost) =>
+              currentPost.id ===
+              postId
+                ? {
+                    ...currentPost,
+                    reactions,
+                    creatorScore,
+                    userReactions: {
+                      ...(currentPost.userReactions ||
+                        {}),
+                      [user.uid]:
+                        emoji,
+                    },
+                  }
+                : currentPost
+          );
 
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                reactions,
-                creatorScore,
-                userReactions: {
-                  ...(p.userReactions ||
-                    {}),
-                  [user.uid]:
-                    emoji,
-                },
-              }
-            : p
-        )
+      setPosts(
+        updateReactionState
       );
 
       setFilteredPosts(
-        (prev) =>
-          prev.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  reactions,
-                  creatorScore,
-                  userReactions: {
-                    ...(p.userReactions ||
-                      {}),
-                    [user.uid]:
-                      emoji,
-                  },
-                }
-              : p
-          )
+        updateReactionState
       );
     } catch (error) {
       console.error(
@@ -575,7 +813,9 @@ function Feed() {
   ) {
     if (
       !post?.id ||
-      !post?.text
+      typeof post.text !==
+        "string" ||
+      !post.text.trim()
     ) {
       return;
     }
@@ -592,83 +832,29 @@ function Feed() {
     }
 
     /*
-     * Use the live i18next language
-     * at the exact moment Translate
-     * is pressed.
+     * Read the language at the exact
+     * moment the button is pressed.
      */
     const targetLanguage =
-  normalizeFeedLanguage(
-    i18n.language
-  );
+      normalizeFeedLanguage(
+        i18n.language
+      );
 
-if (!targetLanguage) {
-  return;
-}
-
-    /*
-     * If this post already has a translation
-     * for the currently selected language,
-     * use it immediately.
-     */
     const existingTranslation =
-  post.translatedText?.[
-    targetLanguage
-  ] ||
-  (
-    targetLanguage === "zh-TW"
-      ? post.translatedText?.[
-          "zh-tw"
-        ]
-      : null
-  );
+      getPostTranslation(
+        post,
+        targetLanguage
+      );
 
     if (
-      typeof existingTranslation ===
-        "string" &&
-      existingTranslation.trim()
+      existingTranslation
     ) {
-      const existingText =
-        existingTranslation.trim();
-
-      const updatedTranslations =
-        {
-          ...(post.translatedText ||
-            {}),
-          [targetLanguage]:
-            existingText,
-        };
-
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                translatedText:
-                  updatedTranslations,
-              }
-            : p
-        )
-      );
-
-      setFilteredPosts(
-        (prev) =>
-          prev.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  translatedText:
-                    updatedTranslations,
-              }
-              : p
-          )
-      );
-
       return;
     }
 
     setTranslatingPosts(
-      (prev) => ({
-        ...prev,
+      (previous) => ({
+        ...previous,
         [postId]: true,
       })
     );
@@ -695,30 +881,23 @@ if (!targetLanguage) {
           targetLanguage,
         });
 
-      if (
-        !result?.translatedText ||
-        typeof result.translatedText !==
+      const translatedText =
+        typeof result?.translatedText ===
           "string"
-      ) {
+          ? result.translatedText.trim()
+          : "";
+
+      if (!translatedText) {
         throw new Error(
           "Translation service returned no translated text."
         );
       }
 
-      const translatedText =
-        result.translatedText.trim();
-
-      if (!translatedText) {
-        throw new Error(
-          "Translation service returned empty text."
-        );
-      }
-
       /*
-       * Save the translation cache.
-       * A cache failure must not prevent
-       * the Feed from displaying the
-       * successful translation.
+       * Cache save is supplementary.
+       * A cache failure must never prevent
+       * the successful translation from
+       * appearing in Feed.
        */
       try {
         await saveTranslation({
@@ -732,39 +911,37 @@ if (!targetLanguage) {
           targetLanguage,
           translatedText,
           confidence:
-            result.confidence ||
-            0,
+            typeof result.confidence ===
+            "number"
+              ? result.confidence
+              : 0,
         });
       } catch (
-        cacheSaveError
+        cacheError
       ) {
         console.error(
           "Inclura Translation Cache Save Error:",
-          cacheSaveError
+          cacheError
         );
       }
 
       /*
-       * Preserve all existing translations
-       * and add/update only the selected
-       * language.
+       * Build the translation from the
+       * post supplied to this operation.
+       * Do not depend on a possibly stale
+       * posts closure.
        */
-      const currentPost =
-  posts.find(
-    (current) =>
-      current.id === postId
-  ) || post;
+      const updatedTranslatedText =
+        {
+          ...(post.translatedText ||
+            {}),
+          [targetLanguage]:
+            translatedText,
+        };
 
-const updatedTranslatedText =
-  {
-    ...(currentPost.translatedText ||
-      {}),
-    [targetLanguage]:
-      translatedText,
-  };
       /*
-       * Persist the translation to the
-       * Firestore post.
+       * Persist the translation on the
+       * actual post document.
        */
       await updateDoc(
         doc(
@@ -779,36 +956,29 @@ const updatedTranslatedText =
       );
 
       /*
-       * Immediately update both Feed
-       * collections in React state.
-       *
-       * This is the important part that
-       * allows the already-loaded post to
-       * change without refreshing.
+       * Immediately update both Feed state
+       * collections.
        */
-      setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? {
-                ...p,
-                translatedText:
-                  updatedTranslatedText,
-              }
-            : p
-        )
+      const updateTranslationState =
+        (previousPosts) =>
+          previousPosts.map(
+            (currentPost) =>
+              currentPost.id ===
+              postId
+                ? {
+                    ...currentPost,
+                    translatedText:
+                      updatedTranslatedText,
+                  }
+                : currentPost
+          );
+
+      setPosts(
+        updateTranslationState
       );
 
       setFilteredPosts(
-        (prev) =>
-          prev.map((p) =>
-            p.id === postId
-              ? {
-                  ...p,
-                  translatedText:
-                    updatedTranslatedText,
-                }
-              : p
-          )
+        updateTranslationState
       );
     } catch (error) {
       console.error(
@@ -822,9 +992,9 @@ const updatedTranslatedText =
       );
     } finally {
       setTranslatingPosts(
-        (prev) => {
+        (previous) => {
           const next = {
-            ...prev,
+            ...previous,
           };
 
           delete next[
@@ -837,10 +1007,6 @@ const updatedTranslatedText =
     }
   }
 
-  /*
-   * Return the temporary accessibility
-   * settings for a particular post.
-   */
   function getPostAccessibility(
     postId
   ) {
@@ -855,25 +1021,23 @@ const updatedTranslatedText =
     );
   }
 
-  /*
-   * Update a temporary accessibility
-   * setting for one post.
-   */
   function togglePostAccessibility(
     postId,
     setting
   ) {
     setPostAccessibility(
-      (prev) => {
+      (previous) => {
         const current =
-          prev[postId] || {
+          previous[
+            postId
+          ] || {
             largeText: false,
             highContrast: false,
             textOnly: false,
           };
 
         return {
-          ...prev,
+          ...previous,
           [postId]: {
             ...current,
             [setting]:
@@ -886,10 +1050,6 @@ const updatedTranslatedText =
     );
   }
 
-  /*
-   * Read a post aloud using the
-   * Android/browser speech engine.
-   */
   function readPostAloud(
     post
   ) {
@@ -911,18 +1071,15 @@ const updatedTranslatedText =
     }
 
     const speechLanguage =
-      String(
-        i18n.language ||
-          userLanguage ||
-          "en"
-      )
-        .trim()
-        .toLowerCase();
+      normalizeFeedLanguage(
+        i18n.language
+      );
 
     const text =
-      post.translatedText?.[
+      getPostTranslation(
+        post,
         speechLanguage
-      ] ||
+      ) ||
       post.text ||
       "";
 
@@ -937,40 +1094,38 @@ const updatedTranslatedText =
         text
       );
 
-    const speechLanguageMap =
-      {
-        en: "en-US",
-        es: "es-ES",
-        fr: "fr-FR",
-        pt: "pt-PT",
-        ar: "ar-SA",
-        zh: "zh-CN",
-        "zh-tw": "zh-TW",
-        ja: "ja-JP",
-        de: "de-DE",
-        hi: "hi-IN",
-        ru: "ru-RU",
-        it: "it-IT",
-        nl: "nl-NL",
-        sw: "sw-KE",
-        yo: "yo-NG",
-        ig: "ig-NG",
-        ha: "ha-NG",
-        pcm: "en-NG",
-        ko: "ko-KR",
-        vi: "vi-VN",
-        th: "th-TH",
-        id: "id-ID",
-        ms: "ms-MY",
-        bn: "bn-BD",
-        tr: "tr-TR",
-      };
+    const speechLanguageMap = {
+      en: "en-US",
+      es: "es-ES",
+      fr: "fr-FR",
+      pt: "pt-PT",
+      ar: "ar-SA",
+      zh: "zh-CN",
+      "zh-TW": "zh-TW",
+      ja: "ja-JP",
+      de: "de-DE",
+      hi: "hi-IN",
+      ru: "ru-RU",
+      it: "it-IT",
+      nl: "nl-NL",
+      sw: "sw-KE",
+      yo: "yo-NG",
+      ig: "ig-NG",
+      ha: "ha-NG",
+      pcm: "en-NG",
+      ko: "ko-KR",
+      vi: "vi-VN",
+      th: "th-TH",
+      id: "id-ID",
+      ms: "ms-MY",
+      bn: "bn-BD",
+      tr: "tr-TR",
+    };
 
     utterance.lang =
       speechLanguageMap[
         speechLanguage
       ] ||
-      speechLanguage ||
       "en-US";
 
     utterance.rate =
@@ -987,9 +1142,6 @@ const updatedTranslatedText =
     );
   }
 
-  /*
-   * Stop all current speech.
-   */
   function stopReading() {
     if (
       typeof window !==
@@ -1000,10 +1152,6 @@ const updatedTranslatedText =
     }
   }
 
-  /*
-   * Open the central Accessibility
-   * Settings page.
-   */
   function openAccessibilitySettings() {
     navigate(
       "/accessibility"
@@ -1085,8 +1233,8 @@ const updatedTranslatedText =
     Boolean(
       accessibilityProfile
         ?.wheelchair ||
-        accessibilityProfile
-          ?.motorImpaired
+      accessibilityProfile
+        ?.motorImpaired
     );
 
   const neurodivergentEnabled =
@@ -1145,32 +1293,11 @@ const updatedTranslatedText =
                   ]
                 );
 
-              /*
-               * Use the synchronized
-               * userLanguage state.
-               *
-               * This is the same pattern
-               * that previously allowed
-               * language changes without
-               * refreshing the page.
-               */
-              const displayLanguage =
-  normalizeFeedLanguage(
-    i18n.language
-  );
-
-const translated =
-  post
-    .translatedText?.[
-    displayLanguage
-  ] ||
-  (
-    displayLanguage === "zh-TW"
-      ? post.translatedText?.[
-          "zh-tw"
-        ]
-      : null
-  );
+              const translated =
+                getPostTranslation(
+                  post,
+                  activeLanguage
+                );
 
               const currentAccessibility =
                 getPostAccessibility(
@@ -1185,6 +1312,17 @@ const translated =
                 translated ||
                 post.text ||
                 "";
+
+              const authorName =
+                !isPlaceholderUserName(
+                  post.userName
+                )
+                  ? post.userName
+                  : hydratedAuthors[
+                      post.userId
+                    ] ||
+                    post.userName ||
+                    "Inclura User";
 
               const postFontSize =
                 currentAccessibility.largeText
@@ -1255,7 +1393,7 @@ const translated =
                         }}
                       >
                         {
-                          post.userName
+                          authorName
                         }
 
                         {post.verified && (
@@ -1311,7 +1449,7 @@ const translated =
                           }
                           alt={
                             `Image shared by ${
-                              post.userName ||
+                              authorName ||
                               "user"
                             }`
                           }
@@ -1331,7 +1469,7 @@ const translated =
                           controls
                           aria-label={
                             `Video shared by ${
-                              post.userName ||
+                              authorName ||
                               "user"
                             }`
                           }
@@ -1381,7 +1519,7 @@ const translated =
                     >
                       Translated to{" "}
                       {
-                        userLanguage
+                        activeLanguage
                       }
                     </small>
                   )}
@@ -1400,7 +1538,7 @@ const translated =
                       isTranslating
                         ? "Translating post"
                         : translated
-                        ? `Post translated to ${userLanguage}`
+                        ? `Post translated to ${activeLanguage}`
                         : "Translate this post"
                     }
                     style={{
