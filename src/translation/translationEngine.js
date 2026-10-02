@@ -11,11 +11,17 @@ import {
 } from "./textTranslator";
 
 import {
+  getCachedTranslation,
+} from "./translationCache";
+
+import {
   detectLanguage,
   isSupportedLanguage,
 } from "./languageDetector";
 
-function normalizeLanguageCode(code = "") {
+function normalizeLanguageCode(
+  code = ""
+) {
   const normalized = String(code)
     .trim()
     .toLowerCase()
@@ -35,7 +41,15 @@ function getStoredTranslation(
   data,
   targetLanguage
 ) {
-  if (!data?.translatedText) {
+  if (
+    !data ||
+    !data.translatedText ||
+    typeof data.translatedText !==
+      "object" ||
+    Array.isArray(
+      data.translatedText
+    )
+  ) {
     return "";
   }
 
@@ -106,11 +120,15 @@ export async function translateContent({
     );
   }
 
-  let detectedLanguage = {
-    code: "en",
-    language: "English",
-    confidence: 0,
-  };
+  /*
+   * Detect the source language.
+   *
+   * We only use the detected language to
+   * bypass translation when detection
+   * actually succeeds. If detection fails,
+   * we must not assume the text is English.
+   */
+  let detectedLanguage = null;
 
   try {
     detectedLanguage =
@@ -127,17 +145,19 @@ export async function translateContent({
   const originalLanguage =
     normalizeLanguageCode(
       detectedLanguage?.code ||
-        "en"
+        ""
     );
 
   /*
-   * If the requested language is already
-   * the source language, no translation is
+   * If language detection succeeded and
+   * the source language is already the
+   * requested language, no translation is
    * necessary.
    */
   if (
+    originalLanguage &&
     originalLanguage ===
-    normalizedTargetLanguage
+      normalizedTargetLanguage
   ) {
     return {
       originalLanguage,
@@ -156,74 +176,76 @@ export async function translateContent({
   }
 
   /*
-   * First check the central translation
-   * cache used by the Inclura translation
-   * system.
+   * First check the same translation
+   * collection used by textTranslator.js.
+   *
+   * This is important because
+   * saveTranslation() currently uses
+   * addDoc(), not a deterministic document
+   * ID.
    */
   if (sourceId) {
     try {
-      const translationRef =
-        doc(
-          db,
-          "translations",
-          `${sourceId}_${normalizedTargetLanguage}`
+      const cachedTranslation =
+        await getCachedTranslation(
+          sourceId,
+          normalizedTargetLanguage
         );
 
-      const translationSnap =
-        await getDoc(
-          translationRef
-        );
+      const cachedText =
+        typeof cachedTranslation?.translatedText ===
+        "string"
+          ? cachedTranslation.translatedText.trim()
+          : "";
 
-      if (
-        translationSnap.exists()
-      ) {
-        const cached =
-          translationSnap.data();
-
-        const cachedText =
-          typeof cached?.translatedText ===
-          "string"
-            ? cached.translatedText.trim()
-            : "";
-
-        if (cachedText) {
-          return {
-            originalLanguage:
-              normalizeLanguageCode(
-                cached.originalLanguage ||
-                  originalLanguage
-              ),
-            targetLanguage:
-              normalizeLanguageCode(
-                cached.targetLanguage ||
-                  normalizedTargetLanguage
-              ),
-            translatedText:
-              cachedText,
-            confidence:
-              typeof cached.confidence ===
-              "number"
-                ? cached.confidence
-                : 0,
-            audioUrl:
-              cached.audioUrl || "",
-            subtitleUrl:
-              cached.subtitleUrl || "",
-          };
-        }
+      if (cachedText) {
+        return {
+          id:
+            cachedTranslation.id ||
+            null,
+          sourceId,
+          sourceType:
+            cachedTranslation.sourceType ||
+            sourceType ||
+            "unknown",
+          originalLanguage:
+            normalizeLanguageCode(
+              cachedTranslation.originalLanguage ||
+                originalLanguage ||
+                "en"
+            ),
+          targetLanguage:
+            normalizeLanguageCode(
+              cachedTranslation.targetLanguage ||
+                normalizedTargetLanguage
+            ),
+          translatedText:
+            cachedText,
+          confidence:
+            typeof cachedTranslation.confidence ===
+            "number"
+              ? cachedTranslation.confidence
+              : 0,
+          audioUrl:
+            cachedTranslation.audioUrl ||
+            "",
+          subtitleUrl:
+            cachedTranslation.subtitleUrl ||
+            "",
+        };
       }
     } catch (error) {
       console.warn(
-        "Inclura Translation Engine Document Cache Warning:",
+        "Inclura Translation Engine Collection Cache Warning:",
         error
       );
     }
   }
 
   /*
-   * Also support posts or other content
-   * that already contains translations
-   * directly on the source document.
+   * Also support translations already
+   * stored directly inside the source
+   * document.
    */
   if (sourceId) {
     try {
@@ -259,10 +281,15 @@ export async function translateContent({
 
           if (storedTranslation) {
             return {
+              sourceId,
+              sourceType:
+                sourceType ||
+                "unknown",
               originalLanguage:
                 normalizeLanguageCode(
                   sourceData.originalLanguage ||
-                    originalLanguage
+                    originalLanguage ||
+                    "en"
                 ),
               targetLanguage:
                 normalizedTargetLanguage,
@@ -284,12 +311,9 @@ export async function translateContent({
   }
 
   /*
-   * Use the real Inclura translation
-   * gateway through textTranslator.js.
-   *
-   * This replaces the old placeholder
-   * implementation that returned the
-   * original text unchanged.
+   * No usable cached translation was
+   * found, so use the real translation
+   * gateway.
    */
   const result =
     await translateText({
@@ -321,14 +345,12 @@ export async function translateContent({
   }
 
   /*
-   * Save through the same central
-   * translation persistence layer used
-   * by the current Inclura translation
-   * system.
+   * Persist the successful translation
+   * through the central translation
+   * persistence layer.
    *
-   * A cache persistence failure should
-   * not erase a successful translation
-   * result from the caller.
+   * Persistence failure does not destroy
+   * the successful translation result.
    */
   let savedTranslation = null;
 
@@ -340,7 +362,8 @@ export async function translateContent({
           sourceType || "unknown",
         originalLanguage:
           result.originalLanguage ||
-          originalLanguage,
+          originalLanguage ||
+          "en",
         targetLanguage:
           normalizedTargetLanguage,
         translatedText,
@@ -368,7 +391,8 @@ export async function translateContent({
     originalLanguage:
       normalizeLanguageCode(
         result.originalLanguage ||
-          originalLanguage
+          originalLanguage ||
+          "en"
       ),
     targetLanguage:
       normalizeLanguageCode(
@@ -381,8 +405,12 @@ export async function translateContent({
       "number"
         ? result.confidence
         : 0,
-    audioUrl: "",
-    subtitleUrl: "",
+    audioUrl:
+      result.audioUrl ||
+      "",
+    subtitleUrl:
+      result.subtitleUrl ||
+      "",
   };
 }
 
