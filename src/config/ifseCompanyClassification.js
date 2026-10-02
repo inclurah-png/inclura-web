@@ -1,9 +1,13 @@
 // =======================================================
 // IFSE Company Classification Engine
 // =======================================================
+//
+// Defines company classification tiers used by IFSE.
+// Actual verification decisions, pricing, and contracts
+// should remain in their respective modules.
+// =======================================================
 
 export const IFSE_COMPANY_CLASSIFICATION = {
-
   tier1: {
     id: "tier1",
     title: "Micro Business",
@@ -59,5 +63,43 @@ export const IFSE_COMPANY_CLASSIFICATION = {
     description:
       "Global corporations requiring enterprise partnership agreements.",
   },
-
 };
+
+/**
+ * Get a company classification by tier ID.
+ *
+ * @param {string} tierId
+ * @returns {object|null}
+ */
+export function getIFSECompanyClassification(tierId) {
+  if (!tierId || typeof tierId !== "string") {
+    return null;
+  }
+
+  return IFSE_COMPANY_CLASSIFICATION[tierId] || null;
+}
+
+/**
+ * Get all company classification tiers.
+ *
+ * @returns {object[]}
+ */
+export function getIFSECompanyClassifications() {
+  return Object.values(IFSE_COMPANY_CLASSIFICATION);
+}
+
+/**
+ * Check whether a company classification tier exists.
+ *
+ * @param {string} tierId
+ * @returns {boolean}
+ */
+export function isValidIFSECompanyTier(tierId) {
+  return Boolean(
+    tierId &&
+      typeof tierId === "string" &&
+      IFSE_COMPANY_CLASSIFICATION[tierId]
+  );
+}
+
+export default IFSE_COMPANY_CLASSIFICATION;
