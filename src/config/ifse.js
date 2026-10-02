@@ -1,3 +1,15 @@
+/**
+ * Inclura Fortress Security Engine (IFSE)
+ *
+ * Core security configuration for the Inclura Platform.
+ *
+ * IMPORTANT:
+ * - This file defines IFSE identity and security requirements.
+ * - Actual security decisions and implementations belong to their
+ *   respective IFSE services and engines.
+ * - Do not place secrets, credentials, API keys, or user data here.
+ */
+
 export const IFSE = {
   version: "1.0",
   engine: "Inclura Fortress Security Engine",
@@ -56,3 +68,5 @@ export const IFSE = {
     "Audit Logging",
   ],
 };
+
+export default IFSE;
