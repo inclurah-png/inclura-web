@@ -1,4 +1,4 @@
-   import {
+import {
   useEffect,
   useRef,
   useState,
@@ -146,6 +146,18 @@ function ChatWindow({
    * switches chats.
    */
   const trackedChatIdRef =
+    useRef(null);
+
+
+  /*
+   * Locks an active voice recording to
+   * the chat and user that started it.
+   *
+   * This prevents a recording from being
+   * uploaded into another conversation if
+   * the selected chat changes while recording.
+   */
+  const recordingContextRef =
     useRef(null);
 
 
@@ -415,12 +427,7 @@ function ChatWindow({
         }
       );
 
-    /*
-     * Mark all newly observed messages
-     * as seen before speaking so a React
-     * re-render cannot cause duplicate
-     * announcements.
-     */
+
     messages.forEach(
       (message) => {
 
@@ -437,6 +444,7 @@ function ChatWindow({
       }
     );
 
+
     if (
       newMessages.length === 0
     ) {
@@ -445,14 +453,7 @@ function ChatWindow({
 
     }
 
-    /*
-     * Read only the newest newly received
-     * text message.
-     *
-     * If several messages arrive together,
-     * reading only the newest prevents a
-     * long queue of speech from being created.
-     */
+
     const latestMessage =
       newMessages[
         newMessages.length - 1
@@ -466,6 +467,7 @@ function ChatWindow({
       return;
 
     }
+
 
     window.speechSynthesis.cancel();
 
@@ -695,6 +697,10 @@ function ChatWindow({
       }
 
 
+      recordingContextRef.current =
+        null;
+
+
       if (
         typeof window !== "undefined" &&
         window.speechSynthesis
@@ -883,7 +889,13 @@ function ChatWindow({
 
       alert(
         error?.message ||
-          t("messageSendError")
+          t(
+            "messageSendError",
+            {
+              defaultValue:
+                "Unable to send message.",
+            }
+          )
       );
 
     } finally {
@@ -1099,7 +1111,11 @@ function ChatWindow({
       alert(
         error?.message ||
           t(
-            "messageTranslationError"
+            "messageTranslationError",
+            {
+              defaultValue:
+                "Unable to translate message.",
+            }
           )
       );
 
@@ -1292,7 +1308,13 @@ function ChatWindow({
 
       alert(
         error?.message ||
-          t("imageUploadError")
+          t(
+            "imageUploadError",
+            {
+              defaultValue:
+                "Unable to upload image.",
+            }
+          )
       );
 
     } finally {
@@ -1407,7 +1429,13 @@ function ChatWindow({
 
       alert(
         error?.message ||
-          t("videoUploadError")
+          t(
+            "videoUploadError",
+            {
+              defaultValue:
+                "Unable to upload video.",
+            }
+          )
       );
 
     } finally {
@@ -1458,7 +1486,13 @@ function ChatWindow({
     ) {
 
       alert(
-        "This file is larger than the 50 MB messaging limit."
+        t(
+          "fileTooLarge",
+          {
+            defaultValue:
+              "This file is larger than the 50 MB messaging limit.",
+          }
+        )
       );
 
       event.target.value = "";
@@ -1543,7 +1577,13 @@ function ChatWindow({
 
       alert(
         error?.message ||
-          t("fileUploadError")
+          t(
+            "fileUploadError",
+            {
+              defaultValue:
+                "Unable to upload file.",
+            }
+          )
       );
 
     } finally {
@@ -1620,6 +1660,26 @@ function ChatWindow({
         stream;
 
 
+      /*
+       * Capture the chat and user at the
+       * exact moment recording begins.
+       */
+      const recordingChatId =
+        selectedChat.id;
+
+      const recordingUserId =
+        auth.currentUser.uid;
+
+
+      recordingContextRef.current = {
+        chatId:
+          recordingChatId,
+
+        userId:
+          recordingUserId,
+      };
+
+
       const recorder =
         new MediaRecorder(
           stream
@@ -1648,7 +1708,28 @@ function ChatWindow({
       recorder.onstop =
         async () => {
 
+          const recordingContext =
+            recordingContextRef.current;
+
           try {
+
+            if (
+              !recordingContext?.chatId ||
+              !recordingContext?.userId
+            ) {
+
+              throw new Error(
+                t(
+                  "voiceRecordingContextMissing",
+                  {
+                    defaultValue:
+                      "The voice recording session could not be completed.",
+                  }
+                )
+              );
+
+            }
+
 
             const audioBlob =
               new Blob(
@@ -1661,10 +1742,27 @@ function ChatWindow({
               );
 
 
+            if (
+              audioBlob.size <= 0
+            ) {
+
+              throw new Error(
+                t(
+                  "voiceRecordingEmpty",
+                  {
+                    defaultValue:
+                      "The voice recording was empty.",
+                  }
+                )
+              );
+
+            }
+
+
             const storageRef =
               ref(
                 storage,
-                `voiceNotes/${auth.currentUser.uid}/${Date.now()}.webm`
+                `voiceNotes/${recordingContext.userId}/${Date.now()}.webm`
               );
 
 
@@ -1684,12 +1782,12 @@ function ChatWindow({
               collection(
                 db,
                 "chats",
-                selectedChat.id,
+                recordingContext.chatId,
                 "messages"
               ),
               {
                 senderId:
-                  auth.currentUser.uid,
+                  recordingContext.userId,
 
                 audioUrl,
 
@@ -1709,7 +1807,7 @@ function ChatWindow({
                   "sent",
 
                 readBy: [
-                  auth.currentUser.uid,
+                  recordingContext.userId,
                 ],
 
                 messageType:
@@ -1748,6 +1846,9 @@ function ChatWindow({
                 null;
 
             }
+
+            recordingContextRef.current =
+              null;
 
           }
 
@@ -1797,6 +1898,9 @@ function ChatWindow({
           null;
 
       }
+
+      recordingContextRef.current =
+        null;
 
       alert(
         error?.message ||
@@ -2456,7 +2560,9 @@ function ChatWindow({
                         preload="metadata"
                         aria-label={
                           msg.fileName ||
-                          "Shared video"
+                          t(
+                            "sharedVideo"
+                          )
                         }
                         style={{
                           display:
@@ -2482,8 +2588,9 @@ function ChatWindow({
                           }
                         />
 
-                        Your browser does not
-                        support video playback.
+                        {t(
+                          "videoPlaybackUnsupported"
+                        )}
 
                       </video>
 
@@ -2502,7 +2609,13 @@ function ChatWindow({
                         rel="noopener noreferrer"
                         aria-label={
                           msg.fileName
-                            ? `Open ${msg.fileName}`
+                            ? t(
+                                "openFile",
+                                {
+                                  fileName:
+                                    msg.fileName,
+                                }
+                              )
                             : t(
                                 "sharedFile"
                               )
@@ -2799,7 +2912,9 @@ function ChatWindow({
 
         <div
           role="dialog"
-          aria-label="Emoji picker"
+          aria-label={t(
+            "emojiPicker"
+          )}
           style={{
             position:
               "absolute",
@@ -2855,7 +2970,14 @@ function ChatWindow({
                     )
                   }
                   aria-label={
-                    `Insert ${emoji}`
+                    t(
+                      "insertEmoji",
+                      {
+                        emoji,
+                        defaultValue:
+                          `Insert ${emoji}`,
+                      }
+                    )
                   }
                   style={{
                     border:
@@ -2893,7 +3015,9 @@ function ChatWindow({
 
         <div
           role="menu"
-          aria-label="Attachment options"
+          aria-label={t(
+            "attachmentOptions"
+          )}
           style={{
             position:
               "absolute",
@@ -2986,7 +3110,10 @@ function ChatWindow({
                 "14px",
             }}
           >
-            🎥 Video
+            🎥{" "}
+            {t(
+              "video"
+            )}
           </button>
 
 
@@ -3020,7 +3147,10 @@ function ChatWindow({
                 "14px",
             }}
           >
-            📄 Document / File
+            📄{" "}
+            {t(
+              "documentFile"
+            )}
           </button>
 
         </div>
@@ -3137,7 +3267,9 @@ function ChatWindow({
           disabled={
             isUploadingAttachment
           }
-          aria-label="Share video"
+          aria-label={t(
+            "shareVideo"
+          )}
           style={{
             display:
               "none",
@@ -3158,7 +3290,9 @@ function ChatWindow({
           disabled={
             isUploadingAttachment
           }
-          aria-label="Share document or file"
+          aria-label={t(
+            "shareDocumentOrFile"
+          )}
           style={{
             display:
               "none",
@@ -3192,8 +3326,12 @@ function ChatWindow({
             }}
           >
             {isUploadingImage
-              ? "Uploading image..."
-              : "Uploading attachment..."}
+              ? t(
+                  "uploadingImage"
+                )
+              : t(
+                  "uploadingAttachment"
+                )}
           </div>
 
         )}
@@ -3239,8 +3377,12 @@ function ChatWindow({
             aria-expanded={
               showEmojiPicker
             }
-            aria-label="Open emoji picker"
-            title="Emoji"
+            aria-label={t(
+              "openEmojiPicker"
+            )}
+            title={t(
+              "emoji"
+            )}
             disabled={
               isSending
             }
@@ -3287,8 +3429,12 @@ function ChatWindow({
               showAttachmentMenu
             }
             aria-haspopup="menu"
-            aria-label="Open attachment options"
-            title="Attach file"
+            aria-label={t(
+              "openAttachmentOptions"
+            )}
+            title={t(
+              "attachFile"
+            )}
             disabled={
               isUploadingImage ||
               isUploadingAttachment
@@ -3515,5 +3661,3 @@ function ChatWindow({
 
 
 export default ChatWindow;
-
-         
