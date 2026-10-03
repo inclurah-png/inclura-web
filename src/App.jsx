@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
+
 import ResponderIncidentReport from "./pages/ResponderIncidentReport";
 import FamilyEmergencyDashboard from "./pages/FamilyEmergencyDashboard";
 import FamilyEmergencyTimeline from "./pages/FamilyEmergencyTimeline";
@@ -8,13 +9,14 @@ import FamilyEmergencyNotifications from "./pages/FamilyEmergencyNotifications";
 
 import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
 import SOSResponderDashboard from "./pages/SOSResponderDashboard";
+
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorRoute from "./components/CreatorRoute";
 import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
-import AdminRoute from "./components/AdminRoute"; 
+import AdminRoute from "./components/AdminRoute";
 
 import Home from "./pages/Home";
 import Login from "./pages/Login";
@@ -43,6 +45,7 @@ import ReelsSystem from "./pages/ReelsSystem";
 import AccessibilityHub from "./pages/AccessibilityHub";
 import OpportunitiesHub from "./pages/OpportunitiesHub";
 import CareGigs from "./pages/CareGigs";
+import CareRequestPage from "./pages/CareRequestPage";
 import MentorHub from "./pages/MentorHub";
 
 import PostPage from "./pages/PostPage";
@@ -88,27 +91,18 @@ import ResponderAssignments from "./pages/ResponderAssignments";
 
 function App() {
   useEffect(() => {
-
-  window.addEventListener(
-
-    "online",
-
-    synchronizeSatelliteQueue
-
-  );
-
-  return () =>
-
-    window.removeEventListener(
-
+    window.addEventListener(
       "online",
-
       synchronizeSatelliteQueue
-
     );
 
-}, []);
-  
+    return () =>
+      window.removeEventListener(
+        "online",
+        synchronizeSatelliteQueue
+      );
+  }, []);
+
   return (
     <Routes>
 
@@ -132,13 +126,13 @@ function App() {
       />
 
       <Route
-  path="/identity/biometric-verification"
-  element={
-    <ProtectedRoute>
-      <BiometricsDemoPage />
-    </ProtectedRoute>
-  }
-/>
+        path="/identity/biometric-verification"
+        element={
+          <ProtectedRoute>
+            <BiometricsDemoPage />
+          </ProtectedRoute>
+        }
+      />
 
       <Route
         path="/forgot-password"
@@ -190,7 +184,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-            <Route
+
+      <Route
         path="/messages"
         element={
           <ProtectedRoute>
@@ -317,6 +312,15 @@ function App() {
       />
 
       <Route
+        path="/care-gigs/request"
+        element={
+          <ProtectedRoute>
+            <CareRequestPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/mentor-hub"
         element={
           <ProtectedRoute>
@@ -324,7 +328,8 @@ function App() {
           </ProtectedRoute>
         }
       />
-            {/* ========================= */}
+
+      {/* ========================= */}
       {/* VERIFICATION SYSTEM */}
       {/* ========================= */}
 
@@ -452,7 +457,8 @@ function App() {
           </AdvertiserRoute>
         }
       />
-            {/* ========================= */}
+
+      {/* ========================= */}
       {/* ENTERPRISE */}
       {/* ========================= */}
 
@@ -600,77 +606,77 @@ function App() {
       />
 
       <Route
-  path="/admin/ifse-risk"
-  element={
-    <AdminRoute>
-      <IFSERiskPanel />
-    </AdminRoute>
-  }
-/>
+        path="/admin/ifse-risk"
+        element={
+          <AdminRoute>
+            <IFSERiskPanel />
+          </AdminRoute>
+        }
+      />
 
- <Route
-  path="/sos-responder"
-  element={
-    <AdminRoute>
-      <SOSResponderDashboard />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/sos-responder"
+        element={
+          <AdminRoute>
+            <SOSResponderDashboard />
+          </AdminRoute>
+        }
+      />
 
- <Route
-  path="/responder-assignments"
-  element={
-    <AdminRoute>
-      <ResponderAssignments />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/responder-assignments"
+        element={
+          <AdminRoute>
+            <ResponderAssignments />
+          </AdminRoute>
+        }
+      />
 
-<Route
-  path="/responder-assignments"
-  element={
-    <AdminRoute>
-      <ResponderAssignments />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/responder-assignments"
+        element={
+          <AdminRoute>
+            <ResponderAssignments />
+          </AdminRoute>
+        }
+      />
 
-<Route
-  path="/family-emergency-dashboard"
-  element={
-    <AdminRoute>
-      <FamilyEmergencyDashboard />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/family-emergency-dashboard"
+        element={
+          <AdminRoute>
+            <FamilyEmergencyDashboard />
+          </AdminRoute>
+        }
+      />
 
-<Route
-  path="/family-emergency-timeline"
-  element={
-    <AdminRoute>
-      <FamilyEmergencyTimeline />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/family-emergency-timeline"
+        element={
+          <AdminRoute>
+            <FamilyEmergencyTimeline />
+          </AdminRoute>
+        }
+      />
 
-<Route
-  path="/family-emergency-map"
-  element={
-    <AdminRoute>
-      <FamilyEmergencyMap />
-    </AdminRoute>
-  }
-/>
+      <Route
+        path="/family-emergency-map"
+        element={
+          <AdminRoute>
+            <FamilyEmergencyMap />
+          </AdminRoute>
+        }
+      />
 
-<Route
-  path="/family-emergency-notifications"
-  element={
-    <AdminRoute>
-      <FamilyEmergencyNotifications />
-    </AdminRoute>
-  }
-/>
-      
+      <Route
+        path="/family-emergency-notifications"
+        element={
+          <AdminRoute>
+            <FamilyEmergencyNotifications />
+          </AdminRoute>
+        }
+      />
+
       {/* ========================= */}
       {/* SOS */}
       {/* ========================= */}
