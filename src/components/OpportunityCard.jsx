@@ -1,13 +1,33 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function OpportunityCard({ opportunity }) {
+  const { t } = useTranslation();
+
+  const safeOpportunity = opportunity || {};
+
+  const {
+    id = "",
+    title = "",
+    company = "",
+    location = "",
+    employmentType = "",
+    salary = "",
+    deadline = "",
+    applications = 0,
+    status = "",
+    description = "",
+    recruiterPlan = "",
+    featured = false,
+    createdAt = null,
+  } = safeOpportunity;
+
   const cardStyle = {
     background: "#0f172a",
     borderRadius: "20px",
     padding: "24px",
     marginBottom: "20px",
     color: "white",
-    transition: "0.3s",
     border: "1px solid #1e293b",
   };
 
@@ -21,26 +41,71 @@ function OpportunityCard({ opportunity }) {
     marginBottom: "8px",
   };
 
-  return (
-    <div style={cardStyle}>
-      {/* Top Row */}
+  const normalizedStatus = String(status).toLowerCase();
 
+  const statusLabel =
+    normalizedStatus === "active"
+      ? t("opportunities.status.active", {
+          defaultValue: "Active",
+        })
+      : normalizedStatus === "closed"
+      ? t("opportunities.status.closed", {
+          defaultValue: "Closed",
+        })
+      : normalizedStatus === "expired"
+      ? t("opportunities.status.expired", {
+          defaultValue: "Expired",
+        })
+      : status ||
+        t("opportunities.status.unknown", {
+          defaultValue: "Status unavailable",
+        });
+
+  const statusIsActive =
+    normalizedStatus === "active";
+
+  const formattedCreatedDate =
+    createdAt?.seconds
+      ? new Date(
+          createdAt.seconds * 1000
+        ).toLocaleDateString()
+      : createdAt?.toDate
+      ? createdAt.toDate().toLocaleDateString()
+      : t("opportunities.recently", {
+          defaultValue: "Recently",
+        });
+
+  const truncatedDescription =
+    String(description).substring(0, 180);
+
+  return (
+    <article
+      aria-labelledby={`opportunity-title-${id}`}
+      style={cardStyle}
+    >
+      {/* Top Row */}
       <div
         style={{
           display: "flex",
-          justifyContent:
-            "space-between",
-          alignItems: "center",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
           flexWrap: "wrap",
+          gap: "16px",
         }}
       >
         <div>
           <h2
+            id={`opportunity-title-${id}`}
             style={{
               margin: 0,
+              lineHeight: "1.4",
             }}
           >
-            {opportunity.title}
+            {title ||
+              t("opportunities.untitled", {
+                defaultValue:
+                  "Untitled opportunity",
+              })}
           </h2>
 
           <p
@@ -49,156 +114,379 @@ function OpportunityCard({ opportunity }) {
               marginTop: "8px",
             }}
           >
-            {opportunity.company}
+            {company ||
+              t("opportunities.organizationUnavailable", {
+                defaultValue:
+                  "Organization unavailable",
+              })}
           </p>
         </div>
 
-        <div>
-          {opportunity.featured && (
+        <div
+          aria-label={t(
+            "opportunities.badgesLabel",
+            {
+              defaultValue:
+                "Opportunity badges",
+            }
+          )}
+        >
+          {featured && (
             <span
               style={{
                 ...badgeStyle,
-                background:
-                  "#f59e0b",
+                background: "#f59e0b",
                 color: "white",
               }}
             >
-              ⭐ Featured
+              ⭐{" "}
+              {t("opportunities.badges.featured", {
+                defaultValue: "Featured",
+              })}
             </span>
           )}
 
-          {opportunity.recruiterPlan ===
-            "business" && (
+          {recruiterPlan === "business" && (
             <span
               style={{
                 ...badgeStyle,
-                background:
-                  "#10b981",
+                background: "#10b981",
                 color: "white",
               }}
             >
-              Business Recruiter
+              {t(
+                "opportunities.badges.businessRecruiter",
+                {
+                  defaultValue:
+                    "Business Recruiter",
+                }
+              )}
             </span>
           )}
 
-          {opportunity.recruiterPlan ===
-            "enterprise" && (
+          {recruiterPlan === "enterprise" && (
             <span
               style={{
                 ...badgeStyle,
-                background:
-                  "#7c3aed",
+                background: "#7c3aed",
                 color: "white",
               }}
             >
-              Enterprise Hiring
+              {t(
+                "opportunities.badges.enterpriseHiring",
+                {
+                  defaultValue:
+                    "Enterprise Hiring",
+                }
+              )}
             </span>
           )}
         </div>
       </div>
-{/* Details */}
 
-      <div
+      {/* Details */}
+      <dl
         style={{
           marginTop: "20px",
           color: "#cbd5e1",
           lineHeight: "1.8",
         }}
       >
-        <p>
-          📍 <strong>Location:</strong>{" "}
-          {opportunity.location}
-        </p>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            📍{" "}
+            {t("opportunities.details.location", {
+              defaultValue: "Location",
+            })}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            {location ||
+              t("opportunities.notSpecified", {
+                defaultValue: "Not specified",
+              })}
+          </dd>
+        </div>
 
-        <p>
-          💼 <strong>Employment:</strong>{" "}
-          {opportunity.employmentType}
-        </p>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            💼{" "}
+            {t(
+              "opportunities.details.employment",
+              {
+                defaultValue: "Employment",
+              }
+            )}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            {employmentType ||
+              t("opportunities.notSpecified", {
+                defaultValue: "Not specified",
+              })}
+          </dd>
+        </div>
 
-        <p>
-          💰 <strong>Salary:</strong>{" "}
-          {opportunity.salary}
-        </p>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            💰{" "}
+            {t("opportunities.details.salary", {
+              defaultValue: "Salary",
+            })}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            {salary ||
+              t("opportunities.notSpecified", {
+                defaultValue: "Not specified",
+              })}
+          </dd>
+        </div>
 
-        <p>
-          📅 <strong>Deadline:</strong>{" "}
-          {opportunity.deadline}
-        </p>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            📅{" "}
+            {t("opportunities.details.deadline", {
+              defaultValue: "Deadline",
+            })}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            {deadline ||
+              t("opportunities.notSpecified", {
+                defaultValue: "Not specified",
+              })}
+          </dd>
+        </div>
 
-        <p>
-          👥 <strong>Applications:</strong>{" "}
-          {opportunity.applications || 0}
-        </p>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            👥{" "}
+            {t(
+              "opportunities.details.applications",
+              {
+                defaultValue: "Applications",
+              }
+            )}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            {Number.isFinite(Number(applications))
+              ? Number(applications)
+              : 0}
+          </dd>
+        </div>
 
-        <p>
-          🟢 <strong>Status:</strong>{" "}
-          {opportunity.status}
-        </p>
-      </div>
+        <div>
+          <dt
+            style={{
+              display: "inline",
+              fontWeight: "700",
+            }}
+          >
+            🟢{" "}
+            {t("opportunities.details.status", {
+              defaultValue: "Status",
+            })}
+            :{" "}
+          </dt>
+          <dd
+            style={{
+              display: "inline",
+              margin: 0,
+            }}
+          >
+            <span
+              aria-label={`${t(
+                "opportunities.details.status",
+                {
+                  defaultValue: "Status",
+                }
+              )}: ${statusLabel}`}
+            >
+              {statusLabel}
+            </span>
+          </dd>
+        </div>
+      </dl>
 
       {/* Description Preview */}
-
       <div
         style={{
           marginTop: "18px",
           color: "#94a3b8",
+          lineHeight: "1.7",
         }}
       >
-        {opportunity.description
-          ?.substring(0, 180)}
-        {opportunity.description
-          ?.length > 180
-          ? "..."
-          : ""}
+        <p
+          style={{
+            margin: 0,
+          }}
+        >
+          {truncatedDescription ||
+            t(
+              "opportunities.descriptionUnavailable",
+              {
+                defaultValue:
+                  "No description is available for this opportunity.",
+              }
+            )}
+
+          {String(description).length > 180
+            ? "..."
+            : ""}
+        </p>
       </div>
 
       {/* Bottom Row */}
-
       <div
         style={{
           marginTop: "24px",
           display: "flex",
-          justifyContent:
-            "space-between",
+          justifyContent: "space-between",
           alignItems: "center",
           flexWrap: "wrap",
+          gap: "16px",
         }}
       >
-        <span
-          style={{
-            color: "#38bdf8",
-            fontWeight: "700",
-          }}
-        >
-          Recruiter Plan:{" "}
-          {opportunity.recruiterPlan}
-        </span>
-        <Link
-          to={`/opportunity/${opportunity.id}`}
-          style={{
-            textDecoration: "none",
-          }}
-        >
-          <button
+        {recruiterPlan && (
+          <span
+            style={{
+              color: "#38bdf8",
+              fontWeight: "700",
+            }}
+          >
+            {t(
+              "opportunities.recruiterPlan",
+              {
+                defaultValue:
+                  "Recruiter Plan",
+              }
+            )}
+            : {recruiterPlan}
+          </span>
+        )}
+
+        {id ? (
+          <Link
+            to={`/opportunity/${id}`}
+            aria-label={t(
+              "opportunities.viewOpportunityAria",
+              {
+                defaultValue:
+                  "View opportunity: {{title}}",
+                title:
+                  title ||
+                  t("opportunities.untitled", {
+                    defaultValue:
+                      "Untitled opportunity",
+                  }),
+              }
+            )}
+            style={{
+              textDecoration: "none",
+            }}
+          >
+            <span
+              role="button"
+              tabIndex={0}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "12px 22px",
+                borderRadius: "12px",
+                background: "#38bdf8",
+                color: "white",
+                fontWeight: "700",
+                fontSize: "15px",
+                minHeight: "44px",
+              }}
+            >
+              {t(
+                "opportunities.viewOpportunity",
+                {
+                  defaultValue:
+                    "View Opportunity",
+                }
+              )}
+            </span>
+          </Link>
+        ) : (
+          <span
+            aria-disabled="true"
             style={{
               padding: "12px 22px",
-              border: "none",
               borderRadius: "12px",
-              background: "#38bdf8",
-              color: "white",
+              background: "#475569",
+              color: "#cbd5e1",
               fontWeight: "700",
-              cursor: "pointer",
               fontSize: "15px",
             }}
           >
-            View Opportunity
-          </button>
-        </Link>
+            {t(
+              "opportunities.unavailable",
+              {
+                defaultValue:
+                  "Opportunity unavailable",
+              }
+            )}
+          </span>
+        )}
       </div>
 
       {/* Footer */}
-
-      <div
+      <footer
         style={{
           marginTop: "20px",
           paddingTop: "16px",
@@ -207,21 +495,43 @@ function OpportunityCard({ opportunity }) {
           fontSize: "13px",
         }}
       >
-        Posted by{" "}
-        <strong>
-          {opportunity.company}
-        </strong>
+        <p
+          style={{
+            margin: 0,
+          }}
+        >
+          {t("opportunities.postedBy", {
+            defaultValue: "Posted by",
+          })}{" "}
+          <strong>
+            {company ||
+              t("opportunities.organizationUnavailable", {
+                defaultValue:
+                  "Organization unavailable",
+              })}
+          </strong>
 
-        {" • "}
+          {" • "}
 
-        {opportunity.createdAt?.seconds
-          ? new Date(
-              opportunity.createdAt.seconds *
-                1000
-            ).toLocaleDateString()
-          : "Recently"}
-      </div>
-    </div>
+          {formattedCreatedDate}
+        </p>
+
+        {!statusIsActive && (
+          <p
+            role="status"
+            style={{
+              marginTop: "8px",
+              color: "#fbbf24",
+            }}
+          >
+            {t("opportunities.statusNotice", {
+              defaultValue:
+                "This opportunity is not currently accepting applications.",
+            })}
+          </p>
+        )}
+      </footer>
+    </article>
   );
 }
 
