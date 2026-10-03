@@ -311,14 +311,14 @@ function App() {
         }
       />
 
-      <Route
-        path="/care-gigs/request"
-        element={
-          <ProtectedRoute>
-            <CareRequestPage />
-          </ProtectedRoute>
-        }
-      />
+<Route
+  path="/care-gigs/request"
+  element={
+    <ProtectedRoute>
+      <CareGigs />
+    </ProtectedRoute>
+  }
+/>
 
       <Route
         path="/mentor-hub"
