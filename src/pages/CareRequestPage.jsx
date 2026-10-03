@@ -2,25 +2,22 @@ import { useState } from "react";
 
 import DashboardLayout from "../components/DashboardLayout";
 import CareRequestForm from "../components/CareRequestForm";
-import { createCareRequest } from "../services/careGigService";
 import { useTranslation } from "react-i18next";
 
 function CareRequestPage() {
   const { t } = useTranslation();
 
-  const [submitting, setSubmitting] =
-    useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  async function handleSubmit(
-    requestData
-  ) {
+  async function handleSubmit(requestData) {
     setSubmitting(true);
 
     try {
-      const result =
-        await createCareRequest(
-          requestData
-        );
+      const { createCareRequest } = await import(
+        "../services/careGigService"
+      );
+
+      const result = await createCareRequest(requestData);
 
       return result;
     } catch (error) {
@@ -43,23 +40,16 @@ function CareRequestPage() {
       >
         <header style={header}>
           <h1 id="care-request-page-title">
-            {t(
-              "careGigs.requestPage.title",
-              {
-                defaultValue:
-                  "Create a Care Request",
-              }
-            )}
+            {t("careGigs.requestPage.title", {
+              defaultValue: "Create a Care Request",
+            })}
           </h1>
 
           <p style={intro}>
-            {t(
-              "careGigs.requestPage.introduction",
-              {
-                defaultValue:
-                  "Tell us what care or support you need so suitable providers can respond.",
-              }
-            )}
+            {t("careGigs.requestPage.introduction", {
+              defaultValue:
+                "Tell us what care or support you need so suitable providers can respond.",
+            })}
           </p>
         </header>
 
