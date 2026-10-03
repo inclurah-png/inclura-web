@@ -1,5 +1,6 @@
 import DashboardLayout from "../components/DashboardLayout";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 
 function CareGigs() {
   const { t } = useTranslation();
@@ -85,6 +86,23 @@ function CareGigs() {
                 "Connect people who need care and support with people who can provide it.",
             })}
           </p>
+
+          <Link
+            to="/care-gigs/request"
+            style={requestButton}
+            aria-label={t(
+              "careGigs.createRequestAriaLabel",
+              {
+                defaultValue:
+                  "Create a new Care-Gig request",
+              }
+            )}
+          >
+            {t("careGigs.createRequest", {
+              defaultValue:
+                "Create a Care Request",
+            })}
+          </Link>
         </header>
 
         <section
@@ -180,6 +198,18 @@ const intro = {
   color: "#cbd5e1",
   lineHeight: "1.7",
   maxWidth: "760px",
+};
+
+const requestButton = {
+  display: "inline-block",
+  marginTop: "18px",
+  padding: "14px 20px",
+  borderRadius: "12px",
+  background: "#38bdf8",
+  color: "white",
+  textDecoration: "none",
+  fontWeight: "700",
+  lineHeight: "1.4",
 };
 
 const card = {
