@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import DashboardLayout from "../components/DashboardLayout";
 import OpportunityCard from "../components/OpportunityCard";
@@ -13,318 +14,709 @@ import {
 import { db } from "../firebase";
 
 function OpportunitiesHub() {
-  const [search, setSearch] =
-    useState("");
+  const { t } = useTranslation();
 
-  const [category, setCategory] =
-    useState("All");
-
-  const [opportunities, setOpportunities] =
-    useState([]);
-
-  const [loading, setLoading] =
-    useState(true);
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("All");
+  const [opportunities, setOpportunities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const categories = [
-    "All",
-    "Remote",
-    "Enterprise",
-    "Internship",
-    "Volunteer",
-    "Scholarship",
-    "Grant",
-    "Competition",
-    "Freelance",
-    "Full Time",
-    "Part Time",
+    {
+      id: "All",
+      label: t("opportunities.categories.all", {
+        defaultValue: "All",
+      }),
+    },
+    {
+      id: "Remote",
+      label: t("opportunities.categories.remote", {
+        defaultValue: "Remote",
+      }),
+    },
+    {
+      id: "Enterprise",
+      label: t("opportunities.categories.enterprise", {
+        defaultValue: "Enterprise",
+      }),
+    },
+    {
+      id: "Internship",
+      label: t("opportunities.categories.internship", {
+        defaultValue: "Internship",
+      }),
+    },
+    {
+      id: "Volunteer",
+      label: t("opportunities.categories.volunteer", {
+        defaultValue: "Volunteer",
+      }),
+    },
+    {
+      id: "Scholarship",
+      label: t("opportunities.categories.scholarship", {
+        defaultValue: "Scholarship",
+      }),
+    },
+    {
+      id: "Grant",
+      label: t("opportunities.categories.grant", {
+        defaultValue: "Grant",
+      }),
+    },
+    {
+      id: "Competition",
+      label: t("opportunities.categories.competition", {
+        defaultValue: "Competition",
+      }),
+    },
+    {
+      id: "Freelance",
+      label: t("opportunities.categories.freelance", {
+        defaultValue: "Freelance",
+      }),
+    },
+    {
+      id: "Full Time",
+      label: t("opportunities.categories.fullTime", {
+        defaultValue: "Full Time",
+      }),
+    },
+    {
+      id: "Part Time",
+      label: t("opportunities.categories.partTime", {
+        defaultValue: "Part Time",
+      }),
+    },
   ];
 
   useEffect(() => {
-    loadOpportunities();
-  }, []);
+    let mounted = true;
 
-  async function loadOpportunities() {
-    try {
-      const q = query(
-        collection(db, "opportunities"),
-        orderBy("createdAt", "desc")
-      );
+    async function loadOpportunities() {
+      setLoading(true);
+      setError("");
 
-      const snapshot =
-        await getDocs(q);
+      try {
+        const q = query(
+          collection(db, "opportunities"),
+          orderBy("createdAt", "desc")
+        );
 
-      const jobs = [];
+        const snapshot = await getDocs(q);
 
-      snapshot.forEach((doc) => {
-        jobs.push({
-          id: doc.id,
-          ...doc.data(),
+        if (!mounted) return;
+
+        const jobs = [];
+
+        snapshot.forEach((opportunityDoc) => {
+          const data = opportunityDoc.data();
+
+          jobs.push({
+            id: opportunityDoc.id,
+            ...data,
+          });
         });
-      });
 
-      setOpportunities(jobs);
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
+        setOpportunities(jobs);
+      } catch (loadError) {
+        console.error(
+          "Unable to load opportunities:",
+          loadError
+        );
+
+        if (!mounted) return;
+
+        setOpportunities([]);
+        setError(
+          t("opportunities.errors.loadFailed", {
+            defaultValue:
+              "We couldn't load opportunities right now. Please try again.",
+          })
+        );
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
+      }
     }
-  }
 
-  const filteredJobs =
-    opportunities.filter((job) => {
-      const keyword =
-        search.toLowerCase();
+    loadOpportunities();
+
+    return () => {
+      mounted = false;
+    };
+  }, [t]);
+
+  const normalizedSearch = search.trim().toLowerCase();
+
+  const filteredJobs = useMemo(() => {
+    return opportunities.filter((job) => {
+      const title = String(job.title || "").toLowerCase();
+      const company = String(job.company || "").toLowerCase();
+      const location = String(job.location || "").toLowerCase();
+      const description = String(
+        job.description || ""
+      ).toLowerCase();
+      const requirements = String(
+        job.requirements || ""
+      ).toLowerCase();
+      const employmentType = String(
+        job.employmentType || ""
+      ).toLowerCase();
+      const opportunityType = String(
+        job.opportunityType || ""
+      ).toLowerCase();
+      const categoryValue = String(
+        job.category || ""
+      ).toLowerCase();
+      const workType = String(
+        job.workType || ""
+      ).toLowerCase();
+      const recruiterPlan = String(
+        job.recruiterPlan || ""
+      ).toLowerCase();
 
       const matchesSearch =
-        job.title
-          ?.toLowerCase()
-          .includes(keyword) ||
-        job.company
-          ?.toLowerCase()
-          .includes(keyword) ||
-        job.location
-          ?.toLowerCase()
-          .includes(keyword);
+        normalizedSearch === "" ||
+        title.includes(normalizedSearch) ||
+        company.includes(normalizedSearch) ||
+        location.includes(normalizedSearch) ||
+        description.includes(normalizedSearch) ||
+        requirements.includes(normalizedSearch) ||
+        employmentType.includes(normalizedSearch) ||
+        opportunityType.includes(normalizedSearch) ||
+        categoryValue.includes(normalizedSearch);
 
-      if (category === "All")
+      if (category === "All") {
         return matchesSearch;
+      }
+
+      const normalizedCategory =
+        category.toLowerCase();
+
+      const categoryMatches = [
+        employmentType,
+        opportunityType,
+        categoryValue,
+        workType,
+        recruiterPlan,
+        location,
+      ].some((value) =>
+        value.includes(normalizedCategory)
+      );
 
       return (
         matchesSearch &&
-        (
-          job.employmentType ||
-          ""
-        )
-          .toLowerCase()
-          .includes(
-            category.toLowerCase()
-          )
+        categoryMatches
       );
     });
+  }, [opportunities, normalizedSearch, category]);
 
-  const featured =
-    filteredJobs.filter(
-      (job) => job.featured
+  const featured = useMemo(() => {
+    return filteredJobs.filter(
+      (job) => job.featured === true
     );
+  }, [filteredJobs]);
+
+  const latest = useMemo(() => {
+    const featuredIds = new Set(
+      featured.map((job) => job.id)
+    );
+
+    return filteredJobs.filter(
+      (job) => !featuredIds.has(job.id)
+    );
+  }, [filteredJobs, featured]);
+
+  const handleSearchSubmit = (event) => {
+    event.preventDefault();
+  };
+
+  const handleCategoryChange = (categoryId) => {
+    setCategory(categoryId);
+  };
+
   return (
     <DashboardLayout>
-      <div
+      <main
+        aria-labelledby="opportunities-hub-title"
         style={{
           color: "white",
         }}
       >
-        <h1
-          style={{
-            fontSize: "34px",
-          }}
-        >
-          💼 Opportunities Hub
-        </h1>
-
-        <p
-          style={{
-            color: "#94a3b8",
-            marginBottom: "24px",
-          }}
-        >
-          Discover jobs, internships,
-          grants, scholarships,
-          competitions and freelance
-          opportunities.
-        </p>
-
-        {/* Search */}
-
-        <div
-          style={{
-            display: "flex",
-            gap: "12px",
-            flexWrap: "wrap",
-            marginBottom: "24px",
-          }}
-        >
-          <input
-            type="text"
-            placeholder="Search opportunities..."
-            value={search}
-            onChange={(e) =>
-              setSearch(
-                e.target.value
-              )
-            }
+        <header>
+          <h1
+            id="opportunities-hub-title"
             style={{
-              flex: 1,
-              minWidth: "240px",
-              padding: "14px",
-              borderRadius: "12px",
-              border:
-                "1px solid #334155",
-              background: "#1e293b",
-              color: "white",
-            }}
-          />
-
-          <button
-            style={{
-              padding: "14px 24px",
-              border: "none",
-              borderRadius: "12px",
-              background: "#38bdf8",
-              color: "white",
-              fontWeight: "700",
+              fontSize: "34px",
             }}
           >
-            🔍 Search
-          </button>
-        </div>
+            💼{" "}
+            {t("opportunities.title", {
+              defaultValue: "Opportunities Hub",
+            })}
+          </h1>
 
-        {/* Categories */}
+          <p
+            style={{
+              color: "#94a3b8",
+              marginBottom: "24px",
+              lineHeight: "1.7",
+            }}
+          >
+            {t("opportunities.description", {
+              defaultValue:
+                "Discover jobs, internships, grants, scholarships, competitions and freelance opportunities.",
+            })}
+          </p>
+        </header>
 
-        <div
+        <section
+          aria-labelledby="opportunities-search-title"
           style={{
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "12px",
+            marginBottom: "24px",
+          }}
+        >
+          <h2
+            id="opportunities-search-title"
+            style={{
+              position: "absolute",
+              width: "1px",
+              height: "1px",
+              padding: 0,
+              margin: "-1px",
+              overflow: "hidden",
+              clip: "rect(0, 0, 0, 0)",
+              whiteSpace: "nowrap",
+              border: 0,
+            }}
+          >
+            {t("opportunities.searchSection", {
+              defaultValue: "Search opportunities",
+            })}
+          </h2>
+
+          <form
+            onSubmit={handleSearchSubmit}
+            role="search"
+          >
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                flexWrap: "wrap",
+              }}
+            >
+              <label
+                htmlFor="opportunity-search"
+                style={{
+                  position: "absolute",
+                  width: "1px",
+                  height: "1px",
+                  padding: 0,
+                  margin: "-1px",
+                  overflow: "hidden",
+                  clip: "rect(0, 0, 0, 0)",
+                  whiteSpace: "nowrap",
+                  border: 0,
+                }}
+              >
+                {t("opportunities.searchLabel", {
+                  defaultValue:
+                    "Search opportunities",
+                })}
+              </label>
+
+              <input
+                id="opportunity-search"
+                type="search"
+                placeholder={t(
+                  "opportunities.searchPlaceholder",
+                  {
+                    defaultValue:
+                      "Search opportunities...",
+                  }
+                )}
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+                autoComplete="off"
+                aria-describedby="opportunity-search-help"
+                style={{
+                  flex: 1,
+                  minWidth: "240px",
+                  padding: "14px",
+                  borderRadius: "12px",
+                  border: "1px solid #334155",
+                  background: "#1e293b",
+                  color: "white",
+                  fontSize: "16px",
+                }}
+              />
+
+              <button
+                type="submit"
+                style={{
+                  padding: "14px 24px",
+                  border: "none",
+                  borderRadius: "12px",
+                  background: "#38bdf8",
+                  color: "white",
+                  fontWeight: "700",
+                  cursor: "pointer",
+                  minHeight: "48px",
+                }}
+              >
+                🔍{" "}
+                {t("opportunities.searchButton", {
+                  defaultValue: "Search",
+                })}
+              </button>
+            </div>
+
+            <p
+              id="opportunity-search-help"
+              style={{
+                color: "#94a3b8",
+                marginTop: "8px",
+                fontSize: "14px",
+              }}
+            >
+              {t("opportunities.searchHelp", {
+                defaultValue:
+                  "Search by title, organization, location, opportunity type, description or requirements.",
+              })}
+            </p>
+          </form>
+        </section>
+
+        <section
+          aria-labelledby="opportunity-categories-title"
+          style={{
             marginBottom: "30px",
           }}
         >
-          {categories.map((item) => (
-            <button
-              key={item}
-              onClick={() =>
-                setCategory(item)
-              }
+          <h2
+            id="opportunity-categories-title"
+            style={{
+              fontSize: "20px",
+              marginBottom: "14px",
+            }}
+          >
+            {t("opportunities.categoriesTitle", {
+              defaultValue:
+                "Opportunity categories",
+            })}
+          </h2>
+
+          <div
+            role="group"
+            aria-labelledby="opportunity-categories-title"
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            {categories.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() =>
+                  handleCategoryChange(item.id)
+                }
+                aria-pressed={
+                  category === item.id
+                }
+                style={{
+                  padding: "10px 18px",
+                  borderRadius: "999px",
+                  border:
+                    category === item.id
+                      ? "2px solid #ffffff"
+                      : "1px solid #334155",
+                  cursor: "pointer",
+                  fontWeight: "700",
+                  background:
+                    category === item.id
+                      ? "#38bdf8"
+                      : "#1e293b",
+                  color: "white",
+                  minHeight: "44px",
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <div
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+          style={{
+            position: "absolute",
+            width: "1px",
+            height: "1px",
+            padding: 0,
+            margin: "-1px",
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            whiteSpace: "nowrap",
+            border: 0,
+          }}
+        >
+          {loading
+            ? t("opportunities.loading", {
+                defaultValue:
+                  "Loading opportunities.",
+              })
+            : t("opportunities.resultsCount", {
+                defaultValue:
+                  "{{count}} opportunities found.",
+                count: filteredJobs.length,
+              })}
+        </div>
+
+        {error && (
+          <section
+            role="alert"
+            aria-labelledby="opportunity-error-title"
+            style={{
+              background: "#450a0a",
+              border: "1px solid #991b1b",
+              padding: "18px",
+              borderRadius: "16px",
+              marginBottom: "24px",
+              color: "#fecaca",
+            }}
+          >
+            <h2
+              id="opportunity-error-title"
               style={{
-                padding:
-                  "10px 18px",
-                borderRadius:
-                  "999px",
-                border: "none",
-                cursor: "pointer",
-                fontWeight: "700",
-                background:
-                  category === item
-                    ? "#38bdf8"
-                    : "#1e293b",
+                marginTop: 0,
                 color: "white",
               }}
             >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        {/* Featured */}
-
-        {featured.length >
-          0 && (
-          <>
-            <h2
-              style={{
-                marginBottom:
-                  "20px",
-              }}
-            >
-              ⭐ Featured
-              Opportunities
+              {t("opportunities.errors.title", {
+                defaultValue:
+                  "Unable to load opportunities",
+              })}
             </h2>
 
-            {featured.map(
-              (job) => (
-                <OpportunityCard
-                  key={job.id}
-                  opportunity={
-                    job
-                  }
-                />
-              )
+            <p>{error}</p>
+          </section>
+        )}
+
+        {loading ? (
+          <section
+            aria-labelledby="opportunity-loading-title"
+            aria-busy="true"
+            style={{
+              background: "#0f172a",
+              padding: "40px",
+              borderRadius: "18px",
+              textAlign: "center",
+            }}
+          >
+            <h2
+              id="opportunity-loading-title"
+              style={{
+                marginTop: 0,
+              }}
+            >
+              {t("opportunities.loadingTitle", {
+                defaultValue:
+                  "Loading opportunities...",
+              })}
+            </h2>
+
+            <p
+              style={{
+                color: "#94a3b8",
+              }}
+            >
+              {t(
+                "opportunities.loadingDescription",
+                {
+                  defaultValue:
+                    "Please wait while available opportunities are loaded.",
+                }
+              )}
+            </p>
+          </section>
+        ) : (
+          <>
+            {featured.length > 0 && (
+              <section
+                aria-labelledby="featured-opportunities-title"
+              >
+                <h2
+                  id="featured-opportunities-title"
+                  style={{
+                    marginBottom: "20px",
+                  }}
+                >
+                  ⭐{" "}
+                  {t(
+                    "opportunities.featuredTitle",
+                    {
+                      defaultValue:
+                        "Featured Opportunities",
+                    }
+                  )}
+                </h2>
+
+                {featured.map((job) => (
+                  <OpportunityCard
+                    key={job.id}
+                    opportunity={job}
+                  />
+                ))}
+              </section>
             )}
+
+            <section
+              aria-labelledby="latest-opportunities-title"
+              style={{
+                marginTop: "40px",
+              }}
+            >
+              <h2
+                id="latest-opportunities-title"
+                style={{
+                  marginBottom: "20px",
+                }}
+              >
+                🆕{" "}
+                {t(
+                  "opportunities.latestTitle",
+                  {
+                    defaultValue:
+                      "Latest Opportunities",
+                  }
+                )}
+              </h2>
+
+              {latest.length === 0 ? (
+                <div
+                  role="status"
+                  style={{
+                    background: "#0f172a",
+                    padding: "40px",
+                    borderRadius: "18px",
+                    textAlign: "center",
+                    color: "#94a3b8",
+                  }}
+                >
+                  <h3
+                    style={{
+                      color: "white",
+                    }}
+                  >
+                    {t(
+                      "opportunities.noResultsTitle",
+                      {
+                        defaultValue:
+                          "No opportunities found",
+                      }
+                    )}
+                  </h3>
+
+                  <p>
+                    {t(
+                      "opportunities.noResultsDescription",
+                      {
+                        defaultValue:
+                          "Try another search term or choose a different category.",
+                      }
+                    )}
+                  </p>
+                </div>
+              ) : (
+                latest.map((job) => (
+                  <OpportunityCard
+                    key={job.id}
+                    opportunity={job}
+                  />
+                ))
+              )}
+            </section>
           </>
         )}
 
-        <h2
-          style={{
-            marginTop: "40px",
-            marginBottom: "20px",
-          }}
-        >
-          🆕 Latest
-          Opportunities
-        </h2>
-        {loading ? (
-          <div
-            style={{
-              background: "#0f172a",
-              padding: "40px",
-              borderRadius: "18px",
-              textAlign: "center",
-            }}
-          >
-            Loading opportunities...
-          </div>
-        ) : filteredJobs.length === 0 ? (
-          <div
-            style={{
-              background: "#0f172a",
-              padding: "40px",
-              borderRadius: "18px",
-              textAlign: "center",
-              color: "#94a3b8",
-            }}
-          >
-            No opportunities found.
-          </div>
-        ) : (
-          filteredJobs.map((job) => (
-            <OpportunityCard
-              key={job.id}
-              opportunity={job}
-            />
-          ))
-        )}
-
-        {/* Footer */}
-
-        <div
+        <section
+          aria-labelledby="opportunity-tips-title"
           style={{
             marginTop: "50px",
             padding: "24px",
             borderRadius: "18px",
             background: "#0f172a",
             color: "#94a3b8",
-            textAlign: "center",
           }}
         >
-          <h3
+          <h2
+            id="opportunity-tips-title"
             style={{
               color: "white",
             }}
           >
-            Opportunity Tips
-          </h3>
+            {t("opportunities.tipsTitle", {
+              defaultValue:
+                "Opportunity Tips",
+            })}
+          </h2>
 
-          <p>
-            • Keep your Inclura profile updated.
-          </p>
+          <ul
+            style={{
+              lineHeight: "1.9",
+              paddingLeft: "24px",
+            }}
+          >
+            <li>
+              {t("opportunities.tips.profile", {
+                defaultValue:
+                  "Keep your Inclura profile updated.",
+              })}
+            </li>
 
-          <p>
-            • Upload your latest resume.
-          </p>
+            <li>
+              {t("opportunities.tips.resume", {
+                defaultValue:
+                  "Upload your latest resume.",
+              })}
+            </li>
 
-          <p>
-            • Apply early before deadlines.
-          </p>
+            <li>
+              {t("opportunities.tips.applyEarly", {
+                defaultValue:
+                  "Apply early before deadlines.",
+              })}
+            </li>
 
-          <p>
-            • Never pay anyone for a job opportunity.
-          </p>
+            <li>
+              {t("opportunities.tips.noPayment", {
+                defaultValue:
+                  "Never pay anyone for a job opportunity.",
+              })}
+            </li>
 
-          <p>
-            • Verified recruiters display their
-            subscription badges for transparency.
-          </p>
-        </div>
-      </div>
+            <li>
+              {t(
+                "opportunities.tips.verifiedRecruiters",
+                {
+                  defaultValue:
+                    "Verified recruiters display their subscription badges for transparency.",
+                }
+              )}
+            </li>
+          </ul>
+        </section>
+      </main>
     </DashboardLayout>
   );
 }
