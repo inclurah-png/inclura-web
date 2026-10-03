@@ -1,82 +1,40 @@
-import { useState } from "react";
-
 import DashboardLayout from "../components/DashboardLayout";
-import CareRequestForm from "../components/CareRequestForm";
-import { useTranslation } from "react-i18next";
 
 function CareRequestPage() {
-  const { t } = useTranslation();
-
-  const [submitting, setSubmitting] = useState(false);
-
-  async function handleSubmit(requestData) {
-    setSubmitting(true);
-
-    try {
-      const { createCareRequest } = await import(
-        "../services/careGigService"
-      );
-
-      const result = await createCareRequest(requestData);
-
-      return result;
-    } catch (error) {
-      console.error(
-        "Care request page submission failed:",
-        error
-      );
-
-      throw error;
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
     <DashboardLayout>
       <main
-        aria-labelledby="care-request-page-title"
-        style={page}
+        style={{
+          color: "white",
+          maxWidth: "1000px",
+          margin: "0 auto",
+          padding: "30px",
+        }}
       >
-        <header style={header}>
-          <h1 id="care-request-page-title">
-            {t("careGigs.requestPage.title", {
-              defaultValue: "Create a Care Request",
-            })}
-          </h1>
+        <h1>Create a Care Request</h1>
 
-          <p style={intro}>
-            {t("careGigs.requestPage.introduction", {
-              defaultValue:
-                "Tell us what care or support you need so suitable providers can respond.",
-            })}
+        <p style={{ color: "#cbd5e1" }}>
+          Care Request page is loading correctly.
+        </p>
+
+        <div
+          style={{
+            background: "#0f172a",
+            padding: "24px",
+            borderRadius: "20px",
+            marginTop: "24px",
+          }}
+        >
+          <h2>Care Request Test</h2>
+
+          <p>
+            This is a temporary rendering test for the
+            Care-Gigs request route.
           </p>
-        </header>
-
-        <CareRequestForm
-          onSubmit={handleSubmit}
-          submitting={submitting}
-        />
+        </div>
       </main>
     </DashboardLayout>
   );
 }
-
-const page = {
-  color: "white",
-  maxWidth: "1000px",
-  margin: "0 auto",
-  paddingBottom: "40px",
-};
-
-const header = {
-  marginBottom: "28px",
-};
-
-const intro = {
-  color: "#cbd5e1",
-  lineHeight: "1.7",
-  maxWidth: "760px",
-};
 
 export default CareRequestPage;
