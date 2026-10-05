@@ -12,13 +12,10 @@ function CareGigs() {
       title: t("careGigs.caregiverRequests", {
         defaultValue: "Caregiver Requests",
       }),
-      description: t(
-        "careGigs.caregiverRequestsDescription",
-        {
-          defaultValue:
-            "Create and find requests for caregiver support.",
-        }
-      ),
+      description: t("careGigs.caregiverRequestsDescription", {
+        defaultValue:
+          "Create and find requests for caregiver support.",
+      }),
     },
     {
       id: "homeAssistance",
@@ -26,13 +23,10 @@ function CareGigs() {
       title: t("careGigs.homeAssistance", {
         defaultValue: "Home Assistance",
       }),
-      description: t(
-        "careGigs.homeAssistanceDescription",
-        {
-          defaultValue:
-            "Find or request assistance with everyday home needs.",
-        }
-      ),
+      description: t("careGigs.homeAssistanceDescription", {
+        defaultValue:
+          "Find or request assistance with everyday home needs.",
+      }),
     },
     {
       id: "transportationSupport",
@@ -40,13 +34,10 @@ function CareGigs() {
       title: t("careGigs.transportationSupport", {
         defaultValue: "Transportation Support",
       }),
-      description: t(
-        "careGigs.transportationSupportDescription",
-        {
-          defaultValue:
-            "Find or request transportation assistance.",
-        }
-      ),
+      description: t("careGigs.transportationSupportDescription", {
+        defaultValue:
+          "Find or request transportation assistance.",
+      }),
     },
     {
       id: "supportServices",
@@ -54,13 +45,10 @@ function CareGigs() {
       title: t("careGigs.supportServices", {
         defaultValue: "Support Services",
       }),
-      description: t(
-        "careGigs.supportServicesDescription",
-        {
-          defaultValue:
-            "Explore other care and support services.",
-        }
-      ),
+      description: t("careGigs.supportServicesDescription", {
+        defaultValue:
+          "Explore other care and support services.",
+      }),
     },
   ];
 
@@ -72,9 +60,7 @@ function CareGigs() {
       >
         <header style={header}>
           <h1 id="care-gigs-title">
-            <span aria-hidden="true">
-              🤝{" "}
-            </span>
+            <span aria-hidden="true">🤝 </span>
             {t("careGigs.title", {
               defaultValue: "Care-Gigs",
             })}
@@ -90,73 +76,55 @@ function CareGigs() {
           <Link
             to="/care-gigs/request"
             style={requestButton}
-            aria-label={t(
-              "careGigs.createRequestAriaLabel",
-              {
-                defaultValue:
-                  "Create a new Care-Gig request",
-              }
-            )}
+            aria-label={t("careGigs.createRequestAriaLabel", {
+              defaultValue:
+                "Create a new Care-Gig request",
+            })}
           >
             {t("careGigs.createRequest", {
-              defaultValue:
-                "Create a Care Request",
+              defaultValue: "Create a Care Request",
             })}
           </Link>
         </header>
 
-        <section
-          aria-labelledby="care-gigs-services-title"
-        >
+        <section aria-labelledby="care-gigs-services-title">
           <h2 id="care-gigs-services-title">
             {t("careGigs.servicesTitle", {
-              defaultValue:
-                "Care and Support Services",
+              defaultValue: "Care and Support Services",
             })}
           </h2>
 
           <div
             role="list"
-            aria-label={t(
-              "careGigs.servicesLabel",
-              {
-                defaultValue:
-                  "Available Care-Gig service categories",
-              }
-            )}
+            aria-label={t("careGigs.servicesLabel", {
+              defaultValue:
+                "Available Care-Gig service categories",
+            })}
           >
-            {services.map(
-              (service) => (
-                <article
-                  key={service.id}
-                  role="listitem"
-                  style={card}
+            {services.map((service) => (
+              <article
+                key={service.id}
+                role="listitem"
+                style={card}
+              >
+                <div
+                  style={iconContainer}
+                  aria-hidden="true"
                 >
-                  <div
-                    style={iconContainer}
-                    aria-hidden="true"
-                  >
-                    {service.icon}
-                  </div>
+                  {service.icon}
+                </div>
 
-                  <div>
-                    <h3
-                      style={{
-                        marginTop: 0,
-                      }}
-                    >
-                      {service.title}
-                    </h3>
+                <div>
+                  <h3 style={{ marginTop: 0 }}>
+                    {service.title}
+                  </h3>
 
-                    <p
-                      style={description}
-                    >
-                      {service.description}
-                    </p>
-                  </div>
-                </article>
-              )
-            )}
+                  <p style={description}>
+                    {service.description}
+                  </p>
+                </div>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -166,8 +134,7 @@ function CareGigs() {
         >
           <h2 id="care-gigs-safety-title">
             {t("careGigs.safetyTitle", {
-              defaultValue:
-                "Safety and Trust",
+              defaultValue: "Safety and Trust",
             })}
           </h2>
 
@@ -201,7 +168,11 @@ const intro = {
 };
 
 const requestButton = {
-  display: "inline-block",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "relative",
+  zIndex: 100,
   marginTop: "18px",
   padding: "14px 20px",
   borderRadius: "12px",
@@ -210,6 +181,10 @@ const requestButton = {
   textDecoration: "none",
   fontWeight: "700",
   lineHeight: "1.4",
+  cursor: "pointer",
+  pointerEvents: "auto",
+  touchAction: "manipulation",
+  WebkitTapHighlightColor: "transparent",
 };
 
 const card = {
