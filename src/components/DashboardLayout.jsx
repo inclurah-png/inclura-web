@@ -24,48 +24,38 @@ import {
 
 function DashboardLayout({ children }) {
   const navigate = useNavigate();
+
   const {
-  user,
-} = useAuth();
+    user,
+  } = useAuth();
 
-async function savePreferredLanguage(
-  languageCode
-) {
+  async function savePreferredLanguage(languageCode) {
+    if (!user) return;
 
-  if (!user) return;
+    try {
+      await updateDoc(
+        doc(
+          db,
+          "users",
+          user.uid
+        ),
+        {
+          preferredLanguage:
+            languageCode,
+        }
+      );
 
-  try {
-
-    await updateDoc(
-
-      doc(
-        db,
-        "users",
-        user.uid
-      ),
-
-      {
-        preferredLanguage:
-          languageCode,
-      }
-
-    );
-
-    console.log(
-      "Preferred language saved:",
-      languageCode
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Failed to save language:",
-      error
-    );
-
+      console.log(
+        "Preferred language saved:",
+        languageCode
+      );
+    } catch (error) {
+      console.error(
+        "Failed to save language:",
+        error
+      );
+    }
   }
-
-}
 
   async function handleLogout() {
     try {
@@ -86,6 +76,7 @@ async function savePreferredLanguage(
         padding: "24px",
         background: "#020617",
         minHeight: "100vh",
+        position: "relative",
       }}
     >
       <DashboardSidebar />
@@ -93,23 +84,27 @@ async function savePreferredLanguage(
       <div
         style={{
           flex: 1,
+          minWidth: 0,
+          position: "relative",
+          zIndex: 2,
         }}
       >
-<div
-  style={{
-    display: "flex",
-    justifyContent:
-      "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-  }}
->
-  <LanguageSelector
-  onLanguageChange={
-    savePreferredLanguage
-  }
-/>
-  
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "20px",
+            position: "relative",
+            zIndex: 3,
+          }}
+        >
+          <LanguageSelector
+            onLanguageChange={
+              savePreferredLanguage
+            }
+          />
+
           <button
             onClick={handleLogout}
             style={{
@@ -120,13 +115,22 @@ async function savePreferredLanguage(
               borderRadius: "12px",
               fontWeight: "700",
               cursor: "pointer",
+              position: "relative",
+              zIndex: 4,
             }}
           >
             Logout
           </button>
         </div>
 
-        {children}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 3,
+          }}
+        >
+          {children}
+        </div>
 
         <AccessibilityButton />
       </div>
