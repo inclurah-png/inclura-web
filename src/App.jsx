@@ -315,7 +315,7 @@ function App() {
   path="/care-gigs/request"
   element={
     <ProtectedRoute>
-      <CareGigs />
+      <CareRequestPage />
     </ProtectedRoute>
   }
 />
