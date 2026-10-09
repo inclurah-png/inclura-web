@@ -1,5 +1,5 @@
 import DashboardLayout from "../components/DashboardLayout";
-import CareRequestForm from './path/to/CareRequestForm';
+import CareRequestForm from '../components/CareRequestForm'; // Updated import path
 
 const handleFormSubmit = async (event) => {
   event.preventDefault(); // Prevent the default form submission
