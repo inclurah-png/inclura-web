@@ -1,4 +1,11 @@
 import DashboardLayout from "../components/DashboardLayout";
+import CareRequestForm from './path/to/CareRequestForm';
+
+const handleFormSubmit = async (event) => {
+  event.preventDefault(); // Prevent the default form submission
+  const formData = new FormData(event.target); // Collect form data
+  // Handle form submission logic here
+};
 
 function CareRequestPage() {
   return (
@@ -25,7 +32,19 @@ function CareRequestPage() {
             marginTop: "24px",
           }}
         >
-          <h2>Care Request Test</h2>
+          <h2>Care Request Form</h2>
+
+          <form onSubmit={handleFormSubmit}>
+            <div>
+              <label htmlFor="requesterName">Name:</label>
+              <input type="text" id="requesterName" name="requesterName" required />
+            </div>
+            <div>
+              <label htmlFor="requestDetails">Request Details:</label>
+              <textarea id="requestDetails" name="requestDetails" required></textarea>
+            </div>
+            <button type="submit">Submit Request</button>
+          </form>
 
           <p>
             This is a temporary rendering test for the
