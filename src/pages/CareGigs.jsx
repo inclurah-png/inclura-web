@@ -13,8 +13,7 @@ function CareGigs() {
         defaultValue: "Caregiver Requests",
       }),
       description: t("careGigs.caregiverRequestsDescription", {
-        defaultValue:
-          "Create and find requests for caregiver support.",
+        defaultValue: "Create and find requests for caregiver support.",
       }),
     },
     {
@@ -24,8 +23,7 @@ function CareGigs() {
         defaultValue: "Home Assistance",
       }),
       description: t("careGigs.homeAssistanceDescription", {
-        defaultValue:
-          "Find or request assistance with everyday home needs.",
+        defaultValue: "Find or request assistance with everyday home needs.",
       }),
     },
     {
@@ -35,8 +33,7 @@ function CareGigs() {
         defaultValue: "Transportation Support",
       }),
       description: t("careGigs.transportationSupportDescription", {
-        defaultValue:
-          "Find or request transportation assistance.",
+        defaultValue: "Find or request transportation assistance.",
       }),
     },
     {
@@ -46,8 +43,7 @@ function CareGigs() {
         defaultValue: "Support Services",
       }),
       description: t("careGigs.supportServicesDescription", {
-        defaultValue:
-          "Explore other care and support services.",
+        defaultValue: "Explore other care and support services.",
       }),
     },
   ];
@@ -68,17 +64,15 @@ function CareGigs() {
 
           <p style={intro}>
             {t("careGigs.introduction", {
-              defaultValue:
-                "Connect people who need care and support with people who can provide it.",
+              defaultValue: "Connect people who need care and support with people who can provide it.",
             })}
           </p>
 
           <Link
             to="/care-gigs/request"
-            style={requestButton}
+            style={requestButton} // Using the improved requestButton style
             aria-label={t("careGigs.createRequestAriaLabel", {
-              defaultValue:
-                "Create a new Care-Gig request",
+              defaultValue: "Create a new Care-Gig request",
             })}
           >
             {t("careGigs.createRequest", {
@@ -97,8 +91,7 @@ function CareGigs() {
           <div
             role="list"
             aria-label={t("careGigs.servicesLabel", {
-              defaultValue:
-                "Available Care-Gig service categories",
+              defaultValue: "Available Care-Gig service categories",
             })}
           >
             {services.map((service) => (
@@ -140,8 +133,7 @@ function CareGigs() {
 
           <p>
             {t("careGigs.safetyMessage", {
-              defaultValue:
-                "CareGig will include verification, accessibility preferences, privacy controls, reporting, and IFSE security protections as the service is developed.",
+              defaultValue: "CareGig will include verification, accessibility preferences, privacy controls, reporting, and IFSE security protections as the service is developed.",
             })}
           </p>
         </aside>
@@ -167,12 +159,13 @@ const intro = {
   maxWidth: "760px",
 };
 
+// Improved requestButton style
 const requestButton = {
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
   position: "relative",
-  zIndex: 100,
+  zIndex: 200, // Updated zIndex
   marginTop: "18px",
   padding: "14px 20px",
   borderRadius: "12px",
@@ -219,3 +212,4 @@ const notice = {
 };
 
 export default CareGigs;
+
