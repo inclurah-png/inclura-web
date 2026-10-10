@@ -1,13 +1,43 @@
-import DashboardLayout from "../components/DashboardLayout";
-import CareRequestForm from '../components/CareRequestForm'; // Updated import path
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
-const handleFormSubmit = async (event) => {
-  event.preventDefault(); // Prevent the default form submission
-  const formData = new FormData(event.target); // Collect form data
-  // Handle form submission logic here
-};
+import DashboardLayout from "../components/DashboardLayout";
+import CareRequestForm from "../components/CareRequestForm";
+
+import { createCareRequest } from "../services/careGigService";
 
 function CareRequestPage() {
+  const { t } = useTranslation();
+
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleFormSubmit(requestData) {
+    if (submitting) {
+      return;
+    }
+
+    setSubmitting(true);
+
+    try {
+      const result = await createCareRequest(requestData);
+
+      if (!result || !result.success || !result.requestId) {
+        throw new Error("CARE_REQUEST_CREATION_FAILED");
+      }
+
+      return result;
+    } catch (error) {
+      console.error(
+        "CareGig request submission failed:",
+        error
+      );
+
+      throw error;
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   return (
     <DashboardLayout>
       <main
@@ -16,41 +46,42 @@ function CareRequestPage() {
           maxWidth: "1000px",
           margin: "0 auto",
           padding: "30px",
+          boxSizing: "border-box",
+          width: "100%",
         }}
       >
-        <h1>Create a Care Request</h1>
+        <h1>
+          {t("careGigs.createRequest", {
+            defaultValue: "Create a Care Request",
+          })}
+        </h1>
 
-        <p style={{ color: "#cbd5e1" }}>
-          Care Request page is loading correctly.
-        </p>
-
-        <div
+        <p
           style={{
-            background: "#0f172a",
-            padding: "24px",
-            borderRadius: "20px",
-            marginTop: "24px",
+            color: "#cbd5e1",
+            lineHeight: "1.6",
           }}
         >
-          <h2>Care Request Form</h2>
+          {t("careGigs.form.introduction", {
+            defaultValue:
+              "Tell us what care or support you need.",
+          })}
+        </p>
 
-          <form onSubmit={handleFormSubmit}>
-            <div>
-              <label htmlFor="requesterName">Name:</label>
-              <input type="text" id="requesterName" name="requesterName" required />
-            </div>
-            <div>
-              <label htmlFor="requestDetails">Request Details:</label>
-              <textarea id="requestDetails" name="requestDetails" required></textarea>
-            </div>
-            <button type="submit">Submit Request</button>
-          </form>
-
-          <p>
-            This is a temporary rendering test for the
-            Care-Gigs request route.
-          </p>
-        </div>
+        <section
+          aria-label={t("careGigs.form.title", {
+            defaultValue: "Care Request Form",
+          })}
+          style={{
+            marginTop: "24px",
+            width: "100%",
+          }}
+        >
+          <CareRequestForm
+            onSubmit={handleFormSubmit}
+            submitting={submitting}
+          />
+        </section>
       </main>
     </DashboardLayout>
   );
