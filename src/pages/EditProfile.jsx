@@ -5,7 +5,7 @@ import { auth, db, storage } from "../firebase";
 import {
   doc,
   getDoc,
-  updateDoc,
+  setDoc,
   collection,
   query,
   where,
@@ -18,6 +18,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 
+import { updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 
 function isPlaceholderName(value) {
@@ -63,18 +64,14 @@ async function recoverNameFromPosts(userId) {
       where("userId", "==", userId)
     );
 
-    const postsSnapshot =
-      await getDocs(postsQuery);
+    const postsSnapshot = await getDocs(postsQuery);
 
     let recoveredName = "";
-
     let latestTimestamp = -Infinity;
 
     postsSnapshot.forEach((postDoc) => {
       const post = postDoc.data();
-
-      const postName =
-        getValidName(post?.userName);
+      const postName = getValidName(post?.userName);
 
       if (!postName) {
         return;
@@ -84,22 +81,14 @@ async function recoverNameFromPosts(userId) {
 
       if (
         post?.createdAt &&
-        typeof post.createdAt.toMillis ===
-          "function"
+        typeof post.createdAt.toMillis === "function"
       ) {
-        timestamp =
-          post.createdAt.toMillis();
-      } else if (
-        post?.createdAt instanceof Date
-      ) {
-        timestamp =
-          post.createdAt.getTime();
+        timestamp = post.createdAt.toMillis();
+      } else if (post?.createdAt instanceof Date) {
+        timestamp = post.createdAt.getTime();
       }
 
-      if (
-        !recoveredName ||
-        timestamp >= latestTimestamp
-      ) {
+      if (!recoveredName || timestamp >= latestTimestamp) {
         recoveredName = postName;
         latestTimestamp = timestamp;
       }
@@ -107,7 +96,7 @@ async function recoverNameFromPosts(userId) {
 
     return recoveredName;
   } catch (error) {
-    console.log(
+    console.warn(
       "Unable to recover profile name from posts:",
       error
     );
@@ -117,715 +106,584 @@ async function recoverNameFromPosts(userId) {
 }
 
 function EditProfile() {
-  const [fullName, setFullName] =
-    useState("");
+  const navigate = useNavigate();
 
-  const [location, setLocation] =
-    useState("");
-
-  const [phoneNumber, setPhoneNumber] =
-    useState("");
-
-  const [bio, setBio] =
-    useState("");
-
-  const [category, setCategory] =
-    useState("");
-
-  const [
-    preferredLanguage,
-    setPreferredLanguage,
-  ] = useState("en");
-
-  const [photoURL, setPhotoURL] =
-    useState("");
-
-  const [
-    accessibilityNeeds,
-    setAccessibilityNeeds,
-  ] = useState([]);
-
-  const [loading, setLoading] =
+  const [fullName, setFullName] = useState("");
+  const [location, setLocation] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [bio, setBio] = useState("");
+  const [category, setCategory] = useState("");
+  const [preferredLanguage, setPreferredLanguage] = useState("en");
+  const [photoURL, setPhotoURL] = useState("");
+  const [accessibilityNeeds, setAccessibilityNeeds] = useState([]);
+  const [accessibilityNeedsPublic, setAccessibilityNeedsPublic] =
     useState(false);
 
-  const navigate =
-    useNavigate();
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileError, setProfileError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const user =
-          auth.currentUser;
+    let isCurrent = true;
 
-        if (!user) {
+    async function loadProfile() {
+      setProfileLoading(true);
+      setProfileError("");
+
+      try {
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+          if (isCurrent) {
+            setProfileError("Please log in to edit your profile.");
+          }
           return;
         }
 
-        const profileRef =
-          doc(
-            db,
-            "users",
-            user.uid
-          );
+        const profileRef = doc(db, "users", currentUser.uid);
+        const snap = await getDoc(profileRef);
 
-        const snap =
-          await getDoc(profileRef);
-
-        let data = {};
-
-        if (snap.exists()) {
-          data = snap.data() || {};
+        if (!isCurrent) {
+          return;
         }
 
-        /*
-         * --------------------------------------------------
-         * STEP 1
-         * Try the authoritative users.fullName field.
-         * --------------------------------------------------
-         */
+        const data = snap.exists() ? snap.data() || {} : {};
 
-        let resolvedName =
-          getValidName(
-            data?.fullName
-          );
-
-        /*
-         * --------------------------------------------------
-         * STEP 2
-         * If users.fullName is missing, recover the name
-         * from an existing post created by this user.
-         *
-         * Existing posts already contain:
-         *
-         * userName: "ADEBAMIJI ADEOKUN"
-         *
-         * This allows us to restore the profile without
-         * hard-coding a personal name into the application.
-         * --------------------------------------------------
-         */
+        let resolvedName = getValidName(data.fullName);
 
         if (!resolvedName) {
-          resolvedName =
-            await recoverNameFromPosts(
-              user.uid
-            );
+          resolvedName = await recoverNameFromPosts(currentUser.uid);
         }
 
-        /*
-         * --------------------------------------------------
-         * STEP 3
-         * If the name was not found in posts, use Firebase
-         * Authentication's displayName if it is real.
-         * --------------------------------------------------
-         */
+        if (!isCurrent) {
+          return;
+        }
 
         if (!resolvedName) {
-          resolvedName =
-            getValidName(
-              user.displayName
-            );
+          resolvedName = getValidName(currentUser.displayName);
         }
-
-        /*
-         * --------------------------------------------------
-         * STEP 4
-         * Final fallback to the email username.
-         *
-         * We deliberately do NOT use "Inclura User" here
-         * because that would hide the actual missing-name
-         * problem again.
-         * --------------------------------------------------
-         */
 
         if (!resolvedName) {
-          const email =
-            user.email ||
-            data?.email ||
-            "";
-
-          if (email) {
-            resolvedName =
-              email
-                .split("@")[0]
-                .trim();
-          }
+          const email = currentUser.email || data.email || "";
+          resolvedName = email ? email.split("@")[0].trim() : "";
         }
 
-        setFullName(
-          resolvedName
-        );
-
+        setFullName(resolvedName);
         setLocation(
-          data?.location || ""
+          typeof data.location === "string" ? data.location : ""
         );
-
         setPhoneNumber(
-          data?.phoneNumber || ""
+          typeof data.phoneNumber === "string" ? data.phoneNumber : ""
         );
-
-        setBio(
-          data?.bio || ""
-        );
-
+        setBio(typeof data.bio === "string" ? data.bio : "");
         setCategory(
-          data?.category || ""
+          typeof data.category === "string" ? data.category : ""
         );
-
         setPreferredLanguage(
-          data?.preferredLanguage ||
-            "en"
+          typeof data.preferredLanguage === "string"
+            ? data.preferredLanguage
+            : "en"
         );
-
         setPhotoURL(
-          data?.photoURL ||
-            data?.profilePhoto ||
-            user.photoURL ||
+          data.photoURL ||
+            data.profilePhoto ||
+            currentUser.photoURL ||
             ""
         );
-
         setAccessibilityNeeds(
-          Array.isArray(
-            data?.accessibilityNeeds
-          )
-            ? data.accessibilityNeeds
+          Array.isArray(data.accessibilityNeeds)
+            ? data.accessibilityNeeds.filter(
+                (need) => typeof need === "string"
+              )
             : []
         );
-      } catch (error) {
-        console.log(
-          "Load profile error:",
-          error
+        setAccessibilityNeedsPublic(
+          data.accessibilityNeedsPublic === true
         );
+      } catch (error) {
+        console.error("Load profile error:", error);
+
+        if (isCurrent) {
+          setProfileError(
+            "Unable to load your profile. Check your connection and Firebase permissions."
+          );
+        }
+      } finally {
+        if (isCurrent) {
+          setProfileLoading(false);
+        }
       }
     }
 
     loadProfile();
-  }, []);
 
-  async function handlePhotoUpload(
-    e
-  ) {
-    const file =
-      e.target.files?.[0];
+    return () => {
+      isCurrent = false;
+    };
+  }, [reloadKey]);
+
+  async function handlePhotoUpload(event) {
+    const file = event.target.files?.[0];
+
+    // Allow the same file to be selected again after an error.
+    event.target.value = "";
 
     if (!file) {
       return;
     }
 
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
+    const maxFileSize = 5 * 1024 * 1024;
+
+    if (file.size > maxFileSize) {
+      alert("Please choose an image smaller than 5 MB.");
+      return;
+    }
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert("Please log in again.");
+      return;
+    }
+
+    setUploadingPhoto(true);
+
     try {
-      const user =
-        auth.currentUser;
-
-      if (!user) {
-        alert(
-          "Please login again."
-        );
-        return;
-      }
-
-      const storageRef =
-        ref(
-          storage,
-          `profilePhotos/${user.uid}`
-        );
-
-      await uploadBytes(
-        storageRef,
-        file
+      const storageRef = ref(
+        storage,
+        `profilePhotos/${currentUser.uid}`
       );
 
-      const url =
-        await getDownloadURL(
-          storageRef
-        );
+      await uploadBytes(storageRef, file, {
+        contentType: file.type,
+      });
 
-      setPhotoURL(url);
+      const downloadURL = await getDownloadURL(storageRef);
+
+      setPhotoURL(downloadURL);
 
       alert(
-        "Photo uploaded successfully"
+        "Photo uploaded. Select Save Changes to update your profile."
       );
     } catch (error) {
-      alert(error.message);
+      console.error("Profile photo upload failed:", error);
+
+      alert(
+        "Photo upload failed. Check your internet connection and Firebase Storage permissions."
+      );
+    } finally {
+      setUploadingPhoto(false);
     }
   }
 
   async function handleSave() {
+    if (saving || uploadingPhoto) {
+      return;
+    }
+
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert("Please log in again.");
+      return;
+    }
+
+    const cleanedName = fullName.trim();
+
+    if (!cleanedName || isPlaceholderName(cleanedName)) {
+      alert("Please enter your real profile name.");
+      return;
+    }
+
+    if (cleanedName.length > 100) {
+      alert("Your name must be 100 characters or fewer.");
+      return;
+    }
+
+    if (bio.trim().length > 1000) {
+      alert("Your bio must be 1,000 characters or fewer.");
+      return;
+    }
+
+    setSaving(true);
+
     try {
-      setLoading(true);
+      const profileRef = doc(db, "users", currentUser.uid);
 
-      const user =
-        auth.currentUser;
+      const profileData = {
+        fullName: cleanedName,
+        location: location.trim(),
+        phoneNumber: phoneNumber.trim(),
+        bio: bio.trim(),
+        category,
+        preferredLanguage,
+        accessibilityNeeds,
+        accessibilityNeedsPublic,
+        photoURL,
+        profilePhoto: photoURL,
+      };
 
-      if (!user) {
-        alert(
-          "Please login again."
-        );
-        return;
-      }
+      // Merge preserves existing user fields not edited on this page.
+      // Firestore Security Rules must still authorize this write.
+      await setDoc(profileRef, profileData, { merge: true });
 
-      const cleanedName =
-        fullName.trim();
-
-      if (!cleanedName) {
-        alert(
-          "Please enter your full name."
-        );
-        return;
-      }
-
-      const profileRef =
-        doc(
-          db,
-          "users",
-          user.uid
-        );
-
-      await updateDoc(
-        profileRef,
-        {
-          fullName:
-            cleanedName,
-
-          location:
-            location.trim(),
-
-          phoneNumber:
-            phoneNumber.trim(),
-
-          bio:
-            bio.trim(),
-
-          category,
-
-          preferredLanguage,
-
-          accessibilityNeeds,
-
-          photoURL,
-
-          /*
-           * Keep profilePhoto synchronized
-           * with photoURL because other parts
-           * of Inclura currently use profilePhoto.
-           */
-          profilePhoto:
-            photoURL,
-        }
-      );
-
-      /*
-       * Keep Firebase Authentication's
-       * displayName synchronized when possible.
-       *
-       * The Firestore fullName remains the
-       * application's authoritative profile name.
-       */
       try {
-        const {
-          updateProfile,
-        } = await import(
-          "firebase/auth"
-        );
-
-        await updateProfile(
-          user,
-          {
-            displayName:
-              cleanedName,
-          }
-        );
+        await updateProfile(currentUser, {
+          displayName: cleanedName,
+          photoURL: photoURL || null,
+        });
       } catch (authError) {
-        console.log(
-          "Firebase Auth display name sync skipped:",
+        // The Firestore save has already succeeded at this point.
+        console.warn(
+          "Profile saved, but Firebase Auth profile sync failed:",
           authError
         );
       }
 
-      alert(
-        "Profile updated successfully"
-      );
+      alert("Profile updated successfully.");
 
       navigate("/profile");
     } catch (error) {
-      console.log(
-        "Save profile error:",
-        error
-      );
+      console.error("Save profile error:", error);
 
-      alert(error.message);
+      alert(
+        "Profile could not be saved. Check your connection and Firebase Security Rules, then try again."
+      );
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
 
-  function toggleNeed(
-    value
-  ) {
-    if (
-      accessibilityNeeds.includes(
-        value
-      )
-    ) {
-      setAccessibilityNeeds(
-        accessibilityNeeds.filter(
-          (item) =>
-            item !== value
-        )
-      );
-    } else {
-      setAccessibilityNeeds([
-        ...accessibilityNeeds,
-        value,
-      ]);
-    }
+  function toggleNeed(value) {
+    setAccessibilityNeeds((currentNeeds) =>
+      currentNeeds.includes(value)
+        ? currentNeeds.filter((item) => item !== value)
+        : [...currentNeeds, value]
+    );
+  }
+
+  if (profileLoading) {
+    return (
+      <div style={pageStyle} role="status" aria-live="polite">
+        Loading your profile...
+      </div>
+    );
+  }
+
+  if (profileError) {
+    return (
+      <div style={pageStyle}>
+        <div style={panelStyle}>
+          <h1>Profile unavailable</h1>
+          <p role="alert">{profileError}</p>
+
+          <button
+            type="button"
+            onClick={() => setReloadKey((key) => key + 1)}
+            style={buttonStyle}
+          >
+            Try Again
+          </button>
+
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            style={secondaryButtonStyle}
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div
-      style={{
-        background:
-          "#020617",
-        minHeight:
-          "100vh",
-        padding: "24px",
-        color: "white",
-        fontFamily:
-          "Arial",
-      }}
-    >
-      <div
-        style={{
-          maxWidth:
-            "700px",
-          margin:
-            "0 auto",
-          background:
-            "#0f172a",
-          padding: "30px",
-          borderRadius:
-            "24px",
-        }}
-      >
-        <h1>
-          Edit Profile
-        </h1>
+    <div style={pageStyle}>
+      <div style={panelStyle}>
+        <h1>Edit Profile</h1>
 
-        <div
-          style={{
-            textAlign:
-              "center",
-            marginBottom:
-              "24px",
-          }}
-        >
-          <img
-            src={
-              photoURL ||
-              "https://via.placeholder.com/120"
-            }
-            alt="Profile"
-            style={{
-              width:
-                "120px",
-              height:
-                "120px",
-              borderRadius:
-                "50%",
-              objectFit:
-                "cover",
-              border:
-                "4px solid #38bdf8",
-            }}
-          />
+        <div style={{ textAlign: "center", marginBottom: "24px" }}>
+          {photoURL ? (
+            <img
+              src={photoURL}
+              alt="Profile"
+              referrerPolicy="no-referrer"
+              style={photoStyle}
+            />
+          ) : (
+            <div
+              aria-label="No profile photo"
+              style={{
+                ...photoStyle,
+                margin: "0 auto",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#1e293b",
+                color: "white",
+                fontSize: "36px",
+              }}
+            >
+              {fullName.charAt(0).toUpperCase()}
+            </div>
+          )}
 
-          <br />
+          <div>
+            <label
+              htmlFor="profile-photo"
+              style={{ display: "block", marginTop: "12px" }}
+            >
+              Change profile photo
+            </label>
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={
-              handlePhotoUpload
-            }
-            style={{
-              marginTop:
-                "12px",
-            }}
-          />
+            <input
+              id="profile-photo"
+              type="file"
+              accept="image/*"
+              disabled={uploadingPhoto || saving}
+              onChange={handlePhotoUpload}
+              style={{ marginTop: "8px", maxWidth: "100%" }}
+            />
+          </div>
+
+          {uploadingPhoto && (
+            <p role="status">Uploading photo...</p>
+          )}
         </div>
 
+        <label htmlFor="full-name">Full Name</label>
         <input
-          placeholder="Full Name"
+          id="full-name"
+          autoComplete="name"
+          maxLength={100}
           value={fullName}
-          onChange={(e) =>
-            setFullName(
-              e.target.value
-            )
-          }
+          onChange={(event) => setFullName(event.target.value)}
           style={inputStyle}
         />
 
+        <label htmlFor="profile-location">Location</label>
         <input
-          placeholder="Location"
+          id="profile-location"
+          autoComplete="address-level2"
           value={location}
-          onChange={(e) =>
-            setLocation(
-              e.target.value
-            )
-          }
+          onChange={(event) => setLocation(event.target.value)}
           style={inputStyle}
         />
 
+        <label htmlFor="phone-number">Phone Number</label>
         <input
+          id="phone-number"
           type="tel"
-          placeholder="Phone Number"
-          value={
-            phoneNumber
-          }
-          onChange={(e) =>
-            setPhoneNumber(
-              e.target.value
-            )
-          }
+          autoComplete="tel"
+          value={phoneNumber}
+          onChange={(event) => setPhoneNumber(event.target.value)}
           style={inputStyle}
         />
 
+        <label htmlFor="profile-bio">Bio</label>
         <textarea
-          placeholder="Bio"
+          id="profile-bio"
+          maxLength={1000}
           value={bio}
-          onChange={(e) =>
-            setBio(
-              e.target.value
-            )
-          }
-          style={{
-            ...inputStyle,
-            height:
-              "120px",
-          }}
+          onChange={(event) => setBio(event.target.value)}
+          style={{ ...inputStyle, height: "120px" }}
         />
 
+        <label htmlFor="profile-category">Category</label>
         <select
+          id="profile-category"
           value={category}
-          onChange={(e) =>
-            setCategory(
-              e.target.value
-            )
-          }
-          style={{
-            width:
-              "100%",
-            padding:
-              "16px",
-            marginBottom:
-              "16px",
-            borderRadius:
-              "14px",
-            border:
-              "1px solid #334155",
-            background:
-              "#ffffff",
-            color:
-              "#000000",
-            boxSizing:
-              "border-box",
-          }}
+          onChange={(event) => setCategory(event.target.value)}
+          style={selectStyle}
         >
-          <option value="">
-            Select Category
-          </option>
-
-          <option value="Creator">
-            Creator
-          </option>
-
-          <option value="Caregiver">
-            Caregiver
-          </option>
-
-          <option value="Employer">
-            Employer
-          </option>
-
-          <option value="Job Seeker">
-            Job Seeker
-          </option>
-
-          <option value="Volunteer">
-            Volunteer
-          </option>
-
-          <option value="Organization">
-            Organization
-          </option>
-
-          <option value="Advocate">
-            Advocate
-          </option>
+          <option value="">Select Category</option>
+          <option value="Creator">Creator</option>
+          <option value="Caregiver">Caregiver</option>
+          <option value="Employer">Employer</option>
+          <option value="Job Seeker">Job Seeker</option>
+          <option value="Volunteer">Volunteer</option>
+          <option value="Organization">Organization</option>
+          <option value="Advocate">Advocate</option>
         </select>
 
+        <label htmlFor="preferred-language">Preferred Language</label>
         <select
-          value={
-            preferredLanguage
+          id="preferred-language"
+          value={preferredLanguage}
+          onChange={(event) =>
+            setPreferredLanguage(event.target.value)
           }
-          onChange={(e) =>
-            setPreferredLanguage(
-              e.target.value
-            )
-          }
-          style={{
-            width:
-              "100%",
-            padding:
-              "16px",
-            marginBottom:
-              "16px",
-            borderRadius:
-              "14px",
-            border:
-              "1px solid #334155",
-            background:
-              "#ffffff",
-            color:
-              "#000000",
-            boxSizing:
-              "border-box",
-          }}
+          style={selectStyle}
         >
-          <option value="en">
-            English
-          </option>
-
-          <option value="fr">
-            French
-          </option>
-
-          <option value="es">
-            Spanish
-          </option>
-
-          <option value="pt">
-            Portuguese
-          </option>
-
-          <option value="ar">
-            Arabic
-          </option>
-
-          <option value="sw">
-            Swahili
-          </option>
-
-          <option value="ha">
-            Hausa
-          </option>
-
-          <option value="yo">
-            Yoruba
-          </option>
-
-          <option value="ig">
-            Igbo
-          </option>
+          <option value="en">English</option>
+          <option value="fr">French</option>
+          <option value="es">Spanish</option>
+          <option value="pt">Portuguese</option>
+          <option value="ar">Arabic</option>
+          <option value="sw">Swahili</option>
+          <option value="ha">Hausa</option>
+          <option value="yo">Yoruba</option>
+          <option value="ig">Igbo</option>
         </select>
 
-        <div
-          style={{
-            marginBottom:
-              "20px",
-          }}
+        <section
+          aria-labelledby="accessibility-heading"
+          style={{ marginBottom: "20px" }}
         >
-          <h3>
-            Accessibility
-            Needs
-          </h3>
+          <h2 id="accessibility-heading">Accessibility Needs</h2>
+
+          <p>
+            Choose the accessibility needs you want Inclura to
+            remember for your experience.
+          </p>
 
           {[
             "Visual Impairment",
             "Hearing Impairment",
             "Mobility Impairment",
             "Speech Impairment",
-          ].map(
-            (need) => (
-              <div
-                key={need}
-              >
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={accessibilityNeeds.includes(
-                      need
-                    )}
-                    onChange={() =>
-                      toggleNeed(
-                        need
-                      )
-                    }
-                  />
+          ].map((need) => (
+            <div key={need} style={{ marginBottom: "10px" }}>
+              <label>
+                <input
+                  type="checkbox"
+                  checked={accessibilityNeeds.includes(need)}
+                  onChange={() => toggleNeed(need)}
+                />{" "}
+                {need}
+              </label>
+            </div>
+          ))}
 
-                  {" "}
+          <div
+            style={{
+              marginTop: "18px",
+              padding: "14px",
+              border: "1px solid #475569",
+              borderRadius: "12px",
+            }}
+          >
+            <label>
+              <input
+                type="checkbox"
+                checked={accessibilityNeedsPublic}
+                onChange={(event) =>
+                  setAccessibilityNeedsPublic(event.target.checked)
+                }
+              />{" "}
+              Share my accessibility needs on my public profile
+            </label>
 
-                  {need}
-                </label>
-              </div>
-            )
-          )}
-        </div>
+            <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
+              When disabled, your accessibility needs will not be
+              displayed in the public profile's Accessibility tab.
+              This setting controls display in the profile interface;
+              it does not replace database access rules.
+            </p>
+          </div>
+        </section>
 
         <button
-          onClick={
-            handleSave
-          }
-          disabled={
-            loading
-          }
-          style={
-            buttonStyle
-          }
+          type="button"
+          onClick={handleSave}
+          disabled={saving || uploadingPhoto}
+          style={{
+            ...buttonStyle,
+            opacity: saving || uploadingPhoto ? 0.65 : 1,
+            cursor: saving || uploadingPhoto ? "not-allowed" : "pointer",
+          }}
         >
-          {loading
+          {saving
             ? "Saving..."
-            : "Save Changes"}
+            : uploadingPhoto
+              ? "Wait for Photo Upload..."
+              : "Save Changes"}
+        </button>
+
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          disabled={saving}
+          style={secondaryButtonStyle}
+        >
+          Cancel
         </button>
       </div>
     </div>
   );
 }
 
+const pageStyle = {
+  background: "#020617",
+  minHeight: "100vh",
+  padding: "24px",
+  color: "white",
+  fontFamily: "Arial, sans-serif",
+  boxSizing: "border-box",
+};
+
+const panelStyle = {
+  maxWidth: "700px",
+  margin: "0 auto",
+  background: "#0f172a",
+  padding: "30px",
+  borderRadius: "24px",
+  boxSizing: "border-box",
+  overflowWrap: "anywhere",
+};
+
+const photoStyle = {
+  width: "120px",
+  height: "120px",
+  borderRadius: "50%",
+  objectFit: "cover",
+  border: "4px solid #38bdf8",
+};
+
 const inputStyle = {
-  width:
-    "100%",
-  padding:
-    "16px",
-  marginBottom:
-    "16px",
-  borderRadius:
-    "14px",
-  border:
-    "1px solid #334155",
-  background:
-    "#1e293b",
-  color:
-    "white",
-  boxSizing:
-    "border-box",
+  display: "block",
+  width: "100%",
+  padding: "16px",
+  marginTop: "8px",
+  marginBottom: "16px",
+  borderRadius: "14px",
+  border: "1px solid #334155",
+  background: "#1e293b",
+  color: "white",
+  boxSizing: "border-box",
+};
+
+const selectStyle = {
+  ...inputStyle,
+  background: "#ffffff",
+  color: "#000000",
 };
 
 const buttonStyle = {
-  width:
-    "100%",
-  padding:
-    "16px",
-  borderRadius:
-    "14px",
-  border:
-    "none",
-  background:
-    "#38bdf8",
-  color:
-    "white",
-  fontWeight:
-    "700",
-  cursor:
-    "pointer",
+  display: "block",
+  width: "100%",
+  padding: "16px",
+  borderRadius: "14px",
+  border: "none",
+  background: "#38bdf8",
+  color: "#020617",
+  fontWeight: "700",
+  cursor: "pointer",
+};
+
+const secondaryButtonStyle = {
+  ...buttonStyle,
+  marginTop: "12px",
+  background: "#334155",
+  color: "white",
 };
 
 export default EditProfile;
+
