@@ -17,7 +17,11 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 
-import { storage } from "../firebase";
+import {
+  storage,
+  db,
+  auth,
+} from "../firebase";
 
 import {
   useState,
@@ -33,17 +37,10 @@ import {
 } from "firebase/firestore";
 
 import {
-  db,
-  auth,
-} from "../firebase";
-
-import {
   detectLanguage,
 } from "../translation/languageDetector";
 
-function normalizeLanguageCode(
-  code = ""
-) {
+function normalizeLanguageCode(code = "") {
   const normalized = String(code)
     .trim()
     .toLowerCase()
@@ -59,152 +56,96 @@ function normalizeLanguageCode(
   return normalized || "en";
 }
 
-function getProfileName(
-  profile,
-  user
-) {
+function getProfileName(profile, user) {
   const fullName =
-    typeof profile?.fullName ===
-    "string"
+    typeof profile?.fullName === "string"
       ? profile.fullName.trim()
       : "";
 
-  if (fullName) {
-    return fullName;
-  }
+  if (fullName) return fullName;
 
   const profileDisplayName =
-    typeof profile?.displayName ===
-    "string"
+    typeof profile?.displayName === "string"
       ? profile.displayName.trim()
       : "";
 
-  if (profileDisplayName) {
-    return profileDisplayName;
-  }
+  if (profileDisplayName) return profileDisplayName;
 
   const profileName =
-    typeof profile?.name ===
-    "string"
+    typeof profile?.name === "string"
       ? profile.name.trim()
       : "";
 
-  if (profileName) {
-    return profileName;
-  }
+  if (profileName) return profileName;
 
   const firstName =
-    typeof profile?.firstName ===
-    "string"
+    typeof profile?.firstName === "string"
       ? profile.firstName.trim()
       : "";
 
   const lastName =
-    typeof profile?.lastName ===
-    "string"
+    typeof profile?.lastName === "string"
       ? profile.lastName.trim()
       : "";
 
   const combinedName =
-    `${firstName} ${lastName}`
-      .trim();
+    `${firstName} ${lastName}`.trim();
 
-  if (combinedName) {
-    return combinedName;
-  }
+  if (combinedName) return combinedName;
 
   const authDisplayName =
-    typeof user?.displayName ===
-    "string"
+    typeof user?.displayName === "string"
       ? user.displayName.trim()
       : "";
 
-  if (authDisplayName) {
-    return authDisplayName;
-  }
+  if (authDisplayName) return authDisplayName;
 
   return "";
 }
 
 function CreatePost() {
-  const [postText, setPostText] =
-    useState("");
+  const [postText, setPostText] = useState("");
+  const [category, setCategory] = useState("General");
+  const [loading, setLoading] = useState(false);
+  const [imageFile, setImageFile] = useState(null);
+  const [videoFile, setVideoFile] = useState(null);
 
-  const [category, setCategory] =
-    useState("General");
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [imageFile, setImageFile] =
-    useState(null);
-
-  const [videoFile, setVideoFile] =
-    useState(null);
-
-  const imageInputRef =
-    useRef(null);
-
-  const videoInputRef =
-    useRef(null);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
 
   async function handlePost() {
-    const cleanPostText =
-      postText.trim();
+    const cleanPostText = postText.trim();
 
-    if (
-      !cleanPostText &&
-      !imageFile &&
-      !videoFile
-    ) {
-      alert(
-        "Add text, image or video first."
-      );
+    if (!cleanPostText && !imageFile && !videoFile) {
+      alert("Add text, image or video first.");
       return;
     }
+
+    if (imageFile && videoFile) {
+      alert("Please create a post with either a photo or a video, not both.");
+      return;
+    }
+
+    let postCreated = false;
+    let scoringRecorded = true;
 
     try {
       setLoading(true);
 
-      const user =
-        auth.currentUser;
+      const user = auth.currentUser;
 
       if (!user) {
-        alert(
-          "Please login again."
-        );
+        alert("Please login again.");
         return;
       }
 
-      const userRef =
-        doc(
-          db,
-          "users",
-          user.uid
-        );
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      const profile = userSnap.exists()
+        ? userSnap.data()
+        : {};
 
-      const userSnap =
-        await getDoc(
-          userRef
-        );
-
-      const profile =
-        userSnap.exists()
-          ? userSnap.data()
-          : {};
-
-      /*
-       * The profile fullName is the
-       * authoritative post author name.
-       *
-       * Never save the fake
-       * "Inclura User" placeholder.
-       */
-      const userName =
-        getProfileName(
-          profile,
-          user
-        );
+      const userName = getProfileName(profile, user);
 
       if (!userName) {
         alert(
@@ -213,16 +154,6 @@ function CreatePost() {
         return;
       }
 
-      /*
-       * Detect the language of the actual
-       * post text rather than storing "auto".
-       *
-       * This allows a post created in one
-       * language to remain associated with
-       * its true original language even when
-       * the user later changes the interface
-       * language.
-       */
       let detectedLanguage = {
         code: "en",
         language: "English",
@@ -231,10 +162,7 @@ function CreatePost() {
 
       if (cleanPostText) {
         try {
-          detectedLanguage =
-            await detectLanguage(
-              cleanPostText
-            );
+          detectedLanguage = await detectLanguage(cleanPostText);
         } catch (languageError) {
           console.warn(
             "Inclura Post Language Detection Warning:",
@@ -243,124 +171,67 @@ function CreatePost() {
         }
       }
 
-      const originalLanguage =
-        normalizeLanguageCode(
-          detectedLanguage?.code ||
-            "en"
-        );
+      const originalLanguage = normalizeLanguageCode(
+        detectedLanguage?.code || "en"
+      );
 
       let imageUrl = "";
       let videoUrl = "";
 
       if (imageFile) {
-        const imageRef =
-          ref(
-            storage,
-            `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
-          );
-
-        await uploadBytes(
-          imageRef,
-          imageFile
+        const imageRef = ref(
+          storage,
+          `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
         );
 
-        imageUrl =
-          await getDownloadURL(
-            imageRef
-          );
+        await uploadBytes(imageRef, imageFile);
+        imageUrl = await getDownloadURL(imageRef);
       }
 
       if (videoFile) {
-        const videoRef =
-          ref(
-            storage,
-            `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
-          );
-
-        await uploadBytes(
-          videoRef,
-          videoFile
+        const videoRef = ref(
+          storage,
+          `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
         );
 
-        videoUrl =
-          await getDownloadURL(
-            videoRef
-          );
+        await uploadBytes(videoRef, videoFile);
+        videoUrl = await getDownloadURL(videoRef);
       }
 
-      await addDoc(
-        collection(
-          db,
-          "posts"
-        ),
+      // Save the post and retain its real Firestore document ID.
+      const createdPost = await addDoc(
+        collection(db, "posts"),
         {
-          text:
-            cleanPostText,
-
-          /*
-           * Preserve the existing language
-           * field for compatibility while
-           * storing the real detected language.
-           */
-          language:
-            originalLanguage,
-
-          originalLanguage:
-            originalLanguage,
-
+          text: cleanPostText,
+          language: originalLanguage,
+          originalLanguage,
           translatedText: {},
-
           category,
-
-          userId:
-            user.uid,
-
+          userId: user.uid,
           userName,
+          profilePhoto: profile?.profilePhoto || "",
+          role: profile?.role || "user",
+          accessibilityNeeds: profile?.accessibilityNeeds || [],
 
-          profilePhoto:
-            profile?.profilePhoto ||
-            "",
+          verified: profile?.verified || false,
 
-          role:
-            profile?.role ||
-            "user",
+          badgeType: migrateVerificationId(
+            profile?.badgeType
+          ),
 
-          accessibilityNeeds:
-            profile?.accessibilityNeeds ||
-            [],
+          verificationMetadata: profile?.verified
+            ? getVerificationMetadata(
+                migrateVerificationId(profile?.badgeType)
+              )
+            : null,
 
-          verified:
-            profile?.verified ||
-            false,
-
-          badgeType:
-            migrateVerificationId(
-              profile?.badgeType
-            ),
-
-          verificationMetadata:
-            profile?.verified
-              ? getVerificationMetadata(
-                  migrateVerificationId(
-                    profile?.badgeType
-                  )
-                )
-              : null,
-
-          premium:
-            profile?.premium ||
-            false,
-
-          premiumTier:
-            profile?.premiumTier ||
-            "",
+          premium: profile?.premium || false,
+          premiumTier: profile?.premiumTier || "",
 
           imageUrl,
-
           videoUrl,
 
           likes: [],
-
           comments: [],
 
           reactions: {
@@ -375,31 +246,31 @@ function CreatePost() {
           },
 
           userReactions: {},
-
           creatorScore: 0,
-
           commentCount: 0,
-
           crossPosts: 0,
-
           saveCount: 0,
-
-          createdAt:
-            serverTimestamp(),
+          createdAt: serverTimestamp(),
         }
       );
 
-      // ---------------------------
-      // Update Creator Economy
-      // ---------------------------
+      postCreated = true;
 
-      if (videoFile) {
-        await addVideoPost(
-          user.uid
-        );
-      } else {
-        await addTextPost(
-          user.uid
+      // Award activity against the actual saved post ID.
+      // A scoring failure must not turn a successful post
+      // creation into a reported post-creation failure.
+      try {
+        if (videoFile) {
+          await addVideoPost(user.uid, createdPost.id);
+        } else {
+          await addTextPost(user.uid, createdPost.id);
+        }
+      } catch (scoreError) {
+        scoringRecorded = false;
+
+        console.error(
+          "Inclura Creator Scoring Error:",
+          scoreError
         );
       }
 
@@ -407,232 +278,157 @@ function CreatePost() {
       setImageFile(null);
       setVideoFile(null);
 
-      if (
-        imageInputRef.current
-      ) {
-        imageInputRef.current.value =
-          "";
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
       }
 
-      if (
-        videoInputRef.current
-      ) {
-        videoInputRef.current.value =
-          "";
+      if (videoInputRef.current) {
+        videoInputRef.current.value = "";
       }
 
-      alert(
-        "Post created successfully!"
-      );
+      if (scoringRecorded) {
+        alert("Post created successfully!");
+      } else {
+        alert(
+          "Your post was created, but creator scoring could not be recorded. Please try again later."
+        );
+      }
     } catch (error) {
       console.error(
         "Inclura Create Post Error:",
         error
       );
 
-      alert(
-        error?.message ||
-          "Unable to create post."
-      );
+      if (postCreated) {
+        alert(
+          "Your post was created, but a follow-up operation failed."
+        );
+      } else {
+        alert(
+          error?.message || "Unable to create post."
+        );
+      }
     } finally {
       setLoading(false);
     }
   }
 
-  function handleImageSelect(
-    e
-  ) {
-    const file =
-      e.target.files?.[0];
+  function handleImageSelect(event) {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
     setImageFile(file);
+    setVideoFile(null);
+
+    if (videoInputRef.current) {
+      videoInputRef.current.value = "";
+    }
   }
 
-  function handleVideoSelect(
-    e
-  ) {
-    const file =
-      e.target.files?.[0];
+  function handleVideoSelect(event) {
+    const file = event.target.files?.[0];
 
     if (!file) return;
 
     setVideoFile(file);
+    setImageFile(null);
+
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
   }
 
   return (
     <div
       style={{
-        background:
-          "#0f172a",
-        padding:
-          "20px",
-        borderRadius:
-          "20px",
-        marginBottom:
-          "24px",
-        color:
-          "white",
+        background: "#0f172a",
+        padding: "20px",
+        borderRadius: "20px",
+        marginBottom: "24px",
+        color: "white",
       }}
     >
-      <h3
-        style={{
-          marginBottom:
-            "16px",
-        }}
-      >
+      <h3 style={{ marginBottom: "16px" }}>
         ✍ Create Post
       </h3>
 
       <textarea
-        value={
-          postText
-        }
-        onChange={(e) =>
-          setPostText(
-            e.target.value
-          )
-        }
+        value={postText}
+        onChange={(event) => setPostText(event.target.value)}
         placeholder="Share something with the Inclura community..."
         style={{
-          width:
-            "100%",
-          minHeight:
-            "120px",
-          borderRadius:
-            "14px",
-          border:
-            "1px solid #334155",
-          background:
-            "#1e293b",
-          color:
-            "white",
-          padding:
-            "14px",
-          resize:
-            "vertical",
-          boxSizing:
-            "border-box",
+          width: "100%",
+          minHeight: "120px",
+          borderRadius: "14px",
+          border: "1px solid #334155",
+          background: "#1e293b",
+          color: "white",
+          padding: "14px",
+          resize: "vertical",
+          boxSizing: "border-box",
         }}
       />
 
       {imageFile && (
-        <div
-          style={{
-            marginTop:
-              "14px",
-            color:
-              "#38bdf8",
-          }}
-        >
-          📷{" "}
-          {
-            imageFile.name
-          }
+        <div style={{ marginTop: "14px", color: "#38bdf8" }}>
+          📷 {imageFile.name}
         </div>
       )}
 
       {videoFile && (
-        <div
-          style={{
-            marginTop:
-              "10px",
-            color:
-              "#38bdf8",
-          }}
-        >
-          🎥{" "}
-          {
-            videoFile.name
-          }
+        <div style={{ marginTop: "10px", color: "#38bdf8" }}>
+          🎥 {videoFile.name}
         </div>
       )}
 
       <div
         style={{
-          display:
-            "flex",
-          gap:
-            "10px",
-          marginTop:
-            "14px",
-          flexWrap:
-            "wrap",
+          display: "flex",
+          gap: "10px",
+          marginTop: "14px",
+          flexWrap: "wrap",
         }}
       >
         <select
-          value={
-            category
-          }
-          onChange={(e) =>
-            setCategory(
-              e.target.value
-            )
-          }
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
           style={{
-            padding:
-              "10px",
-            borderRadius:
-              "12px",
-            border:
-              "none",
+            padding: "10px",
+            borderRadius: "12px",
+            border: "none",
           }}
         >
-          <option>
-            General
-          </option>
-
-          <option>
-            Accessibility
-          </option>
-
-          <option>
-            Care-Gig
-          </option>
-
-          <option>
-            Opportunity
-          </option>
-
-          <option>
-            Mentorship
-          </option>
-
-          <option>
-            Marketplace
-          </option>
+          <option>General</option>
+          <option>Accessibility</option>
+          <option>Care-Gig</option>
+          <option>Opportunity</option>
+          <option>Mentorship</option>
+          <option>Marketplace</option>
         </select>
 
         <button
           type="button"
-          style={
-            actionBtn
-          }
-          onClick={() =>
-            imageInputRef.current?.click()
-          }
+          style={actionBtn}
+          onClick={() => imageInputRef.current?.click()}
+          disabled={loading}
         >
           📷 Photo
         </button>
 
         <button
           type="button"
-          style={
-            actionBtn
-          }
-          onClick={() =>
-            videoInputRef.current?.click()
-          }
+          style={actionBtn}
+          onClick={() => videoInputRef.current?.click()}
+          disabled={loading}
         >
           🎥 Video
         </button>
 
         <button
           type="button"
-          style={
-            actionBtn
-          }
+          style={actionBtn}
+          disabled={loading}
         >
           ♿ Accessibility
         </button>
@@ -641,81 +437,50 @@ function CreatePost() {
       <input
         type="file"
         accept="image/*"
-        ref={
-          imageInputRef
-        }
-        onChange={
-          handleImageSelect
-        }
-        style={{
-          display:
-            "none",
-        }}
+        ref={imageInputRef}
+        onChange={handleImageSelect}
+        style={{ display: "none" }}
+        disabled={loading}
       />
 
       <input
         type="file"
         accept="video/*"
-        ref={
-          videoInputRef
-        }
-        onChange={
-          handleVideoSelect
-        }
-        style={{
-          display:
-            "none",
-        }}
+        ref={videoInputRef}
+        onChange={handleVideoSelect}
+        style={{ display: "none" }}
+        disabled={loading}
       />
 
       <button
         type="button"
-        onClick={
-          handlePost
-        }
-        disabled={
-          loading
-        }
+        onClick={handlePost}
+        disabled={loading}
         style={{
-          marginTop:
-            "16px",
-          background:
-            "#38bdf8",
-          border:
-            "none",
-          color:
-            "white",
-          padding:
-            "12px 18px",
-          borderRadius:
-            "12px",
-          cursor:
-            "pointer",
-          fontWeight:
-            "bold",
+          marginTop: "16px",
+          background: "#38bdf8",
+          border: "none",
+          color: "white",
+          padding: "12px 18px",
+          borderRadius: "12px",
+          cursor: loading ? "wait" : "pointer",
+          fontWeight: "bold",
+          opacity: loading ? 0.7 : 1,
         }}
       >
-        {loading
-          ? "Posting..."
-          : "Post"}
+        {loading ? "Posting..." : "Post"}
       </button>
     </div>
   );
 }
 
 const actionBtn = {
-  background:
-    "#1e293b",
-  border:
-    "1px solid #334155",
-  color:
-    "white",
-  padding:
-    "10px 14px",
-  borderRadius:
-    "12px",
-  cursor:
-    "pointer",
+  background: "#1e293b",
+  border: "1px solid #334155",
+  color: "white",
+  padding: "10px 14px",
+  borderRadius: "12px",
+  cursor: "pointer",
 };
 
 export default CreatePost;
