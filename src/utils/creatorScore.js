@@ -1,44 +1,52 @@
-import {
-  doc,
-  updateDoc,
-  increment,
-} from "firebase/firestore";
+import { auth } from "../firebase";
+import { getFunctions, httpsCallable } from "firebase/functions";
 
-import { db } from "../firebase";
+const functions = getFunctions();
+const awardCreatorActivity = httpsCallable(
+  functions,
+  "awardCreatorActivity"
+);
 
-import { checkCreatorQualification } from "./qualificationChecker";
+async function awardActivity(uid, activityType, activityId) {
+  const currentUser = auth.currentUser;
 
-export async function addVideoPost(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    "creatorEconomy.monthlyVideoPosts": increment(1),
-    "creatorEconomy.creatorScore": increment(4),
+  if (!currentUser) {
+    throw new Error("You must be signed in to record creator activity.");
+  }
+
+  if (currentUser.uid !== uid) {
+    throw new Error("You cannot record activity for another user.");
+  }
+
+  if (
+    typeof activityId !== "string" ||
+    !activityId.trim()
+  ) {
+    throw new Error(
+      "A valid activity ID is required to record creator activity."
+    );
+  }
+
+  const result = await awardCreatorActivity({
+    activityType,
+    activityId: activityId.trim(),
   });
 
-  await checkCreatorQualification(uid);
+  return result.data;
 }
 
-export async function addTextPost(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    "creatorEconomy.monthlyTextPosts": increment(1),
-    "creatorEconomy.creatorScore": increment(2),
-  });
-
-  await checkCreatorQualification(uid);
+export function addVideoPost(uid, postId) {
+  return awardActivity(uid, "video_post", postId);
 }
 
-export async function addCrossPost(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    "creatorEconomy.monthlyCrossPosts": increment(1),
-    "creatorEconomy.creatorScore": increment(5),
-  });
-
-  await checkCreatorQualification(uid);
+export function addTextPost(uid, postId) {
+  return awardActivity(uid, "text_post", postId);
 }
 
-export async function addComment(uid) {
-  await updateDoc(doc(db, "users", uid), {
-    "creatorEconomy.communityTrust": increment(2),
-  });
+export function addCrossPost(uid, crossPostId) {
+  return awardActivity(uid, "cross_post", crossPostId);
+}
 
-  await checkCreatorQualification(uid);
+export function addComment(uid, commentId) {
+  return awardActivity(uid, "comment", commentId);
 }
