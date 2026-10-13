@@ -1,52 +1,47 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
-function SearchBar({
-  posts = [],
-  onResults,
-}) {
+function SearchBar({ posts = [], onResults }) {
   const [query, setQuery] = useState("");
+  const { t } = useTranslation();
+  const onResultsRef = useRef(onResults);
+
+  // Keep the latest callback without making the filtering
+  // effect depend on a potentially changing function identity.
+  useEffect(() => {
+    onResultsRef.current = onResults;
+  }, [onResults]);
 
   useEffect(() => {
     const searchValue = query.trim().toLowerCase();
 
-    if (!searchValue) {
-      onResults(posts);
-      return;
-    }
+    const filtered = !searchValue
+      ? posts
+      : posts.filter((post) => {
+          const text = String(post.text || "").toLowerCase();
+          const user = String(post.userName || "").toLowerCase();
 
-    const filtered = posts.filter((post) => {
-      const text =
-        post.text?.toLowerCase() || "";
+          return (
+            text.includes(searchValue) ||
+            user.includes(searchValue)
+          );
+        });
 
-      const user =
-        post.userName?.toLowerCase() || "";
-
-      return (
-        text.includes(searchValue) ||
-        user.includes(searchValue)
-      );
-    });
-
-    onResults(filtered);
-  }, [posts, query, onResults]);
-
-  function handleSearch(value) {
-    setQuery(value);
-  }
+    onResultsRef.current?.(filtered);
+  }, [posts, query]);
 
   return (
-    <div
-      style={{
-        marginBottom: "24px",
-      }}
-    >
+    <div style={{ marginBottom: "24px" }}>
       <input
-        type="text"
-        placeholder="Search posts or users..."
+        type="search"
+        aria-label={t("feed.searchLabel", {
+          defaultValue: "Search posts or users",
+        })}
+        placeholder={t("feed.searchPlaceholder", {
+          defaultValue: "Search posts or users...",
+        })}
         value={query}
-        onChange={(e) =>
-          handleSearch(e.target.value)
-        }
+        onChange={(event) => setQuery(event.target.value)}
         style={{
           width: "100%",
           padding: "16px",
