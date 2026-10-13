@@ -1,214 +1,240 @@
-import { useState, useEffect } from "react";
-
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  addDoc,
   collection,
-  serverTimestamp,
   doc,
-  updateDoc,
-  increment,
-  query,
-  orderBy,
   onSnapshot,
+  orderBy,
+  query,
+  runTransaction,
+  serverTimestamp,
 } from "firebase/firestore";
-
-import { db, auth } from "../firebase";
+import { auth, db } from "../firebase";
 
 function CommentBox({ postId }) {
+  const { t } = useTranslation();
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-const [comment, setComment] =
-useState("");
+  useEffect(() => {
+    if (!postId) {
+      setComments([]);
+      return undefined;
+    }
 
-const [comments, setComments] =
-useState([]);
-
-async function handleComment() {
-
-  if (!comment.trim()) return;
-
-  try {
-
-    const user = auth.currentUser;
-
-    await addDoc(
-
-      collection(
-        db,
-        "posts",
-        postId,
-        "comments"
-      ),
-
-      {
-        text: comment,
-        userId: user.uid,
-        userName:
-          user.displayName ||
-          "Inclura User",
-
-        createdAt:
-          serverTimestamp(),
-      }
-
-    );
-
-    // Update post comment count
-
-    const postRef = doc(
+    const commentsRef = collection(
       db,
       "posts",
-      postId
+      postId,
+      "comments"
     );
 
-    await updateDoc(postRef, {
-      commentCount: increment(1),
-    });
+    const commentsQuery = query(
+      commentsRef,
+      orderBy("createdAt", "asc")
+    );
 
-    // Update creator economy
+    const unsubscribe = onSnapshot(
+      commentsQuery,
+      (snapshot) => {
+        setComments(
+          snapshot.docs.map((commentDoc) => ({
+            id: commentDoc.id,
+            ...commentDoc.data(),
+          }))
+        );
+      },
+      (listenerError) => {
+        console.error(
+          "Inclura Comment Load Error:",
+          listenerError
+        );
 
-    await addComment(user.uid);
+        setError(
+          t("comments.loadError", {
+            defaultValue: "Unable to load comments.",
+          })
+        );
+      }
+    );
 
-    setComment("");
+    return unsubscribe;
+  }, [postId, t]);
 
-  } catch (error) {
+  async function handleComment(event) {
+    event.preventDefault();
 
-    alert(error.message);
+    const user = auth.currentUser;
+    const text = commentText.trim();
 
+    if (!user) {
+      setError(
+        t("comments.signInRequired", {
+          defaultValue: "Please sign in to comment.",
+        })
+      );
+      return;
+    }
+
+    if (!postId || !text) {
+      return;
+    }
+
+    if (text.length > 2000) {
+      setError(
+        t("comments.tooLong", {
+          defaultValue: "Comments cannot exceed 2,000 characters.",
+        })
+      );
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const postRef = doc(db, "posts", postId);
+      const commentRef = doc(
+        collection(db, "posts", postId, "comments")
+      );
+
+      await runTransaction(db, async (transaction) => {
+        const postSnapshot = await transaction.get(postRef);
+
+        if (!postSnapshot.exists()) {
+          throw new Error("POST_NOT_FOUND");
+        }
+
+        transaction.set(commentRef, {
+          text,
+          userId: user.uid,
+          userName:
+            user.displayName ||
+            user.email ||
+            t("comments.defaultUser", {
+              defaultValue: "Inclura user",
+            }),
+          createdAt: serverTimestamp(),
+        });
+
+        const currentCount =
+          postSnapshot.data().commentCount || 0;
+
+        transaction.update(postRef, {
+          commentCount: currentCount + 1,
+        });
+      });
+
+      setCommentText("");
+    } catch (submitError) {
+      console.error(
+        "Inclura Comment Submit Error:",
+        submitError
+      );
+
+      setError(
+        t("comments.submitError", {
+          defaultValue:
+            "Unable to submit your comment. Please try again.",
+        })
+      );
+    } finally {
+      setLoading(false);
+    }
   }
 
-}
+  return (
+    <section aria-label={t("comments.heading", {
+      defaultValue: "Comments",
+    })}>
+      <h3>
+        {t("comments.heading", {
+          defaultValue: "Comments",
+        })} ({comments.length})
+      </h3>
 
-useEffect(() => {
+      <form onSubmit={handleComment}>
+        <label htmlFor={`comment-${postId}`}>
+          {t("comments.inputLabel", {
+            defaultValue: "Write a comment",
+          })}
+        </label>
 
-const q = query(
-collection(
-db,
-"posts",
-postId,
-"comments"
-),
-orderBy(
-"createdAt",
-"asc"
-)
-);
+        <textarea
+          id={`comment-${postId}`}
+          value={commentText}
+          onChange={(event) => {
+            setCommentText(event.target.value);
+            if (error) setError("");
+          }}
+          placeholder={t("comments.placeholder", {
+            defaultValue: "Write your comment...",
+          })}
+          maxLength={2000}
+          rows={3}
+          disabled={loading}
+          required
+          style={{
+            display: "block",
+            width: "100%",
+            boxSizing: "border-box",
+            padding: "12px",
+            marginTop: "8px",
+            marginBottom: "12px",
+            borderRadius: "10px",
+            border: "1px solid #334155",
+            background: "#0f172a",
+            color: "white",
+            resize: "vertical",
+          }}
+        />
 
-const unsubscribe =
-onSnapshot(q, (snapshot) => {
+        <button
+          type="submit"
+          disabled={loading || !commentText.trim()}
+        >
+          {loading
+            ? t("comments.submitting", {
+                defaultValue: "Submitting...",
+              })
+            : t("comments.submit", {
+                defaultValue: "Comment",
+              })}
+        </button>
+      </form>
 
-const fetched =
-snapshot.docs.map((doc) => ({
-id: doc.id,
-...doc.data(),
-}));
+      {error && (
+        <p role="alert" style={{ color: "#f87171" }}>
+          {error}
+        </p>
+      )}
 
-setComments(fetched);
+      <div>
+        {comments.map((comment) => (
+          <article
+            key={comment.id}
+            style={{
+              padding: "12px 0",
+              borderBottom: "1px solid #334155",
+            }}
+          >
+            <strong>
+              {comment.userName ||
+                t("comments.defaultUser", {
+                  defaultValue: "Inclura user",
+                })}
+            </strong>
 
-});
-
-return () =>
-unsubscribe();
-
-}, [postId]);
-
-return (
-
-<div
-style={{
-marginTop: "18px",
-}}
->
-
-<div
-style={{
-display: "flex",
-gap: "10px",
-marginBottom: "16px",
-}}
->
-
-<input
-type="text"
-placeholder="Write a comment..."
-value={comment}
-onChange={(e) =>
-setComment(e.target.value)
-}
-style={{
-flex: 1,
-padding: "12px",
-borderRadius: "12px",
-border: "1px solid #334155",
-background: "#1e293b",
-color: "white",
-outline: "none",
-}}
-/>
-
-<button
-onClick={handleComment}
-style={{
-padding: "12px 18px",
-borderRadius: "12px",
-border: "none",
-background: "#38bdf8",
-color: "white",
-fontWeight: "700",
-cursor: "pointer",
-}}
->
-Post
-</button>
-
-</div>
-
-<div
-style={{
-display: "flex",
-flexDirection: "column",
-gap: "12px",
-}}
->
-
-{comments.map((item) => (
-
-<div
-key={item.id}
-style={{
-background: "#1e293b",
-padding: "12px",
-borderRadius: "14px",
-}}
->
-
-<h4
-style={{
-marginBottom: "6px",
-fontSize: "14px",
-}}
->
-{item.userName}
-</h4>
-
-<p
-style={{
-fontSize: "14px",
-lineHeight: "1.6",
-}}
->
-{item.text}
-</p>
-
-</div>
-
-))}
-
-</div>
-
-</div>
-
-);
-
+            <p style={{ whiteSpace: "pre-wrap" }}>
+              {comment.text}
+            </p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
 }
 
 export default CommentBox;
