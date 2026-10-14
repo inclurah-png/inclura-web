@@ -1,11 +1,11 @@
 import { auth } from "../firebase";
-import { getFunctions, httpsCallable } from "firebase/functions";
 
-const functions = getFunctions();
-const awardCreatorActivity = httpsCallable(
-  functions,
-  "awardCreatorActivity"
-);
+const API_BASE_URL = (
+  import.meta.env.VITE_AI_BACKEND_URL || ""
+).replace(/\/+$/, "");
+
+const CREATOR_SCORE_ENDPOINT =
+  `${API_BASE_URL}/api/creator-score/award`;
 
 async function awardActivity(uid, activityType, activityId) {
   const currentUser = auth.currentUser;
@@ -15,7 +15,9 @@ async function awardActivity(uid, activityType, activityId) {
   }
 
   if (currentUser.uid !== uid) {
-    throw new Error("You cannot record activity for another user.");
+    throw new Error(
+      "You cannot record activity for another user."
+    );
   }
 
   if (
@@ -27,12 +29,53 @@ async function awardActivity(uid, activityType, activityId) {
     );
   }
 
-  const result = await awardCreatorActivity({
-    activityType,
-    activityId: activityId.trim(),
-  });
+  if (!API_BASE_URL) {
+    throw new Error(
+      "The Inclura backend URL is not configured."
+    );
+  }
 
-  return result.data;
+  // Obtain a Firebase ID token for backend verification.
+  const idToken = await currentUser.getIdToken();
+
+  let response;
+
+  try {
+    response = await fetch(CREATOR_SCORE_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({
+        activityType,
+        activityId: activityId.trim(),
+      }),
+    });
+  } catch {
+    throw new Error(
+      "Unable to connect to Inclura. Please check your connection and try again."
+    );
+  }
+
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(
+      "The Inclura backend returned an invalid response."
+    );
+  }
+
+  if (!response.ok || result.success === false) {
+    throw new Error(
+      result.message ||
+        `Creator-score request failed (${response.status}).`
+    );
+  }
+
+  return result;
 }
 
 export function addVideoPost(uid, postId) {
