@@ -1,3 +1,21 @@
+import { useState, useRef } from "react";
+
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+
+import { storage, db, auth } from "../firebase";
+
 import {
   addVideoPost,
   addTextPost,
@@ -10,31 +28,6 @@ import {
 import {
   migrateVerificationId,
 } from "../config/verificationMigration";
-
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
-  storage,
-  db,
-  auth,
-} from "../firebase";
-
-import {
-  useState,
-  useRef,
-} from "react";
-
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  doc,
-  getDoc,
-} from "firebase/firestore";
 
 import {
   detectLanguage,
@@ -103,17 +96,43 @@ function getProfileName(profile, user) {
   return "";
 }
 
+const ACCESSIBILITY_TAGS = [
+  "Alt Text",
+  "Captions",
+  "Sign Language",
+  "Easy Read",
+  "Sensory Warning",
+  "Screen Reader Friendly",
+];
+
+function getErrorMessage(error) {
+  if (error?.code) {
+    return `${error.message || "Unknown error"} (Firebase code: ${error.code})`;
+  }
+
+  return error?.message || "Unknown error";
+}
+
 function CreatePost() {
   const [postText, setPostText] = useState("");
   const [category, setCategory] = useState("General");
   const [loading, setLoading] = useState(false);
+
   const [imageFile, setImageFile] = useState(null);
   const [videoFile, setVideoFile] = useState(null);
+
+  const [showAccessibilityOptions, setShowAccessibilityOptions] =
+    useState(false);
+
+  const [selectedAccessibilityTags, setSelectedAccessibilityTags] =
+    useState([]);
 
   const imageInputRef = useRef(null);
   const videoInputRef = useRef(null);
 
   async function handlePost() {
+    if (loading) return;
+
     const cleanPostText = postText.trim();
 
     if (!cleanPostText && !imageFile && !videoFile) {
@@ -122,12 +141,14 @@ function CreatePost() {
     }
 
     if (imageFile && videoFile) {
-      alert("Please create a post with either a photo or a video, not both.");
+      alert(
+        "Please create a post with either a photo or a video, not both."
+      );
       return;
     }
 
+    let operation = "authentication";
     let postCreated = false;
-    let scoringRecorded = true;
 
     try {
       setLoading(true);
@@ -139,8 +160,12 @@ function CreatePost() {
         return;
       }
 
+      // 1. Load the author's existing profile.
+      operation = "profile read";
+
       const userRef = doc(db, "users", user.uid);
       const userSnap = await getDoc(userRef);
+
       const profile = userSnap.exists()
         ? userSnap.data()
         : {};
@@ -154,6 +179,8 @@ function CreatePost() {
         return;
       }
 
+      // 2. Detect the source language without preventing
+      //    post creation if the detector is temporarily unavailable.
       let detectedLanguage = {
         code: "en",
         language: "English",
@@ -161,8 +188,28 @@ function CreatePost() {
       };
 
       if (cleanPostText) {
+        operation = "language detection";
+
         try {
-          detectedLanguage = await detectLanguage(cleanPostText);
+          const detectionResult =
+            await detectLanguage(cleanPostText);
+
+          if (
+            detectionResult &&
+            typeof detectionResult === "object"
+          ) {
+            detectedLanguage = {
+              ...detectedLanguage,
+              ...detectionResult,
+            };
+          } else if (
+            typeof detectionResult === "string"
+          ) {
+            detectedLanguage = {
+              ...detectedLanguage,
+              code: detectionResult,
+            };
+          }
         } catch (languageError) {
           console.warn(
             "Inclura Post Language Detection Warning:",
@@ -175,55 +222,93 @@ function CreatePost() {
         detectedLanguage?.code || "en"
       );
 
+      // 3. Upload media. Keep upload and URL retrieval
+      //    errors distinguishable in the diagnostic output.
       let imageUrl = "";
       let videoUrl = "";
 
       if (imageFile) {
-        const imageRef = ref(
-          storage,
-          `posts/images/${user.uid}/${Date.now()}_${imageFile.name}`
+        const safeFileName = imageFile.name.replace(
+          /[^a-zA-Z0-9._-]/g,
+          "_"
         );
 
+        const imageRef = ref(
+          storage,
+          `posts/images/${user.uid}/${Date.now()}_${safeFileName}`
+        );
+
+        operation = "image upload";
         await uploadBytes(imageRef, imageFile);
+
+        operation = "image download URL retrieval";
         imageUrl = await getDownloadURL(imageRef);
       }
 
       if (videoFile) {
-        const videoRef = ref(
-          storage,
-          `posts/videos/${user.uid}/${Date.now()}_${videoFile.name}`
+        const safeFileName = videoFile.name.replace(
+          /[^a-zA-Z0-9._-]/g,
+          "_"
         );
 
+        const videoRef = ref(
+          storage,
+          `posts/videos/${user.uid}/${Date.now()}_${safeFileName}`
+        );
+
+        operation = "video upload";
         await uploadBytes(videoRef, videoFile);
+
+        operation = "video download URL retrieval";
         videoUrl = await getDownloadURL(videoRef);
       }
 
-      // Save the post and retain its real Firestore document ID.
+      // 4. Prepare the existing verification fields.
+      operation = "post preparation";
+
+      const badgeType = migrateVerificationId(
+        profile?.badgeType
+      );
+
+      const verificationMetadata = profile?.verified
+        ? getVerificationMetadata(badgeType)
+        : null;
+
+      // 5. Create the Firestore post.
+      operation = "post creation";
+
       const createdPost = await addDoc(
         collection(db, "posts"),
         {
           text: cleanPostText,
+
           language: originalLanguage,
           originalLanguage,
           translatedText: {},
+
           category,
+
           userId: user.uid,
           userName,
-          profilePhoto: profile?.profilePhoto || "",
+
+          profilePhoto:
+            profile?.profilePhoto ||
+            profile?.photoURL ||
+            "",
+
           role: profile?.role || "user",
-          accessibilityNeeds: profile?.accessibilityNeeds || [],
+          accessibilityNeeds:
+            Array.isArray(profile?.accessibilityNeeds)
+              ? profile.accessibilityNeeds
+              : [],
+
+          accessibilityTags: [
+            ...selectedAccessibilityTags,
+          ],
 
           verified: profile?.verified || false,
-
-          badgeType: migrateVerificationId(
-            profile?.badgeType
-          ),
-
-          verificationMetadata: profile?.verified
-            ? getVerificationMetadata(
-                migrateVerificationId(profile?.badgeType)
-              )
-            : null,
+          badgeType,
+          verificationMetadata,
 
           premium: profile?.premium || false,
           premiumTier: profile?.premiumTier || "",
@@ -250,16 +335,20 @@ function CreatePost() {
           commentCount: 0,
           crossPosts: 0,
           saveCount: 0,
+
           createdAt: serverTimestamp(),
         }
       );
 
       postCreated = true;
 
-      // Award activity against the actual saved post ID.
-      // A scoring failure must not turn a successful post
-      // creation into a reported post-creation failure.
+      // 6. Award creator activity using the real document ID.
+      //    Scoring errors must not invalidate successful posting.
+      let scoringRecorded = true;
+
       try {
+        operation = "creator scoring";
+
         if (videoFile) {
           await addVideoPost(user.uid, createdPost.id);
         } else {
@@ -270,13 +359,20 @@ function CreatePost() {
 
         console.error(
           "Inclura Creator Scoring Error:",
-          scoreError
+          {
+            operation: "creator scoring",
+            postId: createdPost.id,
+            userId: user.uid,
+            error: scoreError,
+          }
         );
       }
 
+      // 7. Reset the form only after the post is saved.
       setPostText("");
       setImageFile(null);
       setVideoFile(null);
+      setSelectedAccessibilityTags([]);
 
       if (imageInputRef.current) {
         imageInputRef.current.value = "";
@@ -290,22 +386,28 @@ function CreatePost() {
         alert("Post created successfully!");
       } else {
         alert(
-          "Your post was created, but creator scoring could not be recorded. Please try again later."
+          "Your post was created successfully, but creator scoring could not be recorded. Please try again later."
         );
       }
     } catch (error) {
       console.error(
         "Inclura Create Post Error:",
-        error
+        {
+          operation,
+          postCreated,
+          error,
+          code: error?.code || "unknown",
+          message: getErrorMessage(error),
+        }
       );
 
       if (postCreated) {
         alert(
-          "Your post was created, but a follow-up operation failed."
+          `Your post was created, but the follow-up operation failed during ${operation}. Check the console for details.`
         );
       } else {
         alert(
-          error?.message || "Unable to create post."
+          `Unable to complete ${operation}: ${getErrorMessage(error)}`
         );
       }
     } finally {
@@ -339,6 +441,14 @@ function CreatePost() {
     }
   }
 
+  function toggleAccessibilityTag(tag) {
+    setSelectedAccessibilityTags((currentTags) =>
+      currentTags.includes(tag)
+        ? currentTags.filter((item) => item !== tag)
+        : [...currentTags, tag]
+    );
+  }
+
   return (
     <div
       style={{
@@ -357,6 +467,8 @@ function CreatePost() {
         value={postText}
         onChange={(event) => setPostText(event.target.value)}
         placeholder="Share something with the Inclura community..."
+        aria-label="Post text"
+        disabled={loading}
         style={{
           width: "100%",
           minHeight: "120px",
@@ -371,13 +483,19 @@ function CreatePost() {
       />
 
       {imageFile && (
-        <div style={{ marginTop: "14px", color: "#38bdf8" }}>
+        <div
+          style={{ marginTop: "14px", color: "#38bdf8" }}
+          role="status"
+        >
           📷 {imageFile.name}
         </div>
       )}
 
       {videoFile && (
-        <div style={{ marginTop: "10px", color: "#38bdf8" }}>
+        <div
+          style={{ marginTop: "10px", color: "#38bdf8" }}
+          role="status"
+        >
           🎥 {videoFile.name}
         </div>
       )}
@@ -393,6 +511,8 @@ function CreatePost() {
         <select
           value={category}
           onChange={(event) => setCategory(event.target.value)}
+          aria-label="Post category"
+          disabled={loading}
           style={{
             padding: "10px",
             borderRadius: "12px",
@@ -428,11 +548,63 @@ function CreatePost() {
         <button
           type="button"
           style={actionBtn}
+          onClick={() =>
+            setShowAccessibilityOptions((visible) => !visible)
+          }
+          aria-expanded={showAccessibilityOptions}
           disabled={loading}
         >
           ♿ Accessibility
         </button>
       </div>
+
+      {showAccessibilityOptions && (
+        <fieldset
+          style={{
+            marginTop: "14px",
+            padding: "14px",
+            border: "1px solid #334155",
+            borderRadius: "12px",
+          }}
+        >
+          <legend>Accessibility tags for this post</legend>
+
+          <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
+            Select the accessibility features provided by your
+            content. These tags describe the post; they do not
+            automatically generate captions, alt text, or sign
+            language.
+          </p>
+
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "12px",
+            }}
+          >
+            {ACCESSIBILITY_TAGS.map((tag) => (
+              <label
+                key={tag}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  cursor: loading ? "default" : "pointer",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedAccessibilityTags.includes(tag)}
+                  onChange={() => toggleAccessibilityTag(tag)}
+                  disabled={loading}
+                />
+                {tag}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <input
         type="file"
@@ -441,6 +613,7 @@ function CreatePost() {
         onChange={handleImageSelect}
         style={{ display: "none" }}
         disabled={loading}
+        aria-label="Choose a photo"
       />
 
       <input
@@ -450,6 +623,7 @@ function CreatePost() {
         onChange={handleVideoSelect}
         style={{ display: "none" }}
         disabled={loading}
+        aria-label="Choose a video"
       />
 
       <button
