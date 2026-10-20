@@ -14,6 +14,7 @@ import {
   getDoc,
   arrayUnion,
   arrayRemove,
+  runTransaction,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
@@ -623,187 +624,171 @@ function Feed() {
     }
   }
 
-  async function reactToPost(
-    postId,
-    emoji
-  ) {
-    const user =
-      auth.currentUser;
+  
+  async function reactToPost(postId, emoji) {
+    const user = auth.currentUser;
 
     if (!user) {
+      alert("Please sign in to react to a post.");
       return;
     }
 
+    const scoreMap = {
+      "❤️": 4,
+      "👏": 3,
+      "😊": 3,
+      "👍": 2,
+      "😂": 2,
+      "😮": 2,
+      "😢": 2,
+      "👎": -3,
+    };
+
+    if (!Object.prototype.hasOwnProperty.call(scoreMap, emoji)) {
+      return;
+    }
+
+    const postRef = doc(db, "posts", postId);
+
     try {
-      const postRef =
-        doc(
-          db,
-          "posts",
-          postId
-        );
+      const result = await runTransaction(db, async (transaction) => {
+        const postSnap = await transaction.get(postRef);
 
-      const postSnap =
-        await getDoc(
-          postRef
-        );
-
-      if (
-        !postSnap.exists()
-      ) {
-        return;
-      }
-
-      const post =
-        postSnap.data();
-
-      const scoreMap = {
-        "❤️": 4,
-        "👏": 3,
-        "😊": 3,
-        "👍": 2,
-        "😂": 2,
-        "😮": 2,
-        "😢": 2,
-        "👎": -3,
-      };
-
-      const previousReaction =
-        post.userReactions?.[
-          user.uid
-        ];
-
-      const reactions = {
-        "👍":
-          post.reactions?.[
-            "👍"
-          ] || 0,
-        "❤️":
-          post.reactions?.[
-            "❤️"
-          ] || 0,
-        "😂":
-          post.reactions?.[
-            "😂"
-          ] || 0,
-        "😊":
-          post.reactions?.[
-            "😊"
-          ] || 0,
-        "😮":
-          post.reactions?.[
-            "😮"
-          ] || 0,
-        "😢":
-          post.reactions?.[
-            "😢"
-          ] || 0,
-        "👏":
-          post.reactions?.[
-            "👏"
-          ] || 0,
-        "👎":
-          post.reactions?.[
-            "👎"
-          ] || 0,
-      };
-
-      let creatorScore =
-        post.creatorScore ||
-        0;
-
-      if (
-        previousReaction
-      ) {
-        reactions[
-          previousReaction
-        ] = Math.max(
-          0,
-          (
-            reactions[
-              previousReaction
-            ] || 1
-          ) - 1
-        );
-
-        creatorScore -=
-          scoreMap[
-            previousReaction
-          ] || 0;
-      }
-
-      reactions[emoji] =
-        (
-          reactions[
-            emoji
-          ] || 0
-        ) + 1;
-
-      creatorScore +=
-        scoreMap[emoji] || 0;
-
-      await updateDoc(
-        postRef,
-        {
-          reactions,
-          creatorScore,
-          userReactions: {
-            ...(post.userReactions ||
-              {}),
-            [user.uid]:
-              emoji,
-          },
+        if (!postSnap.exists()) {
+          throw new Error("This post no longer exists.");
         }
-      );
 
-      if (
-        post.userId
-      ) {
-        const creatorRef =
-          doc(
-            db,
-            "users",
-            post.userId
+        const post = postSnap.data();
+        const creatorId = post.userId;
+
+        if (!creatorId) {
+          throw new Error(
+            "The post has no creator ID. No score was changed."
+          );
+        }
+
+        // A creator must not earn engagement points
+        // by reacting to their own post.
+        if (creatorId === user.uid) {
+          throw new Error(
+            "You cannot earn creator points by reacting to your own post."
+          );
+        }
+
+        const creatorRef = doc(db, "users", creatorId);
+        const creatorSnap = await transaction.get(creatorRef);
+
+        if (!creatorSnap.exists()) {
+          throw new Error(
+            "The creator profile could not be found. No reaction was saved."
+          );
+        }
+
+        const previousReactions = post.userReactions || {};
+        const previousReaction = previousReactions[user.uid] || null;
+
+        const reactions = {
+          "👍": 0,
+          "❤️": 0,
+          "😂": 0,
+          "😊": 0,
+          "😮": 0,
+          "😢": 0,
+          "👏": 0,
+          "👎": 0,
+          ...(post.reactions || {}),
+        };
+
+        // Work out the score change from this user's
+        // previous reaction to their new reaction.
+        let scoreDelta = 0;
+        const nextUserReactions = { ...previousReactions };
+
+        if (previousReaction === emoji) {
+          // Clicking the same reaction again removes it.
+          reactions[emoji] = Math.max(
+            0,
+            (Number(reactions[emoji]) || 0) - 1
           );
 
-        await updateDoc(
-          creatorRef,
-          {
-            creatorScore,
+          scoreDelta = -(scoreMap[emoji] || 0);
+          delete nextUserReactions[user.uid];
+        } else {
+          // Remove the previous reaction, if any.
+          if (
+            previousReaction &&
+            Object.prototype.hasOwnProperty.call(
+              scoreMap,
+              previousReaction
+            )
+          ) {
+            reactions[previousReaction] = Math.max(
+              0,
+              (Number(reactions[previousReaction]) || 0) - 1
+            );
+
+            scoreDelta -= scoreMap[previousReaction];
           }
+
+          // Add the new reaction exactly once.
+          reactions[emoji] =
+            (Number(reactions[emoji]) || 0) + 1;
+
+          scoreDelta += scoreMap[emoji];
+          nextUserReactions[user.uid] = emoji;
+        }
+
+        const currentPostScore =
+          Number(post.creatorScore) || 0;
+
+        const nextPostScore =
+          currentPostScore + scoreDelta;
+
+        const creator = creatorSnap.data();
+        const currentCreatorScore =
+          Number(creator.creatorScore) || 0;
+
+        const nextCreatorScore =
+          currentCreatorScore + scoreDelta;
+
+        // Both writes commit together or neither commits.
+        transaction.update(postRef, {
+          reactions,
+          creatorScore: nextPostScore,
+          userReactions: nextUserReactions,
+        });
+
+        transaction.update(creatorRef, {
+          creatorScore: nextCreatorScore,
+        });
+
+        return {
+          reactions,
+          creatorScore: nextPostScore,
+          userReactions: nextUserReactions,
+        };
+      });
+
+      const updateReactionState = (previousPosts) =>
+        previousPosts.map((currentPost) =>
+          currentPost.id === postId
+            ? {
+                ...currentPost,
+                reactions: result.reactions,
+                creatorScore: result.creatorScore,
+                userReactions: result.userReactions,
+              }
+            : currentPost
         );
-      }
 
-      const updateReactionState =
-        (previousPosts) =>
-          previousPosts.map(
-            (currentPost) =>
-              currentPost.id ===
-              postId
-                ? {
-                    ...currentPost,
-                    reactions,
-                    creatorScore,
-                    userReactions: {
-                      ...(currentPost.userReactions ||
-                        {}),
-                      [user.uid]:
-                        emoji,
-                    },
-                  }
-                : currentPost
-          );
-
-      setPosts(
-        updateReactionState
-      );
-
-      setFilteredPosts(
-        updateReactionState
-      );
+      setPosts(updateReactionState);
+      setFilteredPosts(updateReactionState);
     } catch (error) {
-      console.error(
-        "Inclura Reaction Error:",
-        error
+      console.error("Inclura Reaction Error:", error);
+
+      alert(
+        error?.message ||
+          "Unable to save your reaction. Please try again."
       );
     }
   }
