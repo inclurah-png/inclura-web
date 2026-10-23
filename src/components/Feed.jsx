@@ -632,99 +632,147 @@ async function reactToPost(postId, emoji) {
     return;
   }
 
-  const allowedEmojis = [
-    "❤️",
-    "👏",
-    "😊",
-    "👍",
-    "😂",
-    "😮",
-    "😢",
-    "👎",
-  ];
+  
+const REACTION_POINTS = {
+  "❤️": 4,
+  "👏": 3,
+  "😊": 3,
+  "👍": 2,
+  "😂": 2,
+  "😮": 2,
+  "😢": 2,
+  "👎": -3,
+};
 
-  if (!allowedEmojis.includes(emoji)) {
+async function reactToPost(postId, emoji) {
+  const currentUser = auth.currentUser;
+
+  if (!currentUser) {
+    alert("Please sign in to react to a post.");
     return;
   }
 
-  const API_BASE_URL = (
-    import.meta.env.VITE_AI_BACKEND_URL ||
-    "https://inclura-ai-backend.onrender.com"
-  ).replace(/\/+$/, "");
+  if (!Object.prototype.hasOwnProperty.call(
+    REACTION_POINTS,
+    emoji
+  )) {
+    alert("This reaction is not supported.");
+    return;
+  }
 
   try {
-    // Obtain a Firebase ID token for the signed-in user.
-    const idToken = await user.getIdToken();
+    const postRef = doc(db, "posts", postId);
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/posts/${encodeURIComponent(postId)}/react`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          emoji,
-        }),
+    await runTransaction(db, async (transaction) => {
+      const postSnapshot = await transaction.get(postRef);
+
+      if (!postSnapshot.exists()) {
+        throw new Error("This post no longer exists.");
       }
+
+      const postData = postSnapshot.data();
+      const creatorUid = postData.userId;
+
+      if (
+        typeof creatorUid !== "string" ||
+        !creatorUid.trim()
+      ) {
+        throw new Error("The post has no valid creator.");
+      }
+
+      if (creatorUid === currentUser.uid) {
+        throw new Error("You cannot react to your own post.");
+      }
+
+      const creatorRef = doc(db, "users", creatorUid);
+      const creatorSnapshot = await transaction.get(creatorRef);
+
+      if (!creatorSnapshot.exists()) {
+        throw new Error(
+          "The creator's user record could not be found."
+        );
+      }
+
+      const creatorData = creatorSnapshot.data();
+      const reactions = { ...(postData.reactions || {}) };
+      const userReactions = {
+        ...(postData.userReactions || {}),
+      };
+
+      const previousEmoji = userReactions[currentUser.uid];
+
+      const previousPoints =
+        previousEmoji &&
+        Object.prototype.hasOwnProperty.call(
+          REACTION_POINTS,
+          previousEmoji
+        )
+          ? REACTION_POINTS[previousEmoji]
+          : 0;
+
+      const removingReaction = previousEmoji === emoji;
+
+      const nextEmoji = removingReaction ? null : emoji;
+
+      const nextPoints = nextEmoji
+        ? REACTION_POINTS[nextEmoji]
+        : 0;
+
+      const scoreDelta = nextPoints - previousPoints;
+
+      // Update reaction counts without allowing negative counts.
+      if (previousEmoji) {
+        reactions[previousEmoji] = Math.max(
+          0,
+          (Number(reactions[previousEmoji]) || 0) - 1
+        );
+      }
+
+      if (nextEmoji) {
+        reactions[nextEmoji] =
+          (Number(reactions[nextEmoji]) || 0) + 1;
+
+        userReactions[currentUser.uid] = nextEmoji;
+      } else {
+        delete userReactions[currentUser.uid];
+      }
+
+      const nextPostScore =
+        (Number(postData.creatorScore) || 0) + scoreDelta;
+
+      const nextCreatorScore =
+        (Number(creatorData.creatorScore) || 0) + scoreDelta;
+
+      // Both documents are updated atomically.
+      transaction.update(postRef, {
+        reactions,
+        userReactions,
+        creatorScore: nextPostScore,
+      });
+
+      transaction.update(creatorRef, {
+        creatorScore: nextCreatorScore,
+      });
+    });
+
+    // Refresh the visible post using the committed reaction.
+    setPosts((previousPosts) =>
+      previousPosts.map((post) => {
+        if (post.id !== postId) return post;
+
+        return {
+          ...post,
+          creatorScore: post.creatorScore,
+          reactions: {
+            ...(post.reactions || {}),
+            [emoji]: post.reactions?.[emoji] || 0,
+          },
+        };
+      })
     );
-
-    let result;
-
-    try {
-      result = await response.json();
-    } catch {
-      throw new Error(
-        "The reaction service returned an invalid response."
-      );
-    }
-
-    if (!response.ok) {
-      throw new Error(
-        result?.detail ||
-          "Unable to save your reaction. Please try again."
-      );
-    }
-
-    if (
-      result?.success !== true ||
-      !result.reactions ||
-      !result.userReactions
-    ) {
-      throw new Error(
-        "The reaction service did not confirm the update."
-      );
-    }
-
-    // Use the server's confirmed reaction data.
-    const updateReactionState = (previousPosts) =>
-      previousPosts.map((currentPost) =>
-        currentPost.id === postId
-          ? {
-              ...currentPost,
-              reactions: result.reactions,
-              creatorScore:
-                result.postCreatorScore ??
-                currentPost.creatorScore ??
-                0,
-              userReactions: result.userReactions,
-            }
-          : currentPost
-      );
-
-    setPosts(updateReactionState);
-    setFilteredPosts(updateReactionState);
   } catch (error) {
-    console.error(
-      "Inclura Reaction Error:",
-      error
-    );
-
-    alert(
-      error?.message ||
-        "Unable to save your reaction. Please try again."
-    );
+    console.error("Reaction scoring failed:", error);
+    alert(error.message || "Unable to record your reaction.");
   }
 }
 
