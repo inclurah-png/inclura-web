@@ -1,3 +1,4 @@
+
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,2121 +15,250 @@ import {
   getDoc,
   arrayUnion,
   arrayRemove,
-  runTransaction
+  runTransaction,
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
-
-import FollowButton from "./FollowButton";
-import CommentBox from "./CommentBox";
-import SearchBar from "./SearchBar";
-
-import {
-  getVerificationBadge,
-  getPremiumBadge,
-} from "../config/verificationTypes";
-
-import {
-  translateText,
-  saveTranslation,
-} from "../translation/textTranslator";
-
-import {
-  useAccessibility,
-} from "../context/AccessibilityProvider";
-
-function normalizeFeedLanguage(code = "") {
-  const normalized = String(code)
-    .trim()
-    .toLowerCase()
-    .replace(/_/g, "-");
-
-  if (
-    normalized === "zh-tw" ||
-    normalized === "zh-hant"
-  ) {
-    return "zh-TW";
+@@ -625,173 +624,109 @@
   }
 
-  return normalized || "en";
-}
 
-function getPostTranslation(
-  post,
-  language
-) {
-  if (!post) {
-    return "";
-  }
-
-  const normalizedLanguage =
-    normalizeFeedLanguage(language);
-
-  const translations =
-    post.translatedText || {};
-
-  const directTranslation =
-    translations[
-      normalizedLanguage
-    ];
-
-  if (
-    typeof directTranslation ===
-      "string" &&
-    directTranslation.trim()
-  ) {
-    return directTranslation.trim();
-  }
-
-  if (
-    normalizedLanguage === "zh-TW"
-  ) {
-    const legacyTranslation =
-      translations["zh-tw"];
-
-    if (
-      typeof legacyTranslation ===
-        "string" &&
-      legacyTranslation.trim()
-    ) {
-      return legacyTranslation.trim();
-    }
-  }
-
-  return "";
-}
-
-function isPlaceholderUserName(
-  name
-) {
-  const normalized =
-    String(name || "")
-      .trim()
-      .toLowerCase();
-
-  return (
-    !normalized ||
-    normalized ===
-      "inclura user" ||
-    normalized ===
-      "inclura-user" ||
-    normalized ===
-      "inclura_user"
-  );
-}
-
-function Feed() {
-  const [posts, setPosts] =
-    useState([]);
-
-  const [lastVisible, setLastVisible] =
-    useState(null);
-
-  const [loading, setLoading] =
-    useState(false);
-
-  const [hasMore, setHasMore] =
-    useState(true);
-
-  const [filteredPosts, setFilteredPosts] =
-    useState([]);
-
-  const [
-    translatingPosts,
-    setTranslatingPosts,
-  ] = useState({});
-
-  const [
-    postAccessibility,
-    setPostAccessibility,
-  ] = useState({});
-
-  const [
-    accessibilityPostId,
-    setAccessibilityPostId,
-  ] = useState(null);
-
-  const [
-    hydratedAuthors,
-    setHydratedAuthors,
-  ] = useState({});
-
-  const {
-    accessibilityNeeds,
-    accessibilityProfile,
-    voiceEnabled,
-    fontScale,
-    highContrast,
-  } = useAccessibility();
-
-  const navigate =
-    useNavigate();
-
-  const { i18n } =
-    useTranslation();
-
-  const POSTS_PER_PAGE = 15;
-
-  /*
-   * The Feed always reads the current
-   * i18next language directly.
-   *
-   * No separate language state is used
-   * for translation rendering.
-   */
-  const activeLanguage =
-    normalizeFeedLanguage(
-      i18n.language
-    );
-
-  /*
-   * Load the initial Feed.
-   */
-  useEffect(() => {
-    loadPosts(false);
-  }, []);
-
-  /*
-   * Stop speech when Feed unmounts.
-   */
-  useEffect(() => {
-    return () => {
-      if (
-        typeof window !==
-          "undefined" &&
-        window.speechSynthesis
-      ) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  /*
-   * When the selected language changes,
-   * Feed re-renders immediately.
-   *
-   * Existing translations already stored
-   * on the loaded post become visible
-   * without refreshing the page.
-   */
-  useEffect(() => {
-    setFilteredPosts(
-      (currentFilteredPosts) =>
-        currentFilteredPosts.map(
-          (post) => ({
-            ...post,
-          })
-        )
-    );
-  }, [activeLanguage]);
-
-  /*
-   * Load current author profile names for
-   * older posts that contain the historical
-   * Inclura User placeholder.
-   *
-   * New posts created by the corrected
-   * CreatePost.jsx will already contain
-   * their real author name.
-   */
-  useEffect(() => {
-    hydrateMissingAuthors(
-      posts
-    );
-  }, [posts]);
-
-  async function hydrateMissingAuthors(
-    currentPosts
-  ) {
-    const postsNeedingAuthors =
-      currentPosts.filter(
-        (post) =>
-          post?.userId &&
-          isPlaceholderUserName(
-            post.userName
-          ) &&
-          !hydratedAuthors[
-            post.userId
-          ]
-      );
-
-    if (
-      postsNeedingAuthors.length ===
-      0
-    ) {
-      return;
-    }
-
-    const uniqueUserIds = [
-      ...new Set(
-        postsNeedingAuthors.map(
-          (post) =>
-            post.userId
-        )
-      ),
-    ];
-
-    const authorUpdates = {};
-
-    await Promise.all(
-      uniqueUserIds.map(
-        async (userId) => {
-          try {
-            const userSnap =
-              await getDoc(
-                doc(
-                  db,
-                  "users",
-                  userId
-                )
-              );
-
-            if (
-              !userSnap.exists()
-            ) {
-              authorUpdates[
-                userId
-              ] = null;
-              return;
-            }
-
-            const profile =
-              userSnap.data();
-
-            const fullName =
-              profile.fullName ||
-              profile.displayName ||
-              profile.name ||
-              [
-                profile.firstName,
-                profile.lastName,
-              ]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-
-            authorUpdates[
-              userId
-            ] =
-              typeof fullName ===
-                "string" &&
-              fullName.trim()
-                ? fullName.trim()
-                : null;
-          } catch (error) {
-            console.error(
-              "Inclura Author Profile Load Error:",
-              error
-            );
-
-            authorUpdates[
-              userId
-            ] = null;
-          }
-        }
-      )
-    );
-
-    setHydratedAuthors(
-      (previous) => ({
-        ...previous,
-        ...authorUpdates,
-      })
-    );
-
-    setPosts(
-      (previousPosts) =>
-        previousPosts.map(
-          (post) => {
-            const authorName =
-              authorUpdates[
-                post.userId
-              ];
-
-            if (
-              !authorName
-            ) {
-              return post;
-            }
-
-            if (
-              !isPlaceholderUserName(
-                post.userName
-              )
-            ) {
-              return post;
-            }
-
-            return {
-              ...post,
-              userName:
-                authorName,
-            };
-          }
-        )
-    );
-
-    setFilteredPosts(
-      (previousPosts) =>
-        previousPosts.map(
-          (post) => {
-            const authorName =
-              authorUpdates[
-                post.userId
-              ];
-
-            if (
-              !authorName
-            ) {
-              return post;
-            }
-
-            if (
-              !isPlaceholderUserName(
-                post.userName
-              )
-            ) {
-              return post;
-            }
-
-            return {
-              ...post,
-              userName:
-                authorName,
-            };
-          }
-        )
-    );
-  }
-
-  async function loadPosts(
-    loadMore = false
-  ) {
-    if (loading) {
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      let q;
-
-      if (
-        loadMore &&
-        lastVisible
-      ) {
-        q = query(
-          collection(
-            db,
-            "posts"
-          ),
-          orderBy(
-            "createdAt",
-            "desc"
-          ),
-          startAfter(
-            lastVisible
-          ),
-          limit(
-            POSTS_PER_PAGE
-          )
-        );
-      } else {
-        q = query(
-          collection(
-            db,
-            "posts"
-          ),
-          orderBy(
-            "createdAt",
-            "desc"
-          ),
-          limit(
-            POSTS_PER_PAGE
-          )
-        );
-      }
-
-      const snapshot =
-        await getDocs(q);
-
-      const fetchedPosts =
-        snapshot.docs.map(
-          (postDoc) => ({
-            id: postDoc.id,
-            ...postDoc.data(),
-          })
-        );
-
-      if (
-        snapshot.docs.length >
-        0
-      ) {
-        setLastVisible(
-          snapshot.docs[
-            snapshot.docs.length -
-              1
-          ]
-        );
-      }
-
-      if (
-        snapshot.docs.length <
-        POSTS_PER_PAGE
-      ) {
-        setHasMore(false);
-      }
-
-      if (loadMore) {
-        setPosts(
-          (previousPosts) => {
-            const existingIds =
-              new Set(
-                previousPosts.map(
-                  (post) =>
-                    post.id
-                )
-              );
-
-            const newPosts =
-              fetchedPosts.filter(
-                (post) =>
-                  !existingIds.has(
-                    post.id
-                  )
-              );
-
-            return [
-              ...previousPosts,
-              ...newPosts,
-            ];
-          }
-        );
-
-        setFilteredPosts(
-          (previousPosts) => {
-            const existingIds =
-              new Set(
-                previousPosts.map(
-                  (post) =>
-                    post.id
-                )
-              );
-
-            const newPosts =
-              fetchedPosts.filter(
-                (post) =>
-                  !existingIds.has(
-                    post.id
-                  )
-              );
-
-            return [
-              ...previousPosts,
-              ...newPosts,
-            ];
-          }
-        );
-      } else {
-        setPosts(
-          fetchedPosts
-        );
-
-        setFilteredPosts(
-          fetchedPosts
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Inclura Feed Load Error:",
-        error
-      );
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function savePost(
-    post
-  ) {
-    try {
-      const user =
-        auth.currentUser;
-
-      if (!user) {
-        return;
-      }
-
-      const userRef =
-        doc(
-          db,
-          "users",
-          user.uid
-        );
-
-      const userSnap =
-        await getDoc(
-          userRef
-        );
-
-      const savedPosts =
-        userSnap.exists()
-          ? userSnap
-              .data()
-              .savedPosts ||
-            []
-          : [];
-
-      if (
-        savedPosts.includes(
-          post.id
-        )
-      ) {
-        await updateDoc(
-          userRef,
-          {
-            savedPosts:
-              arrayRemove(
-                post.id
-              ),
-          }
-        );
-
-        alert(
-          "Post removed"
-        );
-      } else {
-        await updateDoc(
-          userRef,
-          {
-            savedPosts:
-              arrayUnion(
-                post.id
-              ),
-          }
-        );
-
-        alert(
-          "Post saved"
-        );
-      }
-    } catch (error) {
-      console.error(
-        "Inclura Save Post Error:",
-        error
-      );
-
-      alert(
-        "Unable to save post."
-      );
-    }
-  }
-
-const REACTION_POINTS = {
-    "❤️": 4,
-    "👏": 3,
-    "😊": 3,
-    "👍": 2,
-    "😂": 2,
-    "😮": 2,
-    "😢": 2,
-    "👎": -3,
-  };
-
-  
   async function reactToPost(postId, emoji) {
     const user = auth.currentUser;
+async function reactToPost(postId, emoji) {
+  const user = auth.currentUser;
 
     if (!user) {
       alert("Please sign in to react to a post.");
       return;
     }
+  if (!user) {
+    alert("Please sign in to react to a post.");
+    return;
+  }
 
-    const allowedEmojis = [
-      "❤️",
-      "👏",
-      "😊",
-      "👍",
-      "😂",
-      "😮",
-      "😢",
-      "👎",
-    ];
+    const scoreMap = {
+      "❤️": 4,
+      "👏": 3,
+      "😊": 3,
+      "👍": 2,
+      "😂": 2,
+      "😮": 2,
+      "😢": 2,
+      "👎": -3,
+    };
+  const allowedEmojis = [
+    "❤️",
+    "👏",
+    "😊",
+    "👍",
+    "😂",
+    "😮",
+    "😢",
+    "👎",
+  ];
+  if (!allowedEmojis.includes(emoji)) {
+    return;
+  }
 
-    if (!allowedEmojis.includes(emoji)) {
+    if (!Object.prototype.hasOwnProperty.call(scoreMap, emoji)) {
       return;
     }
+  const API_BASE_URL = (
+    import.meta.env.VITE_AI_BACKEND_URL ||
+    "https://inclura-ai-backend.onrender.com"
+  ).replace(/\/+$/, "");
+  try {
+    // Obtain a Firebase ID token for the signed-in user.
+    const idToken = await user.getIdToken();
+    const response = await fetch(
+      `${API_BASE_URL}/api/posts/${encodeURIComponent(postId)}/react`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          emoji,
+        }),
+      }
+    );
 
-    const API_BASE_URL = (
-      import.meta.env.VITE_AI_BACKEND_URL ||
-      "https://inclura-ai-backend.onrender.com"
-    ).replace(/\/+$/, "");
+    const postRef = doc(db, "posts", postId);
+    let result;
 
     try {
-      const idToken = await user.getIdToken();
-
-      const response = await fetch(
-        `${API_BASE_URL}/api/posts/${encodeURIComponent(postId)}/react`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ emoji }),
+      const result = await runTransaction(db, async (transaction) => {
+        const postSnap = await transaction.get(postRef);
+        if (!postSnap.exists()) {
+          throw new Error("This post no longer exists.");
         }
+        const post = postSnap.data();
+        const creatorId = post.userId;
+        if (!creatorId) {
+          throw new Error(
+            "The post has no creator ID. No score was changed."
+          );
+        }
+        // A creator must not earn engagement points
+        // by reacting to their own post.
+        if (creatorId === user.uid) {
+          throw new Error(
+            "You cannot earn creator points by reacting to your own post."
+          );
+        }
+        const creatorRef = doc(db, "users", creatorId);
+        const creatorSnap = await transaction.get(creatorRef);
+        if (!creatorSnap.exists()) {
+          throw new Error(
+            "The creator profile could not be found. No reaction was saved."
+          );
+        }
+        const previousReactions = post.userReactions || {};
+        const previousReaction = previousReactions[user.uid] || null;
+        const reactions = {
+          "👍": 0,
+          "❤️": 0,
+          "😂": 0,
+          "😊": 0,
+          "😮": 0,
+          "😢": 0,
+          "👏": 0,
+          "👎": 0,
+          ...(post.reactions || {}),
+        };
+        // Work out the score change from this user's
+        // previous reaction to their new reaction.
+        let scoreDelta = 0;
+        const nextUserReactions = { ...previousReactions };
+        if (previousReaction === emoji) {
+          // Clicking the same reaction again removes it.
+          reactions[emoji] = Math.max(
+            0,
+            (Number(reactions[emoji]) || 0) - 1
+          );
+          scoreDelta = -(scoreMap[emoji] || 0);
+          delete nextUserReactions[user.uid];
+        } else {
+          // Remove the previous reaction, if any.
+          if (
+            previousReaction &&
+            Object.prototype.hasOwnProperty.call(
+              scoreMap,
+              previousReaction
+            )
+          ) {
+            reactions[previousReaction] = Math.max(
+              0,
+              (Number(reactions[previousReaction]) || 0) - 1
+            );
+            scoreDelta -= scoreMap[previousReaction];
+          }
+          // Add the new reaction exactly once.
+          reactions[emoji] =
+            (Number(reactions[emoji]) || 0) + 1;
+          scoreDelta += scoreMap[emoji];
+          nextUserReactions[user.uid] = emoji;
+        }
+        const currentPostScore =
+          Number(post.creatorScore) || 0;
+        const nextPostScore =
+          currentPostScore + scoreDelta;
+        const creator = creatorSnap.data();
+        const currentCreatorScore =
+          Number(creator.creatorScore) || 0;
+        const nextCreatorScore =
+          currentCreatorScore + scoreDelta;
+      result = await response.json();
+    } catch {
+      throw new Error(
+        "The reaction service returned an invalid response."
       );
+    }
 
-      let result;
+        // Both writes commit together or neither commits.
+        transaction.update(postRef, {
+          reactions,
+          creatorScore: nextPostScore,
+          userReactions: nextUserReactions,
+        });
+    if (!response.ok) {
+      throw new Error(
+        result?.detail ||
+          "Unable to save your reaction. Please try again."
+      );
+    }
 
-      try {
-        result = await response.json();
-      } catch {
-        throw new Error(
-          "The reaction service returned an invalid response."
-        );
-      }
+        transaction.update(creatorRef, {
+          creatorScore: nextCreatorScore,
+        });
+    if (
+      result?.success !== true ||
+      !result.reactions ||
+      !result.userReactions
+    ) {
+      throw new Error(
+        "The reaction service did not confirm the update."
+      );
+    }
 
-      if (!response.ok) {
-        throw new Error(
-          result?.detail ||
-            "Unable to save your reaction. Please try again."
-        );
-      }
-
-      if (
-        result?.success !== true ||
-        !result.reactions ||
-        !result.userReactions
-      ) {
-        throw new Error(
-          "The reaction service did not confirm the update."
-        );
-      }
-
+        return {
+          reactions,
+          creatorScore: nextPostScore,
+          userReactions: nextUserReactions,
+        };
+      });
       const updateReactionState = (previousPosts) =>
         previousPosts.map((currentPost) =>
           currentPost.id === postId
             ? {
                 ...currentPost,
                 reactions: result.reactions,
-                creatorScore:
-                  result.postCreatorScore ??
-                  currentPost.creatorScore ??
-                  0,
+                creatorScore: result.creatorScore,
                 userReactions: result.userReactions,
               }
             : currentPost
         );
+    // Use the server's confirmed reaction data.
+    const updateReactionState = (previousPosts) =>
+      previousPosts.map((currentPost) =>
+        currentPost.id === postId
+          ? {
+              ...currentPost,
+              reactions: result.reactions,
+              creatorScore:
+                result.postCreatorScore ??
+                currentPost.creatorScore ??
+                0,
+              userReactions: result.userReactions,
+            }
+          : currentPost
+      );
 
       setPosts(updateReactionState);
       setFilteredPosts(updateReactionState);
     } catch (error) {
       console.error("Inclura Reaction Error:", error);
+    setPosts(updateReactionState);
+    setFilteredPosts(updateReactionState);
+  } catch (error) {
+    console.error(
+      "Inclura Reaction Error:",
+      error
+    );
 
       alert(
         error?.message ||
           "Unable to save your reaction. Please try again."
       );
     }
+    alert(
+      error?.message ||
+        "Unable to save your reaction. Please try again."
+    );
   }
-
+}
 
   async function translatePost(
     post
-  ) {
-    if (
-      !post?.id ||
-      typeof post.text !==
-        "string" ||
-      !post.text.trim()
-    ) {
-      return;
-    }
-
-    const postId =
-      post.id;
-
-    if (
-      translatingPosts[
-        postId
-      ]
-    ) {
-      return;
-    }
-
-    /*
-     * Read the language at the exact
-     * moment the button is pressed.
-     */
-    const targetLanguage =
-      normalizeFeedLanguage(
-        i18n.language
-      );
-
-    const existingTranslation =
-      getPostTranslation(
-        post,
-        targetLanguage
-      );
-
-    if (
-      existingTranslation
-    ) {
-      return;
-    }
-
-    setTranslatingPosts(
-      (previous) => ({
-        ...previous,
-        [postId]: true,
-      })
-    );
-
-    try {
-      console.log(
-        "🌍 Inclura Feed Translation:",
-        {
-          postId,
-          targetLanguage,
-          i18nLanguage:
-            i18n.language,
-        }
-      );
-
-      const result =
-        await translateText({
-          sourceId:
-            postId,
-          sourceType:
-            "post",
-          text:
-            post.text,
-          targetLanguage,
-        });
-
-      const translatedText =
-        typeof result?.translatedText ===
-          "string"
-          ? result.translatedText.trim()
-          : "";
-
-      if (!translatedText) {
-        throw new Error(
-          "Translation service returned no translated text."
-        );
-      }
-
-      /*
-       * Cache save is supplementary.
-       * A cache failure must never prevent
-       * the successful translation from
-       * appearing in Feed.
-       */
-      try {
-        await saveTranslation({
-          sourceId:
-            postId,
-          sourceType:
-            "post",
-          originalLanguage:
-            result.originalLanguage ||
-            "",
-          targetLanguage,
-          translatedText,
-          confidence:
-            typeof result.confidence ===
-            "number"
-              ? result.confidence
-              : 0,
-        });
-      } catch (
-        cacheError
-      ) {
-        console.error(
-          "Inclura Translation Cache Save Error:",
-          cacheError
-        );
-      }
-
-      /*
-       * Build the translation from the
-       * post supplied to this operation.
-       * Do not depend on a possibly stale
-       * posts closure.
-       */
-      const updatedTranslatedText =
-        {
-          ...(post.translatedText ||
-            {}),
-          [targetLanguage]:
-            translatedText,
-        };
-
-      /*
-       * Persist the translation on the
-       * actual post document.
-       */
-      await updateDoc(
-        doc(
-          db,
-          "posts",
-          postId
-        ),
-        {
-          translatedText:
-            updatedTranslatedText,
-        }
-      );
-
-      /*
-       * Immediately update both Feed state
-       * collections.
-       */
-      const updateTranslationState =
-        (previousPosts) =>
-          previousPosts.map(
-            (currentPost) =>
-              currentPost.id ===
-              postId
-                ? {
-                    ...currentPost,
-                    translatedText:
-                      updatedTranslatedText,
-                  }
-                : currentPost
-          );
-
-      setPosts(
-        updateTranslationState
-      );
-
-      setFilteredPosts(
-        updateTranslationState
-      );
-    } catch (error) {
-      console.error(
-        "Inclura Feed Translation Error:",
-        error
-      );
-
-      alert(
-        error?.message ||
-          "Translation failed. Please try again."
-      );
-    } finally {
-      setTranslatingPosts(
-        (previous) => {
-          const next = {
-            ...previous,
-          };
-
-          delete next[
-            postId
-          ];
-
-          return next;
-        }
-      );
-    }
-  }
-
-  function getPostAccessibility(
-    postId
-  ) {
-    return (
-      postAccessibility[
-        postId
-      ] || {
-        largeText: false,
-        highContrast: false,
-        textOnly: false,
-      }
-    );
-  }
-
-  function togglePostAccessibility(
-    postId,
-    setting
-  ) {
-    setPostAccessibility(
-      (previous) => {
-        const current =
-          previous[
-            postId
-          ] || {
-            largeText: false,
-            highContrast: false,
-            textOnly: false,
-          };
-
-        return {
-          ...previous,
-          [postId]: {
-            ...current,
-            [setting]:
-              !current[
-                setting
-              ],
-          },
-        };
-      }
-    );
-  }
-
-  function readPostAloud(
-    post
-  ) {
-    if (
-      typeof window ===
-      "undefined"
-    ) {
-      return;
-    }
-
-    if (
-      !window.speechSynthesis
-    ) {
-      alert(
-        "Voice guidance is not available in this browser."
-      );
-
-      return;
-    }
-
-    const speechLanguage =
-      normalizeFeedLanguage(
-        i18n.language
-      );
-
-    const text =
-      getPostTranslation(
-        post,
-        speechLanguage
-      ) ||
-      post.text ||
-      "";
-
-    if (!text.trim()) {
-      return;
-    }
-
-    window.speechSynthesis.cancel();
-
-    const utterance =
-      new SpeechSynthesisUtterance(
-        text
-      );
-
-    const speechLanguageMap = {
-      en: "en-US",
-      es: "es-ES",
-      fr: "fr-FR",
-      pt: "pt-PT",
-      ar: "ar-SA",
-      zh: "zh-CN",
-      "zh-TW": "zh-TW",
-      ja: "ja-JP",
-      de: "de-DE",
-      hi: "hi-IN",
-      ru: "ru-RU",
-      it: "it-IT",
-      nl: "nl-NL",
-      sw: "sw-KE",
-      yo: "yo-NG",
-      ig: "ig-NG",
-      ha: "ha-NG",
-      pcm: "en-NG",
-      ko: "ko-KR",
-      vi: "vi-VN",
-      th: "th-TH",
-      id: "id-ID",
-      ms: "ms-MY",
-      bn: "bn-BD",
-      tr: "tr-TR",
-    };
-
-    utterance.lang =
-      speechLanguageMap[
-        speechLanguage
-      ] ||
-      "en-US";
-
-    utterance.rate =
-      0.9;
-
-    utterance.pitch =
-      1;
-
-    utterance.volume =
-      1;
-
-    window.speechSynthesis.speak(
-      utterance
-    );
-  }
-
-  function stopReading() {
-    if (
-      typeof window !==
-        "undefined" &&
-      window.speechSynthesis
-    ) {
-      window.speechSynthesis.cancel();
-    }
-  }
-
-  function openAccessibilitySettings() {
-    navigate(
-      "/accessibility"
-    );
-  }
-
-  function handleShare(
-    postId
-  ) {
-    const url =
-      `${window.location.origin}/post/${postId}`;
-
-    if (
-      navigator.clipboard
-    ) {
-      navigator.clipboard
-        .writeText(url)
-        .then(() => {
-          alert(
-            "Post link copied!"
-          );
-        })
-        .catch((error) => {
-          console.error(
-            "Inclura Share Error:",
-            error
-          );
-
-          alert(
-            "Unable to copy post link."
-          );
-        });
-
-      return;
-    }
-
-    alert(
-      "Sharing is not available in this browser."
-    );
-  }
-
-  function getBadge(
-    post
-  ) {
-    if (!post.verified) {
-      return null;
-    }
-
-    return getVerificationBadge(
-      post.badgeType
-    );
-  }
-
-  function getPremium(
-    post
-  ) {
-    if (!post.premium) {
-      return null;
-    }
-
-    return getPremiumBadge(
-      post.premiumTier
-    );
-  }
-
-  const visualImpairmentEnabled =
-    Boolean(
-      accessibilityProfile
-        ?.blindLowVision
-    );
-
-  const hearingNeedEnabled =
-    Boolean(
-      accessibilityProfile
-        ?.deaf
-    );
-
-  const mobilityNeedEnabled =
-    Boolean(
-      accessibilityProfile
-        ?.wheelchair ||
-      accessibilityProfile
-        ?.motorImpaired
-    );
-
-  const neurodivergentEnabled =
-    Boolean(
-      accessibilityProfile
-        ?.neurodivergent
-    );
-
-  return (
-    <div
-      style={{
-        padding:
-          "24px",
-        maxWidth:
-          "720px",
-        margin:
-          "0 auto",
-      }}
-    >
-      <SearchBar
-        posts={posts}
-        onResults={
-          setFilteredPosts
-        }
-      />
-
-      <div
-        style={{
-          marginTop:
-            "24px",
-        }}
-      >
-        {filteredPosts.length ===
-        0 ? (
-          <div
-            style={{
-              background:
-                "#0f172a",
-              padding:
-                "24px",
-              borderRadius:
-                "20px",
-              textAlign:
-                "center",
-            }}
-          >
-            No posts yet
-          </div>
-        ) : (
-          filteredPosts.map(
-            (post) => {
-              const isTranslating =
-                Boolean(
-                  translatingPosts[
-                    post.id
-                  ]
-                );
-
-              const translated =
-                getPostTranslation(
-                  post,
-                  activeLanguage
-                );
-
-              const currentAccessibility =
-                getPostAccessibility(
-                  post.id
-                );
-
-              const accessibilityOpen =
-                accessibilityPostId ===
-                post.id;
-
-              const displayedText =
-                translated ||
-                post.text ||
-                "";
-
-              const authorName =
-                !isPlaceholderUserName(
-                  post.userName
-                )
-                  ? post.userName
-                  : hydratedAuthors[
-                      post.userId
-                    ] ||
-                    post.userName ||
-                    "Inclura User";
-
-              const postFontSize =
-                currentAccessibility.largeText
-                  ? `${Math.max(
-                      fontScale,
-                      1.35
-                    )}rem`
-                  : `${fontScale}rem`;
-
-              return (
-                <div
-                  key={
-                    post.id
-                  }
-                  style={{
-                    background:
-                      currentAccessibility.highContrast ||
-                      highContrast
-                        ? "#000000"
-                        : "#0f172a",
-                    color:
-                      currentAccessibility.highContrast ||
-                      highContrast
-                        ? "#ffffff"
-                        : "inherit",
-                    padding:
-                      "24px",
-                    borderRadius:
-                      "24px",
-                    marginBottom:
-                      "20px",
-                    border:
-                      accessibilityOpen
-                        ? "2px solid #38bdf8"
-                        : "1px solid rgba(148,163,184,0.12)",
-                  }}
-                >
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      justifyContent:
-                        "space-between",
-                      alignItems:
-                        "center",
-                      marginBottom:
-                        "12px",
-                    }}
-                  >
-                    <div>
-                      <h3
-                        onClick={() =>
-                          navigate(
-                            `/user/${post.userId}`
-                          )
-                        }
-                        style={{
-                          cursor:
-                            "pointer",
-                          display:
-                            "flex",
-                          alignItems:
-                            "center",
-                          gap:
-                            "8px",
-                          margin:
-                            0,
-                        }}
-                      >
-                        {
-                          authorName
-                        }
-
-                        {post.verified && (
-                          <span>
-                            {getBadge(
-                              post
-                            )}
-                          </span>
-                        )}
-
-                        {getPremium(
-                          post
-                        ) && (
-                          <span>
-                            {getPremium(
-                              post
-                            )}
-                          </span>
-                        )}
-                      </h3>
-
-                      {post.role && (
-                        <div
-                          style={{
-                            fontSize:
-                              "12px",
-                            color:
-                              "#94a3b8",
-                            marginTop:
-                              "4px",
-                          }}
-                        >
-                          {
-                            post.role
-                          }
-                        </div>
-                      )}
-                    </div>
-
-                    <FollowButton
-                      targetUserId={
-                        post.userId
-                      }
-                    />
-                  </div>
-
-                  {!currentAccessibility.textOnly && (
-                    <>
-                      {post.imageUrl && (
-                        <img
-                          src={
-                            post.imageUrl
-                          }
-                          alt={
-                            `Image shared by ${
-                              authorName ||
-                              "user"
-                            }`
-                          }
-                          style={{
-                            width:
-                              "100%",
-                            borderRadius:
-                              "16px",
-                            marginTop:
-                              "12px",
-                          }}
-                        />
-                      )}
-
-                      {post.videoUrl && (
-                        <video
-                          controls
-                          aria-label={
-                            `Video shared by ${
-                              authorName ||
-                              "user"
-                            }`
-                          }
-                          style={{
-                            width:
-                              "100%",
-                            borderRadius:
-                              "16px",
-                            marginTop:
-                              "12px",
-                          }}
-                        >
-                          <source
-                            src={
-                              post.videoUrl
-                            }
-                            type="video/mp4"
-                          />
-                        </video>
-                      )}
-                    </>
-                  )}
-
-                  <p
-                    style={{
-                      fontSize:
-                        postFontSize,
-                      lineHeight:
-                        "1.7",
-                      marginTop:
-                        "14px",
-                    }}
-                  >
-                    {displayedText}
-                  </p>
-
-                  {translated && (
-                    <small
-                      style={{
-                        display:
-                          "block",
-                        marginTop:
-                          "6px",
-                        opacity:
-                          0.7,
-                      }}
-                    >
-                      Translated to{" "}
-                      {
-                        activeLanguage
-                      }
-                    </small>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() =>
-                      translatePost(
-                        post
-                      )
-                    }
-                    disabled={
-                      isTranslating
-                    }
-                    aria-label={
-                      isTranslating
-                        ? "Translating post"
-                        : translated
-                        ? `Post translated to ${activeLanguage}`
-                        : "Translate this post"
-                    }
-                    style={{
-                      marginTop:
-                        "10px",
-                      padding:
-                        "8px 14px",
-                      borderRadius:
-                        "12px",
-                      border:
-                        "none",
-                      background:
-                        isTranslating
-                          ? "#475569"
-                          : "#334155",
-                      color:
-                        "white",
-                      cursor:
-                        isTranslating
-                          ? "not-allowed"
-                          : "pointer",
-                    }}
-                  >
-                    {isTranslating
-                      ? "🌍 Translating..."
-                      : translated
-                      ? "🌍 Translated"
-                      : "🌍 Translate"}
-                  </button>
-
-                  <div
-                    style={{
-                      marginTop:
-                        "14px",
-                      borderTop:
-                        "1px solid rgba(148,163,184,0.18)",
-                      paddingTop:
-                        "14px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setAccessibilityPostId(
-                          accessibilityOpen
-                            ? null
-                            : post.id
-                        )
-                      }
-                      aria-expanded={
-                        accessibilityOpen
-                      }
-                      aria-controls={`post-accessibility-${post.id}`}
-                      style={{
-                        width:
-                          "100%",
-                        padding:
-                          "11px 14px",
-                        borderRadius:
-                          "12px",
-                        border:
-                          "1px solid #38bdf8",
-                        background:
-                          accessibilityOpen
-                            ? "#0369a1"
-                            : "#172554",
-                        color:
-                          "#ffffff",
-                        fontWeight:
-                          "600",
-                        cursor:
-                          "pointer",
-                        textAlign:
-                          "left",
-                      }}
-                    >
-                      ♿{" "}
-                      {accessibilityOpen
-                        ? "Close Accessibility"
-                        : "Accessibility Needs & Controls"}
-                    </button>
-
-                    {accessibilityOpen && (
-                      <div
-                        id={`post-accessibility-${post.id}`}
-                        style={{
-                          marginTop:
-                            "12px",
-                          padding:
-                            "16px",
-                          borderRadius:
-                            "16px",
-                          background:
-                            highContrast
-                              ? "#111111"
-                              : "#111827",
-                          border:
-                            "1px solid rgba(56,189,248,0.35)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            fontWeight:
-                              "700",
-                            marginBottom:
-                              "10px",
-                          }}
-                        >
-                          Accessibility for this post
-                        </div>
-
-                        <div
-                          style={{
-                            fontSize:
-                              "13px",
-                            lineHeight:
-                              "1.6",
-                            marginBottom:
-                              "14px",
-                            color:
-                              "#cbd5e1",
-                          }}
-                        >
-                          Your accessibility needs selected in
-                          Edit Profile:
-                        </div>
-
-                        {accessibilityNeeds &&
-                        accessibilityNeeds.length >
-                          0 ? (
-                          <div
-                            style={{
-                              display:
-                                "flex",
-                              gap:
-                                "8px",
-                              flexWrap:
-                                "wrap",
-                              marginBottom:
-                                "14px",
-                            }}
-                          >
-                            {accessibilityNeeds.map(
-                              (
-                                need,
-                                index
-                              ) => (
-                                <span
-                                  key={`${post.id}-need-${index}`}
-                                  style={{
-                                    padding:
-                                      "7px 10px",
-                                    borderRadius:
-                                      "999px",
-                                    background:
-                                      "#1e3a8a",
-                                    color:
-                                      "#ffffff",
-                                    fontSize:
-                                      "12px",
-                                  }}
-                                >
-                                  ♿{" "}
-                                  {
-                                    need
-                                  }
-                                </span>
-                              )
-                            )}
-                          </div>
-                        ) : (
-                          <div
-                            style={{
-                              padding:
-                                "10px",
-                              borderRadius:
-                                "10px",
-                              background:
-                                "#1e293b",
-                              color:
-                                "#cbd5e1",
-                              marginBottom:
-                                "14px",
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            No specific accessibility need is
-                            currently selected in Edit Profile.
-                          </div>
-                        )}
-
-                        {visualImpairmentEnabled && (
-                          <div
-                            style={{
-                              padding:
-                                "10px",
-                              borderRadius:
-                                "10px",
-                              background:
-                                "#172554",
-                              marginBottom:
-                                "12px",
-                              color:
-                                "#dbeafe",
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            👁️ Visual impairment support is
-                            active for your profile.
-                          </div>
-                        )}
-
-                        {hearingNeedEnabled && (
-                          <div
-                            style={{
-                              padding:
-                                "10px",
-                              borderRadius:
-                                "10px",
-                              background:
-                                "#172554",
-                              marginBottom:
-                                "12px",
-                              color:
-                                "#dbeafe",
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            👂 Hearing accessibility support is
-                            active for your profile.
-                          </div>
-                        )}
-
-                        {mobilityNeedEnabled && (
-                          <div
-                            style={{
-                              padding:
-                                "10px",
-                              borderRadius:
-                                "10px",
-                              background:
-                                "#172554",
-                              marginBottom:
-                                "12px",
-                              color:
-                                "#dbeafe",
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            ♿ Mobility accessibility support is
-                            active for your profile.
-                          </div>
-                        )}
-
-                        {neurodivergentEnabled && (
-                          <div
-                            style={{
-                              padding:
-                                "10px",
-                              borderRadius:
-                                "10px",
-                              background:
-                                "#172554",
-                              marginBottom:
-                                "12px",
-                              color:
-                                "#dbeafe",
-                              fontSize:
-                                "13px",
-                            }}
-                          >
-                            🧠 Neurodivergent accessibility
-                            support is active for your profile.
-                          </div>
-                        )}
-
-                        <div
-                          style={{
-                            display:
-                              "flex",
-                            gap:
-                              "8px",
-                            flexWrap:
-                              "wrap",
-                          }}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              readPostAloud(
-                                post
-                              )
-                            }
-                            aria-label="Read this post aloud"
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                "none",
-                              background:
-                                "#2563eb",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                              fontWeight:
-                                "600",
-                            }}
-                          >
-                            🔊 Read Aloud
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={
-                              stopReading
-                            }
-                            aria-label="Stop reading"
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                "none",
-                              background:
-                                "#7f1d1d",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                            }}
-                          >
-                            ⏹️ Stop
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              togglePostAccessibility(
-                                post.id,
-                                "largeText"
-                              )
-                            }
-                            aria-pressed={
-                              currentAccessibility.largeText
-                            }
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                currentAccessibility.largeText
-                                  ? "2px solid #38bdf8"
-                                  : "none",
-                              background:
-                                "#334155",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                            }}
-                          >
-                            🔤{" "}
-                            {currentAccessibility.largeText
-                              ? "Normal Text"
-                              : "Large Text"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              togglePostAccessibility(
-                                post.id,
-                                "highContrast"
-                              )
-                            }
-                            aria-pressed={
-                              currentAccessibility.highContrast
-                            }
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                currentAccessibility.highContrast
-                                  ? "2px solid #38bdf8"
-                                  : "none",
-                              background:
-                                "#334155",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                            }}
-                          >
-                            ◐{" "}
-                            {currentAccessibility.highContrast
-                              ? "Normal Contrast"
-                              : "High Contrast"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() =>
-                              togglePostAccessibility(
-                                post.id,
-                                "textOnly"
-                              )
-                            }
-                            aria-pressed={
-                              currentAccessibility.textOnly
-                            }
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                currentAccessibility.textOnly
-                                  ? "2px solid #38bdf8"
-                                  : "none",
-                              background:
-                                "#334155",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                            }}
-                          >
-                            📝{" "}
-                            {currentAccessibility.textOnly
-                              ? "Show Media"
-                              : "Text Only"}
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={
-                              openAccessibilitySettings
-                            }
-                            aria-label="Open Accessibility Settings"
-                            style={{
-                              padding:
-                                "10px 12px",
-                              borderRadius:
-                                "10px",
-                              border:
-                                "none",
-                              background:
-                                "#0f766e",
-                              color:
-                                "#ffffff",
-                              cursor:
-                                "pointer",
-                            }}
-                          >
-                            ⚙️ Accessibility Settings
-                          </button>
-                        </div>
-
-                        {voiceEnabled && (
-                          <div
-                            style={{
-                              marginTop:
-                                "12px",
-                              fontSize:
-                                "12px",
-                              color:
-                                "#7dd3fc",
-                            }}
-                          >
-                            🔊 Voice Guidance is currently
-                            enabled in Accessibility Settings.
-                            Use "Read Aloud" above to read this
-                            existing post.
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      gap:
-                        "10px",
-                      flexWrap:
-                        "wrap",
-                      marginTop:
-                        "16px",
-                    }}
-                  >
-                    {[
-                      "👍",
-                      "❤️",
-                      "😂",
-                      "😊",
-                      "😮",
-                      "😢",
-                      "👏",
-                      "👎",
-                    ].map(
-                      (emoji) => (
-                        <button
-                          key={
-                            emoji
-                          }
-                          type="button"
-                          onClick={() =>
-                            reactToPost(
-                              post.id,
-                              emoji
-                            )
-                          }
-                          aria-label={`React ${emoji} to this post`}
-                          style={{
-                            padding:
-                              "8px 12px",
-                            borderRadius:
-                              "20px",
-                            cursor:
-                              "pointer",
-                          }}
-                        >
-                          {
-                            emoji
-                          }{" "}
-                          {
-                            post
-                              .reactions?.[
-                              emoji
-                            ] ||
-                            0
-                          }
-                        </button>
-                      )
-                    )}
-                  </div>
-
-                  <div
-                    style={{
-                      display:
-                        "flex",
-                      gap:
-                        "12px",
-                      marginTop:
-                        "16px",
-                      flexWrap:
-                        "wrap",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/post/${post.id}`
-                        )
-                      }
-                    >
-                      💬 Comment
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        navigate(
-                          `/crosspost/${post.id}`
-                        )
-                      }
-                    >
-                      🔀 Cross-post
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        savePost(
-                          post
-                        )
-                      }
-                    >
-                      📌 Save
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleShare(
-                          post.id
-                        )
-                      }
-                    >
-                      🔗 Share
-                    </button>
-                  </div>
-
-                  <CommentBox
-                    postId={
-                      post.id
-                    }
-                  />
-                </div>
-              );
-            }
-          )
-        )}
-
-        {hasMore && (
-          <div
-            style={{
-              textAlign:
-                "center",
-              marginTop:
-                "24px",
-              marginBottom:
-                "20px",
-            }}
-          >
-            <button
-              type="button"
-              onClick={() =>
-                loadPosts(
-                  true
-                )
-              }
-              disabled={
-                loading
-              }
-              style={{
-                padding:
-                  "12px 24px",
-                borderRadius:
-                  "14px",
-                border:
-                  "none",
-                background:
-                  "#2563eb",
-                color:
-                  "#fff",
-                cursor:
-                  loading
-                    ? "not-allowed"
-                    : "pointer",
-              }}
-            >
-              {loading
-                ? "Loading..."
-                : "Load More Posts"}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-export default Feed;
