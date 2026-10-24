@@ -18,7 +18,6 @@ import {
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
-  }
 
 const API_BASE_URL = (
   import.meta.env.VITE_AI_BACKEND_URL ||
