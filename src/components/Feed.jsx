@@ -19,7 +19,6 @@ import {
 } from "firebase/firestore";
 
 import { db, auth } from "../firebase";
-@@ -625,173 +624,109 @@
   }
 
 
