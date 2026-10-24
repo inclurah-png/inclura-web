@@ -623,158 +623,156 @@ function Feed() {
     }
   }
 
-  
-async function reactToPost(postId, emoji) {
-  const user = auth.currentUser;
-
-  if (!user) {
-    alert("Please sign in to react to a post.");
-    return;
-  }
-
-  
 const REACTION_POINTS = {
-  "❤️": 4,
-  "👏": 3,
-  "😊": 3,
-  "👍": 2,
-  "😂": 2,
-  "😮": 2,
-  "😢": 2,
-  "👎": -3,
-};
+    "❤️": 4,
+    "👏": 3,
+    "😊": 3,
+    "👍": 2,
+    "😂": 2,
+    "😮": 2,
+    "😢": 2,
+    "👎": -3,
+  };
 
-async function reactToPost(postId, emoji) {
-  const currentUser = auth.currentUser;
+  async function reactToPost(postId, emoji) {
+    const currentUser = auth.currentUser;
 
-  if (!currentUser) {
-    alert("Please sign in to react to a post.");
-    return;
-  }
+    if (!currentUser) {
+      alert("Please sign in to react to a post.");
+      return;
+    }
 
-  if (!Object.prototype.hasOwnProperty.call(
-    REACTION_POINTS,
-    emoji
-  )) {
-    alert("This reaction is not supported.");
-    return;
-  }
+    if (
+      !Object.prototype.hasOwnProperty.call(
+        REACTION_POINTS,
+        emoji
+      )
+    ) {
+      alert("This reaction is not supported.");
+      return;
+    }
 
-  try {
-    const postRef = doc(db, "posts", postId);
+    try {
+      const postRef = doc(db, "posts", postId);
 
-    await runTransaction(db, async (transaction) => {
-      const postSnapshot = await transaction.get(postRef);
+      const committedReaction = await runTransaction(
+        db,
+        async (transaction) => {
+          const postSnapshot = await transaction.get(postRef);
 
-      if (!postSnapshot.exists()) {
-        throw new Error("This post no longer exists.");
-      }
+          if (!postSnapshot.exists()) {
+            throw new Error("This post no longer exists.");
+          }
 
-      const postData = postSnapshot.data();
-      const creatorUid = postData.userId;
+          const postData = postSnapshot.data();
+          const creatorUid = postData.userId;
 
-      if (
-        typeof creatorUid !== "string" ||
-        !creatorUid.trim()
-      ) {
-        throw new Error("The post has no valid creator.");
-      }
+          if (
+            typeof creatorUid !== "string" ||
+            !creatorUid.trim()
+          ) {
+            throw new Error("The post has no valid creator.");
+          }
 
-      if (creatorUid === currentUser.uid) {
-        throw new Error("You cannot react to your own post.");
-      }
+          if (creatorUid === currentUser.uid) {
+            throw new Error("You cannot react to your own post.");
+          }
 
-      const creatorRef = doc(db, "users", creatorUid);
-      const creatorSnapshot = await transaction.get(creatorRef);
+          const creatorRef = doc(db, "users", creatorUid);
+          const creatorSnapshot = await transaction.get(creatorRef);
 
-      if (!creatorSnapshot.exists()) {
-        throw new Error(
-          "The creator's user record could not be found."
+          if (!creatorSnapshot.exists()) {
+            throw new Error(
+              "The creator's user record could not be found."
+            );
+          }
+
+          const creatorData = creatorSnapshot.data();
+          const reactions = { ...(postData.reactions || {}) };
+          const userReactions = {
+            ...(postData.userReactions || {}),
+          };
+
+          const previousEmoji = userReactions[currentUser.uid];
+          const previousPoints =
+            previousEmoji &&
+            Object.prototype.hasOwnProperty.call(
+              REACTION_POINTS,
+              previousEmoji
+            )
+              ? REACTION_POINTS[previousEmoji]
+              : 0;
+
+          // Tapping the same reaction removes it.
+          // Tapping a different one replaces the previous reaction.
+          const nextEmoji =
+            previousEmoji === emoji ? null : emoji;
+
+          const nextPoints = nextEmoji
+            ? REACTION_POINTS[nextEmoji]
+            : 0;
+
+          const scoreDelta = nextPoints - previousPoints;
+
+          if (previousEmoji) {
+            reactions[previousEmoji] = Math.max(
+              0,
+              (Number(reactions[previousEmoji]) || 0) - 1
+            );
+          }
+
+          if (nextEmoji) {
+            reactions[nextEmoji] =
+              (Number(reactions[nextEmoji]) || 0) + 1;
+            userReactions[currentUser.uid] = nextEmoji;
+          } else {
+            delete userReactions[currentUser.uid];
+          }
+
+          const nextPostScore =
+            (Number(postData.creatorScore) || 0) + scoreDelta;
+
+          const nextCreatorScore =
+            (Number(creatorData.creatorScore) || 0) + scoreDelta;
+
+          // Keep the post and its actual creator in sync atomically.
+          transaction.update(postRef, {
+            reactions,
+            userReactions,
+            creatorScore: nextPostScore,
+          });
+
+          transaction.update(creatorRef, {
+            creatorScore: nextCreatorScore,
+          });
+
+          return {
+            reactions,
+            userReactions,
+            creatorScore: nextPostScore,
+          };
+        }
+      );
+
+      const updateReactedPost = (currentPosts) =>
+        currentPosts.map((post) =>
+          post.id === postId
+            ? {
+                ...post,
+                reactions: committedReaction.reactions,
+                userReactions: committedReaction.userReactions,
+                creatorScore: committedReaction.creatorScore,
+              }
+            : post
         );
-      }
 
-      const creatorData = creatorSnapshot.data();
-      const reactions = { ...(postData.reactions || {}) };
-      const userReactions = {
-        ...(postData.userReactions || {}),
-      };
-
-      const previousEmoji = userReactions[currentUser.uid];
-
-      const previousPoints =
-        previousEmoji &&
-        Object.prototype.hasOwnProperty.call(
-          REACTION_POINTS,
-          previousEmoji
-        )
-          ? REACTION_POINTS[previousEmoji]
-          : 0;
-
-      const removingReaction = previousEmoji === emoji;
-
-      const nextEmoji = removingReaction ? null : emoji;
-
-      const nextPoints = nextEmoji
-        ? REACTION_POINTS[nextEmoji]
-        : 0;
-
-      const scoreDelta = nextPoints - previousPoints;
-
-      // Update reaction counts without allowing negative counts.
-      if (previousEmoji) {
-        reactions[previousEmoji] = Math.max(
-          0,
-          (Number(reactions[previousEmoji]) || 0) - 1
-        );
-      }
-
-      if (nextEmoji) {
-        reactions[nextEmoji] =
-          (Number(reactions[nextEmoji]) || 0) + 1;
-
-        userReactions[currentUser.uid] = nextEmoji;
-      } else {
-        delete userReactions[currentUser.uid];
-      }
-
-      const nextPostScore =
-        (Number(postData.creatorScore) || 0) + scoreDelta;
-
-      const nextCreatorScore =
-        (Number(creatorData.creatorScore) || 0) + scoreDelta;
-
-      // Both documents are updated atomically.
-      transaction.update(postRef, {
-        reactions,
-        userReactions,
-        creatorScore: nextPostScore,
-      });
-
-      transaction.update(creatorRef, {
-        creatorScore: nextCreatorScore,
-      });
-    });
-
-    // Refresh the visible post using the committed reaction.
-    setPosts((previousPosts) =>
-      previousPosts.map((post) => {
-        if (post.id !== postId) return post;
-
-        return {
-          ...post,
-          creatorScore: post.creatorScore,
-          reactions: {
-            ...(post.reactions || {}),
-            [emoji]: post.reactions?.[emoji] || 0,
-          },
-        };
-      })
-    );
-  } catch (error) {
-    console.error("Reaction scoring failed:", error);
-    alert(error.message || "Unable to record your reaction.");
+      setPosts(updateReactedPost);
+      setFilteredPosts(updateReactedPost);
+    } catch (error) {
+      console.error("Reaction scoring failed:", error);
+      alert(error?.message || "Unable to record your reaction.");
+    }
   }
-}
 
   async function translatePost(
     post
