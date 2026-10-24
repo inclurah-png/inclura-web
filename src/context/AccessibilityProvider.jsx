@@ -1,3 +1,4 @@
+
 import {
   createContext,
   useContext,
@@ -5,6 +6,7 @@ import {
   useMemo,
   useState,
   useCallback,
+  useRef,
 } from "react";
 
 import { useAuth } from "./AuthContext";
@@ -24,14 +26,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import {
-  db,
-} from "../firebase";
+import { db } from "../firebase";
 
 import i18n from "../i18n";
 
-const AccessibilityContext =
-  createContext();
+const AccessibilityContext = createContext();
 
 const LANGUAGE_MAP = {
   en: "en-US",
@@ -61,35 +60,18 @@ const LANGUAGE_MAP = {
   tr: "tr-TR",
 };
 
-function normalizeAccessibilityNeeds(
-  accessibilityNeeds
-) {
-  if (
-    Array.isArray(
-      accessibilityNeeds
-    )
-  ) {
+function normalizeAccessibilityNeeds(accessibilityNeeds) {
+  if (Array.isArray(accessibilityNeeds)) {
     return accessibilityNeeds
-      .filter(
-        (need) =>
-          need !== null &&
-          need !== undefined
-      )
-      .map((need) =>
-        String(need).trim()
-      )
+      .filter((need) => need !== null && need !== undefined)
+      .map((need) => String(need).trim())
       .filter(Boolean);
   }
 
-  if (
-    typeof accessibilityNeeds ===
-    "string"
-  ) {
+  if (typeof accessibilityNeeds === "string") {
     return accessibilityNeeds
       .split(",")
-      .map((need) =>
-        need.trim()
-      )
+      .map((need) => need.trim())
       .filter(Boolean);
   }
 
@@ -103,556 +85,377 @@ function normalizeNeed(need) {
     .replace(/[_-]+/g, " ");
 }
 
-export function AccessibilityProvider({
-  children,
-}) {
-  const {
-    user,
-    userProfile,
-  } = useAuth();
+export function AccessibilityProvider({ children }) {
+  const { user, userProfile } = useAuth();
 
-  const [language, setLanguageState] =
-    useState("en");
+  const [language, setLanguageState] = useState("en");
+  const [fontScale, setFontScaleState] = useState(1);
+  const [highContrast, setHighContrastState] = useState(false);
+  const [reducedMotion, setReducedMotionState] = useState(false);
+  const [voiceEnabled, setVoiceEnabledState] = useState(false);
+  const [speaking, setSpeaking] = useState(false);
 
-  const [fontScale, setFontScaleState] =
-    useState(1);
-
-  const [
-    highContrast,
-    setHighContrastState,
-  ] = useState(false);
-
-  const [
-    reducedMotion,
-    setReducedMotionState,
-  ] = useState(false);
-
-  const [
-    voiceEnabled,
-    setVoiceEnabledState,
-  ] = useState(false);
-
-  const [speaking, setSpeaking] =
-    useState(false);
-
-  const [
-    ifseAccessibilityRuntime,
-    setIfseAccessibilityRuntime,
-  ] = useState(
-    () =>
-      getAccessibilityRuntime()
-  );
+  const [ifseAccessibilityRuntime, setIfseAccessibilityRuntime] =
+    useState(() => getAccessibilityRuntime());
 
   /*
-   * --------------------------------------------------
-   * SAVED ACCESSIBILITY NEEDS
-   * --------------------------------------------------
+   * SAVE STATUS
+   *
+   * Settings take effect immediately. If Firestore saving fails,
+   * the selected values remain active locally and the context exposes
+   * a warning for the settings screen to display.
    */
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [saveMessage, setSaveMessage] = useState("");
 
-  const accessibilityNeeds =
-    useMemo(() => {
-      return normalizeAccessibilityNeeds(
-        userProfile?.accessibilityNeeds
-      );
-    }, [
-      userProfile?.accessibilityNeeds,
-    ]);
+  const saveSequenceRef = useRef(0);
+  const localOverridesRef = useRef({});
+  const currentUidRef = useRef(user?.uid || null);
 
-  const normalizedNeeds =
-    useMemo(() => {
-      return accessibilityNeeds.map(
-        normalizeNeed
-      );
-    }, [
-      accessibilityNeeds,
-    ]);
+  /*
+   * Do not let an old user's unsaved preferences leak into another
+   * signed-in user's session.
+   */
+  useEffect(() => {
+    const nextUid = user?.uid || null;
+
+    if (currentUidRef.current !== nextUid) {
+      currentUidRef.current = nextUid;
+      localOverridesRef.current = {};
+      saveSequenceRef.current += 1;
+      setSaveStatus("idle");
+      setSaveMessage("");
+    }
+  }, [user?.uid]);
+
+  /*
+   * SAVED ACCESSIBILITY NEEDS
+   */
+  const accessibilityNeeds = useMemo(() => {
+    return normalizeAccessibilityNeeds(
+      userProfile?.accessibilityNeeds
+    );
+  }, [userProfile?.accessibilityNeeds]);
+
+  const normalizedNeeds = useMemo(() => {
+    return accessibilityNeeds.map(normalizeNeed);
+  }, [accessibilityNeeds]);
 
   const hasNeed = useCallback(
-    (...keywords) => {
-      return normalizedNeeds.some(
-        (need) =>
-          keywords.some((keyword) =>
-            need.includes(
-              normalizeNeed(keyword)
-            )
-          )
-      );
-    },
+    (...keywords) =>
+      normalizedNeeds.some((need) =>
+        keywords.some((keyword) =>
+          need.includes(normalizeNeed(keyword))
+        )
+      ),
     [normalizedNeeds]
   );
 
   /*
-   * --------------------------------------------------
    * APPLICATION ACCESSIBILITY PROFILE
-   * --------------------------------------------------
    */
+  const accessibilityProfile = useMemo(
+    () => ({
+      blind: hasNeed("blind", "blindness"),
 
-  const accessibilityProfile =
-    useMemo(() => {
-      return {
-        blind: hasNeed(
-          "blind",
-          "blindness"
-        ),
+      lowVision: hasNeed(
+        "low vision",
+        "visual impairment",
+        "low-vision"
+      ),
 
-        lowVision: hasNeed(
-          "low vision",
-          "visual impairment",
-          "low-vision"
-        ),
+      deaf: hasNeed("deaf", "deafness"),
 
-        deaf: hasNeed(
-          "deaf",
-          "deafness"
-        ),
+      hardOfHearing: hasNeed(
+        "hard of hearing",
+        "hearing impairment",
+        "hearing impaired"
+      ),
 
-        hardOfHearing: hasNeed(
-          "hard of hearing",
-          "hearing impairment",
-          "hearing impaired"
-        ),
+      wheelchair: hasNeed("wheelchair"),
 
-        wheelchair: hasNeed(
-          "wheelchair"
-        ),
+      motorImpaired: hasNeed(
+        "mobility impairment",
+        "mobility impaired",
+        "motor impairment",
+        "motor impaired",
+        "physical disability",
+        "wheelchair"
+      ),
 
-        motorImpaired: hasNeed(
-          "mobility impairment",
-          "mobility impaired",
-          "motor impairment",
-          "motor impaired",
-          "physical disability",
-          "wheelchair"
-        ),
+      speechImpairment: hasNeed(
+        "speech impairment",
+        "speech impaired",
+        "speech disability",
+        "non-verbal",
+        "nonverbal",
+        "unable to speak",
+        "communication impairment"
+      ),
 
-        speechImpairment: hasNeed(
-          "speech impairment",
-          "speech impaired",
-          "speech disability",
-          "non-verbal",
-          "nonverbal",
-          "unable to speak",
-          "communication impairment"
-        ),
+      dyslexia: hasNeed("dyslexia", "dyslexic"),
 
-        dyslexia: hasNeed(
-          "dyslexia",
-          "dyslexic"
-        ),
+      adhd: hasNeed("adhd", "attention deficit"),
 
-        adhd: hasNeed(
-          "adhd",
-          "attention deficit"
-        ),
-
-        autism: hasNeed(
-          "autism",
-          "autistic",
-          "neurodivergent",
-          "neurodivers"
-        ),
-      };
-    }, [
-      hasNeed,
-    ]);
+      autism: hasNeed(
+        "autism",
+        "autistic",
+        "neurodivergent",
+        "neurodivers"
+      ),
+    }),
+    [hasNeed]
+  );
 
   /*
-   * --------------------------------------------------
-   * FIRESTORE ACCESSIBILITY PERSISTENCE
-   * --------------------------------------------------
-   */
-
-  const saveAccessibilitySetting =
-    useCallback(
-      async (
-        field,
-        value
-      ) => {
-        const uid =
-          user?.uid;
-
-        if (!uid) {
-          return false;
-        }
-
-        try {
-          await updateDoc(
-            doc(
-              db,
-              "users",
-              uid
-            ),
-            {
-              [field]: value,
-            }
-          );
-
-          return true;
-        } catch (error) {
-          console.error(
-            `Unable to save accessibility setting "${field}":`,
-            error
-          );
-
-          return false;
-        }
-      },
-      [user?.uid]
-    );
-
-  /*
-   * --------------------------------------------------
-   * ACCESSIBILITY SETTERS
+   * FIRESTORE PERSISTENCE
    *
-   * The application language is synchronized with
-   * i18next so accessibility language changes and
-   * application translation always use the same
-   * active language.
-   * --------------------------------------------------
+   * Keep local preferences active when saving fails. Failed values
+   * are kept as local overrides so an unrelated profile refresh
+   * does not immediately reset the user's selection.
    */
+  const saveAccessibilitySettings = useCallback(
+    async (settings) => {
+      const uid = user?.uid;
+      const sequence = ++saveSequenceRef.current;
 
-  const setLanguage =
-    useCallback(
-      (value) => {
-        const normalizedLanguage =
-          typeof value === "string" &&
-          value.trim()
-            ? value.trim()
-            : "en";
+      if (!uid) {
+        localOverridesRef.current = {
+          ...localOverridesRef.current,
+          ...settings,
+        };
 
-        setLanguageState(
-          normalizedLanguage
+        setSaveStatus("error");
+        setSaveMessage(
+          "Your setting is active temporarily, but you must sign in to save it to your account."
         );
+
+        return false;
+      }
+
+      localOverridesRef.current = {
+        ...localOverridesRef.current,
+        ...settings,
+      };
+
+      setSaveStatus("saving");
+      setSaveMessage("Saving accessibility settings…");
+
+      try {
+        await updateDoc(doc(db, "users", uid), settings);
 
         /*
-         * Keep i18next synchronized with the
-         * accessibility language.
+         * Remove only the overrides that still match the values
+         * successfully saved. A newer selection must be preserved.
          */
-        void i18n
-          .changeLanguage(
-            normalizedLanguage
-          )
-          .catch((error) => {
-            console.error(
-              "Unable to change application language:",
-              error
-            );
-          });
+        const remainingOverrides = {
+          ...localOverridesRef.current,
+        };
 
-        /*
-         * The Edit Profile system historically
-         * uses preferredLanguage, while older
-         * accessibility data may use language.
-         *
-         * Keep both synchronized.
-         */
-        void saveAccessibilitySetting(
-          "language",
-          normalizedLanguage
-        );
-
-        void saveAccessibilitySetting(
-          "preferredLanguage",
-          normalizedLanguage
-        );
-      },
-      [
-        saveAccessibilitySetting,
-      ]
-    );
-
-  const setFontScale =
-    useCallback(
-      (value) => {
-        const numericValue =
-          Number(value);
-
-        if (
-          !Number.isFinite(
-            numericValue
-          )
-        ) {
-          return;
-        }
-
-        const normalizedValue =
-          Math.min(
-            1.6,
-            Math.max(
-              0.8,
-              numericValue
-            )
-          );
-
-        setFontScaleState(
-          normalizedValue
-        );
-
-        void saveAccessibilitySetting(
-          "fontScale",
-          normalizedValue
-        );
-      },
-      [
-        saveAccessibilitySetting,
-      ]
-    );
-
-  const setHighContrast =
-    useCallback(
-      (value) => {
-        const normalizedValue =
-          Boolean(value);
-
-        setHighContrastState(
-          normalizedValue
-        );
-
-        void saveAccessibilitySetting(
-          "highContrast",
-          normalizedValue
-        );
-      },
-      [
-        saveAccessibilitySetting,
-      ]
-    );
-
-  const setReducedMotion =
-    useCallback(
-      (value) => {
-        const normalizedValue =
-          Boolean(value);
-
-        setReducedMotionState(
-          normalizedValue
-        );
-
-        void saveAccessibilitySetting(
-          "reducedMotion",
-          normalizedValue
-        );
-      },
-      [
-        saveAccessibilitySetting,
-      ]
-    );
-
-  const setVoiceEnabled =
-    useCallback(
-      (value) => {
-        const normalizedValue =
-          Boolean(value);
-
-        setVoiceEnabledState(
-          normalizedValue
-        );
-
-        void saveAccessibilitySetting(
-          "voiceEnabled",
-          normalizedValue
-        );
-      },
-      [
-        saveAccessibilitySetting,
-      ]
-    );
-
-  /*
-   * --------------------------------------------------
-   * COMPATIBILITY SETTER
-   * --------------------------------------------------
-   */
-
-  const setAccessibilityProfile =
-    useCallback(
-      async (profileUpdate = {}) => {
-        if (
-          !profileUpdate ||
-          typeof profileUpdate !==
-            "object"
-        ) {
-          return;
-        }
-
-        const nextNeeds = [
-          ...accessibilityNeeds,
-        ];
-
-        const mappings = [
-          {
-            key: "blind",
-            values: [
-              "Blind",
-            ],
-          },
-          {
-            key: "lowVision",
-            values: [
-              "Low Vision",
-            ],
-          },
-          {
-            key: "deaf",
-            values: [
-              "Deaf",
-            ],
-          },
-          {
-            key: "hardOfHearing",
-            values: [
-              "Hard of Hearing",
-            ],
-          },
-          {
-            key: "wheelchair",
-            values: [
-              "Wheelchair",
-            ],
-          },
-          {
-            key: "motorImpaired",
-            values: [
-              "Mobility Impairment",
-            ],
-          },
-          {
-            key: "speechImpairment",
-            values: [
-              "Speech Impairment",
-            ],
-          },
-          {
-            key: "dyslexia",
-            values: [
-              "Dyslexia",
-            ],
-          },
-          {
-            key: "adhd",
-            values: [
-              "ADHD",
-            ],
-          },
-          {
-            key: "autism",
-            values: [
-              "Autism",
-            ],
-          },
-        ];
-
-        mappings.forEach(
-          ({
-            key,
-            values,
-          }) => {
-            if (
-              typeof profileUpdate[
-                key
-              ] !== "boolean"
-            ) {
-              return;
-            }
-
-            values.forEach(
-              (needValue) => {
-                const existingIndex =
-                  nextNeeds.findIndex(
-                    (need) =>
-                      normalizeNeed(
-                        need
-                      ) ===
-                      normalizeNeed(
-                        needValue
-                      )
-                  );
-
-                if (
-                  profileUpdate[
-                    key
-                  ]
-                ) {
-                  if (
-                    existingIndex <
-                    0
-                  ) {
-                    nextNeeds.push(
-                      needValue
-                    );
-                  }
-                } else if (
-                  existingIndex >=
-                  0
-                ) {
-                  nextNeeds.splice(
-                    existingIndex,
-                    1
-                  );
-                }
-              }
-            );
+        Object.entries(settings).forEach(([key, value]) => {
+          if (Object.is(remainingOverrides[key], value)) {
+            delete remainingOverrides[key];
           }
+        });
+
+        localOverridesRef.current = remainingOverrides;
+
+        if (saveSequenceRef.current === sequence) {
+          setSaveStatus("saved");
+          setSaveMessage("Accessibility settings saved to your account.");
+        }
+
+        return true;
+      } catch (error) {
+        console.error(
+          "Unable to save accessibility settings:",
+          error
         );
 
-        if (
-          user?.uid
-        ) {
-          try {
-            await updateDoc(
-              doc(
-                db,
-                "users",
-                user.uid
-              ),
-              {
-                accessibilityNeeds:
-                  nextNeeds,
-              }
-            );
-          } catch (error) {
-            console.error(
-              "Unable to save accessibility profile:",
-              error
-            );
-          }
-        }
-      },
-      [
-        accessibilityNeeds,
-        user?.uid,
-      ]
-    );
-
-  /*
-   * --------------------------------------------------
-   * IFSE RUNTIME SUBSCRIPTION
-   * --------------------------------------------------
-   */
-
-  useEffect(() => {
-    const unsubscribe =
-      subscribeAccessibility(
-        (runtimeState) => {
-          setIfseAccessibilityRuntime(
-            runtimeState
+        if (saveSequenceRef.current === sequence) {
+          setSaveStatus("error");
+          setSaveMessage(
+            "Your setting is active on this device, but could not be saved to your account. It may reset when you sign in again."
           );
         }
+
+        return false;
+      }
+    },
+    [user?.uid]
+  );
+
+  /*
+   * ACCESSIBILITY SETTERS
+   */
+  const setLanguage = useCallback(
+    (value) => {
+      const normalizedLanguage =
+        typeof value === "string" && value.trim()
+          ? value.trim()
+          : "en";
+
+      setLanguageState(normalizedLanguage);
+
+      void i18n.changeLanguage(normalizedLanguage).catch((error) => {
+        console.error(
+          "Unable to change application language:",
+          error
+        );
+      });
+
+      /*
+       * Update both existing language fields in one Firestore write.
+       * preferredLanguage is used by the profile language selector.
+       */
+      void saveAccessibilitySettings({
+        language: normalizedLanguage,
+        preferredLanguage: normalizedLanguage,
+      });
+    },
+    [saveAccessibilitySettings]
+  );
+
+  const setFontScale = useCallback(
+    (value) => {
+      const numericValue = Number(value);
+
+      if (!Number.isFinite(numericValue)) {
+        return;
+      }
+
+      const normalizedValue = Math.min(
+        1.6,
+        Math.max(0.8, numericValue)
       );
 
-    setIfseAccessibilityRuntime(
-      getAccessibilityRuntime()
-    );
+      setFontScaleState(normalizedValue);
+
+      void saveAccessibilitySettings({
+        fontScale: normalizedValue,
+      });
+    },
+    [saveAccessibilitySettings]
+  );
+
+  const setHighContrast = useCallback(
+    (value) => {
+      const normalizedValue = Boolean(value);
+
+      setHighContrastState(normalizedValue);
+
+      void saveAccessibilitySettings({
+        highContrast: normalizedValue,
+      });
+    },
+    [saveAccessibilitySettings]
+  );
+
+  const setReducedMotion = useCallback(
+    (value) => {
+      const normalizedValue = Boolean(value);
+
+      setReducedMotionState(normalizedValue);
+
+      void saveAccessibilitySettings({
+        reducedMotion: normalizedValue,
+      });
+    },
+    [saveAccessibilitySettings]
+  );
+
+  const setVoiceEnabled = useCallback(
+    (value) => {
+      const normalizedValue = Boolean(value);
+
+      setVoiceEnabledState(normalizedValue);
+
+      void saveAccessibilitySettings({
+        voiceEnabled: normalizedValue,
+      });
+    },
+    [saveAccessibilitySettings]
+  );
+
+  /*
+   * COMPATIBILITY SETTER FOR ACCESSIBILITY PROFILE NEEDS
+   */
+  const setAccessibilityProfile = useCallback(
+    async (profileUpdate = {}) => {
+      if (
+        !profileUpdate ||
+        typeof profileUpdate !== "object"
+      ) {
+        return false;
+      }
+
+      const nextNeeds = [...accessibilityNeeds];
+
+      const mappings = [
+        { key: "blind", values: ["Blind"] },
+        { key: "lowVision", values: ["Low Vision"] },
+        { key: "deaf", values: ["Deaf"] },
+        { key: "hardOfHearing", values: ["Hard of Hearing"] },
+        { key: "wheelchair", values: ["Wheelchair"] },
+        {
+          key: "motorImpaired",
+          values: ["Mobility Impairment"],
+        },
+        {
+          key: "speechImpairment",
+          values: ["Speech Impairment"],
+        },
+        { key: "dyslexia", values: ["Dyslexia"] },
+        { key: "adhd", values: ["ADHD"] },
+        { key: "autism", values: ["Autism"] },
+      ];
+
+      mappings.forEach(({ key, values }) => {
+        if (typeof profileUpdate[key] !== "boolean") {
+          return;
+        }
+
+        values.forEach((needValue) => {
+          const existingIndex = nextNeeds.findIndex(
+            (need) =>
+              normalizeNeed(need) === normalizeNeed(needValue)
+          );
+
+          if (profileUpdate[key]) {
+            if (existingIndex < 0) {
+              nextNeeds.push(needValue);
+            }
+          } else if (existingIndex >= 0) {
+            nextNeeds.splice(existingIndex, 1);
+          }
+        });
+      });
+
+      const saved = await saveAccessibilitySettings({
+        accessibilityNeeds: nextNeeds,
+      });
+
+      return saved;
+    },
+    [accessibilityNeeds, saveAccessibilitySettings]
+  );
+
+  /*
+   * IFSE RUNTIME SUBSCRIPTION
+   */
+  useEffect(() => {
+    const unsubscribe = subscribeAccessibility((runtimeState) => {
+      setIfseAccessibilityRuntime(runtimeState);
+    });
+
+    setIfseAccessibilityRuntime(getAccessibilityRuntime());
 
     return unsubscribe;
   }, []);
 
   /*
-   * --------------------------------------------------
-   * RESTORE SAVED ACCESSIBILITY SETTINGS
-   * --------------------------------------------------
+   * RESTORE SAVED SETTINGS
    */
-
   useEffect(() => {
     if (!userProfile) {
       setLanguageState("en");
@@ -661,114 +464,83 @@ export function AccessibilityProvider({
       setReducedMotionState(false);
       setVoiceEnabledState(false);
 
-      shutdownAccessibilityRuntime();
+      if (!user?.uid) {
+        shutdownAccessibilityRuntime();
+      }
 
       return;
     }
 
-    /*
-     * Support both language and the existing
-     * preferredLanguage profile field.
-     */
+    const overrides = localOverridesRef.current;
+
     const savedLanguage =
-      typeof userProfile.language ===
-        "string" &&
+      overrides.language ??
+      overrides.preferredLanguage ??
+      (typeof userProfile.language === "string" &&
       userProfile.language.trim()
         ? userProfile.language
-        : typeof userProfile.preferredLanguage ===
-            "string" &&
+        : typeof userProfile.preferredLanguage === "string" &&
           userProfile.preferredLanguage.trim()
         ? userProfile.preferredLanguage
-        : "en";
+        : "en");
 
-    setLanguageState(
-      savedLanguage
-    );
+    setLanguageState(savedLanguage);
 
-    /*
-     * Keep the global i18next language
-     * synchronized when the saved profile
-     * language is restored.
-     */
-    if (
-      i18n.language !==
-      savedLanguage
-    ) {
-      void i18n
-        .changeLanguage(
-          savedLanguage
-        )
-        .catch((error) => {
-          console.error(
-            "Unable to restore application language:",
-            error
-          );
-        });
+    if (i18n.language !== savedLanguage) {
+      void i18n.changeLanguage(savedLanguage).catch((error) => {
+        console.error(
+          "Unable to restore application language:",
+          error
+        );
+      });
     }
 
+    const savedFontScale =
+      overrides.fontScale ?? userProfile.fontScale;
+
     if (
-      typeof userProfile.fontScale ===
-        "number" &&
-      Number.isFinite(
-        userProfile.fontScale
-      ) &&
-      userProfile.fontScale > 0
+      typeof savedFontScale === "number" &&
+      Number.isFinite(savedFontScale) &&
+      savedFontScale > 0
     ) {
       setFontScaleState(
-        Math.min(
-          1.6,
-          Math.max(
-            0.8,
-            userProfile.fontScale
-          )
-        )
+        Math.min(1.6, Math.max(0.8, savedFontScale))
       );
     } else {
       setFontScaleState(1);
     }
 
-    if (
-      typeof userProfile.highContrast ===
-      "boolean"
-    ) {
-      setHighContrastState(
-        userProfile.highContrast
-      );
-    } else {
-      setHighContrastState(false);
-    }
+    const savedHighContrast =
+      overrides.highContrast ?? userProfile.highContrast;
 
-    if (
-      typeof userProfile.reducedMotion ===
-      "boolean"
-    ) {
-      setReducedMotionState(
-        userProfile.reducedMotion
-      );
-    } else {
-      setReducedMotionState(false);
-    }
+    setHighContrastState(
+      typeof savedHighContrast === "boolean"
+        ? savedHighContrast
+        : false
+    );
 
-    if (
-      typeof userProfile.voiceEnabled ===
-      "boolean"
-    ) {
-      setVoiceEnabledState(
-        userProfile.voiceEnabled
-      );
-    } else {
-      setVoiceEnabledState(false);
-    }
-  }, [
-    userProfile,
-  ]);
+    const savedReducedMotion =
+      overrides.reducedMotion ?? userProfile.reducedMotion;
+
+    setReducedMotionState(
+      typeof savedReducedMotion === "boolean"
+        ? savedReducedMotion
+        : false
+    );
+
+    const savedVoiceEnabled =
+      overrides.voiceEnabled ?? userProfile.voiceEnabled;
+
+    setVoiceEnabledState(
+      typeof savedVoiceEnabled === "boolean"
+        ? savedVoiceEnabled
+        : false
+    );
+  }, [userProfile, user?.uid]);
 
   /*
-   * --------------------------------------------------
-   * SEND COMPLETE ACCESSIBILITY STATE TO IFSE
-   * --------------------------------------------------
+   * SEND ACCESSIBILITY STATE TO IFSE
    */
-
   useEffect(() => {
     if (!userProfile) {
       return;
@@ -776,23 +548,15 @@ export function AccessibilityProvider({
 
     const runtimeRequest = {
       ...userProfile,
-
       language,
-
       fontScale,
-
       highContrast,
-
       reducedMotion,
-
       voiceEnabled,
-
       accessibilityNeeds,
     };
 
-    void initializeUserAccessibility(
-      runtimeRequest
-    );
+    void initializeUserAccessibility(runtimeRequest);
   }, [
     userProfile,
     language,
@@ -804,16 +568,12 @@ export function AccessibilityProvider({
   ]);
 
   /*
-   * --------------------------------------------------
    * BROWSER SPEECH SUPPORT
-   * --------------------------------------------------
    */
-
   const speechSupported =
     typeof window !== "undefined" &&
     "speechSynthesis" in window &&
-    "SpeechSynthesisUtterance" in
-      window;
+    "SpeechSynthesisUtterance" in window;
 
   useEffect(() => {
     return () => {
@@ -834,17 +594,9 @@ export function AccessibilityProvider({
       return undefined;
     }
 
-    const handleSpeechStart = () => {
-      setSpeaking(true);
-    };
-
-    const handleSpeechEnd = () => {
-      setSpeaking(false);
-    };
-
-    const handleSpeechError = () => {
-      setSpeaking(false);
-    };
+    const handleSpeechStart = () => setSpeaking(true);
+    const handleSpeechEnd = () => setSpeaking(false);
+    const handleSpeechError = () => setSpeaking(false);
 
     window.speechSynthesis.addEventListener(
       "start",
@@ -877,20 +629,12 @@ export function AccessibilityProvider({
         handleSpeechError
       );
     };
-  }, [
-    speechSupported,
-  ]);
+  }, [speechSupported]);
 
   /*
-   * --------------------------------------------------
    * SPEECH SERVICE
-   * --------------------------------------------------
    */
-
-  function speakText(
-    text,
-    options = {}
-  ) {
+  function speakText(text, options = {}) {
     if (
       !text ||
       !speechSupported ||
@@ -899,67 +643,37 @@ export function AccessibilityProvider({
       return false;
     }
 
-    const cleanText =
-      String(text).trim();
+    const cleanText = String(text).trim();
 
     if (!cleanText) {
       return false;
     }
 
-    const requestedLanguage =
-      options.language ||
-      language;
+    const requestedLanguage = options.language || language;
 
     const speechLanguage =
-      LANGUAGE_MAP[
-        requestedLanguage
-      ] ||
-      "en-US";
+      LANGUAGE_MAP[requestedLanguage] || "en-US";
 
     try {
       window.speechSynthesis.cancel();
 
-      const utterance =
-        new SpeechSynthesisUtterance(
-          cleanText
-        );
-
-      utterance.lang =
-        speechLanguage;
-
-      utterance.rate =
-        typeof options.rate ===
-          "number"
-          ? options.rate
-          : 1;
-
-      utterance.pitch =
-        typeof options.pitch ===
-          "number"
-          ? options.pitch
-          : 1;
-
-      utterance.volume =
-        typeof options.volume ===
-          "number"
-          ? options.volume
-          : 1;
-
-      utterance.onstart = () => {
-        setSpeaking(true);
-      };
-
-      utterance.onend = () => {
-        setSpeaking(false);
-      };
-
-      utterance.onerror = () => {
-        setSpeaking(false);
-      };
-
-      window.speechSynthesis.speak(
-        utterance
+      const utterance = new SpeechSynthesisUtterance(
+        cleanText
       );
+
+      utterance.lang = speechLanguage;
+      utterance.rate =
+        typeof options.rate === "number" ? options.rate : 1;
+      utterance.pitch =
+        typeof options.pitch === "number" ? options.pitch : 1;
+      utterance.volume =
+        typeof options.volume === "number" ? options.volume : 1;
+
+      utterance.onstart = () => setSpeaking(true);
+      utterance.onend = () => setSpeaking(false);
+      utterance.onerror = () => setSpeaking(false);
+
+      window.speechSynthesis.speak(utterance);
 
       return true;
     } catch (error) {
@@ -986,22 +700,16 @@ export function AccessibilityProvider({
   }
 
   /*
-   * --------------------------------------------------
    * EFFECTIVE VOICE ACCESSIBILITY
-   * --------------------------------------------------
    */
-
   const effectiveVoiceEnabled =
     voiceEnabled ||
     accessibilityProfile.blind ||
     accessibilityProfile.lowVision;
 
   /*
-   * --------------------------------------------------
    * CONTEXT VALUE
-   * --------------------------------------------------
    */
-
   const value = {
     language,
     setLanguage,
@@ -1026,39 +734,24 @@ export function AccessibilityProvider({
     stopSpeaking,
 
     accessibilityNeeds,
-
     accessibilityProfile,
     setAccessibilityProfile,
 
     ifseAccessibilityRuntime,
+
+    saveStatus,
+    saveMessage,
   };
 
   return (
-    <AccessibilityContext.Provider
-      value={value}
-    >
+    <AccessibilityContext.Provider value={value}>
       <div
         style={{
-          fontSize:
-            `${fontScale}rem`,
-
-          background:
-            highContrast
-              ? "#000000"
-              : undefined,
-
-          color:
-            highContrast
-              ? "#ffffff"
-              : undefined,
-
-          minHeight:
-            "100%",
-
-          transition:
-            reducedMotion
-              ? "none"
-              : "all 0.3s ease",
+          fontSize: `${fontScale}rem`,
+          background: highContrast ? "#000000" : undefined,
+          color: highContrast ? "#ffffff" : undefined,
+          minHeight: "100%",
+          transition: reducedMotion ? "none" : "all 0.3s ease",
         }}
       >
         {children}
@@ -1068,10 +761,7 @@ export function AccessibilityProvider({
 }
 
 export function useAccessibility() {
-  const context =
-    useContext(
-      AccessibilityContext
-    );
+  const context = useContext(AccessibilityContext);
 
   if (!context) {
     throw new Error(
