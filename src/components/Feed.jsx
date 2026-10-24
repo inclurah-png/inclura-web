@@ -1,4 +1,3 @@
-
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -21,55 +20,48 @@ import {
 import { db, auth } from "../firebase";
   }
 
+const API_BASE_URL = (
+  import.meta.env.VITE_AI_BACKEND_URL ||
+  "https://inclura-ai-backend.onrender.com"
+).replace(/\/+$/, "");
 
-  async function reactToPost(postId, emoji) {
-    const user = auth.currentUser;
+const [reactingPosts, setReactingPosts] = useState({});
+
 async function reactToPost(postId, emoji) {
+  const scoreMap = {
+    "❤️": 4,
+    "👏": 3,
+    "😊": 3,
+    "👍": 2,
+    "😂": 2,
+    "😮": 2,
+    "😢": 2,
+    "👎": -3,
+  };
+
   const user = auth.currentUser;
 
-    if (!user) {
-      alert("Please sign in to react to a post.");
-      return;
-    }
   if (!user) {
     alert("Please sign in to react to a post.");
     return;
   }
 
-    const scoreMap = {
-      "❤️": 4,
-      "👏": 3,
-      "😊": 3,
-      "👍": 2,
-      "😂": 2,
-      "😮": 2,
-      "😢": 2,
-      "👎": -3,
-    };
-  const allowedEmojis = [
-    "❤️",
-    "👏",
-    "😊",
-    "👍",
-    "😂",
-    "😮",
-    "😢",
-    "👎",
-  ];
-  if (!allowedEmojis.includes(emoji)) {
+  if (!Object.prototype.hasOwnProperty.call(scoreMap, emoji)) {
     return;
   }
 
-    if (!Object.prototype.hasOwnProperty.call(scoreMap, emoji)) {
-      return;
-    }
-  const API_BASE_URL = (
-    import.meta.env.VITE_AI_BACKEND_URL ||
-    "https://inclura-ai-backend.onrender.com"
-  ).replace(/\/+$/, "");
+  if (reactingPosts[postId]) {
+    return;
+  }
+
+  setReactingPosts((previous) => ({
+    ...previous,
+    [postId]: true,
+  }));
+
   try {
-    // Obtain a Firebase ID token for the signed-in user.
     const idToken = await user.getIdToken();
+
     const response = await fetch(
       `${API_BASE_URL}/api/posts/${encodeURIComponent(postId)}/react`,
       {
@@ -78,33 +70,67 @@ async function reactToPost(postId, emoji) {
           Authorization: `Bearer ${idToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          emoji,
-        }),
+        body: JSON.stringify({ emoji }),
       }
     );
 
-    const postRef = doc(db, "posts", postId);
-    let result;
+    let result = {};
 
     try {
-      const result = await runTransaction(db, async (transaction) => {
-        const postSnap = await transaction.get(postRef);
-        if (!postSnap.exists()) {
-          throw new Error("This post no longer exists.");
-        }
-        const post = postSnap.data();
-        const creatorId = post.userId;
-        if (!creatorId) {
-          throw new Error(
-            "The post has no creator ID. No score was changed."
-          );
-        }
-        // A creator must not earn engagement points
-        // by reacting to their own post.
-        if (creatorId === user.uid) {
-          throw new Error(
-            "You cannot earn creator points by reacting to your own post."
+      result = await response.json();
+    } catch {
+      result = {};
+    }
+
+    if (!response.ok) {
+      throw new Error(
+        result.detail ||
+          result.message ||
+          `Reaction failed (${response.status}).`
+      );
+    }
+
+    if (
+      !result.reactions ||
+      !result.userReactions
+    ) {
+      throw new Error(
+        "The reaction service returned incomplete data."
+      );
+    }
+
+    const updateReactionState = (previousPosts) =>
+      previousPosts.map((post) =>
+        post.id === postId
+          ? {
+              ...post,
+              reactions: result.reactions,
+              userReactions: result.userReactions,
+              ...(typeof result.creatorScore === "number"
+                ? { creatorScore: result.creatorScore }
+                : {}),
+            }
+          : post
+      );
+
+    setPosts(updateReactionState);
+    setFilteredPosts(updateReactionState);
+  } catch (error) {
+    console.error("Inclura Reaction Error:", error);
+
+    alert(
+      error?.message ||
+        "Unable to save your reaction. Please try again."
+    );
+  } finally {
+    setReactingPosts((previous) => {
+      const next = { ...previous };
+      delete next[postId];
+      return next;
+    });
+  }
+}
+
           );
         }
         const creatorRef = doc(db, "users", creatorId);
