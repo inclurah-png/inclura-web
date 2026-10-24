@@ -635,145 +635,104 @@ const REACTION_POINTS = {
     "👎": -3,
   };
 
+  
   async function reactToPost(postId, emoji) {
-    const currentUser = auth.currentUser;
+    const user = auth.currentUser;
 
-    if (!currentUser) {
+    if (!user) {
       alert("Please sign in to react to a post.");
       return;
     }
 
-    if (
-      !Object.prototype.hasOwnProperty.call(
-        REACTION_POINTS,
-        emoji
-      )
-    ) {
-      alert("This reaction is not supported.");
+    const allowedEmojis = [
+      "❤️",
+      "👏",
+      "😊",
+      "👍",
+      "😂",
+      "😮",
+      "😢",
+      "👎",
+    ];
+
+    if (!allowedEmojis.includes(emoji)) {
       return;
     }
 
+    const API_BASE_URL = (
+      import.meta.env.VITE_AI_BACKEND_URL ||
+      "https://inclura-ai-backend.onrender.com"
+    ).replace(/\/+$/, "");
+
     try {
-      const postRef = doc(db, "posts", postId);
+      const idToken = await user.getIdToken();
 
-      const committedReaction = await runTransaction(
-        db,
-        async (transaction) => {
-          const postSnapshot = await transaction.get(postRef);
-
-          if (!postSnapshot.exists()) {
-            throw new Error("This post no longer exists.");
-          }
-
-          const postData = postSnapshot.data();
-          const creatorUid = postData.userId;
-
-          if (
-            typeof creatorUid !== "string" ||
-            !creatorUid.trim()
-          ) {
-            throw new Error("The post has no valid creator.");
-          }
-
-          if (creatorUid === currentUser.uid) {
-            throw new Error("You cannot react to your own post.");
-          }
-
-          const creatorRef = doc(db, "users", creatorUid);
-          const creatorSnapshot = await transaction.get(creatorRef);
-
-          if (!creatorSnapshot.exists()) {
-            throw new Error(
-              "The creator's user record could not be found."
-            );
-          }
-
-          const creatorData = creatorSnapshot.data();
-          const reactions = { ...(postData.reactions || {}) };
-          const userReactions = {
-            ...(postData.userReactions || {}),
-          };
-
-          const previousEmoji = userReactions[currentUser.uid];
-          const previousPoints =
-            previousEmoji &&
-            Object.prototype.hasOwnProperty.call(
-              REACTION_POINTS,
-              previousEmoji
-            )
-              ? REACTION_POINTS[previousEmoji]
-              : 0;
-
-          // Tapping the same reaction removes it.
-          // Tapping a different one replaces the previous reaction.
-          const nextEmoji =
-            previousEmoji === emoji ? null : emoji;
-
-          const nextPoints = nextEmoji
-            ? REACTION_POINTS[nextEmoji]
-            : 0;
-
-          const scoreDelta = nextPoints - previousPoints;
-
-          if (previousEmoji) {
-            reactions[previousEmoji] = Math.max(
-              0,
-              (Number(reactions[previousEmoji]) || 0) - 1
-            );
-          }
-
-          if (nextEmoji) {
-            reactions[nextEmoji] =
-              (Number(reactions[nextEmoji]) || 0) + 1;
-            userReactions[currentUser.uid] = nextEmoji;
-          } else {
-            delete userReactions[currentUser.uid];
-          }
-
-          const nextPostScore =
-            (Number(postData.creatorScore) || 0) + scoreDelta;
-
-          const nextCreatorScore =
-            (Number(creatorData.creatorScore) || 0) + scoreDelta;
-
-          // Keep the post and its actual creator in sync atomically.
-          transaction.update(postRef, {
-            reactions,
-            userReactions,
-            creatorScore: nextPostScore,
-          });
-
-          transaction.update(creatorRef, {
-            creatorScore: nextCreatorScore,
-          });
-
-          return {
-            reactions,
-            userReactions,
-            creatorScore: nextPostScore,
-          };
+      const response = await fetch(
+        `${API_BASE_URL}/api/posts/${encodeURIComponent(postId)}/react`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ emoji }),
         }
       );
 
-      const updateReactedPost = (currentPosts) =>
-        currentPosts.map((post) =>
-          post.id === postId
+      let result;
+
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error(
+          "The reaction service returned an invalid response."
+        );
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          result?.detail ||
+            "Unable to save your reaction. Please try again."
+        );
+      }
+
+      if (
+        result?.success !== true ||
+        !result.reactions ||
+        !result.userReactions
+      ) {
+        throw new Error(
+          "The reaction service did not confirm the update."
+        );
+      }
+
+      const updateReactionState = (previousPosts) =>
+        previousPosts.map((currentPost) =>
+          currentPost.id === postId
             ? {
-                ...post,
-                reactions: committedReaction.reactions,
-                userReactions: committedReaction.userReactions,
-                creatorScore: committedReaction.creatorScore,
+                ...currentPost,
+                reactions: result.reactions,
+                creatorScore:
+                  result.postCreatorScore ??
+                  currentPost.creatorScore ??
+                  0,
+                userReactions: result.userReactions,
               }
-            : post
+            : currentPost
         );
 
-      setPosts(updateReactedPost);
-      setFilteredPosts(updateReactedPost);
+      setPosts(updateReactionState);
+      setFilteredPosts(updateReactionState);
     } catch (error) {
-      console.error("Reaction scoring failed:", error);
-      alert(error?.message || "Unable to record your reaction.");
+      console.error("Inclura Reaction Error:", error);
+
+      alert(
+        error?.message ||
+          "Unable to save your reaction. Please try again."
+      );
     }
   }
+
 
   async function translatePost(
     post
