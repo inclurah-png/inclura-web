@@ -1,4 +1,3 @@
-
 import {
   createContext,
   useContext,
@@ -23,11 +22,10 @@ import {
 
 import {
   doc,
-  updateDoc,
+  setDoc,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
-
 import i18n from "../i18n";
 
 const AccessibilityContext = createContext();
@@ -85,6 +83,17 @@ function normalizeNeed(need) {
     .replace(/[_-]+/g, " ");
 }
 
+function valuesMatch(left, right) {
+  if (Array.isArray(left) && Array.isArray(right)) {
+    return (
+      left.length === right.length &&
+      left.every((item, index) => item === right[index])
+    );
+  }
+
+  return Object.is(left, right);
+}
+
 export function AccessibilityProvider({ children }) {
   const { user, userProfile } = useAuth();
 
@@ -98,23 +107,16 @@ export function AccessibilityProvider({ children }) {
   const [ifseAccessibilityRuntime, setIfseAccessibilityRuntime] =
     useState(() => getAccessibilityRuntime());
 
-  /*
-   * SAVE STATUS
-   *
-   * Settings take effect immediately. If Firestore saving fails,
-   * the selected values remain active locally and the context exposes
-   * a warning for the settings screen to display.
-   */
   const [saveStatus, setSaveStatus] = useState("idle");
   const [saveMessage, setSaveMessage] = useState("");
+  const [localOverrides, setLocalOverrides] = useState({});
 
   const saveSequenceRef = useRef(0);
   const localOverridesRef = useRef({});
   const currentUidRef = useRef(user?.uid || null);
 
   /*
-   * Do not let an old user's unsaved preferences leak into another
-   * signed-in user's session.
+   * Reset pending local preferences when the signed-in account changes.
    */
   useEffect(() => {
     const nextUid = user?.uid || null;
@@ -122,6 +124,7 @@ export function AccessibilityProvider({ children }) {
     if (currentUidRef.current !== nextUid) {
       currentUidRef.current = nextUid;
       localOverridesRef.current = {};
+      setLocalOverrides({});
       saveSequenceRef.current += 1;
       setSaveStatus("idle");
       setSaveMessage("");
@@ -129,17 +132,25 @@ export function AccessibilityProvider({ children }) {
   }, [user?.uid]);
 
   /*
-   * SAVED ACCESSIBILITY NEEDS
+   * ACCESSIBILITY NEEDS
+   *
+   * Local selections take priority while Firestore is updating.
    */
   const accessibilityNeeds = useMemo(() => {
-    return normalizeAccessibilityNeeds(
-      userProfile?.accessibilityNeeds
-    );
-  }, [userProfile?.accessibilityNeeds]);
+    const needs = Object.prototype.hasOwnProperty.call(
+      localOverrides,
+      "accessibilityNeeds"
+    )
+      ? localOverrides.accessibilityNeeds
+      : userProfile?.accessibilityNeeds;
 
-  const normalizedNeeds = useMemo(() => {
-    return accessibilityNeeds.map(normalizeNeed);
-  }, [accessibilityNeeds]);
+    return normalizeAccessibilityNeeds(needs);
+  }, [localOverrides, userProfile?.accessibilityNeeds]);
+
+  const normalizedNeeds = useMemo(
+    () => accessibilityNeeds.map(normalizeNeed),
+    [accessibilityNeeds]
+  );
 
   const hasNeed = useCallback(
     (...keywords) =>
@@ -194,7 +205,6 @@ export function AccessibilityProvider({ children }) {
       ),
 
       dyslexia: hasNeed("dyslexia", "dyslexic"),
-
       adhd: hasNeed("adhd", "attention deficit"),
 
       autism: hasNeed(
@@ -210,59 +220,45 @@ export function AccessibilityProvider({ children }) {
   /*
    * FIRESTORE PERSISTENCE
    *
-   * Keep local preferences active when saving fails. Failed values
-   * are kept as local overrides so an unrelated profile refresh
-   * does not immediately reset the user's selection.
+   * Merge settings into the existing user document. If it does not
+   * exist, this can create it, subject to the Firestore security rules.
+   *
+   * Keep local overrides until the profile snapshot confirms the values.
    */
   const saveAccessibilitySettings = useCallback(
     async (settings) => {
       const uid = user?.uid;
       const sequence = ++saveSequenceRef.current;
 
-      if (!uid) {
-        localOverridesRef.current = {
-          ...localOverridesRef.current,
-          ...settings,
-        };
+      const nextOverrides = {
+        ...localOverridesRef.current,
+        ...settings,
+      };
 
+      localOverridesRef.current = nextOverrides;
+      setLocalOverrides(nextOverrides);
+
+      if (!uid) {
         setSaveStatus("error");
         setSaveMessage(
           "Your setting is active temporarily, but you must sign in to save it to your account."
         );
-
         return false;
       }
-
-      localOverridesRef.current = {
-        ...localOverridesRef.current,
-        ...settings,
-      };
 
       setSaveStatus("saving");
       setSaveMessage("Saving accessibility settings…");
 
       try {
-        await updateDoc(doc(db, "users", uid), settings);
-
-        /*
-         * Remove only the overrides that still match the values
-         * successfully saved. A newer selection must be preserved.
-         */
-        const remainingOverrides = {
-          ...localOverridesRef.current,
-        };
-
-        Object.entries(settings).forEach(([key, value]) => {
-          if (Object.is(remainingOverrides[key], value)) {
-            delete remainingOverrides[key];
-          }
+        await setDoc(doc(db, "users", uid), settings, {
+          merge: true,
         });
-
-        localOverridesRef.current = remainingOverrides;
 
         if (saveSequenceRef.current === sequence) {
           setSaveStatus("saved");
-          setSaveMessage("Accessibility settings saved to your account.");
+          setSaveMessage(
+            "Accessibility settings saved to your account."
+          );
         }
 
         return true;
@@ -275,7 +271,7 @@ export function AccessibilityProvider({ children }) {
         if (saveSequenceRef.current === sequence) {
           setSaveStatus("error");
           setSaveMessage(
-            "Your setting is active on this device, but could not be saved to your account. It may reset when you sign in again."
+            "Your setting remains active locally, but could not be saved to your account. Check your connection and account permissions."
           );
         }
 
@@ -284,6 +280,36 @@ export function AccessibilityProvider({ children }) {
     },
     [user?.uid]
   );
+
+  /*
+   * CLEAR ONLY OVERRIDES THAT MATCH THE PROFILE SNAPSHOT.
+   *
+   * A stale snapshot cannot remove a newer local selection.
+   */
+  useEffect(() => {
+    if (!user?.uid || !userProfile) {
+      return;
+    }
+
+    const currentOverrides = localOverridesRef.current;
+    const remainingOverrides = { ...currentOverrides };
+    let changed = false;
+
+    Object.entries(currentOverrides).forEach(([key, value]) => {
+      if (
+        Object.prototype.hasOwnProperty.call(userProfile, key) &&
+        valuesMatch(userProfile[key], value)
+      ) {
+        delete remainingOverrides[key];
+        changed = true;
+      }
+    });
+
+    if (changed) {
+      localOverridesRef.current = remainingOverrides;
+      setLocalOverrides(remainingOverrides);
+    }
+  }, [user?.uid, userProfile, localOverrides]);
 
   /*
    * ACCESSIBILITY SETTERS
@@ -304,10 +330,6 @@ export function AccessibilityProvider({ children }) {
         );
       });
 
-      /*
-       * Update both existing language fields in one Firestore write.
-       * preferredLanguage is used by the profile language selector.
-       */
       void saveAccessibilitySettings({
         language: normalizedLanguage,
         preferredLanguage: normalizedLanguage,
@@ -378,13 +400,14 @@ export function AccessibilityProvider({ children }) {
   );
 
   /*
-   * COMPATIBILITY SETTER FOR ACCESSIBILITY PROFILE NEEDS
+   * ACCESSIBILITY PROFILE NEEDS
    */
   const setAccessibilityProfile = useCallback(
     async (profileUpdate = {}) => {
       if (
         !profileUpdate ||
-        typeof profileUpdate !== "object"
+        typeof profileUpdate !== "object" ||
+        Array.isArray(profileUpdate)
       ) {
         return false;
       }
@@ -431,11 +454,9 @@ export function AccessibilityProvider({ children }) {
         });
       });
 
-      const saved = await saveAccessibilitySettings({
+      return saveAccessibilitySettings({
         accessibilityNeeds: nextNeeds,
       });
-
-      return saved;
     },
     [accessibilityNeeds, saveAccessibilitySettings]
   );
@@ -457,23 +478,20 @@ export function AccessibilityProvider({ children }) {
    * RESTORE SAVED SETTINGS
    */
   useEffect(() => {
-  if (!userProfile) {
-    // Preserve current settings while a signed-in user's
-    // profile is temporarily loading.
-    if (!user?.uid) {
-      setLanguageState("en");
-      setFontScaleState(1);
-      setHighContrastState(false);
-      setReducedMotionState(false);
-      setVoiceEnabledState(false);
+    if (!userProfile) {
+      if (!user?.uid) {
+        setLanguageState("en");
+        setFontScaleState(1);
+        setHighContrastState(false);
+        setReducedMotionState(false);
+        setVoiceEnabledState(false);
+        shutdownAccessibilityRuntime();
+      }
 
-      shutdownAccessibilityRuntime();
+      return;
     }
 
-    return;
-  }
-
-    const overrides = localOverridesRef.current;
+    const overrides = localOverrides;
 
     const savedLanguage =
       overrides.language ??
@@ -538,7 +556,7 @@ export function AccessibilityProvider({ children }) {
         ? savedVoiceEnabled
         : false
     );
-  }, [userProfile, user?.uid]);
+  }, [userProfile, user?.uid, localOverrides]);
 
   /*
    * SEND ACCESSIBILITY STATE TO IFSE
@@ -604,12 +622,10 @@ export function AccessibilityProvider({ children }) {
       "start",
       handleSpeechStart
     );
-
     window.speechSynthesis.addEventListener(
       "end",
       handleSpeechEnd
     );
-
     window.speechSynthesis.addEventListener(
       "error",
       handleSpeechError
@@ -620,12 +636,10 @@ export function AccessibilityProvider({ children }) {
         "start",
         handleSpeechStart
       );
-
       window.speechSynthesis.removeEventListener(
         "end",
         handleSpeechEnd
       );
-
       window.speechSynthesis.removeEventListener(
         "error",
         handleSpeechError
@@ -652,16 +666,13 @@ export function AccessibilityProvider({ children }) {
     }
 
     const requestedLanguage = options.language || language;
-
     const speechLanguage =
       LANGUAGE_MAP[requestedLanguage] || "en-US";
 
     try {
       window.speechSynthesis.cancel();
 
-      const utterance = new SpeechSynthesisUtterance(
-        cleanText
-      );
+      const utterance = new SpeechSynthesisUtterance(cleanText);
 
       utterance.lang = speechLanguage;
       utterance.rate =
@@ -685,7 +696,6 @@ export function AccessibilityProvider({ children }) {
       );
 
       setSpeaking(false);
-
       return false;
     }
   }
