@@ -457,19 +457,21 @@ export function AccessibilityProvider({ children }) {
    * RESTORE SAVED SETTINGS
    */
   useEffect(() => {
-    if (!userProfile) {
+  if (!userProfile) {
+    // Preserve current settings while a signed-in user's
+    // profile is temporarily loading.
+    if (!user?.uid) {
       setLanguageState("en");
       setFontScaleState(1);
       setHighContrastState(false);
       setReducedMotionState(false);
       setVoiceEnabledState(false);
 
-      if (!user?.uid) {
-        shutdownAccessibilityRuntime();
-      }
-
-      return;
+      shutdownAccessibilityRuntime();
     }
+
+    return;
+  }
 
     const overrides = localOverridesRef.current;
 
