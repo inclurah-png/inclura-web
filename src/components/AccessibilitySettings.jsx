@@ -8,7 +8,7 @@ import {
   useRef,
 } from "react";
 
-import { useAuth } from "./AuthContext";
+import { useAuth } from "../context/AuthContext";
 
 import {
   initializeUserAccessibility,
