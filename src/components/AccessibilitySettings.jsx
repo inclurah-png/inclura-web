@@ -1,826 +1,354 @@
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useCallback,
-  useRef,
-} from "react";
+import { useAccessibility } from "../context/AccessibilityProvider";
 
-import { useAuth } from "../context/AuthContext";
+const LANGUAGE_OPTIONS = [
+  { value: "en", label: "English" },
+  { value: "yo", label: "Yoruba" },
+  { value: "ig", label: "Igbo" },
+  { value: "ha", label: "Hausa" },
+  { value: "pcm", label: "Nigerian Pidgin" },
+  { value: "fr", label: "French" },
+  { value: "es", label: "Spanish" },
+  { value: "pt", label: "Portuguese" },
+  { value: "sw", label: "Swahili" },
+  { value: "ar", label: "Arabic" },
+  { value: "zh", label: "Chinese (Simplified)" },
+  { value: "zh-TW", label: "Chinese (Traditional)" },
+  { value: "ja", label: "Japanese" },
+  { value: "de", label: "German" },
+  { value: "hi", label: "Hindi" },
+  { value: "ru", label: "Russian" },
+  { value: "it", label: "Italian" },
+  { value: "nl", label: "Dutch" },
+  { value: "ko", label: "Korean" },
+  { value: "vi", label: "Vietnamese" },
+  { value: "th", label: "Thai" },
+  { value: "id", label: "Indonesian" },
+  { value: "ms", label: "Malay" },
+  { value: "bn", label: "Bengali" },
+  { value: "tr", label: "Turkish" },
+];
 
-import {
-  initializeUserAccessibility,
-} from "../ifse/accessibility/AccessibilityAuthenticationIntegration";
+const PROFILE_OPTIONS = [
+  { key: "blind", label: "Blindness" },
+  { key: "lowVision", label: "Low vision" },
+  { key: "deaf", label: "Deafness" },
+  { key: "hardOfHearing", label: "Hard of hearing" },
+  { key: "wheelchair", label: "Wheelchair user" },
+  { key: "motorImpaired", label: "Mobility impairment" },
+  { key: "speechImpairment", label: "Speech impairment" },
+  { key: "dyslexia", label: "Dyslexia" },
+  { key: "adhd", label: "ADHD" },
+  { key: "autism", label: "Autism" },
+];
 
-import {
-  getAccessibilityRuntime,
-  subscribeAccessibility,
-  shutdownAccessibilityRuntime,
-} from "../ifse/accessibility/AccessibilityRuntimeEngine";
+function SettingRow({ label, description, children }) {
+  return (
+    <div
+      style={{
+        padding: "12px 0",
+        borderBottom: "1px solid #334155",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: "12px",
+        }}
+      >
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "inherit",
+            }}
+          >
+            {label}
+          </div>
 
-import {
-  doc,
-  updateDoc,
-} from "firebase/firestore";
+          {description && (
+            <div
+              style={{
+                fontSize: "12px",
+                color: "#cbd5e1",
+                marginTop: "4px",
+                lineHeight: 1.5,
+              }}
+            >
+              {description}
+            </div>
+          )}
+        </div>
 
-import { db } from "../firebase";
-
-import i18n from "../i18n";
-
-const AccessibilityContext = createContext();
-
-const LANGUAGE_MAP = {
-  en: "en-US",
-  yo: "yo-NG",
-  ig: "ig-NG",
-  ha: "ha-NG",
-  pcm: "en-NG",
-  fr: "fr-FR",
-  es: "es-ES",
-  pt: "pt-PT",
-  sw: "sw-KE",
-  ar: "ar-SA",
-  zh: "zh-CN",
-  "zh-TW": "zh-TW",
-  ja: "ja-JP",
-  de: "de-DE",
-  hi: "hi-IN",
-  ru: "ru-RU",
-  it: "it-IT",
-  nl: "nl-NL",
-  ko: "ko-KR",
-  vi: "vi-VN",
-  th: "th-TH",
-  id: "id-ID",
-  ms: "ms-MY",
-  bn: "bn-BD",
-  tr: "tr-TR",
-};
-
-function normalizeAccessibilityNeeds(accessibilityNeeds) {
-  if (Array.isArray(accessibilityNeeds)) {
-    return accessibilityNeeds
-      .filter((need) => need !== null && need !== undefined)
-      .map((need) => String(need).trim())
-      .filter(Boolean);
-  }
-
-  if (typeof accessibilityNeeds === "string") {
-    return accessibilityNeeds
-      .split(",")
-      .map((need) => need.trim())
-      .filter(Boolean);
-  }
-
-  return [];
+        {children}
+      </div>
+    </div>
+  );
 }
 
-function normalizeNeed(need) {
-  return String(need)
-    .trim()
-    .toLowerCase()
-    .replace(/[_-]+/g, " ");
-}
-
-/*
- * Extract useful information from Firebase errors without assuming
- * every error has the same shape.
- */
-function describeSaveError(error) {
-  let code = "unknown";
-  let message = "No error message was provided.";
-
-  try {
-    if (error && typeof error.code === "string") {
-      code = error.code;
-    }
-
-    if (
-      error &&
-      typeof error.message === "string" &&
-      error.message.trim()
-    ) {
-      message = error.message.trim();
-    } else if (typeof error === "string" && error.trim()) {
-      message = error.trim();
-    } else if (error != null) {
-      const serialized = JSON.stringify(error);
-
-      if (serialized && serialized !== "{}") {
-        message = serialized;
-      } else if (error.name) {
-        message = String(error.name);
-      }
-    }
-  } catch {
-    message = "The error occurred, but its details could not be read.";
-  }
-
-  return { code, message };
-}
-
-export function AccessibilityProvider({ children }) {
-  const { user, userProfile } = useAuth();
-
-  const [language, setLanguageState] = useState("en");
-  const [fontScale, setFontScaleState] = useState(1);
-  const [highContrast, setHighContrastState] = useState(false);
-  const [reducedMotion, setReducedMotionState] = useState(false);
-  const [voiceEnabled, setVoiceEnabledState] = useState(false);
-  const [speaking, setSpeaking] = useState(false);
-
-  const [ifseAccessibilityRuntime, setIfseAccessibilityRuntime] =
-    useState(() => getAccessibilityRuntime());
-
-  const [saveStatus, setSaveStatus] = useState("idle");
-  const [saveMessage, setSaveMessage] = useState("");
-
-  const saveSequenceRef = useRef(0);
-  const localOverridesRef = useRef({});
-  const currentUidRef = useRef(user?.uid || null);
-
-  /*
-   * RESET UNSAVED LOCAL OVERRIDES WHEN THE USER CHANGES
-   */
-  useEffect(() => {
-    const nextUid = user?.uid || null;
-
-    if (currentUidRef.current !== nextUid) {
-      currentUidRef.current = nextUid;
-      localOverridesRef.current = {};
-      saveSequenceRef.current += 1;
-      setSaveStatus("idle");
-      setSaveMessage("");
-    }
-  }, [user?.uid]);
-
-  /*
-   * ACCESSIBILITY NEEDS
-   */
-  const accessibilityNeeds = useMemo(
-    () =>
-      normalizeAccessibilityNeeds(
-        userProfile?.accessibilityNeeds
-      ),
-    [userProfile?.accessibilityNeeds]
-  );
-
-  const normalizedNeeds = useMemo(
-    () => accessibilityNeeds.map(normalizeNeed),
-    [accessibilityNeeds]
-  );
-
-  const hasNeed = useCallback(
-    (...keywords) =>
-      normalizedNeeds.some((need) =>
-        keywords.some((keyword) =>
-          need.includes(normalizeNeed(keyword))
-        )
-      ),
-    [normalizedNeeds]
-  );
-
-  /*
-   * ACCESSIBILITY PROFILE
-   */
-  const accessibilityProfile = useMemo(
-    () => ({
-      blind: hasNeed("blind", "blindness"),
-
-      lowVision: hasNeed(
-        "low vision",
-        "visual impairment",
-        "low-vision"
-      ),
-
-      deaf: hasNeed("deaf", "deafness"),
-
-      hardOfHearing: hasNeed(
-        "hard of hearing",
-        "hearing impairment",
-        "hearing impaired"
-      ),
-
-      wheelchair: hasNeed("wheelchair"),
-
-      motorImpaired: hasNeed(
-        "mobility impairment",
-        "mobility impaired",
-        "motor impairment",
-        "motor impaired",
-        "physical disability",
-        "wheelchair"
-      ),
-
-      speechImpairment: hasNeed(
-        "speech impairment",
-        "speech impaired",
-        "speech disability",
-        "non-verbal",
-        "nonverbal",
-        "unable to speak",
-        "communication impairment"
-      ),
-
-      dyslexia: hasNeed("dyslexia", "dyslexic"),
-
-      adhd: hasNeed("adhd", "attention deficit"),
-
-      autism: hasNeed(
-        "autism",
-        "autistic",
-        "neurodivergent",
-        "neurodivers"
-      ),
-    }),
-    [hasNeed]
-  );
-
-  /*
-   * FIRESTORE PERSISTENCE AND DIAGNOSTICS
-   */
-  const saveAccessibilitySettings = useCallback(
-    async (settings) => {
-      const uid = user?.uid;
-      const sequence = ++saveSequenceRef.current;
-
-      if (!uid) {
-        localOverridesRef.current = {
-          ...localOverridesRef.current,
-          ...settings,
-        };
-
-        setSaveStatus("error");
-        setSaveMessage(
-          "[ACCESSIBILITY SAVE DIAGNOSTIC] You are not signed in. " +
-          "The setting is active temporarily but cannot be saved to your account."
-        );
-
-        console.error(
-          "[ACCESSIBILITY SAVE DIAGNOSTIC]",
-          {
-            reason: "No authenticated user UID was available.",
-            fields: Object.keys(settings),
-          }
-        );
-
-        return false;
-      }
-
-      localOverridesRef.current = {
-        ...localOverridesRef.current,
-        ...settings,
-      };
-
-      setSaveStatus("saving");
-      setSaveMessage(
-        "[ACCESSIBILITY SAVE DIAGNOSTIC] Attempting to save settings…"
-      );
-
-      try {
-        await updateDoc(
-          doc(db, "users", uid),
-          settings
-        );
-
-        /*
-         * Clear only overrides that match the values just saved.
-         * Do not remove a newer selection made while this write ran.
-         */
-        const remainingOverrides = {
-          ...localOverridesRef.current,
-        };
-
-        Object.entries(settings).forEach(([key, value]) => {
-          if (Object.is(remainingOverrides[key], value)) {
-            delete remainingOverrides[key];
-          }
-        });
-
-        localOverridesRef.current = remainingOverrides;
-
-        if (saveSequenceRef.current === sequence) {
-          setSaveStatus("saved");
-          setSaveMessage(
-            "Accessibility settings saved to your account."
-          );
-        }
-
-        return true;
-      } catch (error) {
-        const details = describeSaveError(error);
-
-        console.error(
-          "[ACCESSIBILITY SAVE DIAGNOSTIC] Firestore write failed.",
-          {
-            uid,
-            documentPath: `users/${uid}`,
-            fields: Object.keys(settings),
-            errorCode: details.code,
-            errorMessage: details.message,
-            error,
-          }
-        );
-
-        if (saveSequenceRef.current === sequence) {
-          setSaveStatus("error");
-          setSaveMessage(
-            `[ACCESSIBILITY SAVE DIAGNOSTIC] Save failed. ` +
-            `Error code: ${details.code}. ` +
-            `Details: ${details.message}`
-          );
-        }
-
-        return false;
-      }
-    },
-    [user?.uid]
-  );
-
-  /*
-   * LANGUAGE
-   */
-  const setLanguage = useCallback(
-    (value) => {
-      const normalizedLanguage =
-        typeof value === "string" && value.trim()
-          ? value.trim()
-          : "en";
-
-      setLanguageState(normalizedLanguage);
-
-      void i18n.changeLanguage(normalizedLanguage).catch((error) => {
-        console.error(
-          "Unable to change application language:",
-          error
-        );
-      });
-
-      void saveAccessibilitySettings({
-        language: normalizedLanguage,
-        preferredLanguage: normalizedLanguage,
-      });
-    },
-    [saveAccessibilitySettings]
-  );
-
-  /*
-   * FONT SIZE
-   */
-  const setFontScale = useCallback(
-    (value) => {
-      const numericValue = Number(value);
-
-      if (!Number.isFinite(numericValue)) {
-        return;
-      }
-
-      const normalizedValue = Math.min(
-        1.6,
-        Math.max(0.8, numericValue)
-      );
-
-      setFontScaleState(normalizedValue);
-
-      void saveAccessibilitySettings({
-        fontScale: normalizedValue,
-      });
-    },
-    [saveAccessibilitySettings]
-  );
-
-  /*
-   * HIGH CONTRAST
-   */
-  const setHighContrast = useCallback(
-    (value) => {
-      const normalizedValue = Boolean(value);
-
-      setHighContrastState(normalizedValue);
-
-      void saveAccessibilitySettings({
-        highContrast: normalizedValue,
-      });
-    },
-    [saveAccessibilitySettings]
-  );
-
-  /*
-   * REDUCED MOTION
-   */
-  const setReducedMotion = useCallback(
-    (value) => {
-      const normalizedValue = Boolean(value);
-
-      setReducedMotionState(normalizedValue);
-
-      void saveAccessibilitySettings({
-        reducedMotion: normalizedValue,
-      });
-    },
-    [saveAccessibilitySettings]
-  );
-
-  /*
-   * VOICE GUIDANCE
-   */
-  const setVoiceEnabled = useCallback(
-    (value) => {
-      const normalizedValue = Boolean(value);
-
-      setVoiceEnabledState(normalizedValue);
-
-      void saveAccessibilitySettings({
-        voiceEnabled: normalizedValue,
-      });
-    },
-    [saveAccessibilitySettings]
-  );
-
-  /*
-   * ACCESSIBILITY PROFILE UPDATE
-   */
-  const setAccessibilityProfile = useCallback(
-    async (profileUpdate = {}) => {
-      if (
-        !profileUpdate ||
-        typeof profileUpdate !== "object"
-      ) {
-        return false;
-      }
-
-      const nextNeeds = [...accessibilityNeeds];
-
-      const mappings = [
-        { key: "blind", values: ["Blind"] },
-        { key: "lowVision", values: ["Low Vision"] },
-        { key: "deaf", values: ["Deaf"] },
-        { key: "hardOfHearing", values: ["Hard of Hearing"] },
-        { key: "wheelchair", values: ["Wheelchair"] },
-        {
-          key: "motorImpaired",
-          values: ["Mobility Impairment"],
-        },
-        {
-          key: "speechImpairment",
-          values: ["Speech Impairment"],
-        },
-        { key: "dyslexia", values: ["Dyslexia"] },
-        { key: "adhd", values: ["ADHD"] },
-        { key: "autism", values: ["Autism"] },
-      ];
-
-      mappings.forEach(({ key, values }) => {
-        if (typeof profileUpdate[key] !== "boolean") {
-          return;
-        }
-
-        values.forEach((needValue) => {
-          const existingIndex = nextNeeds.findIndex(
-            (need) =>
-              normalizeNeed(need) === normalizeNeed(needValue)
-          );
-
-          if (profileUpdate[key]) {
-            if (existingIndex < 0) {
-              nextNeeds.push(needValue);
-            }
-          } else if (existingIndex >= 0) {
-            nextNeeds.splice(existingIndex, 1);
-          }
-        });
-      });
-
-      return saveAccessibilitySettings({
-        accessibilityNeeds: nextNeeds,
-      });
-    },
-    [accessibilityNeeds, saveAccessibilitySettings]
-  );
-
-  /*
-   * IFSE RUNTIME SUBSCRIPTION
-   */
-  useEffect(() => {
-    const unsubscribe = subscribeAccessibility((runtimeState) => {
-      setIfseAccessibilityRuntime(runtimeState);
-    });
-
-    setIfseAccessibilityRuntime(getAccessibilityRuntime());
-
-    return unsubscribe;
-  }, []);
-
-  /*
-   * RESTORE SAVED SETTINGS WITHOUT OVERRIDING LOCAL CHANGES
-   */
-  useEffect(() => {
-    if (!userProfile) {
-      setLanguageState("en");
-      setFontScaleState(1);
-      setHighContrastState(false);
-      setReducedMotionState(false);
-      setVoiceEnabledState(false);
-
-      if (!user?.uid) {
-        shutdownAccessibilityRuntime();
-      }
-
-      return;
-    }
-
-    const overrides = localOverridesRef.current;
-
-    const savedLanguage =
-      overrides.language ??
-      overrides.preferredLanguage ??
-      (typeof userProfile.language === "string" &&
-      userProfile.language.trim()
-        ? userProfile.language
-        : typeof userProfile.preferredLanguage === "string" &&
-          userProfile.preferredLanguage.trim()
-        ? userProfile.preferredLanguage
-        : "en");
-
-    setLanguageState(savedLanguage);
-
-    if (i18n.language !== savedLanguage) {
-      void i18n.changeLanguage(savedLanguage).catch((error) => {
-        console.error(
-          "Unable to restore application language:",
-          error
-        );
-      });
-    }
-
-    const savedFontScale =
-      overrides.fontScale ?? userProfile.fontScale;
-
-    setFontScaleState(
-      typeof savedFontScale === "number" &&
-        Number.isFinite(savedFontScale) &&
-        savedFontScale > 0
-        ? Math.min(1.6, Math.max(0.8, savedFontScale))
-        : 1
-    );
-
-    const savedHighContrast =
-      overrides.highContrast ?? userProfile.highContrast;
-
-    setHighContrastState(
-      typeof savedHighContrast === "boolean"
-        ? savedHighContrast
-        : false
-    );
-
-    const savedReducedMotion =
-      overrides.reducedMotion ?? userProfile.reducedMotion;
-
-    setReducedMotionState(
-      typeof savedReducedMotion === "boolean"
-        ? savedReducedMotion
-        : false
-    );
-
-    const savedVoiceEnabled =
-      overrides.voiceEnabled ?? userProfile.voiceEnabled;
-
-    setVoiceEnabledState(
-      typeof savedVoiceEnabled === "boolean"
-        ? savedVoiceEnabled
-        : false
-    );
-  }, [userProfile, user?.uid]);
-
-  /*
-   * SEND ACCESSIBILITY STATE TO IFSE
-   */
-  useEffect(() => {
-    if (!userProfile) {
-      return;
-    }
-
-    void initializeUserAccessibility({
-      ...userProfile,
-      language,
-      fontScale,
-      highContrast,
-      reducedMotion,
-      voiceEnabled,
-      accessibilityNeeds,
-    });
-  }, [
-    userProfile,
-    language,
-    fontScale,
-    highContrast,
-    reducedMotion,
-    voiceEnabled,
-    accessibilityNeeds,
-  ]);
-
-  /*
-   * BROWSER SPEECH SUPPORT
-   */
-  const speechSupported =
-    typeof window !== "undefined" &&
-    "speechSynthesis" in window &&
-    "SpeechSynthesisUtterance" in window;
-
-  useEffect(() => {
-    return () => {
-      if (
-        typeof window !== "undefined" &&
-        "speechSynthesis" in window
-      ) {
-        window.speechSynthesis.cancel();
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (
-      !speechSupported ||
-      typeof window === "undefined"
-    ) {
-      return undefined;
-    }
-
-    const handleSpeechStart = () => setSpeaking(true);
-    const handleSpeechEnd = () => setSpeaking(false);
-    const handleSpeechError = () => setSpeaking(false);
-
-    window.speechSynthesis.addEventListener(
-      "start",
-      handleSpeechStart
-    );
-
-    window.speechSynthesis.addEventListener(
-      "end",
-      handleSpeechEnd
-    );
-
-    window.speechSynthesis.addEventListener(
-      "error",
-      handleSpeechError
-    );
-
-    return () => {
-      window.speechSynthesis.removeEventListener(
-        "start",
-        handleSpeechStart
-      );
-
-      window.speechSynthesis.removeEventListener(
-        "end",
-        handleSpeechEnd
-      );
-
-      window.speechSynthesis.removeEventListener(
-        "error",
-        handleSpeechError
-      );
-    };
-  }, [speechSupported]);
-
-  /*
-   * SPEECH SERVICE
-   */
-  function speakText(text, options = {}) {
-    if (
-      !text ||
-      !speechSupported ||
-      typeof window === "undefined"
-    ) {
-      return false;
-    }
-
-    const cleanText = String(text).trim();
-
-    if (!cleanText) {
-      return false;
-    }
-
-    const requestedLanguage = options.language || language;
-    const speechLanguage =
-      LANGUAGE_MAP[requestedLanguage] || "en-US";
-
-    try {
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(
-        cleanText
-      );
-
-      utterance.lang = speechLanguage;
-      utterance.rate =
-        typeof options.rate === "number" ? options.rate : 1;
-      utterance.pitch =
-        typeof options.pitch === "number" ? options.pitch : 1;
-      utterance.volume =
-        typeof options.volume === "number" ? options.volume : 1;
-
-      utterance.onstart = () => setSpeaking(true);
-      utterance.onend = () => setSpeaking(false);
-      utterance.onerror = () => setSpeaking(false);
-
-      window.speechSynthesis.speak(utterance);
-
-      return true;
-    } catch (error) {
-      console.error(
-        "Inclura Accessibility Speech Error:",
-        error
-      );
-
-      setSpeaking(false);
-
-      return false;
-    }
-  }
-
-  function stopSpeaking() {
-    if (
-      typeof window !== "undefined" &&
-      "speechSynthesis" in window
-    ) {
-      window.speechSynthesis.cancel();
-    }
-
-    setSpeaking(false);
-  }
-
-  /*
-   * EFFECTIVE VOICE ACCESSIBILITY
-   */
-  const effectiveVoiceEnabled =
-    voiceEnabled ||
-    accessibilityProfile.blind ||
-    accessibilityProfile.lowVision;
-
-  /*
-   * CONTEXT VALUE
-   */
-  const value = {
+function AccessibilitySettings() {
+  const {
     language,
     setLanguage,
-
     fontScale,
     setFontScale,
-
     highContrast,
     setHighContrast,
-
     reducedMotion,
     setReducedMotion,
-
     voiceEnabled,
     setVoiceEnabled,
-
     effectiveVoiceEnabled,
-
     speaking,
     speechSupported,
     speakText,
     stopSpeaking,
-
-    accessibilityNeeds,
     accessibilityProfile,
     setAccessibilityProfile,
-
-    ifseAccessibilityRuntime,
-
     saveStatus,
     saveMessage,
+  } = useAccessibility();
+
+  const selectStyle = {
+    width: "100%",
+    boxSizing: "border-box",
+    marginTop: "8px",
+    padding: "10px",
+    borderRadius: "8px",
+    border: "1px solid #64748b",
+    background: highContrast ? "#000000" : "#1e293b",
+    color: "#ffffff",
+    fontSize: "14px",
+  };
+
+  const checkboxStyle = {
+    width: "20px",
+    height: "20px",
+    flexShrink: 0,
+    cursor: "pointer",
+    accentColor: "#38bdf8",
   };
 
   return (
-    <AccessibilityContext.Provider value={value}>
+    <div
+      style={{
+        padding: "16px",
+        background: highContrast ? "#000000" : "#0f172a",
+        color: "#ffffff",
+        fontSize: `${fontScale}rem`,
+      }}
+    >
+      <section aria-labelledby="accessibility-display-heading">
+        <h3
+          id="accessibility-display-heading"
+          style={{ fontSize: "16px", margin: "0 0 8px" }}
+        >
+          Display and language
+        </h3>
+
+        <div style={{ padding: "12px 0" }}>
+          <label
+            htmlFor="accessibility-language"
+            style={{ fontSize: "14px", fontWeight: 600 }}
+          >
+            Preferred language
+          </label>
+
+          <select
+            id="accessibility-language"
+            value={language}
+            onChange={(event) => setLanguage(event.target.value)}
+            style={selectStyle}
+          >
+            {LANGUAGE_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <SettingRow
+          label="Text size"
+          description={`Current scale: ${Math.round(fontScale * 100)}%`}
+        >
+          <span style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
+            {Math.round(fontScale * 100)}%
+          </span>
+        </SettingRow>
+
+        <input
+          type="range"
+          aria-label="Text size"
+          min="0.8"
+          max="1.6"
+          step="0.1"
+          value={fontScale}
+          onChange={(event) => setFontScale(Number(event.target.value))}
+          style={{ width: "100%", margin: "12px 0" }}
+        />
+
+        <SettingRow
+          label="High contrast"
+          description="Use a dark background and bright text."
+        >
+          <input
+            type="checkbox"
+            aria-label="Enable high contrast"
+            checked={highContrast}
+            onChange={(event) => setHighContrast(event.target.checked)}
+            style={checkboxStyle}
+          />
+        </SettingRow>
+
+        <SettingRow
+          label="Reduce motion"
+          description="Reduce animated transitions where supported."
+        >
+          <input
+            type="checkbox"
+            aria-label="Enable reduced motion"
+            checked={reducedMotion}
+            onChange={(event) => setReducedMotion(event.target.checked)}
+            style={checkboxStyle}
+          />
+        </SettingRow>
+      </section>
+
+      <section
+        aria-labelledby="accessibility-voice-heading"
+        style={{ marginTop: "24px" }}
+      >
+        <h3
+          id="accessibility-voice-heading"
+          style={{ fontSize: "16px", margin: "0 0 8px" }}
+        >
+          Voice guidance
+        </h3>
+
+        <SettingRow
+          label="Enable voice guidance"
+          description="Enable spoken guidance for supported features."
+        >
+          <input
+            type="checkbox"
+            aria-label="Enable voice guidance"
+            checked={voiceEnabled}
+            onChange={(event) => setVoiceEnabled(event.target.checked)}
+            style={checkboxStyle}
+          />
+        </SettingRow>
+
+        {effectiveVoiceEnabled && (
+          <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
+            Voice guidance is active because it is enabled or your
+            accessibility profile indicates that it may be helpful.
+          </p>
+        )}
+
+        {speechSupported ? (
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "8px",
+              marginTop: "12px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() =>
+                speakText(
+                  "Welcome to Inclura accessibility settings.",
+                  { language }
+                )
+              }
+              style={buttonStyle}
+            >
+              Test voice
+            </button>
+
+            {speaking && (
+              <button
+                type="button"
+                onClick={stopSpeaking}
+                style={buttonStyle}
+              >
+                Stop speaking
+              </button>
+            )}
+          </div>
+        ) : (
+          <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
+            Speech synthesis is not supported by this browser.
+          </p>
+        )}
+      </section>
+
+      <section
+        aria-labelledby="accessibility-profile-heading"
+        style={{ marginTop: "24px" }}
+      >
+        <h3
+          id="accessibility-profile-heading"
+          style={{ fontSize: "16px", margin: "0 0 8px" }}
+        >
+          Accessibility profile
+        </h3>
+
+        <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
+          Select any needs you want Inclura to take into account.
+        </p>
+
+        {PROFILE_OPTIONS.map((option) => (
+          <SettingRow key={option.key} label={option.label}>
+            <input
+              type="checkbox"
+              aria-label={option.label}
+              checked={Boolean(accessibilityProfile[option.key])}
+              onChange={(event) => {
+                void setAccessibilityProfile({
+                  [option.key]: event.target.checked,
+                });
+              }}
+              style={checkboxStyle}
+            />
+          </SettingRow>
+        ))}
+      </section>
+
       <div
+        role="status"
+        aria-live="polite"
         style={{
-          fontSize: `${fontScale}rem`,
-          background: highContrast ? "#000000" : undefined,
-          color: highContrast ? "#ffffff" : undefined,
-          minHeight: "100%",
-          transition: reducedMotion ? "none" : "all 0.3s ease",
+          marginTop: "20px",
+          padding: "12px",
+          borderRadius: "8px",
+          background: highContrast ? "#111111" : "#1e293b",
+          border: "1px solid #475569",
+          fontSize: "12px",
+          overflowWrap: "anywhere",
         }}
       >
-        {children}
+        {saveStatus === "saving"
+          ? "Saving accessibility settings…"
+          : saveMessage ||
+            "Changes take effect immediately. Save status will appear here."}
       </div>
-    </AccessibilityContext.Provider>
+    </div>
   );
 }
 
-export function useAccessibility() {
-  const context = useContext(AccessibilityContext);
+const buttonStyle = {
+  padding: "9px 12px",
+  borderRadius: "8px",
+  border: "1px solid #64748b",
+  background: "#1e293b",
+  color: "#ffffff",
+  cursor: "pointer",
+  fontSize: "13px",
+};
 
-  if (!context) {
-    throw new Error(
-      "useAccessibility must be used inside AccessibilityProvider."
-    );
-  }
-
-  return context;
-}
+export default AccessibilitySettings;
