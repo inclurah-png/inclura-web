@@ -262,21 +262,36 @@ export function AccessibilityProvider({ children }) {
         }
 
         return true;
+      
       } catch (error) {
+        const errorCode =
+          typeof error?.code === "string"
+            ? error.code
+            : "unknown";
+
+        const errorMessage =
+          typeof error?.message === "string"
+            ? error.message
+            : String(error || "Unknown error");
+
         console.error(
           "Unable to save accessibility settings:",
-          error
+          {
+            code: errorCode,
+            message: errorMessage,
+          }
         );
 
         if (saveSequenceRef.current === sequence) {
           setSaveStatus("error");
           setSaveMessage(
-            "Your setting remains active locally, but could not be saved to your account. Check your connection and account permissions."
+            `Save failed (${errorCode}): ${errorMessage}`
           );
         }
 
         return false;
       }
+
     },
     [user?.uid]
   );
