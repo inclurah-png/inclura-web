@@ -14,7 +14,7 @@ import {
 const firebaseConfig = {
   apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
   authDomain:
-    "inclura-prod-90734.web.app",
+    "inclura-prod-90734.firebaseapp.com",
   projectId:
     "inclura-prod-90734",
   storageBucket:
