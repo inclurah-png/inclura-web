@@ -1,90 +1,22 @@
-// =======================================================
-// Inclura Translation Gateway
-// Cloudflare Pages Function
-// =======================================================
-//
-// POST /translate
-//
-// Request:
-// {
-//   "text": "Hello",
-//   "target": "yo"
-// }
-//
-// Response:
-// {
-//   "translatedText": "Bawo",
-//   "targetLanguage": "yo"
-// }
-//
-// Translation engine:
-// Google Gemini API
-// Model:
-// gemini-3.1-flash-lite
-// =======================================================
-
-
-// =======================================================
-// JSON helper
-// =======================================================
-
-function jsonResponse(
-  body,
-  status = 200
-) {
-  return new Response(
-    JSON.stringify(body),
-    {
-      status,
-
-      headers: {
-        "Content-Type":
-          "application/json",
-
-        "Cache-Control":
-          "no-store",
-      },
-    }
-  );
+function jsonResponse(body, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      "Content-Type": "application/json",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
+function normalizeLanguage(code = "") {
+  const normalized = String(code).trim().toLowerCase().replace(/_/g, "-");
 
-// =======================================================
-// Language normalization
-// =======================================================
-
-function normalizeLanguage(
-  code
-) {
-  if (!code) {
-    return "";
-  }
-
-  const value =
-    String(code)
-      .trim()
-      .toLowerCase()
-      .replace(/_/g, "-");
-
-  if (
-    value === "zh-tw" ||
-    value === "zh-hant"
-  ) {
+  if (normalized === "zh-tw" || normalized === "zh-hant") {
     return "zh-TW";
   }
 
-  return value;
+  return normalized;
 }
-
-
-// =======================================================
-// Language names
-// =======================================================
-//
-// These names give Gemini explicit language targets,
-// especially for African languages where language-code
-// interpretation needs to be unambiguous.
-// =======================================================
 
 const LANGUAGE_NAMES = {
   en: "English",
@@ -93,21 +25,18 @@ const LANGUAGE_NAMES = {
   pt: "Portuguese",
   ar: "Arabic",
   zh: "Simplified Chinese",
-  "zh-TW":
-    "Traditional Chinese",
+  "zh-TW": "Traditional Chinese",
   ja: "Japanese",
   de: "German",
   hi: "Hindi",
   ru: "Russian",
   it: "Italian",
   nl: "Dutch",
-
   sw: "Swahili",
   yo: "Yoruba",
   ig: "Igbo",
   ha: "Hausa",
   pcm: "Nigerian Pidgin",
-
   ko: "Korean",
   vi: "Vietnamese",
   th: "Thai",
@@ -115,7 +44,6 @@ const LANGUAGE_NAMES = {
   ms: "Malay",
   bn: "Bengali",
   tr: "Turkish",
-
   af: "Afrikaans",
   am: "Amharic",
   zu: "Zulu",
@@ -135,417 +63,319 @@ const LANGUAGE_NAMES = {
   ee: "Ewe",
 };
 
+const SUPPORTED_LANGUAGES = new Set(
+  Object.keys(LANGUAGE_NAMES)
+);
 
-// =======================================================
-// Supported languages
-// =======================================================
+// These are the languages currently exposed
+// by your MADLAD-400 Hugging Face Space.
+const MADLAD_LANGUAGES = {
+  fr: "French",
+  es: "Spanish",
+  de: "German",
+  pt: "Portuguese",
+  ar: "Arabic",
+  zh: "Chinese",
+  hi: "Hindi",
+  sw: "Swahili",
+  yo: "Yoruba",
+  ig: "Igbo",
+  ha: "Hausa",
+  ja: "Japanese",
+  ko: "Korean",
+};
 
-const SUPPORTED_LANGUAGES =
-  new Set(
-    Object.keys(
-      LANGUAGE_NAMES
-    )
-  );
+const HF_SPACE =
+  "https://inclura-platform-madlad400-zerogpu-test.hf.space";
 
+const MADLAD_MODEL = "santhosh/madlad400-3b-ct2";
 
-// =======================================================
-// Gemini configuration
-// =======================================================
+function extractFirstString(value) {
+  if (typeof value === "string") {
+    return value;
+  }
 
-const GEMINI_MODEL =
-  "gemini-3.1-flash-lite";
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = extractFirstString(item);
+      if (found) return found;
+    }
+  }
 
-
-// =======================================================
-// POST /translate
-// =======================================================
-
-export async function onRequestPost(
-  context
-) {
-  try {
-    // ---------------------------------------------------
-    // Check Gemini secret
-    // ---------------------------------------------------
-
-    const apiKey =
-      context.env.GEMINI_API_KEY;
-
-    if (!apiKey) {
-      return jsonResponse(
-        {
-          error:
-            "Gemini API key is not configured.",
-
-          code:
-            "GEMINI_API_KEY_NOT_CONFIGURED",
-        },
-        500
-      );
+  if (value && typeof value === "object") {
+    if (value.error) {
+      return String(value.error);
     }
 
+    for (const item of Object.values(value)) {
+      const found = extractFirstString(item);
+      if (found) return found;
+    }
+  }
 
-    // ---------------------------------------------------
-    // Read request
-    // ---------------------------------------------------
+  return "";
+}
 
+function extractCompletedResult(streamText) {
+  const blocks = streamText.split(/\r?\n\r?\n/);
+  let completedResult = "";
+  let reportedError = "";
+
+  for (const block of blocks) {
+    const eventMatch = block.match(/^event:\s*(.+)$/m);
+    const eventName = eventMatch ? eventMatch[1].trim() : "";
+
+    const dataLines = block
+      .split(/\r?\n/)
+      .filter((line) => line.startsWith("data:"))
+      .map((line) => line.slice(5).trim());
+
+    if (!dataLines.length) continue;
+
+    const dataText = dataLines.join("\n");
+
+    let parsedData;
+
+    try {
+      parsedData = JSON.parse(dataText);
+    } catch {
+      parsedData = dataText;
+    }
+
+    const result = extractFirstString(parsedData);
+
+    if (eventName === "error") {
+      reportedError = result || "The translation Space reported an error.";
+    }
+
+    if (eventName === "complete" && result) {
+      completedResult = result;
+    }
+  }
+
+  if (reportedError) {
+    throw new Error(reportedError);
+  }
+
+  if (completedResult) {
+    return completedResult;
+  }
+
+  throw new Error("The translation Space did not return a completed result.");
+}
+
+export async function onRequestPost(context) {
+  try {
     let body;
 
     try {
-      body =
-        await context.request.json();
+      body = await context.request.json();
     } catch {
       return jsonResponse(
         {
-          error:
-            "Invalid JSON request.",
-
-          code:
-            "INVALID_JSON",
+          error: "Invalid JSON request.",
+          code: "INVALID_JSON",
         },
         400
       );
     }
 
-
-    // ---------------------------------------------------
-    // Validate JSON body
-    // ---------------------------------------------------
-
-    if (
-      !body ||
-      typeof body !== "object" ||
-      Array.isArray(body)
-    ) {
+    if (!body || typeof body !== "object" || Array.isArray(body)) {
       return jsonResponse(
         {
-          error:
-            "Translation request body must be a JSON object.",
-
-          code:
-            "INVALID_REQUEST_BODY",
+          error: "Request body must be a JSON object.",
+          code: "INVALID_REQUEST",
         },
         400
       );
     }
 
+    const text = typeof body.text === "string"
+      ? body.text.trim()
+      : "";
 
-    // ---------------------------------------------------
-    // Read translation input
-    // ---------------------------------------------------
+    const target = normalizeLanguage(body.target);
 
-    const text =
-      typeof body.text ===
-        "string"
-        ? body.text.trim()
-        : "";
-
-    const target =
-      normalizeLanguage(
-        body.target
-      );
-
-
-    // ---------------------------------------------------
-    // Validate request
-    // ---------------------------------------------------
-
-    if (
-      !text ||
-      !target
-    ) {
+    if (!text) {
       return jsonResponse(
         {
-          error:
-            "Text and target language are required.",
-
-          code:
-            "INVALID_TRANSLATION_REQUEST",
+          error: "Text is required.",
+          code: "TEXT_REQUIRED",
         },
         400
       );
     }
 
-
-    // ---------------------------------------------------
-    // Maximum request size
-    // ---------------------------------------------------
-
-    if (
-      text.length > 5000
-    ) {
+    if (!target) {
       return jsonResponse(
         {
-          error:
-            "Text is too long. Maximum length is 5000 characters.",
-
-          code:
-            "TEXT_TOO_LONG",
-        },
-        413
-      );
-    }
-
-
-    // ---------------------------------------------------
-    // Validate target language
-    // ---------------------------------------------------
-
-    if (
-      !SUPPORTED_LANGUAGES.has(
-        target
-      )
-    ) {
-      return jsonResponse(
-        {
-          error:
-            `Unsupported target language: ${target}`,
-
-          code:
-            "UNSUPPORTED_TARGET_LANGUAGE",
+          error: "Target language is required.",
+          code: "TARGET_REQUIRED",
         },
         400
       );
     }
 
-
-    const targetLanguage =
-      LANGUAGE_NAMES[target];
-
-
-    // ---------------------------------------------------
-    // Gemini API endpoint
-    // ---------------------------------------------------
-
-    const endpoint =
-      `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-
-    // ---------------------------------------------------
-    // Translation instruction
-    // ---------------------------------------------------
-
-    const prompt = `
-You are the translation engine for Inclura.
-
-Translate the user's text into ${targetLanguage}.
-
-Target language code: ${target}
-
-Rules:
-1. Return ONLY the translated text.
-2. Do NOT explain the translation.
-3. Do NOT add quotation marks.
-4. Do NOT add labels such as "Translation:".
-5. Do NOT summarize.
-6. Preserve the original meaning and tone.
-7. Preserve names, usernames, URLs, hashtags, emojis, numbers, and punctuation whenever appropriate.
-8. Do not translate URLs or usernames.
-9. Preserve paragraph breaks where possible.
-10. If the source text is already in ${targetLanguage}, return it unchanged.
-11. For Nigerian Pidgin (pcm), use natural Nigerian Pidgin rather than Standard English.
-12. For Yoruba (yo), use natural contemporary Yoruba.
-13. For Igbo (ig), use natural contemporary Igbo.
-14. For Hausa (ha), use natural contemporary Hausa.
-15. Do not invent information that is not present in the source.
-
-Text to translate:
-
-${text}
-`;
-
-
-    // ---------------------------------------------------
-    // Call Gemini
-    // ---------------------------------------------------
-
-    const response =
-      await fetch(
-        endpoint,
+    if (text.length > 5000) {
+      return jsonResponse(
         {
-          method:
-            "POST",
-
-          headers: {
-            "Content-Type":
-              "application/json",
-
-            "x-goog-api-key":
-              apiKey,
-          },
-
-          body:
-            JSON.stringify(
-              {
-                contents: [
-                  {
-                    parts: [
-                      {
-                        text:
-                          prompt,
-                      },
-                    ],
-                  },
-                ],
-
-                generationConfig: {
-                  temperature:
-                    0.1,
-
-                  maxOutputTokens:
-                    4096,
-                },
-              }
-            ),
-        }
+          error: "Text exceeds the 5000-character limit.",
+          code: "TEXT_TOO_LONG",
+        },
+        400
       );
-
-
-    // ---------------------------------------------------
-    // Read Gemini response
-    // ---------------------------------------------------
-
-    const raw =
-      await response.text();
-
-    let data;
-
-    try {
-      data =
-        JSON.parse(raw);
-    } catch {
-      data = null;
     }
 
-
-    // ---------------------------------------------------
-    // Gemini provider failure
-    // ---------------------------------------------------
-
-    if (
-      !response.ok
-    ) {
-      console.error(
-        "Gemini Translation Error:",
-        response.status,
-        data || raw
+    if (!SUPPORTED_LANGUAGES.has(target)) {
+      return jsonResponse(
+        {
+          error: "The requested language is not supported.",
+          code: "UNSUPPORTED_LANGUAGE",
+        },
+        400
       );
+    }
 
-      let errorMessage =
-        "Gemini translation request failed.";
+    if (!MADLAD_LANGUAGES[target]) {
+      return jsonResponse(
+        {
+          error:
+            `${LANGUAGE_NAMES[target]} is not currently available in the MADLAD-400 Space.`,
+          code: "MADLAD_LANGUAGE_NOT_AVAILABLE",
+          supportedLanguages: Object.keys(MADLAD_LANGUAGES),
+        },
+        422
+      );
+    }
 
-      if (
-        data &&
-        data.error &&
-        typeof data.error.message ===
-          "string"
-      ) {
-        errorMessage =
-          data.error.message;
+    const targetLanguage = MADLAD_LANGUAGES[target];
+
+    // Submit the translation request to Hugging Face.
+    const submitResponse = await fetch(
+      `${HF_SPACE}/gradio_api/call/v2/test_translation`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text,
+          target_languages: [targetLanguage],
+        }),
       }
+    );
+
+    if (!submitResponse.ok) {
+      const errorDetails = await submitResponse.text();
 
       return jsonResponse(
         {
-          error:
-            errorMessage,
-
-          code:
-            "GEMINI_TRANSLATION_FAILED",
-
-          providerStatus:
-            response.status,
+          error: "Could not submit the translation to Hugging Face.",
+          code: "MADLAD_SUBMISSION_FAILED",
+          details: errorDetails.slice(0, 500),
         },
         502
       );
     }
 
+    const submission = await submitResponse.json();
+    const eventId = submission.event_id || submission.eventId;
 
-    // ---------------------------------------------------
-    // Extract Gemini text
-    // ---------------------------------------------------
+    if (!eventId) {
+      return jsonResponse(
+        {
+          error: "Hugging Face did not return a translation event ID.",
+          code: "MADLAD_EVENT_ID_MISSING",
+        },
+        502
+      );
+    }
 
-    const parts =
-      Array.isArray(
-        data?.candidates?.[0]
-          ?.content?.parts
-      )
-        ? data.candidates[0]
-            .content.parts
-        : [];
+    // Wait for the completed Gradio translation result.
+    const resultResponse = await fetch(
+      `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
+      {
+        method: "GET",
+        headers: {
+          "Accept": "text/event-stream",
+        },
+      }
+    );
 
-    const translatedText =
-      parts
-        .map(
-          (part) =>
-            typeof part?.text ===
-            "string"
-              ? part.text
-              : ""
-        )
-        .filter(Boolean)
-        .join("");
+    if (!resultResponse.ok) {
+      const errorDetails = await resultResponse.text();
 
+      return jsonResponse(
+        {
+          error: "Could not retrieve the MADLAD-400 translation result.",
+          code: "MADLAD_RESULT_FAILED",
+          details: errorDetails.slice(0, 500),
+        },
+        502
+      );
+    }
 
-    // ---------------------------------------------------
-    // Validate Gemini output
-    // ---------------------------------------------------
+    const streamText = await resultResponse.text();
+    const report = extractCompletedResult(streamText);
 
     if (
-      !translatedText.trim()
+      report.includes("TRANSLATION TEST FAILED") ||
+      report.includes("TRANSLATION FAILED:")
     ) {
-      console.error(
-        "Gemini returned no translated text:",
-        data
-      );
-
       return jsonResponse(
         {
-          error:
-            "Gemini returned no translated text.",
-
-          code:
-            "EMPTY_TRANSLATION_RESPONSE",
+          error: "MADLAD-400 could not complete this translation.",
+          code: "MADLAD_TRANSLATION_FAILED",
+          details: report.slice(0, 500),
         },
         502
       );
     }
 
+    // Extract only the requested language from the Space report.
+    const marker = `${targetLanguage}:\n`;
+    const markerPosition = report.lastIndexOf(marker);
 
-    // ---------------------------------------------------
-    // Successful translation
-    // ---------------------------------------------------
+    if (markerPosition === -1) {
+      return jsonResponse(
+        {
+          error: "The expected translated text was not found in the result.",
+          code: "MADLAD_RESULT_FORMAT_ERROR",
+          details: report.slice(0, 500),
+        },
+        502
+      );
+    }
 
+    const translatedText = report
+      .slice(markerPosition + marker.length)
+      .trim();
+
+    if (!translatedText) {
+      return jsonResponse(
+        {
+          error: "MADLAD-400 returned an empty translation.",
+          code: "EMPTY_TRANSLATION",
+        },
+        502
+      );
+    }
+
+    // Preserve the response format used by INCLURA.
+    return jsonResponse({
+      translatedText,
+      targetLanguage: target,
+      model: MADLAD_MODEL,
+      provider: "Hugging Face MADLAD-400 ZeroGPU",
+    });
+  } catch (error) {
     return jsonResponse(
       {
-        translatedText:
-          translatedText.trim(),
-
-        targetLanguage:
-          target,
-
-        model:
-          GEMINI_MODEL,
-
-        provider:
-          "Google Gemini API",
-      },
-      200
-    );
-  } catch (err) {
-    console.error(
-      "Inclura Translation Gateway Error:",
-      err
-    );
-
-    return jsonResponse(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Translation failed.",
-
-        code:
-          "TRANSLATION_GATEWAY_ERROR",
+        error: "Translation service failed.",
+        code: "TRANSLATION_SERVICE_ERROR",
+        details: error instanceof Error
+          ? error.message
+          : "Unknown server error.",
       },
       500
     );
