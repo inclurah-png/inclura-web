@@ -1,16 +1,34 @@
 import { Navigate } from "react-router-dom";
 
-import { auth } from "../firebase";
+import { useAuth } from "../context/AuthContext";
 
 function ProtectedRoute({ children }) {
-const user = auth.currentUser;
+  const { user, loading } = useAuth();
 
-if (!user) {
-return <Navigate to="/login" />;
-}
+  // Wait until Firebase has restored the session before redirecting.
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#020617",
+          color: "#ffffff",
+          fontSize: "16px",
+        }}
+      >
+        Checking your session...
+      </div>
+    );
+  }
 
-return children;
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
 
 export default ProtectedRoute;
-
