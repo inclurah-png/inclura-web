@@ -76,10 +76,6 @@ function resolveDisplayName(
   const fullNameFromParts =
     `${firstName} ${lastName}`.trim();
 
-  /*
-   * Prefer an actual first-name/last-name
-   * combination when available.
-   */
   if (
     fullNameFromParts &&
     !isPlaceholderName(
@@ -149,9 +145,6 @@ function resolveDisplayName(
     return profileDisplayName;
   }
 
-  /*
-   * Last-resort identity fallback.
-   */
   const email =
     currentUser?.email ||
     profile.email ||
@@ -227,8 +220,15 @@ export function AuthProvider({
     setUserProfile,
   ] = useState(null);
 
+  // This state covers Firebase session restoration only.
   const [loading, setLoading] =
     useState(true);
+
+  // Firestore profile loading must not hide public pages.
+  const [
+    profileLoading,
+    setProfileLoading,
+  ] = useState(false);
 
   useEffect(() => {
     let unsubscribeProfile =
@@ -238,36 +238,28 @@ export function AuthProvider({
       onAuthStateChanged(
         auth,
         (currentUser) => {
-          setUser(
-            currentUser
-          );
+          setUser(currentUser);
 
-          if (
-            unsubscribeProfile
-          ) {
+          if (unsubscribeProfile) {
             unsubscribeProfile();
-            unsubscribeProfile =
-              null;
+            unsubscribeProfile = null;
           }
+
+          // Firebase has resolved the user's sign-in state.
+          setLoading(false);
 
           if (!currentUser) {
             setUserProfile(null);
-            setLoading(false);
-
+            setProfileLoading(false);
             return;
           }
 
-          /*
-           * Provide authenticated identity
-           * immediately while Firestore loads.
-           */
+          // Make the Firebase identity available immediately.
           setUserProfile(
-            buildUserProfile(
-              currentUser
-            )
+            buildUserProfile(currentUser)
           );
 
-          setLoading(true);
+          setProfileLoading(true);
 
           const profileRef =
             doc(
@@ -292,7 +284,7 @@ export function AuthProvider({
                   )
                 );
 
-                setLoading(false);
+                setProfileLoading(false);
               },
               (error) => {
                 console.log(
@@ -300,27 +292,30 @@ export function AuthProvider({
                   error
                 );
 
-                /*
-                 * Preserve authenticated
-                 * identity even if Firestore
-                 * temporarily fails.
-                 */
+                // Keep the authenticated identity if Firestore fails.
                 setUserProfile(
-                  buildUserProfile(
-                    currentUser
-                  )
+                  buildUserProfile(currentUser)
                 );
 
-                setLoading(false);
+                setProfileLoading(false);
               }
             );
+        },
+        (error) => {
+          console.log(
+            "Firebase authentication state error:",
+            error
+          );
+
+          setUser(null);
+          setUserProfile(null);
+          setProfileLoading(false);
+          setLoading(false);
         }
       );
 
     return () => {
-      if (
-        unsubscribeProfile
-      ) {
+      if (unsubscribeProfile) {
         unsubscribeProfile();
       }
 
@@ -334,16 +329,14 @@ export function AuthProvider({
         user,
         userProfile,
         loading,
+        profileLoading,
       }}
     >
-      {!loading &&
-        children}
+      {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(
-    AuthContext
-  );
+  return useContext(AuthContext);
 }
