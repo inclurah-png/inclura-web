@@ -70,6 +70,7 @@ const SUPPORTED_LANGUAGES = new Set(
 // These are the languages currently exposed
 // by your MADLAD-400 Hugging Face Space.
 const MADLAD_LANGUAGES = {
+  en: "English",
   fr: "French",
   es: "Spanish",
   de: "German",
@@ -235,19 +236,15 @@ export async function onRequestPost(context) {
         400
       );
     }
-
-    if (!MADLAD_LANGUAGES[target]) {
-      return jsonResponse(
-        {
-          error:
-            `${LANGUAGE_NAMES[target]} is not currently available in the MADLAD-400 Space.`,
-          code: "MADLAD_LANGUAGE_NOT_AVAILABLE",
-          supportedLanguages: Object.keys(MADLAD_LANGUAGES),
-        },
-        422
-      );
-    }
-
+    
+if (target === "en") {
+  return jsonResponse({
+    translatedText: text,
+    targetLanguage: "en",
+    model: "native",
+    provider: "INCLURA Translation Gateway",
+  });
+}
     const targetLanguage = MADLAD_LANGUAGES[target];
 
     // Submit the translation request to Hugging Face.
