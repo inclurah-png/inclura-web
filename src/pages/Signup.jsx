@@ -14,6 +14,10 @@ serverTimestamp,
 
 import { auth, db } from "../firebase";
 
+import {
+getAuthErrorInfo,
+} from "../services/authErrorMessages";
+
 import { useNavigate } from "react-router-dom";
 
 const googleProvider =
@@ -31,6 +35,9 @@ useState("");
 
 const [password, setPassword] =
 useState("");
+
+const [error, setError] =
+useState(null);
   
 const [category, setCategory] =
 useState("");
@@ -74,6 +81,8 @@ option,
 
 async function handleSignup() {
 
+setError(null);
+
 try {
 
 const userCredential =
@@ -85,6 +94,10 @@ password
 
 const user =
 userCredential.user;
+
+// A failed profile write must not be reported as a failed signup:
+// the Firebase account already exists at this point.
+try {
 
 await setDoc(
   doc(db, "users", user.uid),
@@ -138,17 +151,29 @@ savedPosts: [],
 
 profilePhoto: "",
   }
+  );
+
+} catch (profileError) {
+
+console.error(
+"Profile setup error:",
+profileError
 );
 
-alert(
-"Account created successfully"
-);
+}
 
 navigate("/onboarding");
 
-} catch (error) {
+} catch (signupError) {
 
-alert(error.message);
+console.error(
+"Signup error:",
+signupError
+);
+
+setError(
+getAuthErrorInfo(signupError)
+);
 
 }
 
@@ -166,6 +191,11 @@ googleProvider
 
 const user =
 result.user;
+
+setError(null);
+
+// Same as above: the account exists even if this write fails.
+try {
 
 await setDoc(
   doc(db, "users", user.uid),
@@ -221,12 +251,29 @@ profilePhoto:
   user.photoURL || "",
   },
   { merge: true }
+  );
+
+} catch (profileError) {
+
+console.error(
+"Profile setup error:",
+profileError
 );
+
+}
+
 navigate("/onboarding");
 
-} catch (error) {
+} catch (signupError) {
 
-alert(error.message);
+console.error(
+"Google signup error:",
+signupError
+);
+
+setError(
+getAuthErrorInfo(signupError)
+);
 
 }
 
@@ -546,6 +593,24 @@ e.target.value
 }
 style={inputStyle}
 />
+
+{error && (
+<div
+role="alert"
+style={{
+background: "#450a0a",
+border: "1px solid #7f1d1d",
+color: "#fecaca",
+padding: "12px 14px",
+borderRadius: "12px",
+marginBottom: "16px",
+fontSize: "14px",
+lineHeight: "1.45",
+}}
+>
+{error.message}
+</div>
+)}
 
 <button
 onClick={handleSignup}

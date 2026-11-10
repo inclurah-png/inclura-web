@@ -15,6 +15,10 @@ import {
   Link,
 } from "react-router-dom";
 
+import {
+  getAuthErrorInfo,
+} from "../services/authErrorMessages";
+
 // =======================================================
 // IFSE Identity Backend
 // =======================================================
@@ -125,6 +129,8 @@ function Login() {
 
   const [loading, setLoading] = useState(false);
 
+  const [error, setError] = useState(null);
+
   const [
     passkeyLoading,
     setPasskeyLoading,
@@ -138,11 +144,16 @@ function Login() {
     const cleanEmail = email.trim();
 
     if (!cleanEmail || !password) {
-      alert(
-        "Please enter your email and password."
-      );
+      setError({
+        code: "missing",
+        message:
+          "Please enter your email and password.",
+        retryable: false,
+      });
       return;
     }
+
+    setError(null);
 
     try {
       setLoading(true);
@@ -155,28 +166,24 @@ function Login() {
 
       navigate("/profile");
 
-    } catch (error) {
+    } catch (loginError) {
       console.error(
         "Email Login Error:",
-        error
+        loginError
       );
 
       console.error(
         "Firebase Error Code:",
-        error.code
+        loginError.code
       );
 
       console.error(
         "Firebase Error Message:",
-        error.message
+        loginError.message
       );
 
-      alert(
-        `Email login failed.\n\nError code: ${
-          error.code || "Unknown"
-        }\n\nMessage: ${
-          error.message
-        }`
+      setError(
+        getAuthErrorInfo(loginError)
       );
 
     } finally {
@@ -189,6 +196,8 @@ function Login() {
   // =====================================================
 
   async function handleGoogleLogin() {
+    setError(null);
+
     try {
       setLoading(true);
 
@@ -199,24 +208,24 @@ function Login() {
 
       navigate("/profile");
 
-    } catch (error) {
+    } catch (googleError) {
       console.error(
         "Google Login Error:",
-        error
+        googleError
       );
 
       console.error(
         "Code:",
-        error.code
+        googleError.code
       );
 
       console.error(
         "Message:",
-        error.message
+        googleError.message
       );
 
-      alert(
-        `${error.code}\n${error.message}`
+      setError(
+        getAuthErrorInfo(googleError)
       );
 
     } finally {
@@ -383,10 +392,6 @@ function Login() {
 
       // Success
 
-      alert(
-        "Passkey authentication successful."
-      );
-
       navigate("/profile");
 
     } catch (error) {
@@ -395,8 +400,8 @@ function Login() {
         error
       );
 
-      alert(
-        `Passkey sign-in failed.\n\n${error.message}`
+      setError(
+        getAuthErrorInfo(error)
       );
 
     } finally {
@@ -446,6 +451,67 @@ function Login() {
         >
           Sign in to continue to Inclura
         </p>
+
+        {/* Login error */}
+
+        {error && (
+          <div
+            role="alert"
+            style={{
+              background: "#450a0a",
+              border:
+                "1px solid #7f1d1d",
+              color: "#fecaca",
+              padding: "12px 14px",
+              borderRadius: "12px",
+              marginBottom: "16px",
+              fontSize: "14px",
+              lineHeight: "1.45",
+            }}
+          >
+            <div>{error.message}</div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                marginTop: "8px",
+                flexWrap: "wrap",
+              }}
+            >
+              {error.code ===
+                "auth/invalid-credential" && (
+                <Link
+                  to="/forgot-password"
+                  style={{
+                    color: "#fca5a5",
+                    fontWeight: "700",
+                  }}
+                >
+                  Reset your password
+                </Link>
+              )}
+
+              {error.retryable && (
+                <button
+                  type="button"
+                  onClick={handleLogin}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    color: "#fca5a5",
+                    fontWeight: "700",
+                    cursor: "pointer",
+                    padding: 0,
+                    fontSize: "14px",
+                  }}
+                >
+                  Try again
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Google */}
 
