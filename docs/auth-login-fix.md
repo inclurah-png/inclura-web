@@ -17,55 +17,64 @@ is raised only when the browser's request to `identitytoolkit.googleapis.com`
 never completes: an ad-blocker/privacy extension, VPN, DNS filter, antivirus
 HTTPS scanning, or being offline. That part has no code fix.
 
-## What was wrong in the code
-
-`src/pages/Login.jsx` reported every failure with `alert()`. That blocks the
-page, and Chrome suppresses alerts once the user dismisses a few of them — after
-that, **Sign In looks like it does nothing**, which matches "I can't log in"
-with no explanation.
-
 ## What changed
 
 - **`src/services/authErrorMessages.js`** — maps Firebase auth codes to
-  actionable sentences, and flags the retryable ones
-  (`network-request-failed`, `timeout`, `too-many-requests`).
-- **`src/pages/Login.jsx`** — errors from email/password, Google and passkey
-  sign-in now render in an inline `role="alert"` banner instead of an `alert()`.
-  `auth/invalid-credential` adds a "Reset your password" link; retryable errors
-  add "Try again".
-- **`src/pages/ForgotPassword.jsx`** — reset success/failure is shown inline
-  (including "check your spam folder" guidance) instead of `alert()`.
-- **`src/pages/Signup.jsx`** — inline errors, and a failed Firestore profile
-  write no longer reports signup as failed. `createUserWithEmailAndPassword`
-  had already created the account at that point, so the old `catch` told the
-  user signup failed when it had succeeded — then a retry hit
-  `auth/email-already-in-use`. Profile errors are now logged and signup
-  continues; the auth context already builds a profile from the auth user.
-
-## Verified
-
-- `npm run build` succeeds.
-- In the browser on the login page: submitting an empty form shows
-  "Please enter your email and password." inline and the page stays responsive;
-  wrong credentials show the credential message with the reset link, no modal.
-- In the browser on the signup page: a 3-character password shows "Choose a
-  stronger password (at least 6 characters)." inline, the page stays responsive,
-  and no account is created.
+  actionable sentences and flags the retryable ones.
+- **`src/pages/Login.jsx`** — email/password, Google and passkey errors render
+  in one inline `role="alert"` banner. Invalid credentials offer the reset
+  route; retryable errors offer a retry.
+- **`src/pages/Signup.jsx`** — a failed Firestore profile write no longer
+  reports signup as failed after the account was created.
+- **`src/pages/ForgotPassword.jsx`** — inline reset feedback.
+- **`src/firebase.js`** — `authDomain` reads `VITE_FIREBASE_AUTH_DOMAIN`, with
+  `inclura-prod-90734.firebaseapp.com` as the default.
 
 ## Still yours to do
 
-1. **Network:** allow `identitytoolkit.googleapis.com`,
-   `securetoken.googleapis.com` and `*.googleapis.com` in the ad-blocker / VPN /
-   DNS filter on the machine that fails, or try a private window with extensions
-   off. Nothing in the app can bypass that block for email/password sign-in.
-2. **Optional, deliberate:** `authDomain` is still
-   `inclura-prod-90734.firebaseapp.com`. Moving it to
-   `inclura-prod-90734.web.app` stops Google sign-in and reset links from
-   depending on the hostname blocklists often refuse. It requires adding
-   `https://inclura-prod-90734.web.app/__/auth/handler` to the Google provider's
-   authorized redirect URIs first, or Google sign-in will fail with a redirect
-   mismatch. Do not point `authDomain` at `inclura-web.pages.dev` without a
-   `/__/auth/*` proxy — Pages returns the SPA shell for that path.
-3. **Email templates:** Authentication → Templates → Customize action URL →
-   keep it on whichever auth domain you settle on, so reset and verification
-   links are minted there.
+### A. `auth/network-request-failed` — a local block, no code fix
+
+On the machine that fails, run this in the browser console on the login page:
+
+```js
+fetch("https://identitytoolkit.googleapis.com/", { mode: "no-cors" })
+  .then(() => console.log("reachable — Firebase Auth is not blocked"))
+  .catch((e) => console.error("blocked", e));
+```
+
+- `reachable` → the network is fine; the failure is the password itself.
+- `blocked` → something local drops the request: an ad-blocker/privacy
+  extension (try a private window with extensions off), a VPN or DNS filter
+  (Pi-hole, NextDNS, AdGuard), antivirus HTTPS scanning, or a corporate
+  proxy. Allow `identitytoolkit.googleapis.com`, `securetoken.googleapis.com`
+  and `*.googleapis.com`. Phone on mobile data with Wi-Fi off splits "my
+  machine" from "my network".
+
+No application code can bypass a blocked host for email/password sign-in.
+
+### B. `authDomain` — switch it with a setting, not code
+
+Do these **in this order**, or Google sign-in fails with a redirect mismatch:
+
+1. **Google Cloud Console → APIs & Services → Credentials →** the OAuth 2.0
+   Client ID used by Firebase (ends in `apps.googleusercontent.com`). Under
+   **Authorized redirect URIs** add
+   `https://inclura-prod-90734.web.app/__/auth/handler`, save, wait a few
+   minutes.
+2. **Firebase Console → Authentication → Settings → Authorized domains** —
+   `inclura-prod-90734.web.app` is already listed; nothing to do.
+3. **Cloudflare Pages → Settings → Environment variables** — add
+   `VITE_FIREBASE_AUTH_DOMAIN` = `inclura-prod-90734.web.app` for Production,
+   then trigger a deployment (Vite inlines env values at build time).
+4. **Verify:** the Google popup URL must start with
+   `https://inclura-prod-90734.web.app/__/auth/handler`, and a reset email link
+   must use that host instead of `firebaseapp.com`.
+
+Revert by deleting the variable and redeploying. Do **not** use
+`inclura-web.pages.dev` without a `/__/auth/*` proxy — Pages returns the SPA
+shell for unknown paths, so the auth handler would not exist there.
+
+### C. Email templates
+
+**Firebase Console → Authentication → Templates →** each template →
+**Customize action URL** → `https://inclura-prod-90734.web.app/__/auth/action`.
