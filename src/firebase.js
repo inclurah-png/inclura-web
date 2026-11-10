@@ -11,10 +11,19 @@ import {
   getStorage,
 } from "firebase/storage";
 
+// Only authDomain varies by environment: it is the origin Firebase serves
+// /__/auth/* from, and it is what email links and the Google popup use.
+// Override it in Cloudflare Pages variables (VITE_FIREBASE_AUTH_DOMAIN) once
+// that origin is an authorized domain and its handler is registered as a
+// Google redirect URI; otherwise the default keeps Google sign-in working.
+const AUTH_DOMAIN =
+  import.meta.env
+    .VITE_FIREBASE_AUTH_DOMAIN ||
+  "inclura-prod-90734.firebaseapp.com";
+
 const firebaseConfig = {
   apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
-  authDomain:
-    "inclura-prod-90734.firebaseapp.com",
+  authDomain: AUTH_DOMAIN,
   projectId:
     "inclura-prod-90734",
   storageBucket:
