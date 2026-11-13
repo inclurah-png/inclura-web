@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { useAccessibility } from "../context/AccessibilityProvider";
 
 import {
   SUPPORTED_LANGUAGES,
@@ -11,6 +12,9 @@ function LanguageSelector({
 
   const { i18n } =
     useTranslation();
+
+  const { setLanguage } =
+    useAccessibility();
 
   const [open, setOpen] =
     useState(false);
@@ -26,9 +30,15 @@ function LanguageSelector({
   code
 ) {
 
-  await i18n.changeLanguage(
-    code
-  );
+  /*
+   * Keep i18next, the accessibility provider,
+   * Firestore preferences, and localStorage in
+   * sync.  Previously this component changed only
+   * i18next/localStorage, while AccessibilityProvider
+   * could restore the older saved language on the
+   * next render (for example after post translation).
+   */
+  setLanguage(code);
 
   localStorage.setItem(
     "inclura-language",
