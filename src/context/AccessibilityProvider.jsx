@@ -508,11 +508,24 @@ export function AccessibilityProvider({ children }) {
 
     const overrides = localOverrides;
 
+    /*
+     * The browser/local language selection is the freshest value.
+     * Do not let an older Firestore userProfile snapshot overwrite
+     * a language the user has just selected.
+     */
+    const storedBrowserLanguage =
+      typeof window !== "undefined"
+        ? window.localStorage.getItem("inclura-language")
+        : "";
+
     const savedLanguage =
       overrides.language ??
       overrides.preferredLanguage ??
-      (typeof userProfile.language === "string" &&
-      userProfile.language.trim()
+      (typeof storedBrowserLanguage === "string" &&
+      storedBrowserLanguage.trim()
+        ? storedBrowserLanguage.trim()
+        : typeof userProfile.language === "string" &&
+          userProfile.language.trim()
         ? userProfile.language
         : typeof userProfile.preferredLanguage === "string" &&
           userProfile.preferredLanguage.trim()
