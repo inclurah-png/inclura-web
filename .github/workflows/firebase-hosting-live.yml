@@ -28,29 +28,31 @@ jobs:
       - name: Build Vite app
         run: npm run build
 
-      - name: Check Firebase service account secret safely
+      - name: Prepare Firebase service account credentials
+        id: firebase-creds
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_INCLURA_PROD_90734 }}
         run: |
           node <<'NODE'
+          const fs = require("fs");
+          let account = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
           try {
-            const value = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
-            const account = JSON.parse(value);
-            console.log("Secret contains valid JSON:", true);
-            console.log("Top-level client_email exists:", typeof account.client_email === "string" && account.client_email.includes("@"));
-            console.log("Top-level JSON field names:", Object.keys(account).join(", "));
-            const findPaths = (obj, target, prefix = "") => {
-              if (!obj || typeof obj !== "object") return [];
-              return Object.entries(obj).flatMap(([key, value]) => {
-                const path = prefix ? prefix + "." + key : key;
-                return [...(key === target ? [path] : []), ...findPaths(value, target, path)];
-              });
-            };
-            console.log("client_email field locations:", findPaths(account, "client_email").join(", ") || "not found");
-            console.log("project_id field locations:", findPaths(account, "project_id").join(", ") || "not found");
+            account = JSON.parse(account);
+            if (typeof account === "string") account = JSON.parse(account);
+            if (!account || typeof account !== "object" || Array.isArray(account)) {
+              throw new Error("Credential data is not a JSON object");
+            }
+            if (typeof account.client_email !== "string" || !account.client_email.includes("@")) {
+              throw new Error("Service account client_email is missing");
+            }
+            if (account.project_id !== "inclura-prod-90734") {
+              throw new Error("Service account project_id does not match");
+            }
+            const json = JSON.stringify(account);
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, "json<<FIREBASE_JSON\n" + json + "\nFIREBASE_JSON\n");
+            console.log("Firebase credentials validated and prepared.");
           } catch (error) {
-            console.log("Secret contains valid JSON:", false);
-            console.log("JSON parsing failed; secret content was not displayed.");
+            console.error("Firebase credential format check failed:", error.message);
             process.exit(1);
           }
           NODE
@@ -59,6 +61,6 @@ jobs:
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_INCLURA_PROD_90734 }}
+          firebaseServiceAccount: ${{ steps.firebase-creds.outputs.json }}
           projectId: inclura-prod-90734
           channelId: live
