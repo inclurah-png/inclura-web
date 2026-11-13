@@ -38,7 +38,16 @@ jobs:
             const account = JSON.parse(value);
             console.log("Secret contains valid JSON:", true);
             console.log("Top-level client_email exists:", typeof account.client_email === "string" && account.client_email.includes("@"));
-            console.log("Project ID matches:", account.project_id === "inclura-prod-90734");
+            console.log("Top-level JSON field names:", Object.keys(account).join(", "));
+            const findPaths = (obj, target, prefix = "") => {
+              if (!obj || typeof obj !== "object") return [];
+              return Object.entries(obj).flatMap(([key, value]) => {
+                const path = prefix ? prefix + "." + key : key;
+                return [...(key === target ? [path] : []), ...findPaths(value, target, path)];
+              });
+            };
+            console.log("client_email field locations:", findPaths(account, "client_email").join(", ") || "not found");
+            console.log("project_id field locations:", findPaths(account, "project_id").join(", ") || "not found");
           } catch (error) {
             console.log("Secret contains valid JSON:", false);
             console.log("JSON parsing failed; secret content was not displayed.");
