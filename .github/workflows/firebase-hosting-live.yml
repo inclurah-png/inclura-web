@@ -28,6 +28,24 @@ jobs:
       - name: Build Vite app
         run: npm run build
 
+      - name: Check Firebase service account secret safely
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_INCLURA_PROD_90734 }}
+        run: |
+          node <<'NODE'
+          try {
+            const value = process.env.FIREBASE_SERVICE_ACCOUNT_JSON || "";
+            const account = JSON.parse(value);
+            console.log("Secret contains valid JSON:", true);
+            console.log("Top-level client_email exists:", typeof account.client_email === "string" && account.client_email.includes("@"));
+            console.log("Project ID matches:", account.project_id === "inclura-prod-90734");
+          } catch (error) {
+            console.log("Secret contains valid JSON:", false);
+            console.log("JSON parsing failed; secret content was not displayed.");
+            process.exit(1);
+          }
+          NODE
+
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
