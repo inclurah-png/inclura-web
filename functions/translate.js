@@ -373,7 +373,7 @@ if (target === "en") {
         }
 
         // Extract only the requested language from the Space report.
-        const marker = `${targetLanguage}:\\n`;
+        const marker = `${targetLanguage}:\n`;
         const markerPosition = report.lastIndexOf(marker);
 
         if (markerPosition === -1) {
