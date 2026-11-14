@@ -311,8 +311,9 @@ export async function onRequestPost(context) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                text,
-                target_languages: [targetLanguage],
+                // Gradio queue endpoints accept positional component
+                // values in the "data" array, not named form fields.
+                data: [text, [targetLanguage]],
               }),
             }
           );
