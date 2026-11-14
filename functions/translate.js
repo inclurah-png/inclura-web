@@ -289,140 +289,127 @@ if (target === "en") {
       );
     }
 
-    // Hugging Face ZeroGPU can briefly return 5xx/network failures
-    // while a Space is waking or a queue is being established.
-    // Retry those transient failures before giving up.
-    let submitResponse;
+    // Hugging Face ZeroGPU can fail after a job is accepted (queue wake-up,
+    // provider-side errors, malformed SSE, or an empty result). Treat the
+    // whole submission + result cycle as retryable so one bad job does not
+    // make every later post fail.
+    const MAX_TRANSLATION_ATTEMPTS = 3;
+    let lastProviderError = null;
+    let translatedText = "";
 
-    try {
-      submitResponse = await fetchWithRetry(
-        `${HF_SPACE}/gradio_api/call/v2/test_translation`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            text,
-            target_languages: [targetLanguage],
-          }),
+    for (let translationAttempt = 1;
+      translationAttempt <= MAX_TRANSLATION_ATTEMPTS;
+      translationAttempt += 1) {
+      try {
+        let submitResponse;
+
+        try {
+          submitResponse = await fetchWithRetry(
+            \`\${HF_SPACE}/gradio_api/call/v2/test_translation\`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                text,
+                target_languages: [targetLanguage],
+              }),
+            }
+          );
+        } catch (error) {
+          throw new Error(
+            \`Could not submit translation job: \${error instanceof Error ? error.message : "Unknown provider error."}\`
+          );
         }
-      );
-    } catch (error) {
-      return jsonResponse(
-        {
-          error: "Could not submit the translation to Hugging Face after automatic retries.",
-          code: "MADLAD_SUBMISSION_FAILED",
-          details: error instanceof Error ? error.message : "Unknown provider error.",
-        },
-        502
-      );
-    }
 
-    if (!submitResponse.ok) {
-      const errorDetails = await submitResponse.text();
-
-      return jsonResponse(
-        {
-          error: "Could not submit the translation to Hugging Face.",
-          code: "MADLAD_SUBMISSION_FAILED",
-          details: errorDetails.slice(0, 500),
-        },
-        502
-      );
-    }
-
-    const submission = await submitResponse.json();
-    const eventId = submission.event_id || submission.eventId;
-
-    if (!eventId) {
-      return jsonResponse(
-        {
-          error: "Hugging Face did not return a translation event ID.",
-          code: "MADLAD_EVENT_ID_MISSING",
-        },
-        502
-      );
-    }
-
-    // Wait for the completed Gradio translation result.
-    let resultResponse;
-
-    try {
-      resultResponse = await fetchWithRetry(
-        `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
-        {
-          method: "GET",
-          headers: {
-            "Accept": "text/event-stream",
-          },
+        if (!submitResponse.ok) {
+          const errorDetails = await submitResponse.text();
+          throw new Error(
+            \`Translation submission failed (HTTP \${submitResponse.status}): \${errorDetails.slice(0, 500)}\`
+          );
         }
-      );
-    } catch (error) {
-      return jsonResponse(
-        {
-          error: "Could not retrieve the MADLAD-400 translation result after automatic retries.",
-          code: "MADLAD_RESULT_FAILED",
-          details: error instanceof Error ? error.message : "Unknown provider error.",
-        },
-        502
-      );
+
+        const submission = await submitResponse.json();
+        const eventId = submission.event_id || submission.eventId;
+
+        if (!eventId) {
+          throw new Error("Hugging Face did not return a translation event ID.");
+        }
+
+        let resultResponse;
+
+        try {
+          resultResponse = await fetchWithRetry(
+            \`\${HF_SPACE}/gradio_api/call/test_translation/\${encodeURIComponent(eventId)}\`,
+            {
+              method: "GET",
+              headers: {
+                "Accept": "text/event-stream",
+              },
+            }
+          );
+        } catch (error) {
+          throw new Error(
+            \`Could not retrieve translation result: \${error instanceof Error ? error.message : "Unknown provider error."}\`
+          );
+        }
+
+        if (!resultResponse.ok) {
+          const errorDetails = await resultResponse.text();
+          throw new Error(
+            \`Translation result request failed (HTTP \${resultResponse.status}): \${errorDetails.slice(0, 500)}\`
+          );
+        }
+
+        const streamText = await resultResponse.text();
+        const report = extractCompletedResult(streamText);
+
+        if (
+          report.includes("TRANSLATION TEST FAILED") ||
+          report.includes("TRANSLATION FAILED:")
+        ) {
+          throw new Error(report.slice(0, 500));
+        }
+
+        // Extract only the requested language from the Space report.
+        const marker = \`\${targetLanguage}:\\n\`;
+        const markerPosition = report.lastIndexOf(marker);
+
+        if (markerPosition === -1) {
+          throw new Error(
+            \`The expected \${targetLanguage} translation was not found in the provider result.\`
+          );
+        }
+
+        const candidate = report
+          .slice(markerPosition + marker.length)
+          .trim();
+
+        if (!candidate) {
+          throw new Error("MADLAD-400 returned an empty translation.");
+        }
+
+        translatedText = candidate;
+        break;
+      } catch (error) {
+        lastProviderError = error;
+
+        if (translationAttempt < MAX_TRANSLATION_ATTEMPTS) {
+          // Give ZeroGPU a little time to recover before creating a fresh job.
+          await sleep(RETRY_DELAYS_MS[translationAttempt - 1] || 3500);
+        }
+      }
     }
-
-    if (!resultResponse.ok) {
-      const errorDetails = await resultResponse.text();
-
-      return jsonResponse(
-        {
-          error: "Could not retrieve the MADLAD-400 translation result.",
-          code: "MADLAD_RESULT_FAILED",
-          details: errorDetails.slice(0, 500),
-        },
-        502
-      );
-    }
-
-    const streamText = await resultResponse.text();
-    const report = extractCompletedResult(streamText);
-
-    if (
-      report.includes("TRANSLATION TEST FAILED") ||
-      report.includes("TRANSLATION FAILED:")
-    ) {
-      return jsonResponse(
-        {
-          error: "MADLAD-400 could not complete this translation.",
-          code: "MADLAD_TRANSLATION_FAILED",
-          details: report.slice(0, 500),
-        },
-        502
-      );
-    }
-
-    // Extract only the requested language from the Space report.
-    const marker = `${targetLanguage}:\n`;
-    const markerPosition = report.lastIndexOf(marker);
-
-    if (markerPosition === -1) {
-      return jsonResponse(
-        {
-          error: "The expected translated text was not found in the result.",
-          code: "MADLAD_RESULT_FORMAT_ERROR",
-          details: report.slice(0, 500),
-        },
-        502
-      );
-    }
-
-    const translatedText = report
-      .slice(markerPosition + marker.length)
-      .trim();
 
     if (!translatedText) {
       return jsonResponse(
         {
-          error: "MADLAD-400 returned an empty translation.",
-          code: "EMPTY_TRANSLATION",
+          error: "MADLAD-400 could not complete this translation after automatic retries.",
+          code: "MADLAD_TRANSLATION_FAILED",
+          details: lastProviderError instanceof Error
+            ? lastProviderError.message
+            : "Unknown provider error.",
         },
         502
       );
