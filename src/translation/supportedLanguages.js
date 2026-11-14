@@ -168,14 +168,6 @@ export const SUPPORTED_LANGUAGES = [
     rtl: false,
   },
   {
-    code: "ms",
-    name: "Malay",
-    nativeName: "Bahasa Melayu",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
-  {
     code: "bn",
     name: "Bengali",
     nativeName: "বাংলা",
