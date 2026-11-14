@@ -311,9 +311,8 @@ export async function onRequestPost(context) {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({
-                // Gradio queue endpoints accept positional component
-                // values in the "data" array, not named form fields.
-                data: [text, [targetLanguage]],
+                text,
+                target_languages: [targetLanguage],
               }),
             }
           );
@@ -341,7 +340,7 @@ export async function onRequestPost(context) {
 
         try {
           resultResponse = await fetchWithRetry(
-            `${HF_SPACE}/gradio_api/call/v2/test_translation/${encodeURIComponent(eventId)}`,
+            `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
             {
               method: "GET",
               headers: {
