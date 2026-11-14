@@ -22,6 +22,15 @@ import {
  */
 const inFlightTranslations = new Map();
 
+/*
+ * MADLAD-400 is running on a shared Hugging Face ZeroGPU Space.
+ * Keep translation jobs from this browser strictly sequential so
+ * translating several feed posts does not submit multiple GPU jobs
+ * at the same time. Different posts still use their own in-flight key.
+ */
+let translationQueue = Promise.resolve();
+const TRANSLATION_QUEUE_GAP_MS = 1200;
+
 const RETRY_DELAYS_MS = [900, 2000];
 
 function sleep(ms) {
@@ -37,9 +46,17 @@ function translationKey(sourceId, targetLanguage, sourceText) {
 }
 
 async function requestTranslationGateway(sourceText, targetLanguage) {
-  let lastError = null;
+  /*
+   * Wait for the previous translation job to finish before submitting
+   * the next one. The queue is deliberately browser-local and does not
+   * block users on other devices.
+   */
+  const run = translationQueue.then(async () => {
+    await sleep(TRANSLATION_QUEUE_GAP_MS);
 
-  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    let lastError = null;
+
+    for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
     try {
       const response = await fetch("/translate", {
         method: "POST",
@@ -115,9 +132,18 @@ async function requestTranslationGateway(sourceText, targetLanguage) {
     );
   }
 
-  throw lastError || new Error(
-    "Translation service request failed."
-  );
+    throw lastError || new Error(
+      "Translation service request failed."
+    );
+  });
+
+  /*
+   * Keep the queue moving even if this job fails. The failed promise
+   * itself must never poison all later translation requests.
+   */
+  translationQueue = run.catch(() => undefined);
+
+  return run;
 }
 
 /**
