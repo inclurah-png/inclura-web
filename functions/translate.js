@@ -305,7 +305,7 @@ if (target === "en") {
 
         try {
           submitResponse = await fetchWithRetry(
-            \`\${HF_SPACE}/gradio_api/call/v2/test_translation\`,
+            `${HF_SPACE}/gradio_api/call/v2/test_translation`,
             {
               method: "POST",
               headers: {
@@ -319,14 +319,14 @@ if (target === "en") {
           );
         } catch (error) {
           throw new Error(
-            \`Could not submit translation job: \${error instanceof Error ? error.message : "Unknown provider error."}\`
+            `Could not submit translation job: ${error instanceof Error ? error.message : "Unknown provider error."}`
           );
         }
 
         if (!submitResponse.ok) {
           const errorDetails = await submitResponse.text();
           throw new Error(
-            \`Translation submission failed (HTTP \${submitResponse.status}): \${errorDetails.slice(0, 500)}\`
+            `Translation submission failed (HTTP ${submitResponse.status}): ${errorDetails.slice(0, 500)}`
           );
         }
 
@@ -341,7 +341,7 @@ if (target === "en") {
 
         try {
           resultResponse = await fetchWithRetry(
-            \`\${HF_SPACE}/gradio_api/call/test_translation/\${encodeURIComponent(eventId)}\`,
+            `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
             {
               method: "GET",
               headers: {
@@ -351,14 +351,14 @@ if (target === "en") {
           );
         } catch (error) {
           throw new Error(
-            \`Could not retrieve translation result: \${error instanceof Error ? error.message : "Unknown provider error."}\`
+            `Could not retrieve translation result: ${error instanceof Error ? error.message : "Unknown provider error."}`
           );
         }
 
         if (!resultResponse.ok) {
           const errorDetails = await resultResponse.text();
           throw new Error(
-            \`Translation result request failed (HTTP \${resultResponse.status}): \${errorDetails.slice(0, 500)}\`
+            `Translation result request failed (HTTP ${resultResponse.status}): ${errorDetails.slice(0, 500)}`
           );
         }
 
@@ -373,12 +373,12 @@ if (target === "en") {
         }
 
         // Extract only the requested language from the Space report.
-        const marker = \`\${targetLanguage}:\\n\`;
+        const marker = `${targetLanguage}:\\n`;
         const markerPosition = report.lastIndexOf(marker);
 
         if (markerPosition === -1) {
           throw new Error(
-            \`The expected \${targetLanguage} translation was not found in the provider result.\`
+            `The expected ${targetLanguage} translation was not found in the provider result.`
           );
         }
 
