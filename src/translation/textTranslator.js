@@ -18,12 +18,12 @@ import {
 /*
  * Keep one in-flight request per source/language pair.
  * Rapid taps or repeated renders must not create several
- * identical MADLAD jobs at the same time.
+ * identical translation jobs at the same time.
  */
 const inFlightTranslations = new Map();
 
 /*
- * MADLAD-400 is running on a shared Hugging Face ZeroGPU Space.
+ * Translation requests are sent through the Inclura server-side provider gateway.
  * Keep translation jobs from this browser strictly sequential so
  * translating several feed posts does not submit multiple GPU jobs
  * at the same time. Different posts still use their own in-flight key.
@@ -45,7 +45,7 @@ function translationKey(sourceId, targetLanguage, sourceText) {
   ].join("::");
 }
 
-async function requestTranslationGateway(sourceText, targetLanguage) {
+async function requestTranslationGateway(sourceText, targetLanguage, sourceLanguage) {
   /*
    * Wait for the previous translation job to finish before submitting
    * the next one. The queue is deliberately browser-local and does not
@@ -66,6 +66,7 @@ async function requestTranslationGateway(sourceText, targetLanguage) {
         body: JSON.stringify({
           text: sourceText,
           target: targetLanguage,
+          source: sourceLanguage,
         }),
       });
 
@@ -155,6 +156,10 @@ function normalizeLanguageCode(code = "") {
 
   if (normalized === "zh-tw" || normalized === "zh_hant") {
     return "zh-TW";
+  }
+
+  if (normalized === "zh" || normalized === "zh-cn") {
+    return "zh-CN";
   }
 
   return normalized;
@@ -298,7 +303,8 @@ export async function translateText({
       translatedText,
     } = await requestTranslationGateway(
       sourceText,
-      normalizedTargetLanguage
+      normalizedTargetLanguage,
+      originalLanguage
     );
 
     const finalTargetLanguage =
