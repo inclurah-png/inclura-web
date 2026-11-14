@@ -15,6 +15,111 @@ import {
   getCachedTranslation,
 } from "./translationCache";
 
+/*
+ * Keep one in-flight request per source/language pair.
+ * Rapid taps or repeated renders must not create several
+ * identical MADLAD jobs at the same time.
+ */
+const inFlightTranslations = new Map();
+
+const RETRY_DELAYS_MS = [900, 2000];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function translationKey(sourceId, targetLanguage, sourceText) {
+  return [
+    sourceId || "no-source-id",
+    targetLanguage,
+    sourceText,
+  ].join("::");
+}
+
+async function requestTranslationGateway(sourceText, targetLanguage) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const response = await fetch("/translate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          text: sourceText,
+          target: targetLanguage,
+        }),
+      });
+
+      let data = null;
+
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error(
+          "Translation service returned an invalid response."
+        );
+      }
+
+      if (response.ok) {
+        if (
+          !data?.translatedText ||
+          typeof data.translatedText !== "string"
+        ) {
+          throw new Error(
+            "Translation service returned no translated text."
+          );
+        }
+
+        const translatedText =
+          data.translatedText.trim();
+
+        if (!translatedText) {
+          throw new Error(
+            "Translation service returned empty text."
+          );
+        }
+
+        return {
+          data,
+          translatedText,
+        };
+      }
+
+      lastError = new Error(
+        data?.error ||
+          "Translation service request failed."
+      );
+
+      /*
+       * Retry only transient provider/server failures.
+       * Invalid language/text errors should return immediately.
+       */
+      if (
+        response.status < 500 ||
+        attempt >= RETRY_DELAYS_MS.length
+      ) {
+        throw lastError;
+      }
+    } catch (error) {
+      lastError = error;
+
+      if (attempt >= RETRY_DELAYS_MS.length) {
+        throw lastError;
+      }
+    }
+
+    await sleep(
+      RETRY_DELAYS_MS[attempt]
+    );
+  }
+
+  throw lastError || new Error(
+    "Translation service request failed."
+  );
+}
+
 /**
  * Normalize language codes so the translation system
  * uses one consistent representation.
@@ -151,90 +256,52 @@ export async function translateText({
    * authoritative translation layer.
    */
 
-  let response;
+  const requestKey = translationKey(
+    sourceId,
+    normalizedTargetLanguage,
+    sourceText
+  );
+
+  if (inFlightTranslations.has(requestKey)) {
+    return inFlightTranslations.get(requestKey);
+  }
+
+  const translationPromise = (async () => {
+    const {
+      data,
+      translatedText,
+    } = await requestTranslationGateway(
+      sourceText,
+      normalizedTargetLanguage
+    );
+
+    const finalTargetLanguage =
+      normalizeLanguageCode(
+        data.targetLanguage ||
+          normalizedTargetLanguage
+      );
+
+    return {
+      originalLanguage,
+      targetLanguage: finalTargetLanguage,
+      translatedText,
+      confidence:
+        typeof data.confidence === "number"
+          ? data.confidence
+          : 0,
+    };
+  })();
+
+  inFlightTranslations.set(
+    requestKey,
+    translationPromise
+  );
 
   try {
-    response = await fetch("/translate", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: sourceText,
-        target: normalizedTargetLanguage,
-      }),
-    });
-  } catch (error) {
-    console.error(
-      "Inclura Translation Gateway Network Error:",
-      error
-    );
-
-    throw new Error(
-      "Unable to connect to the translation service."
-    );
+    return await translationPromise;
+  } finally {
+    inFlightTranslations.delete(requestKey);
   }
-
-  let data = null;
-
-  try {
-    data = await response.json();
-  } catch (error) {
-    console.error(
-      "Inclura Translation Gateway Invalid Response:",
-      error
-    );
-
-    throw new Error(
-      "Translation service returned an invalid response."
-    );
-  }
-
-  if (!response.ok) {
-    console.error(
-      "Inclura Translation Gateway Error:",
-      data
-    );
-
-    throw new Error(
-      data?.error ||
-        "Translation service request failed."
-    );
-  }
-
-  if (
-    !data?.translatedText ||
-    typeof data.translatedText !== "string"
-  ) {
-    throw new Error(
-      "Translation service returned no translated text."
-    );
-  }
-
-  const translatedText =
-    data.translatedText.trim();
-
-  if (!translatedText) {
-    throw new Error(
-      "Translation service returned empty text."
-    );
-  }
-
-  const finalTargetLanguage =
-    normalizeLanguageCode(
-      data.targetLanguage ||
-        normalizedTargetLanguage
-    );
-
-  return {
-    originalLanguage,
-    targetLanguage: finalTargetLanguage,
-    translatedText,
-    confidence:
-      typeof data.confidence === "number"
-        ? data.confidence
-        : 0,
-  };
 }
 
 /**
