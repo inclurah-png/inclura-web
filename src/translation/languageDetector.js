@@ -14,6 +14,10 @@ function normalizeLanguageCode(code = "") {
     return "zh-TW";
   }
 
+  if (normalized === "zh" || normalized === "zh-cn") {
+    return "zh-CN";
+  }
+
   return normalized;
 }
 
