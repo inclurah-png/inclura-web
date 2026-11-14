@@ -25,6 +25,7 @@ const LANGUAGE_NAMES = {
   pt: "Portuguese",
   ar: "Arabic",
   zh: "Simplified Chinese",
+  "zh-CN": "Simplified Chinese",
   "zh-TW": "Traditional Chinese",
   ja: "Japanese",
   de: "German",
@@ -66,6 +67,21 @@ const LANGUAGE_NAMES = {
 const SUPPORTED_LANGUAGES = new Set(
   Object.keys(LANGUAGE_NAMES)
 );
+
+const M2M100_LANGUAGE_CODES = new Set([
+  "en", "es", "fr", "pt", "ar", "sw", "ha", "yo",
+  "ig", "am", "zu", "zh-CN", "zh-TW", "ja", "ko",
+  "hi", "bn", "ur", "ta", "id", "th", "vi", "de",
+  "it", "nl", "ru", "tr", "ms",
+]);
+
+function toM2M100LanguageCode(code) {
+  if (code === "zh-CN" || code === "zh-TW" || code === "zh") {
+    return "zh";
+  }
+
+  return code;
+}
 
 // These are the languages currently exposed
 // by your MADLAD-400 Hugging Face Space.
@@ -227,6 +243,7 @@ export async function onRequestPost(context) {
       : "";
 
     const target = normalizeLanguage(body.target);
+    const source = normalizeLanguage(body.source || "en");
 
     if (!text) {
       return jsonResponse(
@@ -268,7 +285,7 @@ export async function onRequestPost(context) {
       );
     }
     
-if (target === "en") {
+if (target === "en" && source === "en") {
   return jsonResponse({
     translatedText: text,
     targetLanguage: "en",
@@ -276,7 +293,67 @@ if (target === "en") {
     provider: "INCLURA Translation Gateway",
   });
 }
-    const targetLanguage = MADLAD_LANGUAGES[target];
+
+    /*
+     * Primary replacement provider: Cloudflare Workers AI.
+     * The Pages project must have a Workers AI binding named AI.
+     * Keep the legacy provider below only as a temporary migration
+     * fallback until that binding is configured and deployed.
+     */
+    if (context.env && context.env.AI) {
+      if (!M2M100_LANGUAGE_CODES.has(target)) {
+        return jsonResponse({
+          error: "The selected language is not supported by the replacement translation model.",
+          code: "M2M100_LANGUAGE_UNAVAILABLE",
+          targetLanguage: target,
+        }, 400);
+      }
+
+      if (!M2M100_LANGUAGE_CODES.has(source)) {
+        return jsonResponse({
+          error: "The detected source language is not supported by the replacement translation model.",
+          code: "M2M100_SOURCE_LANGUAGE_UNAVAILABLE",
+          sourceLanguage: source,
+        }, 400);
+      }
+
+      try {
+        const result = await context.env.AI.run(
+          "@cf/meta/m2m100-1.2b",
+          {
+            text,
+            source_lang: toM2M100LanguageCode(source),
+            target_lang: toM2M100LanguageCode(target),
+          }
+        );
+
+        const translatedText =
+          typeof result?.translated_text === "string"
+            ? result.translated_text.trim()
+            : "";
+
+        if (!translatedText) {
+          throw new Error("Workers AI returned an empty translation.");
+        }
+
+        return jsonResponse({
+          translatedText,
+          targetLanguage: target,
+          model: "@cf/meta/m2m100-1.2b",
+          provider: "Cloudflare Workers AI",
+        });
+      } catch (error) {
+        console.error("Inclura Workers AI Translation Error:", error);
+        return jsonResponse({
+          error: "The replacement translation service could not complete this request.",
+          code: "WORKERS_AI_TRANSLATION_FAILED",
+          details: error instanceof Error ? error.message : "Unknown provider error.",
+        }, 502);
+      }
+    }
+
+    const targetLanguage = MADLAD_LANGUAGES[target] ||
+      (target === "zh-CN" || target === "zh-TW" ? "Chinese" : null);
 
     if (!targetLanguage) {
       return jsonResponse(
