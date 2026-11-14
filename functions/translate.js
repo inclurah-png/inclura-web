@@ -341,7 +341,7 @@ if (target === "en") {
 
         try {
           resultResponse = await fetchWithRetry(
-            `${HF_SPACE}/gradio_api/call/v2/test_translation/${encodeURIComponent(eventId)}`,
+            `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
             {
               method: "GET",
               headers: {
