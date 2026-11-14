@@ -130,6 +130,7 @@ function Feed() {
     useState(null);
   const [hydratedAuthors, setHydratedAuthors] = useState({});
   const [reactingPosts, setReactingPosts] = useState({});
+  const [feedError, setFeedError] = useState("");
 
   const {
     accessibilityNeeds,
@@ -269,26 +270,83 @@ function Feed() {
     if (loading) return;
 
     setLoading(true);
+    setFeedError("");
 
     try {
-      let q;
+      let snapshot;
 
-      if (loadMore && lastVisible) {
-        q = query(
-          collection(db, "posts"),
-          orderBy("createdAt", "desc"),
-          startAfter(lastVisible),
-          limit(POSTS_PER_PAGE)
+      try {
+        let q;
+
+        if (loadMore && lastVisible) {
+          q = query(
+            collection(db, "posts"),
+            orderBy("createdAt", "desc"),
+            startAfter(lastVisible),
+            limit(POSTS_PER_PAGE)
+          );
+        } else {
+          q = query(
+            collection(db, "posts"),
+            orderBy("createdAt", "desc"),
+            limit(POSTS_PER_PAGE)
+          );
+        }
+
+        snapshot = await getDocs(q);
+      } catch (orderedQueryError) {
+        /*
+         * Some older posts may not have createdAt, or the ordered
+         * query may temporarily fail because of Firestore query
+         * configuration. Do not make the whole Feed look empty.
+         * Fall back to a plain collection read and sort safely
+         * in the browser.
+         */
+        console.warn(
+          "Inclura Feed Ordered Query Fallback:",
+          orderedQueryError
         );
-      } else {
-        q = query(
-          collection(db, "posts"),
-          orderBy("createdAt", "desc"),
-          limit(POSTS_PER_PAGE)
+
+        if (loadMore) {
+          setHasMore(false);
+          return;
+        }
+
+        const fallbackSnapshot = await getDocs(
+          query(
+            collection(db, "posts"),
+            limit(50)
+          )
         );
+
+        const fallbackDocs = [...fallbackSnapshot.docs];
+
+        fallbackDocs.sort((a, b) => {
+          const aData = a.data();
+          const bData = b.data();
+
+          const aTime =
+            aData.createdAt?.toMillis?.() ||
+            (aData.createdAt?.seconds
+              ? aData.createdAt.seconds * 1000
+              : 0);
+
+          const bTime =
+            bData.createdAt?.toMillis?.() ||
+            (bData.createdAt?.seconds
+              ? bData.createdAt.seconds * 1000
+              : 0);
+
+          return bTime - aTime;
+        });
+
+        snapshot = {
+          docs: fallbackDocs,
+        };
+
+        setLastVisible(null);
+        setHasMore(false);
       }
-
-      const snapshot = await getDocs(q);
 
       const fetchedPosts = snapshot.docs.map(
         (postDoc) => ({
@@ -297,15 +355,14 @@ function Feed() {
         })
       );
 
-      if (snapshot.docs.length > 0) {
+      if (
+        snapshot.docs.length > 0 &&
+        !loadMore
+      ) {
         setLastVisible(
           snapshot.docs[snapshot.docs.length - 1]
         );
       }
-
-      setHasMore(
-        snapshot.docs.length === POSTS_PER_PAGE
-      );
 
       if (loadMore) {
         const mergeUnique = (previousPosts) => {
@@ -326,11 +383,17 @@ function Feed() {
       } else {
         setPosts(fetchedPosts);
         setFilteredPosts(fetchedPosts);
+        setHasMore(
+          snapshot.docs.length === POSTS_PER_PAGE
+        );
       }
     } catch (error) {
       console.error(
         "Inclura Feed Load Error:",
         error
+      );
+      setFeedError(
+        "Unable to load posts right now. Please refresh and try again."
       );
     } finally {
       setLoading(false);
@@ -812,7 +875,9 @@ function Feed() {
           >
             {loading
               ? "Loading posts..."
-              : "No posts yet"}
+              : feedError
+                ? feedError
+                : "No posts yet"}
           </div>
         ) : (
           filteredPosts.map((post) => {
