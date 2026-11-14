@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  addDoc,
   collection,
   doc,
+  increment,
   onSnapshot,
   orderBy,
   query,
-  runTransaction,
   serverTimestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
@@ -95,19 +97,16 @@ function CommentBox({ postId }) {
     setError("");
 
     try {
-      const postRef = doc(db, "posts", postId);
-      const commentRef = doc(
-        collection(db, "posts", postId, "comments")
-      );
-
-      await runTransaction(db, async (transaction) => {
-        const postSnapshot = await transaction.get(postRef);
-
-        if (!postSnapshot.exists()) {
-          throw new Error("POST_NOT_FOUND");
-        }
-
-        transaction.set(commentRef, {
+      /*
+       * Create the comment as its own Firestore write.
+       * Do not use a transaction here: a transaction requires read
+       * access to the parent post, which can make an otherwise valid
+       * comment fail when security rules allow comment creation but
+       * restrict post reads/updates.
+       */
+      await addDoc(
+        collection(db, "posts", postId, "comments"),
+        {
           text,
           userId: user.uid,
           userName:
@@ -117,15 +116,24 @@ function CommentBox({ postId }) {
               defaultValue: "Inclura user",
             }),
           createdAt: serverTimestamp(),
-        });
+        }
+      );
 
-        const currentCount =
-          postSnapshot.data().commentCount || 0;
-
-        transaction.update(postRef, {
-          commentCount: currentCount + 1,
+      /*
+       * Keep the post counter updated separately. If a rule or
+       * temporary Firestore problem prevents the counter update,
+       * the comment itself has already been saved successfully.
+       */
+      try {
+        await updateDoc(doc(db, "posts", postId), {
+          commentCount: increment(1),
         });
-      });
+      } catch (countError) {
+        console.warn(
+          "Inclura Comment Count Update Warning:",
+          countError
+        );
+      }
 
       setCommentText("");
     } catch (submitError) {
@@ -134,12 +142,27 @@ function CommentBox({ postId }) {
         submitError
       );
 
-      setError(
-        t("comments.submitError", {
+      let message = t("comments.submitError", {
+        defaultValue:
+          "Unable to submit your comment. Please try again.",
+      });
+
+      if (
+        submitError?.code === "permission-denied" ||
+        submitError?.code === "PERMISSION_DENIED"
+      ) {
+        message = t("comments.permissionError", {
           defaultValue:
-            "Unable to submit your comment. Please try again.",
-        })
-      );
+            "You do not have permission to post a comment. Please sign in again and try.",
+        });
+      } else if (submitError?.code === "unavailable") {
+        message = t("comments.unavailableError", {
+          defaultValue:
+            "Comments are temporarily unavailable. Please try again.",
+        });
+      }
+
+      setError(message);
     } finally {
       setLoading(false);
     }
