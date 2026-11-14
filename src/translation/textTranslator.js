@@ -105,9 +105,18 @@ async function requestTranslationGateway(sourceText, targetLanguage, sourceLangu
         };
       }
 
+      const providerDetails =
+        typeof data?.details === "string"
+          ? data.details.trim().slice(0, 500)
+          : "";
+
       lastError = new Error(
-        data?.error ||
-          "Translation service request failed."
+        [
+          data?.error || "Translation service request failed.",
+          providerDetails ? `Provider details: ${providerDetails}` : "",
+        ]
+          .filter(Boolean)
+          .join(" ")
       );
 
       /*
