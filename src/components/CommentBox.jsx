@@ -6,8 +6,6 @@ import {
   doc,
   increment,
   onSnapshot,
-  orderBy,
-  query,
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
@@ -33,20 +31,40 @@ function CommentBox({ postId }) {
       "comments"
     );
 
-    const commentsQuery = query(
-      commentsRef,
-      orderBy("createdAt", "asc")
-    );
-
+    /*
+     * Read the comments collection directly instead of using an
+     * orderBy query. Older comments may not contain createdAt, and
+     * an ordered query can also fail when the required index/rule
+     * configuration is unavailable.
+     *
+     * Sort safely in the browser after reading so both old and new
+     * comments remain visible.
+     */
     const unsubscribe = onSnapshot(
-      commentsQuery,
+      commentsRef,
       (snapshot) => {
-        setComments(
-          snapshot.docs.map((commentDoc) => ({
-            id: commentDoc.id,
-            ...commentDoc.data(),
-          }))
-        );
+        const nextComments = snapshot.docs.map((commentDoc) => ({
+          id: commentDoc.id,
+          ...commentDoc.data(),
+        }));
+
+        nextComments.sort((a, b) => {
+          const aTime =
+            a.createdAt?.toMillis?.() ||
+            (a.createdAt?.seconds
+              ? a.createdAt.seconds * 1000
+              : 0);
+
+          const bTime =
+            b.createdAt?.toMillis?.() ||
+            (b.createdAt?.seconds
+              ? b.createdAt.seconds * 1000
+              : 0);
+
+          return aTime - bTime;
+        });
+
+        setComments(nextComments);
       },
       (listenerError) => {
         console.error(
