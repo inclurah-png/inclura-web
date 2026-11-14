@@ -183,38 +183,6 @@ export const SUPPORTED_LANGUAGES = [
     speech: true,
     rtl: false,
   },
-  {
-    code: "am",
-    name: "Amharic",
-    nativeName: "አማርኛ",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
-  {
-    code: "zu",
-    name: "Zulu",
-    nativeName: "isiZulu",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
-  {
-    code: "ur",
-    name: "Urdu",
-    nativeName: "اردو",
-    voice: true,
-    speech: true,
-    rtl: true,
-  },
-  {
-    code: "ta",
-    name: "Tamil",
-    nativeName: "தமிழ்",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
 ];
 
 /**
