@@ -590,8 +590,6 @@ function Feed() {
         );
       });
 
-      setPosts(updateTranslationState);
-      setFilteredPosts(updateTranslationState);
     } catch (error) {
       console.error(
         "Inclura Feed Translation Error:",
