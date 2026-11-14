@@ -72,11 +72,13 @@ function CommentBox({ postId }) {
           listenerError
         );
 
-        setError(
-          t("comments.loadError", {
-            defaultValue: "Unable to load comments.",
-          })
-        );
+        /*
+         * A comment-read failure must not leave a persistent red
+         * error under every post. Keep the technical error in the
+         * console for diagnosis, but let the comment area remain
+         * clean and usable.
+         */
+        setError("");
       }
     );
 
