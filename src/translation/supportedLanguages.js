@@ -40,8 +40,8 @@ export const SUPPORTED_LANGUAGES = [
     rtl: true,
   },
   {
-    code: "zh",
-    name: "Chinese",
+    code: "zh-CN",
+    name: "Chinese (Simplified)",
     nativeName: "中文",
     voice: true,
     speech: true,
@@ -136,14 +136,6 @@ export const SUPPORTED_LANGUAGES = [
     rtl: false,
   },
   {
-    code: "pcm",
-    name: "Nigerian Pidgin",
-    nativeName: "Naijá Pidgin",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
-  {
     code: "ko",
     name: "Korean",
     nativeName: "한국어",
@@ -199,6 +191,38 @@ export const SUPPORTED_LANGUAGES = [
     speech: true,
     rtl: false,
   },
+  {
+    code: "am",
+    name: "Amharic",
+    nativeName: "አማርኛ",
+    voice: true,
+    speech: true,
+    rtl: false,
+  },
+  {
+    code: "zu",
+    name: "Zulu",
+    nativeName: "isiZulu",
+    voice: true,
+    speech: true,
+    rtl: false,
+  },
+  {
+    code: "ur",
+    name: "Urdu",
+    nativeName: "اردو",
+    voice: true,
+    speech: true,
+    rtl: true,
+  },
+  {
+    code: "ta",
+    name: "Tamil",
+    nativeName: "தமிழ்",
+    voice: true,
+    speech: true,
+    rtl: false,
+  },
 ];
 
 /**
@@ -221,6 +245,10 @@ export function normalizeLanguageCode(code = "") {
     normalized === "zh-hant"
   ) {
     return "zh-TW";
+  }
+
+  if (normalized === "zh" || normalized === "zh-cn") {
+    return "zh-CN";
   }
 
   return normalized;
