@@ -544,46 +544,50 @@ function Feed() {
         );
       }
 
-      try {
-        await saveTranslation({
-          sourceId: postId,
-          sourceType: "post",
-          originalLanguage:
-            result.originalLanguage || "",
-          targetLanguage,
-          translatedText,
-          confidence:
-            typeof result.confidence === "number"
-              ? result.confidence
-              : 0,
-        });
-      } catch (cacheError) {
+      /*
+       * Put the translation on screen immediately. Do not make
+       * the user wait for Firestore writes after MADLAD has already
+       * returned a valid translation.
+       */
+      setPosts(updateTranslationState);
+      setFilteredPosts(updateTranslationState);
+
+      /*
+       * Persist both caches in the background. A persistence problem
+       * must not turn a successful translation into a visible failure.
+       *
+       * Use a nested Firestore field update so concurrent translations
+       * for different languages cannot overwrite one another.
+       */
+      void saveTranslation({
+        sourceId: postId,
+        sourceType: "post",
+        originalLanguage:
+          result.originalLanguage || "",
+        targetLanguage,
+        translatedText,
+        confidence:
+          typeof result.confidence === "number"
+            ? result.confidence
+            : 0,
+      }).catch((cacheError) => {
         console.error(
           "Inclura Translation Cache Save Error:",
           cacheError
         );
-      }
+      });
 
-      const updateTranslationState = (
-        previousPosts
-      ) =>
-        previousPosts.map((currentPost) =>
-          currentPost.id === postId
-            ? {
-                ...currentPost,
-                translatedText: {
-                  ...(currentPost.translatedText || {}),
-                  [targetLanguage]: translatedText,
-                },
-              }
-            : currentPost
+      void updateDoc(
+        doc(db, "posts", postId),
+        {
+          [`translatedText.${targetLanguage}`]:
+            translatedText,
+        }
+      ).catch((persistError) => {
+        console.error(
+          "Inclura Post Translation Persistence Error:",
+          persistError
         );
-
-      await updateDoc(doc(db, "posts", postId), {
-        translatedText: {
-          ...(post.translatedText || {}),
-          [targetLanguage]: translatedText,
-        },
       });
 
       setPosts(updateTranslationState);
