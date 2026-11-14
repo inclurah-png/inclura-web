@@ -289,15 +289,6 @@ export async function onRequestPost(context) {
       );
     }
     
-if (target === "en" && source === "en") {
-  return jsonResponse({
-    translatedText: text,
-    targetLanguage: "en",
-    model: "native",
-    provider: "INCLURA Translation Gateway",
-  });
-}
-
     /*
      * Primary replacement provider: Cloudflare Workers AI.
      * The Pages project must have a Workers AI binding named AI.
