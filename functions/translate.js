@@ -91,6 +91,37 @@ const HF_SPACE =
 
 const MADLAD_MODEL = "santhosh/madlad400-3b-ct2";
 
+const MAX_SUBMISSION_ATTEMPTS = 3;
+const RETRY_DELAYS_MS = [800, 1800, 3500];
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithRetry(url, options = {}, attempts = MAX_SUBMISSION_ATTEMPTS) {
+  let lastError = null;
+
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+
+      if (response.ok || response.status < 500) {
+        return response;
+      }
+
+      lastError = new Error(`HTTP ${response.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+
+    if (attempt < attempts - 1) {
+      await sleep(RETRY_DELAYS_MS[attempt] || 3500);
+    }
+  }
+
+  throw lastError || new Error("Translation provider request failed.");
+}
+
 function extractFirstString(value) {
   if (typeof value === "string") {
     return value;
@@ -247,20 +278,46 @@ if (target === "en") {
 }
     const targetLanguage = MADLAD_LANGUAGES[target];
 
-    // Submit the translation request to Hugging Face.
-    const submitResponse = await fetch(
-      `${HF_SPACE}/gradio_api/call/v2/test_translation`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    if (!targetLanguage) {
+      return jsonResponse(
+        {
+          error: `The translation provider does not currently support ${LANGUAGE_NAMES[target]}.`,
+          code: "MADLAD_LANGUAGE_UNAVAILABLE",
+          targetLanguage: target,
         },
-        body: JSON.stringify({
-          text,
-          target_languages: [targetLanguage],
-        }),
-      }
-    );
+        400
+      );
+    }
+
+    // Hugging Face ZeroGPU can briefly return 5xx/network failures
+    // while a Space is waking or a queue is being established.
+    // Retry those transient failures before giving up.
+    let submitResponse;
+
+    try {
+      submitResponse = await fetchWithRetry(
+        `${HF_SPACE}/gradio_api/call/v2/test_translation`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            text,
+            target_languages: [targetLanguage],
+          }),
+        }
+      );
+    } catch (error) {
+      return jsonResponse(
+        {
+          error: "Could not submit the translation to Hugging Face after automatic retries.",
+          code: "MADLAD_SUBMISSION_FAILED",
+          details: error instanceof Error ? error.message : "Unknown provider error.",
+        },
+        502
+      );
+    }
 
     if (!submitResponse.ok) {
       const errorDetails = await submitResponse.text();
@@ -289,15 +346,28 @@ if (target === "en") {
     }
 
     // Wait for the completed Gradio translation result.
-    const resultResponse = await fetch(
-      `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
-      {
-        method: "GET",
-        headers: {
-          "Accept": "text/event-stream",
+    let resultResponse;
+
+    try {
+      resultResponse = await fetchWithRetry(
+        `${HF_SPACE}/gradio_api/call/test_translation/${encodeURIComponent(eventId)}`,
+        {
+          method: "GET",
+          headers: {
+            "Accept": "text/event-stream",
+          },
+        }
+      );
+    } catch (error) {
+      return jsonResponse(
+        {
+          error: "Could not retrieve the MADLAD-400 translation result after automatic retries.",
+          code: "MADLAD_RESULT_FAILED",
+          details: error instanceof Error ? error.message : "Unknown provider error.",
         },
-      }
-    );
+        502
+      );
+    }
 
     if (!resultResponse.ok) {
       const errorDetails = await resultResponse.text();
