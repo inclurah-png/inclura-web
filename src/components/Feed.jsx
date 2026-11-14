@@ -546,9 +546,26 @@ function Feed() {
 
       /*
        * Put the translation on screen immediately. Do not make
-       * the user wait for Firestore writes after MADLAD has already
-       * returned a valid translation.
+       * the user wait for Firestore writes after the translation
+       * gateway has already returned a valid translation.
+       *
+       * Define the state updater here so the function always exists
+       * in this scope. It also updates both feed collections in one
+       * predictable operation.
        */
+      const updateTranslationState = (previousPosts) =>
+        previousPosts.map((currentPost) =>
+          currentPost.id === postId
+            ? {
+                ...currentPost,
+                translatedText: {
+                  ...(currentPost.translatedText || {}),
+                  [targetLanguage]: translatedText,
+                },
+              }
+            : currentPost
+        );
+
       setPosts(updateTranslationState);
       setFilteredPosts(updateTranslationState);
 
