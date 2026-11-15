@@ -9,6 +9,22 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    // Comments are stored under each post. Parent post permissions
+    // do not automatically grant access to this nested collection.
+    match /posts/{postId}/comments/{commentId} {
+      allow read: if request.auth != null;
+
+      // A member may create a comment only in their own authenticated name.
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() > 0
+                    && request.resource.data.text.size() <= 2000;
+
+      // Comment editing and deletion are not exposed by the current app.
+      allow update, delete: if false;
+    }
+
     match /notifications/{notificationId} {
       // A signed-in user can only read their own notifications.
       allow read: if request.auth != null
