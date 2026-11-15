@@ -63,3 +63,27 @@ html[data-inclura-reduced-motion="true"] *::after {
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
 }
+
+/* Visible keyboard focus for keyboard and switch-device navigation. */
+:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+html[data-inclura-high-contrast="true"] :focus-visible {
+  outline: 4px solid #ffeb3b !important;
+  outline-offset: 3px;
+}
+
+/* Respect the operating system's reduced-motion preference as well. */
+@media (prefers-reduced-motion: reduce) {
+  html,
+  html *,
+  html *::before,
+  html *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
