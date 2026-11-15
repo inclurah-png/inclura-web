@@ -1,53 +1,85 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 import {
   collection,
   query,
   where,
-  orderBy,
   onSnapshot,
   updateDoc,
   doc,
 } from "firebase/firestore";
 
 function Notifications() {
-  const [notifications, setNotifications] =
-    useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    const user = auth.currentUser;
+    let unsubscribeNotifications = null;
 
-    if (!user) return;
+    const unsubscribeAuth = onAuthStateChanged(
+      auth,
+      (user) => {
+        if (unsubscribeNotifications) {
+          unsubscribeNotifications();
+          unsubscribeNotifications = null;
+        }
 
-    const q = query(
-      collection(db, "notifications"),
-      where("receiverId", "==", user.uid),
-      orderBy("createdAt", "desc")
-    );
+        if (!user) {
+          setNotifications([]);
+          return;
+        }
 
-    const unsubscribe =
-      onSnapshot(q, (snapshot) => {
-        const data = snapshot.docs.map(
-          (doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          })
+        const q = query(
+          collection(db, "notifications"),
+          where("receiverId", "==", user.uid)
         );
 
-        setNotifications(data);
-      });
+        unsubscribeNotifications = onSnapshot(
+          q,
+          (snapshot) => {
+            const data = snapshot.docs
+              .map((notificationDoc) => ({
+                id: notificationDoc.id,
+                ...notificationDoc.data(),
+              }))
+              .sort((a, b) => {
+                const aTime = a.createdAt?.toMillis?.() ?? 0;
+                const bTime = b.createdAt?.toMillis?.() ?? 0;
+                return bTime - aTime;
+              });
 
-    return () => unsubscribe();
+            setError("");
+            setNotifications(data);
+          },
+          (snapshotError) => {
+            console.error("Notifications listener error:", snapshotError);
+            setError("Unable to load notifications.");
+          }
+        );
+      }
+    );
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeNotifications) {
+        unsubscribeNotifications();
+      }
+    };
   }, []);
 
   async function markAsRead(id) {
-    await updateDoc(
-      doc(db, "notifications", id),
-      {
-        read: true,
-      }
-    );
+    try {
+      await updateDoc(
+        doc(db, "notifications", id),
+        {
+          read: true,
+        }
+      );
+    } catch (error) {
+      console.error("Unable to mark notification as read:", error);
+    }
   }
 
   return (
@@ -61,15 +93,15 @@ function Notifications() {
     >
       <h1>🔔 Notifications</h1>
 
-      {notifications.length === 0 ? (
+      {error ? (
+        <p>{error}</p>
+      ) : notifications.length === 0 ? (
         <p>No notifications yet</p>
       ) : (
         notifications.map((item) => (
           <div
             key={item.id}
-            onClick={() =>
-              markAsRead(item.id)
-            }
+            onClick={() => markAsRead(item.id)}
             style={{
               background: item.read
                 ? "#1e293b"
