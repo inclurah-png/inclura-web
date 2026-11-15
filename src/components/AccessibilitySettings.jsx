@@ -137,7 +137,6 @@ function AccessibilitySettings() {
         padding: "16px",
         background: highContrast ? "#000000" : "#0f172a",
         color: "#ffffff",
-        fontSize: `${fontScale}rem`,
       }}
     >
       <section aria-labelledby="accessibility-display-heading">
