@@ -23,26 +23,26 @@ function normalizeLanguage(code = "") {
 }
 
 const LANGUAGE_NAMES = {
-  en: "English",
-  es: "Spanish",
-  fr: "French",
-  pt: "Portuguese",
-  ar: "Arabic",
+  en: "English (en)",
+  es: "Spanish (es)",
+  fr: "French (fr)",
+  pt: "Portuguese (pt)",
+  ar: "Arabic (ar)",
   zh: "Simplified Chinese",
   "zh-CN": "Simplified Chinese",
   "zh-TW": "Traditional Chinese",
-  ja: "Japanese",
-  de: "German",
-  hi: "Hindi",
+  ja: "Japanese (ja)",
+  de: "German (de)",
+  hi: "Hindi (hi)",
   ru: "Russian",
   it: "Italian",
   nl: "Dutch",
-  sw: "Swahili",
-  yo: "Yoruba",
-  ig: "Igbo",
-  ha: "Hausa",
+  sw: "Swahili (sw)",
+  yo: "Yoruba (yo)",
+  ig: "Igbo (ig)",
+  ha: "Hausa (ha)",
   pcm: "Nigerian Pidgin",
-  ko: "Korean",
+  ko: "Korean (ko)",
   vi: "Vietnamese",
   th: "Thai",
   id: "Indonesian",
@@ -81,7 +81,7 @@ const MADLAD_LANGUAGES = {
   de: "German",
   pt: "Portuguese",
   ar: "Arabic",
-  zh: "Chinese",
+  zh: "Chinese (zh)",
   hi: "Hindi",
   sw: "Swahili",
   yo: "Yoruba",
@@ -96,8 +96,8 @@ const HF_SPACE =
 
 const MADLAD_MODEL = "santhosh/madlad400-3b-ct2";
 
-const MAX_SUBMISSION_ATTEMPTS = 3;
-const RETRY_DELAYS_MS = [800, 1800, 3500];
+const MAX_SUBMISSION_ATTEMPTS = 1;
+const RETRY_DELAYS_MS = [];
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -292,7 +292,7 @@ export async function onRequestPost(context) {
     // provider-side errors, malformed SSE, or an empty result). Treat the
     // whole submission + result cycle as retryable so one bad job does not
     // make every later post fail.
-    const MAX_TRANSLATION_ATTEMPTS = 3;
+    const MAX_TRANSLATION_ATTEMPTS = 1;
     let lastProviderError = null;
     let translatedText = "";
 
@@ -371,20 +371,30 @@ export async function onRequestPost(context) {
           throw new Error(report.slice(0, 500));
         }
 
-        // Extract only the requested language from the Space report.
-        const marker = `${targetLanguage}:\n`;
-        const markerPosition = report.lastIndexOf(marker);
+        /*
+         * The Space UI uses exact labels such as "Yoruba (yo)".
+         * Older responses may use the ISO code or plain name.
+         */
+        const markerCandidates = [
+          `${targetLanguage}:\n`,
+          `${target}:\n`,
+          `${LANGUAGE_NAMES[target] || target}:\n`,
+        ];
 
-        if (markerPosition === -1) {
-          throw new Error(
-            `The expected ${targetLanguage} translation was not found in the provider result.`
-          );
+        let candidate = "";
+
+        for (const marker of markerCandidates) {
+          const markerPosition = report.lastIndexOf(marker);
+          if (markerPosition !== -1) {
+            candidate = report.slice(markerPosition + marker.length).trim();
+            break;
+          }
         }
 
-        const candidate = report
-          .slice(markerPosition + marker.length)
-          .trim();
-
+        // Some responses contain the completed translation directly.
+        if (!candidate && report.trim()) {
+          candidate = report.trim();
+        }
         if (!candidate) {
           throw new Error("MADLAD-400 returned an empty translation.");
         }
