@@ -74,10 +74,6 @@ const SUPPORTED_LANGUAGES = new Set(
   Object.keys(LANGUAGE_NAMES)
 );
 
-const NLLB_SUPPORTED_TARGETS = new Set(
-  Object.keys(FLORES_CODES)
-);
-
 // These are the languages currently exposed
 // by your MADLAD-400 Hugging Face Space.
 const MADLAD_LANGUAGES = {
@@ -156,6 +152,10 @@ const FLORES_CODES = {
   bm: "bam_Latn",
   ee: "ewe_Latn",
 };
+
+const NLLB_SUPPORTED_TARGETS = new Set(
+  Object.keys(FLORES_CODES)
+);
 
 const MAX_SUBMISSION_ATTEMPTS = 1;
 const RETRY_DELAYS_MS = [];
@@ -347,10 +347,16 @@ export async function onRequestPost(context) {
      * This removes the old hard dependency on the 13-language MADLAD
      * dropdown and prevents errors such as "Yoruba is not in the list".
      */
-    const useMadlad = Boolean(targetLanguage);
-    const useNllb = !useMadlad && NLLB_SUPPORTED_TARGETS.has(target);
+    /*
+     * MADLAD remains the first provider for the languages exposed by
+     * the current Inclura MADLAD Space. NLLB is the automatic fallback
+     * not only for languages MADLAD does not expose, but also when
+     * MADLAD itself returns a provider-side language/queue error.
+     */
+    const madladAvailable = Boolean(targetLanguage);
+    const nllbAvailable = Boolean(FLORES_CODES[target]);
 
-    if (!useMadlad && !useNllb) {
+    if (!madladAvailable && !nllbAvailable) {
       return jsonResponse(
         {
           error: `The requested language is not currently available from the configured translation engines: ${LANGUAGE_NAMES[target] || target}.`,
@@ -361,7 +367,7 @@ export async function onRequestPost(context) {
       );
     }
 
-    if (useNllb && !FLORES_CODES[source]) {
+    if (!FLORES_CODES[source]) {
       return jsonResponse(
         {
           error: `The detected source language (${source}) is not supported by the NLLB fallback mapping.`,
@@ -373,24 +379,28 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Hugging Face ZeroGPU can fail after a job is accepted (queue wake-up,
-    // provider-side errors, malformed SSE, or an empty result). Treat the
-    // whole submission + result cycle as retryable so one bad job does not
-    // make every later post fail.
-    const MAX_TRANSLATION_ATTEMPTS = 1;
     let lastProviderError = null;
     let translatedText = "";
+    let providerUsed = "";
 
-    for (let translationAttempt = 1;
-      translationAttempt <= MAX_TRANSLATION_ATTEMPTS;
-      translationAttempt += 1) {
+    /*
+     * Provider order is deterministic:
+     * 1. MADLAD for its currently exposed languages.
+     * 2. NLLB automatically for unsupported MADLAD targets or any
+     *    MADLAD provider failure.
+     *
+     * This is the important permanent behavior: the app never sends
+     * Yoruba/Igbo/Hausa/etc. to MADLAD when that Space does not list them,
+     * and ordinary MADLAD failures do not leak its internal 13-language
+     * validation error to the user.
+     */
+    const providers = [];
+    if (madladAvailable) providers.push("madlad");
+    if (nllbAvailable) providers.push("nllb");
+
+    for (const provider of providers) {
       try {
-        /*
-         * NLLB fallback is a normal HTTP GET API and returns the
-         * translation directly. Use it whenever MADLAD does not
-         * expose the requested target language.
-         */
-        if (useNllb) {
+        if (provider === "nllb") {
           const nllbUrl = new URL(NLLB_SPACE);
           nllbUrl.searchParams.set("text", text);
           nllbUrl.searchParams.set("source", FLORES_CODES[source]);
@@ -424,6 +434,7 @@ export async function onRequestPost(context) {
           }
 
           translatedText = nllbResult.trim();
+          providerUsed = "Hugging Face NLLB-200 CPU API";
           break;
         }
 
@@ -523,21 +534,23 @@ export async function onRequestPost(context) {
         }
 
         translatedText = candidate;
+        providerUsed = "Hugging Face MADLAD-400 ZeroGPU";
         break;
       } catch (error) {
         lastProviderError = error;
-
-        if (translationAttempt < MAX_TRANSLATION_ATTEMPTS) {
-          await sleep(RETRY_DELAYS_MS[translationAttempt - 1] || 3500);
-        }
+        /*
+         * Do not retry the same MADLAD ZeroGPU job. If NLLB is available,
+         * move directly to it instead of consuming more ZeroGPU quota.
+         */
+        continue;
       }
     }
 
     if (!translatedText) {
       return jsonResponse(
         {
-          error: "MADLAD-400 could not complete this translation after automatic retries.",
-          code: "MADLAD_TRANSLATION_FAILED",
+          error: "Translation could not be completed by the configured free translation providers.",
+          code: "TRANSLATION_PROVIDER_FAILED",
           details: lastProviderError instanceof Error
             ? lastProviderError.message
             : "Unknown provider error.",
@@ -546,12 +559,13 @@ export async function onRequestPost(context) {
       );
     }
 
-    // Preserve the response format used by INCLURA.
     return jsonResponse({
       translatedText,
       targetLanguage: target,
-      model: MADLAD_MODEL,
-      provider: "Hugging Face MADLAD-400 ZeroGPU",
+      model: providerUsed === "Hugging Face MADLAD-400 ZeroGPU"
+        ? MADLAD_MODEL
+        : "NLLB-200",
+      provider: providerUsed,
     });
   } catch (error) {
     return jsonResponse(
