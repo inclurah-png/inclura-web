@@ -38,7 +38,6 @@ const LANGUAGE_NAMES = {
   it: "Italian",
   nl: "Dutch",
   sw: "Swahili (sw)",
-  yo: "Yoruba (yo)",
   ig: "Igbo (ig)",
   ha: "Hausa (ha)",
   pcm: "Nigerian Pidgin",
