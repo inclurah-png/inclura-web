@@ -161,17 +161,35 @@ async function requestTranslationGateway(sourceText, targetLanguage, sourceLangu
  * uses one consistent representation.
  */
 function normalizeLanguageCode(code = "") {
-  const normalized = String(code).trim().toLowerCase();
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
 
-  if (normalized === "zh-tw" || normalized === "zh_hant") {
+  const aliases = {
+    "yo-ng": "yo",
+    "yoruba": "yo",
+    "yorùbá": "yo",
+    "ig-ng": "ig",
+    "ha-ng": "ha",
+    "en-us": "en",
+    "en-gb": "en",
+    "fr-fr": "fr",
+    "es-es": "es",
+    "pt-br": "pt",
+  };
+
+  const aliased = aliases[normalized] || normalized;
+
+  if (aliased === "zh-tw" || aliased === "zh_hant") {
     return "zh-TW";
   }
 
-  if (normalized === "zh" || normalized === "zh-cn") {
+  if (aliased === "zh" || aliased === "zh-cn") {
     return "zh-CN";
   }
 
-  return normalized;
+  return aliased;
 }
 
 /**
