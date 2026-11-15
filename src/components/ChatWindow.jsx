@@ -46,7 +46,7 @@ function ChatWindow({
 
   const {
     accessibilityProfile,
-    voiceEnabled,
+    effectiveVoiceEnabled,
     fontScale,
     highContrast,
     reducedMotion,
@@ -376,7 +376,7 @@ function ChatWindow({
      */
     if (
       !visualImpairmentEnabled ||
-      !voiceEnabled
+      !effectiveVoiceEnabled
     ) {
 
       return;
@@ -528,7 +528,7 @@ function ChatWindow({
   }, [
     messages,
     visualImpairmentEnabled,
-    voiceEnabled,
+    effectiveVoiceEnabled,
     activeLanguage,
   ]);
 
