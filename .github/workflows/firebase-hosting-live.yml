@@ -51,7 +51,7 @@ jobs:
             const json = JSON.stringify(account);
             fs.writeFileSync("/tmp/firebase-service-account.json", json, { mode: 0o600 });
             fs.appendFileSync(process.env.GITHUB_OUTPUT, "json<<FIREBASE_JSON\n" + json + "\nFIREBASE_JSON\n");
-            console.log("Firebase credentials validated and prepared.");
+            console.log("Firebase credentials validated for service account:", account.client_email);
           } catch (error) {
             console.error("Firebase credential format check failed:", error.message);
             process.exit(1);
