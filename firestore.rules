@@ -3,25 +3,18 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // Feed posts must remain readable by authenticated Inclura members.
-    // This restores the read permission required by Feed.jsx without
-    // changing post contents or weakening notification permissions.
     match /posts/{postId} {
       allow read: if request.auth != null;
     }
 
-    // Comments are stored under each post. Parent post permissions
-    // do not automatically grant access to this nested collection.
+    // Comments are stored under each post.
     match /posts/{postId}/comments/{commentId} {
       allow read: if request.auth != null;
-
-      // A member may create a comment only in their own authenticated name.
       allow create: if request.auth != null
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.text is string
                     && request.resource.data.text.size() > 0
                     && request.resource.data.text.size() <= 2000;
-
-      // Comment editing and deletion are not exposed by the current app.
       allow update, delete: if false;
     }
 
@@ -59,40 +52,96 @@ service cloud.firestore {
                     get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
         }
 
+        function hasValidMessageContent() {
+          return (
+            request.resource.data.messageType == 'text'
+            && request.resource.data.text is string
+            && request.resource.data.text.size() > 0
+            && request.resource.data.text.size() <= 10000
+          ) || (
+            request.resource.data.messageType == 'image'
+            && request.resource.data.imageUrl is string
+            && request.resource.data.imageUrl.size() > 0
+          ) || (
+            request.resource.data.messageType == 'video'
+            && request.resource.data.videoUrl is string
+            && request.resource.data.videoUrl.size() > 0
+          ) || (
+            request.resource.data.messageType == 'file'
+            && request.resource.data.fileUrl is string
+            && request.resource.data.fileUrl.size() > 0
+          ) || (
+            request.resource.data.messageType == 'audio'
+            && request.resource.data.audioUrl is string
+            && request.resource.data.audioUrl.size() > 0
+          );
+        }
+
         allow read: if isChatParticipant();
 
+        // Supports text, image, video, document/file, and voice-note messages.
+        // Only the sender can create a message inside a chat they belong to.
         allow create: if isChatParticipant()
                       && request.resource.data.senderId == request.auth.uid
-                      && request.resource.data.text is string
-                      && request.resource.data.text.size() > 0
-                      && request.resource.data.text.size() <= 10000
                       && request.resource.data.readBy is list
                       && request.auth.uid in request.resource.data.readBy
+                      && request.resource.data.status == 'sent'
+                      && request.resource.data.createdAt is timestamp
+                      && request.resource.data.messageType in [
+                        'text', 'image', 'video', 'file', 'audio'
+                      ]
+                      && hasValidMessageContent()
                       && request.resource.data.keys().hasOnly([
                         'text',
                         'senderId',
                         'createdAt',
                         'status',
                         'readBy',
-                        'messageType'
-                      ]);
+                        'messageType',
+                        'imageUrl',
+                        'videoUrl',
+                        'fileUrl',
+                        'audioUrl',
+                        'fileName',
+                        'fileType',
+                        'fileSize'
+                      ])
+                      && (
+                        !('fileSize' in request.resource.data)
+                        || (
+                          request.resource.data.fileSize is int
+                          && request.resource.data.fileSize >= 0
+                          && request.resource.data.fileSize <= 52428800
+                        )
+                      );
 
+        // Participants may update read receipts, and may add translation
+        // text without changing the original message or its sender.
         allow update: if isChatParticipant()
-                      && resource.data.senderId != request.auth.uid
                       && request.resource.data.senderId == resource.data.senderId
-                      && request.resource.data.text == resource.data.text
                       && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly(['status', 'readBy'])
-                      && request.resource.data.readBy is list
-                      && request.auth.uid in request.resource.data.readBy
-                      && request.resource.data.status == 'read';
+                         .hasOnly(['status', 'readBy', 'translatedText'])
+                      && (
+                        (
+                          request.resource.data.diff(resource.data).affectedKeys()
+                            .hasOnly(['status', 'readBy'])
+                          && resource.data.senderId != request.auth.uid
+                          && request.resource.data.readBy is list
+                          && request.auth.uid in request.resource.data.readBy
+                          && request.resource.data.status == 'read'
+                        )
+                        || (
+                          request.resource.data.diff(resource.data).affectedKeys()
+                            .hasOnly(['translatedText'])
+                          && request.resource.data.translatedText is map
+                        )
+                      );
 
         allow delete: if false;
       }
     }
 
-    // Allow members to save only their own accessibility preferences.
-    // This does not grant access to other profile fields or user documents.
+    // Members may update only their own accessibility preferences.
     match /users/{userId} {
       allow update: if request.auth != null
                     && request.auth.uid == userId
@@ -109,21 +158,15 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      // A signed-in user can only read their own notifications.
       allow read: if request.auth != null
                   && resource.data.receiverId == request.auth.uid;
 
-      // A signed-in user can mark only their own notification as read.
-      // Do not allow changing the recipient or notification contents.
       allow update: if request.auth != null
                     && resource.data.receiverId == request.auth.uid
                     && request.resource.data.receiverId == resource.data.receiverId
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['read']);
 
-      // Client-generated user notifications: the sender must be the
-      // currently authenticated user. System notices may use senderId
-      // "system", but only for that same authenticated recipient.
       allow create: if request.auth != null
                     && request.resource.data.receiverId is string
                     && (
