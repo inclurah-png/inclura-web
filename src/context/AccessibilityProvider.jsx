@@ -587,6 +587,28 @@ export function AccessibilityProvider({ children }) {
   }, [userProfile, user?.uid, localOverrides]);
 
   /*
+   * APPLY CORE ACCESSIBILITY PREFERENCES ACROSS THE WHOLE APP.
+   * The provider is mounted above every route, so these settings
+   * also cover dashboard pages, Reels, Mentor Hub and Messages.
+   */
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const root = document.documentElement;
+    root.style.fontSize = `${Math.round(fontScale * 100)}%`;
+    root.dataset.incluraHighContrast = String(highContrast);
+    root.dataset.incluraReducedMotion = String(reducedMotion);
+
+    return () => {
+      root.style.fontSize = "";
+      delete root.dataset.incluraHighContrast;
+      delete root.dataset.incluraReducedMotion;
+    };
+  }, [fontScale, highContrast, reducedMotion]);
+
+  /*
    * SEND ACCESSIBILITY STATE TO IFSE
    */
   useEffect(() => {
@@ -787,7 +809,6 @@ export function AccessibilityProvider({ children }) {
     <AccessibilityContext.Provider value={value}>
       <div
         style={{
-          fontSize: `${fontScale}rem`,
           background: highContrast ? "#000000" : undefined,
           color: highContrast ? "#ffffff" : undefined,
           minHeight: "100%",
