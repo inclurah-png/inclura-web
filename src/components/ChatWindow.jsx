@@ -47,6 +47,9 @@ function ChatWindow({
   const {
     accessibilityProfile,
     voiceEnabled,
+    fontScale,
+    highContrast,
+    reducedMotion,
   } = useAccessibility();
 
 
@@ -55,8 +58,10 @@ function ChatWindow({
   // ============================================================
 
   const visualImpairmentEnabled =
-    accessibilityProfile?.blindLowVision ===
-    true;
+    Boolean(
+      accessibilityProfile?.blind ||
+      accessibilityProfile?.lowVision
+    );
 
 
   // ============================================================
@@ -311,10 +316,10 @@ function ChatWindow({
   useEffect(() => {
 
     messagesEndRef.current?.scrollIntoView({
-      behavior: "smooth",
+      behavior: reducedMotion ? "auto" : "smooth",
     });
 
-  }, [messages]);
+  }, [messages, reducedMotion]);
 
 
   // ============================================================
@@ -2330,6 +2335,9 @@ function ChatWindow({
         minWidth: 0,
         minHeight: 0,
         position: "relative",
+        fontSize: `${fontScale}rem`,
+        background: highContrast ? "#000000" : "transparent",
+        color: "#ffffff",
       }}
     >
 
@@ -2397,6 +2405,8 @@ function ChatWindow({
           padding: "20px",
           overflowY: "auto",
           minHeight: 0,
+          background: highContrast ? "#000000" : "transparent",
+          color: "#ffffff",
         }}
       >
 
@@ -2485,11 +2495,15 @@ function ChatWindow({
 
                   <div
                     style={{
-                      background:
-                        isOwnMessage
+                      background: highContrast
+                        ? "#000000"
+                        : isOwnMessage
                           ? "#38bdf8"
                           : "#1e293b",
-                      color: "white",
+                      color: highContrast ? "#ffffff" : "white",
+                      border: highContrast
+                        ? "1px solid #ffffff"
+                        : "none",
                       padding: "12px",
                       borderRadius:
                         "16px",
