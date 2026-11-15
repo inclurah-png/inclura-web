@@ -80,14 +80,6 @@ export const SUPPORTED_LANGUAGES = [
     rtl: false,
   },
   {
-    code: "yo",
-    name: "Yoruba",
-    nativeName: "Yorùbá",
-    voice: true,
-    speech: true,
-    rtl: false,
-  },
-  {
     code: "ig",
     name: "Igbo",
     nativeName: "Igbo",
