@@ -29,9 +29,12 @@ const inFlightTranslations = new Map();
  * at the same time. Different posts still use their own in-flight key.
  */
 let translationQueue = Promise.resolve();
-const TRANSLATION_QUEUE_GAP_MS = 1200;
+const TRANSLATION_QUEUE_GAP_MS = 0;
 
-const RETRY_DELAYS_MS = [900, 2000];
+// The gateway already controls provider fallback. Retrying the browser request
+// adds several seconds to every uncached translation and can make a successful
+// language switch appear to hang. Let one gateway request complete first.
+const RETRY_DELAYS_MS = [];
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
