@@ -61,14 +61,29 @@ function normalizeFeedLanguage(code = "") {
     .toLowerCase()
     .replace(/_/g, "-");
 
+  const aliases = {
+    "yo-ng": "yo",
+    "yoruba": "yo",
+    "yorùbá": "yo",
+    "ig-ng": "ig",
+    "ha-ng": "ha",
+    "en-us": "en",
+    "en-gb": "en",
+    "fr-fr": "fr",
+    "es-es": "es",
+    "pt-br": "pt",
+  };
+
+  const aliased = aliases[normalized] || normalized;
+
   if (
-    normalized === "zh-tw" ||
-    normalized === "zh-hant"
+    aliased === "zh-tw" ||
+    aliased === "zh-hant"
   ) {
     return "zh-TW";
   }
 
-  return normalized || "en";
+  return aliased || "en";
 }
 
 function getPostTranslation(post, language) {
