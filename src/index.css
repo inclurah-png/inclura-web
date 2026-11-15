@@ -20,3 +20,46 @@ input,
 textarea {
   font-family: inherit;
 }
+
+html {
+  font-size: 100%;
+}
+
+html[data-inclura-high-contrast="true"] body,
+html[data-inclura-high-contrast="true"] main,
+html[data-inclura-high-contrast="true"] section,
+html[data-inclura-high-contrast="true"] article,
+html[data-inclura-high-contrast="true"] aside,
+html[data-inclura-high-contrast="true"] nav,
+html[data-inclura-high-contrast="true"] header,
+html[data-inclura-high-contrast="true"] footer,
+html[data-inclura-high-contrast="true"] [role="dialog"],
+html[data-inclura-high-contrast="true"] [role="menu"] {
+  background-color: #000 !important;
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
+html[data-inclura-high-contrast="true"] a {
+  color: #ffeb3b !important;
+  text-decoration: underline;
+}
+
+html[data-inclura-high-contrast="true"] button,
+html[data-inclura-high-contrast="true"] input,
+html[data-inclura-high-contrast="true"] textarea,
+html[data-inclura-high-contrast="true"] select {
+  color: #fff !important;
+  background-color: #000 !important;
+  border-color: #fff !important;
+}
+
+html[data-inclura-reduced-motion="true"],
+html[data-inclura-reduced-motion="true"] *,
+html[data-inclura-reduced-motion="true"] *::before,
+html[data-inclura-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
