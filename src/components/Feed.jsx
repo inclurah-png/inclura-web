@@ -183,25 +183,25 @@ function Feed() {
 
   useEffect(() => {
     /*
-     * Translate the visible feed automatically whenever the user
-     * changes the language selector. The request starts immediately;
-     * already-cached translations are skipped by translatePost().
+     * Automatically start translation for EVERY post currently
+     * loaded into the Feed when the selected language changes.
      *
-     * Do not depend on posts/filteredPosts here. That would retrigger
-     * translation every time a translated post updates state.
+     * Also run when another page of posts is loaded (posts.length),
+     * so newly loaded posts are automatically translated too.
+     *
+     * translatePost() already skips cached translations and prevents
+     * duplicate in-flight jobs for the same post/language pair.
      */
-    const visiblePosts =
-      filteredPosts.length > 0 ? filteredPosts : posts;
-
-    if (visiblePosts.length === 0) return;
+    if (posts.length === 0) return;
 
     void Promise.all(
-      visiblePosts.map((post) => translatePost(post))
+      posts.map((post) => translatePost(post))
     );
-    // translatePost is a stable function declaration; this effect
-    // intentionally runs only when the selected language changes.
+    // Intentionally depend on language + post count only. Translation
+    // state updates do not change the count, so they cannot retrigger
+    // this effect in a loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeLanguage]);
+  }, [activeLanguage, posts.length]);
 
   useEffect(() => {
     hydrateMissingAuthors(posts);
