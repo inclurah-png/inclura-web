@@ -9,17 +9,35 @@ function jsonResponse(body, status = 200) {
 }
 
 function normalizeLanguage(code = "") {
-  const normalized = String(code).trim().toLowerCase().replace(/_/g, "-");
+  const normalized = String(code)
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
 
-  if (normalized === "zh-tw" || normalized === "zh-hant") {
+  const aliases = {
+    "yo-ng": "yo",
+    "yoruba": "yo",
+    "yorùbá": "yo",
+    "ig-ng": "ig",
+    "ha-ng": "ha",
+    "en-us": "en",
+    "en-gb": "en",
+    "fr-fr": "fr",
+    "es-es": "es",
+    "pt-br": "pt",
+  };
+
+  const aliased = aliases[normalized] || normalized;
+
+  if (aliased === "zh-tw" || aliased === "zh-hant") {
     return "zh-TW";
   }
 
-  if (normalized === "zh-cn") {
+  if (aliased === "zh-cn" || aliased === "zh") {
     return "zh-CN";
   }
 
-  return normalized;
+  return aliased;
 }
 
 const LANGUAGE_NAMES = {
@@ -425,9 +443,11 @@ export async function onRequestPost(context) {
 
           const nllbData = await nllbResponse.json();
           const nllbResult =
-            typeof nllbData?.translation === "string"
-              ? nllbData.translation
-              : extractFirstString(nllbData);
+            typeof nllbData?.result === "string"
+              ? nllbData.result
+              : typeof nllbData?.translation === "string"
+                ? nllbData.translation
+                : extractFirstString(nllbData);
 
           if (!nllbResult || !nllbResult.trim()) {
             throw new Error("NLLB returned an empty translation.");
