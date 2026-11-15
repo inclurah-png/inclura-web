@@ -1,0 +1,34 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /notifications/{notificationId} {
+      // A signed-in user can only read their own notifications.
+      allow read: if request.auth != null
+                  && resource.data.receiverId == request.auth.uid;
+
+      // A signed-in user can mark only their own notification as read.
+      // Do not allow changing the recipient or notification contents.
+      allow update: if request.auth != null
+                    && resource.data.receiverId == request.auth.uid
+                    && request.resource.data.receiverId == resource.data.receiverId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['read']);
+
+      // Client-generated user notifications: the sender must be the
+      // currently authenticated user. System notices may use senderId
+      // "system", but only for that same authenticated recipient.
+      allow create: if request.auth != null
+                    && request.resource.data.receiverId is string
+                    && (
+                      request.resource.data.senderId == request.auth.uid
+                      || (
+                        request.resource.data.senderId == 'system'
+                        && request.resource.data.receiverId == request.auth.uid
+                      )
+                    );
+
+      allow delete: if false;
+    }
+  }
+}
