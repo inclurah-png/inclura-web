@@ -135,6 +135,8 @@ const FLORES_CODES = {
   id: "ind_Latn",
   ms: "zsm_Latn",
   bn: "ben_Beng",
+  ur: "urd_Arab",
+  ta: "tam_Taml",
   tr: "tur_Latn",
   af: "afr_Latn",
   am: "amh_Ethi",
