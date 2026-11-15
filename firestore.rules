@@ -91,6 +91,23 @@ service cloud.firestore {
       }
     }
 
+    // Allow members to save only their own accessibility preferences.
+    // This does not grant access to other profile fields or user documents.
+    match /users/{userId} {
+      allow update: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly([
+                         'language',
+                         'preferredLanguage',
+                         'fontScale',
+                         'highContrast',
+                         'reducedMotion',
+                         'voiceEnabled',
+                         'accessibilityNeeds'
+                       ]);
+    }
+
     match /notifications/{notificationId} {
       // A signed-in user can only read their own notifications.
       allow read: if request.auth != null
