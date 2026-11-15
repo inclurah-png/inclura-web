@@ -182,9 +182,25 @@ function Feed() {
   }, []);
 
   useEffect(() => {
-    setFilteredPosts((current) =>
-      current.map((post) => ({ ...post }))
+    /*
+     * Translate the visible feed automatically whenever the user
+     * changes the language selector. The request starts immediately;
+     * already-cached translations are skipped by translatePost().
+     *
+     * Do not depend on posts/filteredPosts here. That would retrigger
+     * translation every time a translated post updates state.
+     */
+    const visiblePosts =
+      filteredPosts.length > 0 ? filteredPosts : posts;
+
+    if (visiblePosts.length === 0) return;
+
+    void Promise.all(
+      visiblePosts.map((post) => translatePost(post))
     );
+    // translatePost is a stable function declaration; this effect
+    // intentionally runs only when the selected language changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeLanguage]);
 
   useEffect(() => {
