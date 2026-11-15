@@ -71,6 +71,10 @@ const SUPPORTED_LANGUAGES = new Set(
   Object.keys(LANGUAGE_NAMES)
 );
 
+const NLLB_SUPPORTED_TARGETS = new Set(
+  Object.keys(FLORES_CODES)
+);
+
 // These are the languages currently exposed
 // by your MADLAD-400 Hugging Face Space.
 const MADLAD_LANGUAGES = {
@@ -83,7 +87,6 @@ const MADLAD_LANGUAGES = {
   zh: "Chinese (zh)",
   hi: "Hindi (hi)",
   sw: "Swahili (sw)",
-  yo: "Yoruba (yo)",
   ig: "Igbo (ig)",
   ha: "Hausa (ha)",
   ja: "Japanese (ja)",
@@ -94,6 +97,60 @@ const HF_SPACE =
   "https://inclura-platform-madlad400-zerogpu-test.hf.space";
 
 const MADLAD_MODEL = "santhosh/madlad400-3b-ct2";
+
+/*
+ * Secondary free translation engine.
+ * NLLB-200 exposes a CPU API with FLORES-200 language codes and
+ * includes Yoruba, Igbo, Hausa and many other low-resource languages.
+ * It is used only when the current MADLAD Space does not expose
+ * the requested target language.
+ */
+const NLLB_SPACE =
+  "https://winstxnhdw-nllb-api.hf.space/api/v4/translator";
+
+const FLORES_CODES = {
+  en: "eng_Latn",
+  fr: "fra_Latn",
+  es: "spa_Latn",
+  pt: "por_Latn",
+  ar: "arb_Arab",
+  "zh-CN": "zho_Hans",
+  "zh-TW": "zho_Hant",
+  ja: "jpn_Jpan",
+  de: "deu_Latn",
+  hi: "hin_Deva",
+  sw: "swh_Latn",
+  ig: "ibo_Latn",
+  ha: "hau_Latn",
+  yo: "yor_Latn",
+  ko: "kor_Hang",
+  ru: "rus_Cyrl",
+  it: "ita_Latn",
+  nl: "nld_Latn",
+  vi: "vie_Latn",
+  th: "tha_Thai",
+  id: "ind_Latn",
+  ms: "zsm_Latn",
+  bn: "ben_Beng",
+  tr: "tur_Latn",
+  af: "afr_Latn",
+  am: "amh_Ethi",
+  zu: "zul_Latn",
+  xh: "xho_Latn",
+  so: "som_Latn",
+  st: "sot_Latn",
+  tn: "tsn_Latn",
+  ts: "tso_Latn",
+  ss: "ssw_Latn",
+  rw: "kin_Latn",
+  lg: "lug_Latn",
+  ln: "lin_Latn",
+  ff: "fuv_Latn",
+  wo: "wol_Latn",
+  tw: "twi_Latn",
+  bm: "bam_Latn",
+  ee: "ewe_Latn",
+};
 
 const MAX_SUBMISSION_ATTEMPTS = 1;
 const RETRY_DELAYS_MS = [];
@@ -276,11 +333,35 @@ export async function onRequestPost(context) {
     const targetLanguage = MADLAD_LANGUAGES[target] ||
       (target === "zh-CN" || target === "zh-TW" ? "Chinese" : null);
 
-    if (!targetLanguage) {
+    /*
+     * Provider selection:
+     * - Keep the existing MADLAD Space for its currently exposed languages.
+     * - Automatically fall back to NLLB-200 for every language in the
+     *   Inclura language registry that the MADLAD Space does not expose.
+     *
+     * This removes the old hard dependency on the 13-language MADLAD
+     * dropdown and prevents errors such as "Yoruba is not in the list".
+     */
+    const useMadlad = Boolean(targetLanguage);
+    const useNllb = !useMadlad && NLLB_SUPPORTED_TARGETS.has(target);
+
+    if (!useMadlad && !useNllb) {
       return jsonResponse(
         {
-          error: `The translation provider does not currently support ${LANGUAGE_NAMES[target]}.`,
-          code: "MADLAD_LANGUAGE_UNAVAILABLE",
+          error: `The requested language is not currently available from the configured translation engines: ${LANGUAGE_NAMES[target] || target}.`,
+          code: "LANGUAGE_UNAVAILABLE",
+          targetLanguage: target,
+        },
+        400
+      );
+    }
+
+    if (useNllb && !FLORES_CODES[source]) {
+      return jsonResponse(
+        {
+          error: `The detected source language (${source}) is not supported by the NLLB fallback mapping.`,
+          code: "SOURCE_LANGUAGE_UNAVAILABLE",
+          sourceLanguage: source,
           targetLanguage: target,
         },
         400
@@ -299,6 +380,48 @@ export async function onRequestPost(context) {
       translationAttempt <= MAX_TRANSLATION_ATTEMPTS;
       translationAttempt += 1) {
       try {
+        /*
+         * NLLB fallback is a normal HTTP GET API and returns the
+         * translation directly. Use it whenever MADLAD does not
+         * expose the requested target language.
+         */
+        if (useNllb) {
+          const nllbUrl = new URL(NLLB_SPACE);
+          nllbUrl.searchParams.set("text", text);
+          nllbUrl.searchParams.set("source", FLORES_CODES[source]);
+          nllbUrl.searchParams.set("target", FLORES_CODES[target]);
+
+          const nllbResponse = await fetchWithRetry(
+            nllbUrl.toString(),
+            {
+              method: "GET",
+              headers: {
+                Accept: "application/json",
+              },
+            }
+          );
+
+          if (!nllbResponse.ok) {
+            const errorDetails = await nllbResponse.text();
+            throw new Error(
+              `NLLB translation failed (HTTP ${nllbResponse.status}): ${errorDetails.slice(0, 500)}`
+            );
+          }
+
+          const nllbData = await nllbResponse.json();
+          const nllbResult =
+            typeof nllbData?.translation === "string"
+              ? nllbData.translation
+              : extractFirstString(nllbData);
+
+          if (!nllbResult || !nllbResult.trim()) {
+            throw new Error("NLLB returned an empty translation.");
+          }
+
+          translatedText = nllbResult.trim();
+          break;
+        }
+
         let submitResponse;
 
         try {
@@ -370,14 +493,10 @@ export async function onRequestPost(context) {
           throw new Error(report.slice(0, 500));
         }
 
-        /*
-         * The Space UI uses exact labels such as "Yoruba (yo)".
-         * Older responses may use the ISO code or plain name.
-         */
         const markerCandidates = [
-          `${targetLanguage}:\n`,
-          `${target}:\n`,
-          `${LANGUAGE_NAMES[target] || target}:\n`,
+          `${targetLanguage}:\\n`,
+          `${target}:\\n`,
+          `${LANGUAGE_NAMES[target] || target}:\\n`,
         ];
 
         let candidate = "";
@@ -390,10 +509,10 @@ export async function onRequestPost(context) {
           }
         }
 
-        // Some responses contain the completed translation directly.
         if (!candidate && report.trim()) {
           candidate = report.trim();
         }
+
         if (!candidate) {
           throw new Error("MADLAD-400 returned an empty translation.");
         }
@@ -404,7 +523,6 @@ export async function onRequestPost(context) {
         lastProviderError = error;
 
         if (translationAttempt < MAX_TRANSLATION_ATTEMPTS) {
-          // Give ZeroGPU a little time to recover before creating a fresh job.
           await sleep(RETRY_DELAYS_MS[translationAttempt - 1] || 3500);
         }
       }
