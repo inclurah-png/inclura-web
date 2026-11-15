@@ -75,20 +75,20 @@ const SUPPORTED_LANGUAGES = new Set(
 // These are the languages currently exposed
 // by your MADLAD-400 Hugging Face Space.
 const MADLAD_LANGUAGES = {
-  en: "English",
-  fr: "French",
-  es: "Spanish",
-  de: "German",
-  pt: "Portuguese",
-  ar: "Arabic",
+  en: "English (en)",
+  fr: "French (fr)",
+  es: "Spanish (es)",
+  de: "German (de)",
+  pt: "Portuguese (pt)",
+  ar: "Arabic (ar)",
   zh: "Chinese (zh)",
-  hi: "Hindi",
-  sw: "Swahili",
-  yo: "Yoruba",
-  ig: "Igbo",
-  ha: "Hausa",
-  ja: "Japanese",
-  ko: "Korean",
+  hi: "Hindi (hi)",
+  sw: "Swahili (sw)",
+  yo: "Yoruba (yo)",
+  ig: "Igbo (ig)",
+  ha: "Hausa (ha)",
+  ja: "Japanese (ja)",
+  ko: "Korean (ko)",
 };
 
 const HF_SPACE =
