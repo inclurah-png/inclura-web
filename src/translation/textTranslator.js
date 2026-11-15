@@ -24,12 +24,50 @@ const inFlightTranslations = new Map();
 
 /*
  * Translation requests are sent through the Inclura server-side provider gateway.
- * Keep translation jobs from this browser strictly sequential so
- * translating several feed posts does not submit multiple GPU jobs
- * at the same time. Different posts still use their own in-flight key.
+ *
+ * Do not make the whole feed strictly sequential. When a user changes the
+ * language, every loaded post should begin translating without waiting for
+ * all previous posts to finish. A small browser-local concurrency limit keeps
+ * the free gateway from being flooded while allowing several posts to
+ * translate at the same time.
  */
-let translationQueue = Promise.resolve();
-const TRANSLATION_QUEUE_GAP_MS = 0;
+const MAX_CONCURRENT_TRANSLATIONS = 4;
+let activeTranslationRequests = 0;
+const waitingTranslationJobs = [];
+
+function runNextTranslationJob() {
+  if (
+    activeTranslationRequests >= MAX_CONCURRENT_TRANSLATIONS ||
+    waitingTranslationJobs.length === 0
+  ) {
+    return;
+  }
+
+  const nextJob = waitingTranslationJobs.shift();
+  activeTranslationRequests += 1;
+
+  Promise.resolve()
+    .then(nextJob.task)
+    .then(nextJob.resolve, nextJob.reject)
+    .finally(() => {
+      activeTranslationRequests -= 1;
+      runNextTranslationJob();
+    });
+
+  runNextTranslationJob();
+}
+
+function enqueueTranslationJob(task) {
+  return new Promise((resolve, reject) => {
+    waitingTranslationJobs.push({
+      task,
+      resolve,
+      reject,
+    });
+
+    runNextTranslationJob();
+  });
+}
 
 // The gateway already controls provider fallback. Retrying the browser request
 // adds several seconds to every uncached translation and can make a successful
@@ -50,13 +88,11 @@ function translationKey(sourceId, targetLanguage, sourceText) {
 
 async function requestTranslationGateway(sourceText, targetLanguage, sourceLanguage) {
   /*
-   * Wait for the previous translation job to finish before submitting
-   * the next one. The queue is deliberately browser-local and does not
-   * block users on other devices.
+   * Put this request into a small concurrent queue. This means a language
+   * change can translate several loaded posts immediately instead of making
+   * every post wait behind one previous post.
    */
-  const run = translationQueue.then(async () => {
-    await sleep(TRANSLATION_QUEUE_GAP_MS);
-
+  const run = enqueueTranslationJob(async () => {
     let lastError = null;
 
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
@@ -149,12 +185,6 @@ async function requestTranslationGateway(sourceText, targetLanguage, sourceLangu
       "Translation service request failed."
     );
   });
-
-  /*
-   * Keep the queue moving even if this job fails. The failed promise
-   * itself must never poison all later translation requests.
-   */
-  translationQueue = run.catch(() => undefined);
 
   return run;
 }
