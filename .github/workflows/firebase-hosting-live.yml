@@ -49,6 +49,7 @@ jobs:
               throw new Error("Service account project_id does not match");
             }
             const json = JSON.stringify(account);
+            fs.writeFileSync("/tmp/firebase-service-account.json", json, { mode: 0o600 });
             fs.appendFileSync(process.env.GITHUB_OUTPUT, "json<<FIREBASE_JSON\n" + json + "\nFIREBASE_JSON\n");
             console.log("Firebase credentials validated and prepared.");
           } catch (error) {
@@ -56,6 +57,12 @@ jobs:
             process.exit(1);
           }
           NODE
+
+      - name: Deploy Firestore security rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
+        run: |
+          npx --yes firebase-tools@latest deploy --only firestore:rules --project inclura-prod-90734
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
