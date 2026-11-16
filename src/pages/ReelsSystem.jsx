@@ -77,7 +77,7 @@ function ReelsSystem() {
                   <div><strong>{author}</strong>{reel.role && <div style={role}>{reel.role}</div>}</div>
                   {reel.verified && <span>✓ Verified</span>}
                 </div>
-                <video controls preload="metadata" aria-label={\`Video post by \${author}\`} style={video}>
+                <video controls preload="metadata" aria-label={`Video post by ${author}`} style={video}>
                   <source src={reel.videoUrl} type="video/mp4" />
                 </video>
                 {reel.text && <p style={text}>{reel.text}</p>}
@@ -89,7 +89,7 @@ function ReelsSystem() {
                 <div style={meta}>
                   <span>❤️ {reactions}</span>
                   <span>💬 {Number(reel.commentCount || 0)}</span>
-                  <button type="button" style={linkButton} onClick={() => navigate(\`/post/\${reel.id}\`)}>Open publication</button>
+                  <button type="button" style={linkButton} onClick={() => navigate(`/post/${reel.id}`)}>Open publication</button>
                 </div>
               </article>
             );
