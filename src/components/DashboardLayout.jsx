@@ -2,10 +2,6 @@ import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
 import LanguageSelector from "./LanguageSelector";
 import {
-  signOut,
-} from "firebase/auth";
-import {
-  auth,
   db,
 } from "../firebase";
 
@@ -14,17 +10,12 @@ import {
   updateDoc,
 } from "firebase/firestore";
 
-import {
-  useNavigate,
-} from "react-router-dom";
 
 import {
   useAuth,
 } from "../context/AuthContext";
 
 function DashboardLayout({ children }) {
-  const navigate = useNavigate();
-
   const {
     user,
   } = useAuth();
@@ -57,16 +48,6 @@ function DashboardLayout({ children }) {
     }
   }
 
-  async function handleLogout() {
-    try {
-      await signOut(auth);
-
-      navigate("/login");
-    } catch (error) {
-      console.log(error);
-      alert(error.message);
-    }
-  }
 
   return (
     <div
@@ -105,22 +86,6 @@ function DashboardLayout({ children }) {
             }
           />
 
-          <button
-            onClick={handleLogout}
-            style={{
-              background: "#ef4444",
-              color: "white",
-              border: "none",
-              padding: "12px 18px",
-              borderRadius: "12px",
-              fontWeight: "700",
-              cursor: "pointer",
-              position: "relative",
-              zIndex: 4,
-            }}
-          >
-            Logout
-          </button>
         </div>
 
         <div
