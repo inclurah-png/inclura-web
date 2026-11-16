@@ -838,6 +838,7 @@ overflow: "hidden",
       ) : (
         <ChatList
           chats={chats}
+          currentUserId={currentUser?.uid}
           selectedChat={
             selectedChat
           }
