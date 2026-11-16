@@ -85,6 +85,25 @@ const isAdmin = role === "admin";
   {t("appName")}
 </h2>
 
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={loggingOut}
+        aria-label={t("logout")}
+        style={{
+          ...itemStyle,
+          width: "100%",
+          border: "none",
+          textAlign: "left",
+          background: "#dc2626",
+          marginTop: "20px",
+          opacity: loggingOut ? 0.7 : 1,
+          cursor: loggingOut ? "wait" : "pointer",
+        }}
+      >
+        🚪 {loggingOut ? "Signing out..." : t("logout")}
+      </button>
+
       <div
         style={itemStyle}
         onClick={() => navigate("/profile")}
@@ -384,24 +403,6 @@ const isAdmin = role === "admin";
         🚨 {t("sos")}
       </div>
 
-      <button
-        type="button"
-        onClick={handleLogout}
-        disabled={loggingOut}
-        aria-label={t("logout")}
-        style={{
-          ...itemStyle,
-          width: "100%",
-          border: "none",
-          textAlign: "left",
-          background: "#dc2626",
-          marginTop: "20px",
-          opacity: loggingOut ? 0.7 : 1,
-          cursor: loggingOut ? "wait" : "pointer",
-        }}
-      >
-        🚪 {loggingOut ? "Signing out..." : t("logout")}
-      </button>
     </div>
   );
 }
