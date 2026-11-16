@@ -19,7 +19,8 @@ function ChatList({
   return (
     <div
       style={{
-        width: "320px",
+        width: "100%",
+        boxSizing: "border-box",
         borderRight: "1px solid #1e293b",
         overflowY: "auto",
       }}
