@@ -769,6 +769,62 @@ function ChatWindow({
 
 
   // ============================================================
+  // UPDATE CONVERSATION PREVIEW
+  // ============================================================
+
+  async function updateConversationPreview(
+    chatId,
+    preview
+  ) {
+
+    if (
+      !chatId ||
+      !auth.currentUser
+    ) {
+
+      return;
+
+    }
+
+    try {
+
+      await updateDoc(
+        doc(
+          db,
+          "chats",
+          chatId
+        ),
+        {
+          lastMessage:
+            preview,
+
+          lastSenderId:
+            auth.currentUser.uid,
+
+          updatedAt:
+            serverTimestamp(),
+        }
+      );
+
+    } catch (error) {
+
+      /*
+       * The message itself has already been
+       * saved successfully. A preview update
+       * must never turn a successful send into
+       * a failed send.
+       */
+      console.error(
+        "Conversation preview update error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  // ============================================================
   // HANDLE TEXT INPUT
   // ============================================================
 
@@ -864,6 +920,11 @@ function ChatWindow({
           messageType:
             "text",
         }
+      );
+
+      await updateConversationPreview(
+        selectedChat.id,
+        messageText
       );
 
       await updateTypingStatus(
@@ -1301,6 +1362,21 @@ function ChatWindow({
         }
       );
 
+
+      await updateConversationPreview(
+        selectedChat.id,
+        "🖼️ Image"
+      );
+
+      await updateConversationPreview(
+        selectedChat.id,
+        "🎥 Video"
+      );
+
+      await updateConversationPreview(
+        selectedChat.id,
+        "📄 File"
+      );
 
       event.target.value = "";
 
@@ -1818,6 +1894,10 @@ function ChatWindow({
                 messageType:
                   "audio",
               }
+
+            await updateConversationPreview(
+              recordingContext.chatId,
+              "🎤 Voice message"
             );
 
           } catch (error) {
