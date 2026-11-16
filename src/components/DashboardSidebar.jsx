@@ -37,13 +37,19 @@ const isAdvertiser = role === "advertiser";
 const isEnterprise = role === "enterprise";
 const isAdmin = role === "admin";
 
+  const [loggingOut, setLoggingOut] = useState(false);
+
   async function handleLogout() {
+    if (loggingOut) return;
+
+    setLoggingOut(true);
     try {
       await signOut(auth);
-      navigate("/login");
+      navigate("/login", { replace: true });
     } catch (error) {
-      console.log(error);
-      alert(error.message);
+      console.error("Logout failed:", error);
+      alert("We could not sign you out. Please try again.");
+      setLoggingOut(false);
     }
   }
 
@@ -378,16 +384,24 @@ const isAdmin = role === "admin";
         🚨 {t("sos")}
       </div>
 
-      <div
+      <button
+        type="button"
         onClick={handleLogout}
+        disabled={loggingOut}
+        aria-label={t("logout")}
         style={{
           ...itemStyle,
+          width: "100%",
+          border: "none",
+          textAlign: "left",
           background: "#dc2626",
           marginTop: "20px",
+          opacity: loggingOut ? 0.7 : 1,
+          cursor: loggingOut ? "wait" : "pointer",
         }}
       >
-        🚪 {t("logout")}
-      </div>
+        🚪 {loggingOut ? "Signing out..." : t("logout")}
+      </button>
     </div>
   );
 }
