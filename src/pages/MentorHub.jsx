@@ -89,7 +89,7 @@ function MentorHub() {
                 )}
 
                 <div style={actions}>
-                  <button type="button" style={button} onClick={() => navigate(\`/user/\${mentor.id}\`)}>View Mentor</button>
+                  <button type="button" style={button} onClick={() => navigate(`/user/${mentor.id}`)}>View Mentor</button>
                   <button type="button" style={secondaryButton} onClick={() => navigate("/messages")}>Message</button>
                 </div>
               </article>
