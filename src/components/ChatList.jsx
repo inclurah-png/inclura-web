@@ -68,7 +68,6 @@ function ChatList({
                 background: isSelected
                   ? "#1e293b"
                   : "transparent",
-                outline: "none",
               }}
             >
               <div
