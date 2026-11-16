@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import ChatList from "../components/ChatList";
@@ -14,6 +14,7 @@ doc,
 updateDoc,
 arrayUnion,
 getDocs,
+getDoc,
 limit,
 setDoc,
 serverTimestamp,
@@ -26,6 +27,7 @@ import { db, auth } from "../firebase";
 function Messages() {
 const { t } = useTranslation();
 const navigate = useNavigate();
+const location = useLocation();
 
 const [currentUser, setCurrentUser] =
 useState(null);
@@ -598,6 +600,53 @@ try {
 }
 
 }
+
+// =====================================================
+// Open a seller conversation requested by Marketplace
+// =====================================================
+
+useEffect(() => {
+  const recipientId = location.state?.recipientId;
+
+  if (!currentUser || !recipientId || recipientId === currentUser.uid) {
+    return;
+  }
+
+  let active = true;
+
+  async function openRequestedConversation() {
+    try {
+      const recipientSnapshot = await getDoc(doc(db, "users", recipientId));
+
+      if (!recipientSnapshot.exists()) {
+        throw new Error("This seller account could not be found.");
+      }
+
+      if (!active) return;
+
+      await startConversation({
+        id: recipientSnapshot.id,
+        ...recipientSnapshot.data(),
+      });
+
+      if (active) {
+        navigate("/messages", { replace: true, state: null });
+      }
+    } catch (error) {
+      console.error("Marketplace seller conversation could not be opened:", error);
+      if (active) {
+        alert("Unable to open this seller conversation. You can find the seller from New Message.");
+        navigate("/messages", { replace: true, state: null });
+      }
+    }
+  }
+
+  openRequestedConversation();
+
+  return () => {
+    active = false;
+  };
+}, [currentUser?.uid, location.state?.recipientId]);
 
 // =====================================================
 // Find Display Name
