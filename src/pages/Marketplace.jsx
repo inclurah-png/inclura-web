@@ -6,6 +6,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import { useAccessibility } from "../context/AccessibilityProvider";
 import { translateContent } from "../translation/translationEngine";
 import { db } from "../firebase";
+import { SUPPORTED_LANGUAGES } from "../translation/supportedLanguages";
 
 const categories = [
   { id: "all", icon: "🛍️", label: "All listings" },
@@ -35,6 +36,11 @@ function Marketplace() {
   const [translationErrors, setTranslationErrors] = useState({});
 
   const activeLanguage = String(i18n.language || "en").trim();
+  const [targetLanguage, setTargetLanguage] = useState(activeLanguage);
+
+  useEffect(() => {
+    setTargetLanguage(activeLanguage);
+  }, [activeLanguage]);
 
   async function loadListings() {
     setLoading(true);
@@ -82,20 +88,20 @@ function Marketplace() {
           sourceId: `marketplace-listing-${item.id}-title`,
           sourceType: "marketplace-listing",
           text: title,
-          targetLanguage: activeLanguage,
+          targetLanguage,
         }),
         translateContent({
           sourceId: `marketplace-listing-${item.id}-description`,
           sourceType: "marketplace-listing",
           text: description,
-          targetLanguage: activeLanguage,
+          targetLanguage,
         }),
         accessibilityDetails
           ? translateContent({
               sourceId: `marketplace-listing-${item.id}-accessibility`,
               sourceType: "marketplace-listing",
               text: accessibilityDetails,
-              targetLanguage: activeLanguage,
+              targetLanguage,
             })
           : Promise.resolve(null),
       ]);
@@ -105,7 +111,7 @@ function Marketplace() {
       setTranslations((current) => ({
         ...current,
         [item.id]: {
-          language: activeLanguage,
+          language: targetLanguage,
           title: translatedTitle.translatedText,
           description: translatedDescription.translatedText,
           accessibilityDetails: translatedAccessibility?.translatedText || accessibilityDetails,
@@ -169,12 +175,34 @@ function Marketplace() {
           </div>
         )}
 
+        <div style={translationToolbar}>
+          <label htmlFor="marketplace-translate-language" style={translationLabel}>Translate listings to</label>
+          <select
+            id="marketplace-translate-language"
+            value={targetLanguage}
+            onChange={(event) => {
+              setTargetLanguage(event.target.value);
+              setTranslations({});
+              setTranslationErrors({});
+            }}
+            style={languageSelect}
+            aria-label="Choose the language for marketplace listing translations"
+          >
+            {SUPPORTED_LANGUAGES.map((language) => (
+              <option key={language.code} value={language.code}>
+                {language.nativeName} ({language.name})
+              </option>
+            ))}
+          </select>
+          <p style={translationHelp}>Choose a language, then tap “Translate listing” on any listing.</p>
+        </div>
+
         <section style={grid} aria-label="Marketplace listings" aria-live="polite">
           {visibleListings.map((item) => {
             const originalTitle = String(item.title || item.name || "Untitled listing");
             const originalDescription = String(item.description || "No description provided.");
             const savedTranslation = translations[item.id];
-            const translated = savedTranslation?.language === activeLanguage ? savedTranslation : null;
+            const translated = savedTranslation?.language === targetLanguage ? savedTranslation : null;
             const title = translated?.title || originalTitle;
             const description = translated?.description || originalDescription;
             const originalAccessibilityDetails = listingText(item.accessibilityFeatures || item.accessibilityInfo || item.accessibilityNotes || item.accessibilityNeeds);
@@ -193,7 +221,7 @@ function Marketplace() {
 
                 <h2 id={`${listingId}-title`} style={{ fontSize: "1.15em", margin: "8px 0" }}>{title}</h2>
                 <p id={`${listingId}-description`} style={muted}>{description}</p>
-                {translated && <p role="status" style={translatedNotice}>Translated into {activeLanguage}. Product details and prices should be confirmed with the seller.</p>}
+                {translated && <p role="status" style={translatedNotice}>Translated into {targetLanguage}. Product details and prices should be confirmed with the seller.</p>}
 
                 <div style={{ fontWeight: 800 }} aria-label={item.price != null ? `Price ${item.currency || "Naira"} ${Number(item.price).toLocaleString()}` : "Price not specified"}>
                   {item.price != null ? (item.currency || "₦") + Number(item.price).toLocaleString() : "Price not specified"}
@@ -211,7 +239,7 @@ function Marketplace() {
 
                 <div style={actions}>
                   <button type="button" onClick={() => translated ? setTranslations((current) => ({ ...current, [item.id]: null })) : translateListing(item)} disabled={Boolean(translating[item.id])} aria-describedby={`${listingId}-description`} style={secondaryButton}>
-                    {translating[item.id] ? "Translating..." : translated ? "Show original" : `Translate to ${activeLanguage}`}
+                    {translating[item.id] ? "Translating..." : translated ? "Show original" : `Translate listing to ${SUPPORTED_LANGUAGES.find((language) => language.code === targetLanguage)?.nativeName || targetLanguage}`}
                   </button>
                   {sellerId && <button type="button" onClick={() => contactSeller(item)} style={contactButton}>💬 Contact seller</button>}
                 </div>
@@ -253,6 +281,10 @@ const page = { color: "white", maxWidth: "1100px", margin: "0 auto", paddingBott
 const muted = { color: "#cbd5e1", lineHeight: 1.6 };
 const errorStyle = { color: "#fecaca", background: "#450a0a", border: "1px solid #f87171", borderRadius: 10, padding: 12, margin: "12px 0", lineHeight: 1.5 };
 const toolbar = { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "14px 0" };
+const translationToolbar = { display: "grid", gap: 8, margin: "16px 0", padding: 14, border: "1px solid #d4af37", borderRadius: 14, background: "#102b25" };
+const translationLabel = { color: "white", fontWeight: 800 };
+const languageSelect = { width: "100%", minHeight: 48, padding: "10px 12px", borderRadius: 10, border: "1px solid #d4af37", background: "#0f172a", color: "white", fontSize: 16 };
+const translationHelp = { color: "#cbd5e1", margin: 0, fontSize: 13, lineHeight: 1.5 };
 const searchInput = { flex: "1 1 240px", minWidth: 0, background: "#0f172a", border: "1px solid #64748b", borderRadius: 10, padding: "12px", color: "white", fontSize: 16 };
 const button = { border: "1px solid #d4af37", background: "#064e3b", color: "white", borderRadius: 10, padding: "10px 14px", fontWeight: 700, cursor: "pointer", minHeight: 44 };
 const categoryGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 10, marginBottom: 18 };
