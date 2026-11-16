@@ -16,6 +16,17 @@ const categories = [
   { id: "services", icon: "🤝", label: "Services" },
 ];
 
+// These are browse categories, not claims that products are currently in stock.
+const accessibilityEquipmentTypes = [
+  { id: "mobility", icon: "♿", title: "Mobility aids", description: "Manual and powered wheelchairs, walking frames, crutches, canes, rollators and mobility scooters.", keywords: ["wheelchair", "powered chair", "mobility scooter", "walking frame", "walker", "rollator", "crutch", "cane", "mobility aid"] },
+  { id: "hearing", icon: "🦻", title: "Hearing support", description: "Hearing aids, cochlear accessories, assistive listening devices, amplified phones and alert systems.", keywords: ["hearing aid", "cochlear", "hearing loop", "listening device", "amplified phone", "alert system", "hearing support"] },
+  { id: "vision", icon: "👁️", title: "Vision and Braille", description: "Braille displays, refreshable Braille devices, magnifiers, talking watches, screen-reading tools and accessible reading aids.", keywords: ["braille", "screen reader", "magnifier", "talking watch", "video magnifier", "blind", "low vision", "vision aid"] },
+  { id: "communication", icon: "💬", title: "Communication aids", description: "AAC devices, speech-generating tools, communication boards, switches and text-to-speech devices.", keywords: ["aac", "communication board", "speech generating", "speech device", "switch access", "text to speech", "communication aid"] },
+  { id: "technology", icon: "⌨️", title: "Accessible technology", description: "Adaptive keyboards, trackballs, alternative mice, switch interfaces, accessible phones and computer controls.", keywords: ["adaptive keyboard", "large key", "trackball", "alternative mouse", "switch interface", "accessible phone", "assistive technology", "computer access"] },
+  { id: "daily-living", icon: "🏠", title: "Daily-living aids", description: "Dressing aids, reachers, adapted utensils, shower chairs, transfer benches and other independent-living equipment.", keywords: ["dressing aid", "reacher", "adapted utensil", "shower chair", "transfer bench", "daily living", "independent living", "bathroom aid"] },
+  { id: "learning", icon: "📚", title: "Learning and sensory support", description: "Sensory tools, accessible learning materials, adapted writing aids and classroom support equipment.", keywords: ["sensory", "adapted writing", "learning aid", "accessible learning", "classroom support", "tactile"] },
+];
+
 function listingText(value) {
   if (Array.isArray(value)) return value.map((entry) => String(entry)).filter(Boolean).join(", ");
   if (typeof value === "string") return value.trim();
@@ -31,6 +42,7 @@ function Marketplace() {
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
+  const [selectedEquipmentType, setSelectedEquipmentType] = useState("");
   const [translations, setTranslations] = useState({});
   const [translating, setTranslating] = useState({});
   const [translationErrors, setTranslationErrors] = useState({});
@@ -59,9 +71,13 @@ function Marketplace() {
   useEffect(() => { loadListings(); }, []);
 
   function categoryFor(item) {
-    const category = String(item.category || item.type || "").toLowerCase();
-    const searchable = `${category} ${item.title || item.name || ""} ${item.description || ""}`.toLowerCase();
-    if (/accessib|wheelchair|assistive|mobility|hearing|braille/.test(searchable)) return "accessibility";
+    const category = String(item.category || item.type || item.subcategory || item.equipmentType || "").toLowerCase();
+    const searchable = [
+      category, item.title, item.name, item.description, item.brand,
+      item.accessibilityFeatures, item.accessibilityInfo, item.accessibilityNotes,
+      item.accessibilityNeeds, item.tags, item.keywords, item.accessibilityCategory,
+    ].map(listingText).join(" ").toLowerCase();
+    if (/accessib|wheelchair|assistive|mobility|hearing|braille|blind|low vision|hearing aid|communication aid|adaptive keyboard|daily living|sensory support/.test(searchable)) return "accessibility";
     if (/creator|artwork|digital content|store/.test(searchable)) return "creators";
     if (/service|consult|care|lesson|repair/.test(searchable)) return "services";
     return "products";
@@ -71,10 +87,17 @@ function Marketplace() {
     const term = search.trim().toLowerCase();
     return listings.filter((item) => {
       const matchesCategory = activeCategory === "all" || categoryFor(item) === activeCategory;
-      const haystack = `${item.title || item.name || ""} ${item.description || ""} ${item.category || ""}`.toLowerCase();
-      return matchesCategory && (!term || haystack.includes(term));
+      const haystack = [
+        item.title, item.name, item.description, item.category, item.type,
+        item.subcategory, item.equipmentType, item.brand, item.tags, item.keywords,
+        item.accessibilityCategory, item.accessibilityFeatures, item.accessibilityInfo,
+        item.accessibilityNotes, item.accessibilityNeeds,
+      ].map(listingText).join(" ").toLowerCase();
+      const equipmentType = accessibilityEquipmentTypes.find((entry) => entry.id === selectedEquipmentType);
+      const matchesEquipmentType = !equipmentType || equipmentType.keywords.some((keyword) => haystack.includes(keyword));
+      return matchesCategory && matchesEquipmentType && (!term || haystack.includes(term));
     });
-  }, [listings, search, activeCategory]);
+  }, [listings, search, activeCategory, selectedEquipmentType]);
 
   async function translateListing(item) {
     const title = String(item.title || item.name || "Untitled listing");
@@ -157,21 +180,57 @@ function Marketplace() {
 
         <nav style={categoryGrid} aria-label="Marketplace categories">
           {categories.map((category) => (
-            <button key={category.id} type="button" onClick={() => setActiveCategory(category.id)} aria-pressed={activeCategory === category.id} style={{ ...categoryCard, ...(activeCategory === category.id ? selectedCategory : {}) }}>
+            <button key={category.id} type="button" onClick={() => { setActiveCategory(category.id); setSelectedEquipmentType(""); }} aria-pressed={activeCategory === category.id} style={{ ...categoryCard, ...(activeCategory === category.id ? selectedCategory : {}) }}>
               <span aria-hidden="true" style={{ fontSize: 24 }}>{category.icon}</span>
               <strong>{category.label}</strong>
             </button>
           ))}
         </nav>
 
+        {activeCategory === "accessibility" && (
+          <section style={equipmentDirectory} aria-labelledby="accessibility-equipment-heading">
+            <h2 id="accessibility-equipment-heading" style={equipmentHeading}>Browse accessibility equipment</h2>
+            <p style={muted}>Choose an equipment type to find matching seller listings. These categories are a guide; products only appear below when a seller has published a matching listing.</p>
+            <div style={equipmentGrid}>
+              {accessibilityEquipmentTypes.map((equipment) => (
+                <button
+                  key={equipment.id}
+                  type="button"
+                  onClick={() => { setSelectedEquipmentType(equipment.id); setSearch(""); }}
+                  aria-pressed={selectedEquipmentType === equipment.id}
+                  style={{ ...equipmentCard, ...(selectedEquipmentType === equipment.id ? selectedEquipmentCard : {}) }}
+                >
+                  <span aria-hidden="true" style={{ fontSize: 25 }}>{equipment.icon}</span>
+                  <strong>{equipment.title}</strong>
+                  <span style={equipmentDescription}>{equipment.description}</span>
+                  <span style={equipmentBrowse}>Browse matching listings →</span>
+                </button>
+              ))}
+            </div>
+            {selectedEquipmentType && (
+              <button type="button" style={clearEquipmentButton} onClick={() => setSelectedEquipmentType("")}>
+                Show all accessibility equipment
+              </button>
+            )}
+          </section>
+        )}
+
         {error && <div role="alert" style={errorStyle}>{error}</div>}
         {loading && <p role="status" aria-live="polite" style={muted}>Loading marketplace listings...</p>}
 
         {!loading && !error && visibleListings.length === 0 && (
           <div style={empty} role="status">
-            <h2>{listings.length ? "No matching listings" : "No listings yet"}</h2>
-            <p style={muted}>{listings.length ? "Try another category or search term." : "Published marketplace items will appear here."}</p>
-            {(search || activeCategory !== "all") && <button type="button" style={secondaryButton} onClick={() => { setSearch(""); setActiveCategory("all"); }}>Clear filters</button>}
+            <h2>{listings.length ? "No matching listings yet" : "No seller listings yet"}</h2>
+            <p style={muted}>
+              {selectedEquipmentType
+                ? "There are no published seller listings matching this equipment type yet. Try another equipment type or check back as sellers add products."
+                : listings.length
+                  ? "Try another category or search term."
+                  : activeCategory === "accessibility"
+                    ? "The equipment guide above is ready to browse, but sellers have not published matching equipment listings yet."
+                    : "Published marketplace items will appear here."}
+            </p>
+            {(search || activeCategory !== "all" || selectedEquipmentType) && <button type="button" style={secondaryButton} onClick={() => { setSearch(""); setActiveCategory("all"); setSelectedEquipmentType(""); }}>Clear filters</button>}
           </div>
         )}
 
@@ -256,7 +315,8 @@ function Marketplace() {
 
       <style>{`
         .inclura-marketplace button:focus-visible,
-        .inclura-marketplace input:focus-visible {
+        .inclura-marketplace input:focus-visible,
+        .inclura-marketplace select:focus-visible {
           outline: 3px solid #facc15;
           outline-offset: 3px;
         }
@@ -290,6 +350,14 @@ const button = { border: "1px solid #d4af37", background: "#064e3b", color: "whi
 const categoryGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(145px,1fr))", gap: 10, marginBottom: 18 };
 const categoryCard = { display: "flex", alignItems: "center", gap: 10, textAlign: "left", background: "#0f172a", border: "1px solid #64748b", color: "white", padding: 14, borderRadius: 14, cursor: "pointer", minHeight: 64, font: "inherit" };
 const selectedCategory = { border: "2px solid #facc15", background: "#123b32" };
+const equipmentDirectory = { margin: "8px 0 22px", padding: 16, borderRadius: 16, background: "#102b25", border: "1px solid #d4af37" };
+const equipmentHeading = { margin: "0 0 8px", fontSize: "1.2em" };
+const equipmentGrid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", gap: 10, marginTop: 14 };
+const equipmentCard = { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 8, textAlign: "left", minHeight: 175, padding: 14, borderRadius: 12, background: "#0f172a", color: "white", border: "1px solid #64748b", cursor: "pointer", font: "inherit" };
+const selectedEquipmentCard = { border: "2px solid #facc15", background: "#123b32" };
+const equipmentDescription = { color: "#cbd5e1", fontSize: 13, lineHeight: 1.5 };
+const equipmentBrowse = { color: "#fde68a", fontSize: 13, fontWeight: 700, marginTop: "auto" };
+const clearEquipmentButton = { ...secondaryButton, marginTop: 12 };
 const grid = { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(250px,1fr))", gap: 14 };
 const card = { background: "#0f172a", border: "1px solid #475569", padding: 18, borderRadius: 16, minWidth: 0, overflowWrap: "anywhere" };
 const image = { width: "100%", height: 170, objectFit: "cover", borderRadius: 12, background: "#1e293b" };
