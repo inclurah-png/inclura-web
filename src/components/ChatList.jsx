@@ -42,14 +42,10 @@ function ChatList({
           const unreadCount = Number(chat.unreadCount) || 0;
 
           return (
-            <div
+            <button
+              type="button"
               key={chat.id}
               onClick={() => handleSelectChat(chat)}
-              onKeyDown={(event) =>
-                handleKeyDown(event, chat)
-              }
-              role="button"
-              tabIndex={0}
               aria-current={
                 isSelected ? "true" : undefined
               }
@@ -61,6 +57,12 @@ function ChatList({
                   : chat.name || "Conversation"
               }
               style={{
+                display: "block",
+                width: "100%",
+                border: "0",
+                font: "inherit",
+                color: "inherit",
+                textAlign: "left",
                 padding: "16px",
                 cursor: "pointer",
                 background: isSelected
@@ -121,7 +123,7 @@ function ChatList({
               >
                 {chat.lastMessage || ""}
               </p>
-            </div>
+            </button>
           );
         })
       )}
