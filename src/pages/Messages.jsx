@@ -787,7 +787,18 @@ overflow: "hidden",
         Conversation List
     ================================================= */}
 
+    <style>{`
+      @media (max-width: 640px) {
+        .inclura-messages-sidebar {
+          width: 38% !important;
+          min-width: 120px !important;
+          max-width: 38% !important;
+        }
+      }
+    `}</style>
+
     <aside
+      className="inclura-messages-sidebar"
       style={{
         width: "340px",
         minWidth: "280px",
