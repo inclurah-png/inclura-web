@@ -39,6 +39,7 @@ import {
 function ChatWindow({
   selectedChat,
   messages,
+  onBack,
 }) {
 
   const { t, i18n } =
@@ -2431,13 +2432,27 @@ function ChatWindow({
           "conversationHeader"
         )}
         style={{
-          padding: "16px",
-          borderBottom:
-            "1px solid #1e293b",
+          display: "flex",
+          alignItems: "center",
+          gap: "12px",
+          padding: "12px 16px",
+          borderBottom: "1px solid #1e293b",
           flexShrink: 0,
         }}
       >
 
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            aria-label={t("messages.backToConversations", { defaultValue: "Back to conversations" })}
+            style={{ border: "1px solid #334155", borderRadius: "10px", padding: "8px 11px", background: "#1e293b", color: "#ffffff", cursor: "pointer", fontWeight: 700, flexShrink: 0 }}
+          >
+            ← <span>{t("messages.back", { defaultValue: "Back" })}</span>
+          </button>
+        )}
+
+        <div style={{ minWidth: 0 }}>
         <strong>
           {selectedChat.name ||
             selectedChat.participantNames?.[
@@ -2467,6 +2482,7 @@ function ChatWindow({
               )
             : ""}
         </p>
+        </div>
 
       </header>
 
