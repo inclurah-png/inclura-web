@@ -1,15 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
 
-import ResponderIncidentReport from "./pages/ResponderIncidentReport";
-import FamilyEmergencyDashboard from "./pages/FamilyEmergencyDashboard";
-import FamilyEmergencyTimeline from "./pages/FamilyEmergencyTimeline";
-import FamilyEmergencyMap from "./pages/FamilyEmergencyMap";
-import FamilyEmergencyNotifications from "./pages/FamilyEmergencyNotifications";
-
-import IFSERiskPanel from "./pages/IFSERiskPanel.jsx";
-import SOSResponderDashboard from "./pages/SOSResponderDashboard";
-
+const ResponderIncidentReport = lazy(() => import("./pages/ResponderIncidentReport"));
+const FamilyEmergencyDashboard = lazy(() => import("./pages/FamilyEmergencyDashboard"));
+const FamilyEmergencyTimeline = lazy(() => import("./pages/FamilyEmergencyTimeline"));
+const FamilyEmergencyMap = lazy(() => import("./pages/FamilyEmergencyMap"));
+const FamilyEmergencyNotifications = lazy(() => import("./pages/FamilyEmergencyNotifications"));
+const IFSERiskPanel = lazy(() => import("./pages/IFSERiskPanel.jsx"));
+const SOSResponderDashboard = lazy(() => import("./pages/SOSResponderDashboard"));
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -18,77 +16,63 @@ import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
 
-import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import ForgotPassword from "./pages/ForgotPassword";
-import Onboarding from "./pages/Onboarding";
-
-import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";
-import UserProfile from "./pages/UserProfile";
-
-import Messages from "./pages/Messages";
-import Notifications from "./pages/Notifications";
-import SavedPosts from "./pages/SavedPosts";
-import Search from "./pages/Search";
-
-import Wallet from "./pages/Wallet";
-import PayTopup from "./pages/PayTopup";
-import Withdraw from "./pages/Withdraw";
-import Transfer from "./pages/Transfer";
-import Transactions from "./pages/Transactions";
-
-import Marketplace from "./pages/Marketplace";
-import ReelsSystem from "./pages/ReelsSystem";
-
-import AccessibilityHub from "./pages/AccessibilityHub";
-import OpportunitiesHub from "./pages/OpportunitiesHub";
-import CareGigs from "./pages/CareGigs";
-import CareRequestPage from "./pages/CareRequestPage";
-import MentorHub from "./pages/MentorHub";
-
-import PostPage from "./pages/PostPage";
-import CrossPost from "./pages/CrossPost";
-
-import VerificationCenter from "./pages/VerificationCenter";
-import VerificationApplication from "./pages/VerificationApplication";
-import VerificationDocuments from "./pages/VerificationDocuments";
-import VerificationPaymentEngine from "./pages/VerificationPaymentEngine";
-import VerificationStatus from "./pages/VerificationStatus";
-
-import CreatorMonetization from "./pages/CreatorMonetization";
-import CreatorAnalytics from "./pages/CreatorAnalytics";
-import CreatorEarnings from "./pages/CreatorEarnings";
-
-import AdvertiserDashboard from "./pages/AdvertiserDashboard";
-import AdManager from "./pages/AdManager";
-
-import Enterprise from "./pages/Enterprise";
-import EnterpriseAds from "./pages/EnterpriseAds";
-import EnterpriseCampaignManager from "./pages/EnterpriseCampaignManager";
-import EnterpriseAnalytics from "./pages/EnterpriseAnalytics";
-import EnterprisePartnership from "./pages/EnterprisePartnership";
-import CorporatePartnership from "./pages/CorporatePartnership";
-import GovernmentPartnership from "./pages/GovernmentPartnership";
-
-import PremiumDashboard from "./pages/PremiumDashboard";
-import PremiumPayment from "./pages/PremiumPayment";
-
-import AdminPanel from "./pages/AdminPanel";
-import VerificationManager from "./pages/VerificationManager";
-import VerificationRequestsManager from "./pages/VerificationRequestsManager";
-import WalletMonitoring from "./pages/WalletMonitoring";
-import AdApprovalQueue from "./pages/AdApprovalQueue";
-import UsersManagement from "./pages/UsersManagement";
-import ReportsAndViolations from "./pages/ReportsAndViolations";
-import PricingManager from "./pages/PricingManager";
-import PlatformAnalytics from "./pages/PlatformAnalytics";
-
-import SOS from "./pages/SOS";
-import BiometricsDemoPage from "./pages/BiometricsDemoPage";
-import ResponderAssignments from "./pages/ResponderAssignments";
-
+const Home = lazy(() => import("./pages/Home"));
+const Login = lazy(() => import("./pages/Login"));
+const Signup = lazy(() => import("./pages/Signup"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const Profile = lazy(() => import("./pages/Profile"));
+const EditProfile = lazy(() => import("./pages/EditProfile"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Messages = lazy(() => import("./pages/Messages"));
+const Notifications = lazy(() => import("./pages/Notifications"));
+const SavedPosts = lazy(() => import("./pages/SavedPosts"));
+const Search = lazy(() => import("./pages/Search"));
+const Wallet = lazy(() => import("./pages/Wallet"));
+const PayTopup = lazy(() => import("./pages/PayTopup"));
+const Withdraw = lazy(() => import("./pages/Withdraw"));
+const Transfer = lazy(() => import("./pages/Transfer"));
+const Transactions = lazy(() => import("./pages/Transactions"));
+const Marketplace = lazy(() => import("./pages/Marketplace"));
+const ReelsSystem = lazy(() => import("./pages/ReelsSystem"));
+const AccessibilityHub = lazy(() => import("./pages/AccessibilityHub"));
+const OpportunitiesHub = lazy(() => import("./pages/OpportunitiesHub"));
+const CareGigs = lazy(() => import("./pages/CareGigs"));
+const CareRequestPage = lazy(() => import("./pages/CareRequestPage"));
+const MentorHub = lazy(() => import("./pages/MentorHub"));
+const PostPage = lazy(() => import("./pages/PostPage"));
+const CrossPost = lazy(() => import("./pages/CrossPost"));
+const VerificationCenter = lazy(() => import("./pages/VerificationCenter"));
+const VerificationApplication = lazy(() => import("./pages/VerificationApplication"));
+const VerificationDocuments = lazy(() => import("./pages/VerificationDocuments"));
+const VerificationPaymentEngine = lazy(() => import("./pages/VerificationPaymentEngine"));
+const VerificationStatus = lazy(() => import("./pages/VerificationStatus"));
+const CreatorMonetization = lazy(() => import("./pages/CreatorMonetization"));
+const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
+const CreatorEarnings = lazy(() => import("./pages/CreatorEarnings"));
+const AdvertiserDashboard = lazy(() => import("./pages/AdvertiserDashboard"));
+const AdManager = lazy(() => import("./pages/AdManager"));
+const Enterprise = lazy(() => import("./pages/Enterprise"));
+const EnterpriseAds = lazy(() => import("./pages/EnterpriseAds"));
+const EnterpriseCampaignManager = lazy(() => import("./pages/EnterpriseCampaignManager"));
+const EnterpriseAnalytics = lazy(() => import("./pages/EnterpriseAnalytics"));
+const EnterprisePartnership = lazy(() => import("./pages/EnterprisePartnership"));
+const CorporatePartnership = lazy(() => import("./pages/CorporatePartnership"));
+const GovernmentPartnership = lazy(() => import("./pages/GovernmentPartnership"));
+const PremiumDashboard = lazy(() => import("./pages/PremiumDashboard"));
+const PremiumPayment = lazy(() => import("./pages/PremiumPayment"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const VerificationManager = lazy(() => import("./pages/VerificationManager"));
+const VerificationRequestsManager = lazy(() => import("./pages/VerificationRequestsManager"));
+const WalletMonitoring = lazy(() => import("./pages/WalletMonitoring"));
+const AdApprovalQueue = lazy(() => import("./pages/AdApprovalQueue"));
+const UsersManagement = lazy(() => import("./pages/UsersManagement"));
+const ReportsAndViolations = lazy(() => import("./pages/ReportsAndViolations"));
+const PricingManager = lazy(() => import("./pages/PricingManager"));
+const PlatformAnalytics = lazy(() => import("./pages/PlatformAnalytics"));
+const SOS = lazy(() => import("./pages/SOS"));
+const BiometricsDemoPage = lazy(() => import("./pages/BiometricsDemoPage"));
+const ResponderAssignments = lazy(() => import("./pages/ResponderAssignments"));
 function App() {
   useEffect(() => {
     window.addEventListener(
@@ -104,6 +88,7 @@ function App() {
   }, []);
 
   return (
+    <Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#020617", color: "#fff", fontSize: "18px" }}>Loading Inclura…</main>}>
     <Routes>
 
       {/* ========================= */}
@@ -695,6 +680,7 @@ function App() {
       />
 
     </Routes>
+    </Suspense>
   );
 }
 
