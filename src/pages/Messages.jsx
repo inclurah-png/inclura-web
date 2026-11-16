@@ -742,7 +742,7 @@ overflow: "hidden",
     </div>
 
     <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
-      <button type="button" onClick={() => navigate("/profile")} aria-label={t("messages.backToDashboard", { defaultValue: "Back to dashboard" })} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 12px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>← Dashboard</button>
+      <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); window.setTimeout(() => navigate("/profile"), 300); }} aria-label={t("messages.backToDashboard", { defaultValue: "Back to dashboard" })} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 12px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>← Dashboard</button>
       <button
       type="button"
       onClick={
