@@ -1,245 +1,71 @@
+import { useEffect, useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
 import DashboardLayout from "../components/DashboardLayout";
-
-const sections = [
-  {
-    id: "create",
-    title: "Create Enterprise Campaign",
-    icon: "➕",
-    description:
-      "Campaign creation is disabled until server-side authorization and validation are connected.",
-    status: "Not connected",
-  },
-  {
-    id: "active",
-    title: "Active Campaigns",
-    icon: "📢",
-    description:
-      "Campaign records will appear here after authorized data access is implemented.",
-    status: "Not connected",
-  },
-  {
-    id: "history",
-    title: "Campaign History",
-    icon: "📜",
-    description:
-      "Historical campaign records are not loaded by this page.",
-    status: "Not connected",
-  },
-  {
-    id: "recruitment",
-    title: "Recruitment Campaigns",
-    icon: "💼",
-    description:
-      "Recruitment campaign management is not yet connected.",
-    status: "Not connected",
-  },
-  {
-    id: "accessibility",
-    title: "Accessibility Programs",
-    icon: "♿",
-    description:
-      "Accessibility program management is not yet connected.",
-    status: "Not connected",
-  },
-  {
-    id: "scholarships",
-    title: "Scholarship Campaigns",
-    icon: "🎓",
-    description:
-      "Scholarship campaign management is not yet connected.",
-    status: "Not connected",
-  },
-  {
-    id: "community",
-    title: "Community Outreach",
-    icon: "🤝",
-    description:
-      "Community outreach campaign management is not yet connected.",
-    status: "Not connected",
-  },
-  {
-    id: "government",
-    title: "Government Initiatives",
-    icon: "🏛",
-    description:
-      "Government initiative management requires verified permissions.",
-    status: "Not connected",
-  },
-  {
-    id: "international",
-    title: "International Programs",
-    icon: "🌍",
-    description:
-      "International program management is not yet connected.",
-    status: "Not connected",
-  },
-  {
-    id: "budget",
-    title: "Campaign Budget Management",
-    icon: "💰",
-    description:
-      "Budget changes are disabled until trusted authorization and validation are implemented.",
-    status: "Protected",
-  },
-  {
-    id: "analytics",
-    title: "Campaign Analytics",
-    icon: "📈",
-    description:
-      "Analytics will require access to authorized campaign records.",
-    status: "Not connected",
-  },
-  {
-    id: "audience",
-    title: "Audience Targeting",
-    icon: "🎯",
-    description:
-      "Targeting is disabled until privacy safeguards and permitted targeting rules are implemented.",
-    status: "Protected",
-  },
-  {
-    id: "location",
-    title: "Location Targeting",
-    icon: "📍",
-    description:
-      "Location targeting is disabled until privacy and authorization checks are implemented.",
-    status: "Protected",
-  },
-  {
-    id: "insights",
-    title: "Enterprise Insights",
-    icon: "📊",
-    description:
-      "Existing enterprise insights integration must be inspected before connecting campaign data.",
-    status: "Not connected",
-  },
-];
-
-const card = {
-  background: "#0f172a",
-  border: "1px solid #334155",
-  padding: "24px",
-  borderRadius: "20px",
-  marginBottom: "20px",
-  color: "#f8fafc",
-};
-
-const statusStyle = {
-  display: "inline-block",
-  marginTop: "12px",
-  padding: "5px 10px",
-  borderRadius: "8px",
-  background: "#334155",
-  color: "#e2e8f0",
-  fontSize: "12px",
-  fontWeight: "600",
-};
+import { db } from "../firebase";
 
 function EnterpriseCampaignManager() {
+  const [campaigns, setCampaigns] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  async function loadCampaigns() {
+    setLoading(true);
+    setError("");
+    try {
+      const snapshot = await getDocs(collection(db, "enterpriseCampaigns"));
+      setCampaigns(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    } catch (loadError) {
+      console.error("Enterprise campaigns load failed:", loadError);
+      setError("Campaign records could not be loaded. Check your enterprise permissions.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { loadCampaigns(); }, []);
+
+  const active = campaigns.filter((campaign) => campaign.status === "active").length;
+  const completed = campaigns.filter((campaign) => campaign.status === "completed").length;
+  const paused = campaigns.filter((campaign) => campaign.status === "paused").length;
+
   return (
     <DashboardLayout>
-      <main
-        style={{
-          color: "white",
-          padding: "0 0 24px",
-          maxWidth: "1100px",
-          margin: "0 auto",
-        }}
-      >
-        <h1
-          style={{
-            marginBottom: "12px",
-          }}
-        >
-          🏢 Enterprise Campaign Manager
-        </h1>
-
-        <p
-          style={{
-            color: "#cbd5e1",
-            lineHeight: 1.6,
-            marginBottom: "24px",
-          }}
-        >
-          Enterprise campaign management workspace.
-          Campaign operations remain disabled until the
-          existing authentication, authorization, and
-          campaign data architecture have been verified.
+      <main style={{ color: "white", maxWidth: "1100px", margin: "0 auto" }}>
+        <h1>🏢 Enterprise Campaign Manager</h1>
+        <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
+          Connected campaign workspace. This page reads existing authorized campaign
+          records and does not alter campaign budgets.
         </p>
 
-        <section
-          aria-label="Campaign management security notice"
-          role="status"
-          style={{
-            ...card,
-            borderColor: "#92400e",
-            background: "#1c1917",
-          }}
-        >
-          <h2
-            style={{
-              fontSize: "17px",
-              marginTop: 0,
-              color: "#fde68a",
-            }}
-          >
-            🔒 Security safeguards
-          </h2>
+        <div style={toolbar}>
+          <button type="button" onClick={loadCampaigns} disabled={loading} style={buttonStyle}>
+            {loading ? "Loading..." : "↻ Refresh campaigns"}
+          </button>
+          <span style={summary}>Active: {active} · Completed: {completed} · Paused: {paused}</span>
+        </div>
 
-          <ul
-            style={{
-              paddingLeft: "22px",
-              lineHeight: 1.8,
-              color: "#e7e5e4",
-            }}
-          >
-            <li>
-              This page does not create, modify, or delete
-              campaign records.
-            </li>
-            <li>
-              No campaign budgets or audience data are
-              retrieved by this component.
-            </li>
-            <li>
-              Frontend visibility is not a substitute for
-              backend authorization or Firestore rules.
-            </li>
-            <li>
-              Campaign approval permissions must remain
-              separate from enterprise campaign ownership.
-            </li>
-          </ul>
-        </section>
+        {error && <div style={errorStyle} role="alert">{error}</div>}
 
-        <section aria-label="Enterprise campaign management areas">
-          {sections.map((section) => (
-            <article
-              key={section.id}
-              style={card}
-            >
-              <h2
-                style={{
-                  fontSize: "18px",
-                  margin: "0 0 12px",
-                }}
-              >
-                {section.icon} {section.title}
+        {!loading && !error && campaigns.length === 0 && (
+          <div style={cardStyle}>
+            <h2 style={{ marginTop: 0 }}>No campaigns yet</h2>
+            <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
+              No enterprise campaign records are currently available to this account.
+            </p>
+          </div>
+        )}
+
+        <section style={gridStyle} aria-label="Enterprise campaigns">
+          {campaigns.map((campaign) => (
+            <article key={campaign.id} style={cardStyle}>
+              <h2 style={{ fontSize: "18px", marginTop: 0 }}>
+                {campaign.title || campaign.name || "Untitled campaign"}
               </h2>
-
-              <p
-                style={{
-                  color: "#cbd5e1",
-                  lineHeight: 1.6,
-                  margin: 0,
-                }}
-              >
-                {section.description}
-              </p>
-
-              <span style={statusStyle}>
-                {section.status}
-              </span>
+              <div style={{ color: "#cbd5e1", lineHeight: 1.7 }}>
+                <div>Status: <strong style={{ color: "white" }}>{campaign.status || "unknown"}</strong></div>
+                <div>Type: {campaign.type || campaign.category || "—"}</div>
+                <div>Budget: {typeof campaign.budget === "number" ? campaign.budget.toLocaleString() : "—"}</div>
+              </div>
             </article>
           ))}
         </section>
@@ -247,5 +73,42 @@ function EnterpriseCampaignManager() {
     </DashboardLayout>
   );
 }
+
+const toolbar = {
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+  flexWrap: "wrap",
+  margin: "18px 0",
+};
+const summary = { color: "#cbd5e1", fontSize: "14px" };
+const gridStyle = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+  gap: "14px",
+};
+const cardStyle = {
+  background: "#0f172a",
+  border: "1px solid #334155",
+  padding: "20px",
+  borderRadius: "16px",
+};
+const buttonStyle = {
+  border: "1px solid #d4af37",
+  background: "#064e3b",
+  color: "white",
+  borderRadius: "10px",
+  padding: "10px 14px",
+  fontWeight: "700",
+  cursor: "pointer",
+};
+const errorStyle = {
+  background: "#451a1a",
+  border: "1px solid #991b1b",
+  color: "#fecaca",
+  borderRadius: "12px",
+  padding: "14px",
+  marginBottom: "16px",
+};
 
 export default EnterpriseCampaignManager;
