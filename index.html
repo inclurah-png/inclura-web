@@ -3,24 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020617" />
     <title>Inclura</title>
-
     <style>
-      body {
-        margin: 0;
-        background: #020617;
-        color: white;
-        font-family: Arial, sans-serif;
-      }
-
-      * {
-        box-sizing: border-box;
-      }
+      body { margin: 0; background: #020617; color: white; font-family: Arial, sans-serif; }
+      * { box-sizing: border-box; }
+      #startup-status { min-height: 100vh; display: grid; place-content: center; padding: 24px; text-align: center; }
+      #startup-status h1 { color: #38bdf8; font-size: 30px; margin: 0 0 12px; }
+      #startup-status p { max-width: 440px; line-height: 1.6; margin: 0 auto; }
     </style>
+    <script>
+      window.__incluraStartupTimer = window.setTimeout(function () {
+        var root = document.getElementById("root");
+        if (root && !root.dataset.reactMounted) {
+          root.innerHTML = '<main id="startup-status" role="alert"><section><h1>Inclura is having trouble starting</h1><p>The website opened, but its application files did not finish loading. Please refresh once. If this message remains, tell the Inclura support team that the startup screen appeared.</p></section></main>';
+        }
+      }, 12000);
+      window.addEventListener("error", function (event) {
+        if (event && event.target && event.target.tagName === "SCRIPT") {
+          var root = document.getElementById("root");
+          if (root && !root.dataset.reactMounted) {
+            root.innerHTML = '<main id="startup-status" role="alert"><section><h1>Inclura could not load its application files</h1><p>A required website file failed to load. Please try refreshing once and report this message if it continues.</p></section></main>';
+          }
+        }
+      }, true);
+    </script>
   </head>
-
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main id="startup-status" aria-live="polite">
+        <section><h1>Inclura</h1><p>Loading your inclusive community platform…</p></section>
+      </main>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
