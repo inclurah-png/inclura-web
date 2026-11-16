@@ -1894,6 +1894,7 @@ function ChatWindow({
                 messageType:
                   "audio",
               }
+            );
 
             await updateConversationPreview(
               recordingContext.chatId,
