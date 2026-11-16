@@ -143,6 +143,10 @@ service cloud.firestore {
 
     // Members may update only their own accessibility preferences.
     match /users/{userId} {
+      // A signed-in member may read their own private profile document.
+      // This is required by the publication Follow button to load the member's following list.
+      allow get: if request.auth != null && request.auth.uid == userId;
+
       allow update: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
