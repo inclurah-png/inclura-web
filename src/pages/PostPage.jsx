@@ -572,6 +572,9 @@ function PostPage() {
           "24px",
       }}
     >
+      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
+        <button type="button" onClick={() => navigate("/profile")} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 14px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer" }}>← Dashboard</button>
+      </div>
       {loading ? (
         <p>
           Loading...
