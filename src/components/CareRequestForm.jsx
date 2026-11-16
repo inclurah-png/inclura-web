@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 function CareRequestForm({
@@ -6,9 +7,13 @@ function CareRequestForm({
   submitting = false,
 }) {
   const { t } = useTranslation();
+  const [searchParams] = useSearchParams();
+  const requestedService = searchParams.get("serviceType");
+  const allowedServices = ["caregiver", "home_assistance", "transportation", "support"];
+  const initialService = allowedServices.includes(requestedService) ? requestedService : "";
 
   const [form, setForm] = useState({
-    serviceType: "",
+    serviceType: initialService,
     description: "",
     location: "",
     preferredDate: "",
