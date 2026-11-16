@@ -463,10 +463,12 @@ function CareGigs() {
             })}
           >
             {services.map((service) => (
-              <article
+              <Link
                 key={service.id}
+                to={`/care-gigs/request?serviceType=${service.id === "caregiverRequests" ? "caregiver" : service.id === "homeAssistance" ? "home_assistance" : service.id === "transportationSupport" ? "transportation" : "support"}`}
                 role="listitem"
-                style={card}
+                aria-label={`${service.title}: create a request`}
+                style={{ ...card, textDecoration: "none", cursor: "pointer", border: "1px solid #0f766e" }}
               >
                 <div style={iconContainer} aria-hidden="true">
                   {service.icon}
@@ -481,9 +483,12 @@ function CareGigs() {
                     {service.description}
                   </p>
                 </div>
-              </article>
+              </Link>
             ))}
           </div>
+          <p style={{ ...description, marginTop: "10px" }}>
+            Select a service to open the request form with that service already chosen.
+          </p>
         </section>
 
         <aside
