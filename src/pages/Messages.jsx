@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 import ChatList from "../components/ChatList";
@@ -24,6 +25,7 @@ import { db, auth } from "../firebase";
 
 function Messages() {
 const { t } = useTranslation();
+const navigate = useNavigate();
 
 const [currentUser, setCurrentUser] =
 useState(null);
@@ -687,6 +689,7 @@ overflow: "hidden",
   ================================================= */}
 
   <header
+    className="inclura-messages-header"
     style={{
       minHeight: "72px",
       display: "flex",
@@ -738,7 +741,9 @@ overflow: "hidden",
       </p>
     </div>
 
-    <button
+    <div style={{ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 }}>
+      <button type="button" onClick={() => navigate("/")} aria-label={t("messages.backToDashboard", { defaultValue: "Back to dashboard" })} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 12px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer", whiteSpace: "nowrap" }}>← Dashboard</button>
+      <button
       type="button"
       onClick={
         openNewConversation
@@ -765,7 +770,8 @@ overflow: "hidden",
             "New Message",
         }
       )}
-    </button>
+      </button>
+    </div>
 
   </header>
 
@@ -789,16 +795,17 @@ overflow: "hidden",
 
     <style>{`
       @media (max-width: 640px) {
-        .inclura-messages-sidebar {
-          width: 38% !important;
-          min-width: 120px !important;
-          max-width: 38% !important;
-        }
+        .inclura-messages-sidebar { width: 100% !important; min-width: 0 !important; max-width: 100% !important; flex: 1 1 100% !important; }
+        .inclura-messages-sidebar.inclura-chat-open,
+        .inclura-messages-chat.inclura-chat-closed { display: none !important; }
+        .inclura-messages-chat.inclura-chat-open { display: flex !important; flex: 1 1 100% !important; width: 100% !important; max-width: 100% !important; }
+        .inclura-messages-header { align-items: flex-start !important; flex-wrap: wrap !important; gap: 10px !important; padding: 12px !important; }
+        .inclura-messages-subtitle { display: none !important; }
       }
     `}</style>
 
     <aside
-      className="inclura-messages-sidebar"
+      className={`inclura-messages-sidebar${selectedChat ? " inclura-chat-open" : ""}`}
       style={{
         width: "340px",
         minWidth: "280px",
@@ -848,6 +855,7 @@ overflow: "hidden",
     ================================================= */}
 
     <main
+      className={`inclura-messages-chat${selectedChat ? " inclura-chat-open" : " inclura-chat-closed"}`}
       style={{
         flex: 1,
         minWidth: 0,
@@ -870,12 +878,9 @@ overflow: "hidden",
           }}
         >
           <ChatWindow
-            selectedChat={
-              selectedChat
-            }
-            messages={
-              messages
-            }
+            selectedChat={selectedChat}
+            messages={messages}
+            onBack={() => setSelectedChat(null)}
           />
         </div>
       ) : (
