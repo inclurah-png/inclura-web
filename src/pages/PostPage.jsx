@@ -572,8 +572,41 @@ function PostPage() {
           "24px",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "12px" }}>
-        <button type="button" onClick={() => navigate("/profile")} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 14px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer" }}>← Dashboard</button>
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 100,
+          display: "flex",
+          justifyContent: "flex-start",
+          alignItems: "center",
+          padding: "10px 0 14px",
+          marginBottom: "14px",
+          background: "#020617",
+          borderBottom: "1px solid #334155",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => navigate("/profile")}
+          aria-label="Return to Inclura dashboard"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "8px",
+            border: "2px solid #d4af37",
+            borderRadius: "12px",
+            padding: "12px 18px",
+            background: "#064e3b",
+            color: "#ffffff",
+            fontWeight: "800",
+            fontSize: "15px",
+            cursor: "pointer",
+            minHeight: "46px",
+          }}
+        >
+          ← Back to Dashboard
+        </button>
       </div>
       {loading ? (
         <p>
