@@ -183,9 +183,11 @@ function ProfileHeader({
 
       if (!user) return;
 
+      // Use the same Storage path as EditProfile so both photo
+      // upload entry points update one consistent profile image.
       const storageRef = ref(
         storage,
-        `profiles/${user.uid}`
+        `profilePhotos/${user.uid}`
       );
 
       await uploadBytes(
@@ -206,6 +208,7 @@ function ProfileHeader({
         ),
         {
           profilePhoto: url,
+          photoURL: url,
         }
       );
 
