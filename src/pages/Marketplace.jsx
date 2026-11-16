@@ -24,7 +24,7 @@ function listingText(value) {
 function Marketplace() {
   const navigate = useNavigate();
   const { i18n } = useTranslation();
-  const { fontScale = 1, highContrast = false, reducedMotion = false } = useAccessibility();
+  const { highContrast = false, reducedMotion = false } = useAccessibility();
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -137,7 +137,7 @@ function Marketplace() {
 
   return (
     <DashboardLayout>
-      <main className={`inclura-marketplace${highContrast ? " high-contrast" : ""}${reducedMotion ? " reduced-motion" : ""}`} style={{ ...page, fontSize: `${fontScale}em`, ...(highContrast ? highContrastPage : {}) }}>
+      <main className={`inclura-marketplace${highContrast ? " high-contrast" : ""}${reducedMotion ? " reduced-motion" : ""}`} style={{ ...page, ...(highContrast ? highContrastPage : {}) }}>
         <h1 id="marketplace-heading">🛒 Marketplace</h1>
         <p style={muted}>Browse Inclura listings. Search and filter listings, translate descriptions, review accessibility information and contact sellers.</p>
 
