@@ -97,7 +97,7 @@ async function requestTranslationGateway(sourceText, targetLanguage, sourceLangu
 
     for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt += 1) {
     try {
-      const response = await fetch("/translate", {
+      const response = await fetch("https://inclura-web.pages.dev/translate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
