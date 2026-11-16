@@ -29,7 +29,6 @@ jobs:
         run: npm run build
 
       - name: Prepare Firebase service account credentials
-        id: firebase-creds
         env:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_INCLURA_PROD_90734 }}
         run: |
@@ -50,7 +49,6 @@ jobs:
             }
             const json = JSON.stringify(account);
             fs.writeFileSync("/tmp/firebase-service-account.json", json, { mode: 0o600 });
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, "json<<FIREBASE_JSON\n" + json + "\nFIREBASE_JSON\n");
             console.log("Firebase credentials validated for service account:", account.client_email);
           } catch (error) {
             console.error("Firebase credential format check failed:", error.message);
@@ -65,9 +63,7 @@ jobs:
           npx --yes firebase-tools@latest deploy --only firestore:rules --project inclura-prod-90734
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ steps.firebase-creds.outputs.json }}
-          projectId: inclura-prod-90734
-          channelId: live
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
+        run: |
+          npx --yes firebase-tools@latest deploy --only hosting --project inclura-prod-90734
