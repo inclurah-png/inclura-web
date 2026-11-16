@@ -73,23 +73,42 @@ function Marketplace() {
   async function translateListing(item) {
     const title = String(item.title || item.name || "Untitled listing");
     const description = String(item.description || "No description provided.");
+    const accessibilityDetails = listingText(item.accessibilityFeatures || item.accessibilityInfo || item.accessibilityNotes || item.accessibilityNeeds);
     setTranslating((current) => ({ ...current, [item.id]: true }));
     setTranslationErrors((current) => ({ ...current, [item.id]: "" }));
     try {
-      const result = await translateContent({
-        sourceId: `marketplace-listing-${item.id}`,
-        sourceType: "marketplace-listing",
-        text: `${title}\n\n${description}`,
-        targetLanguage: activeLanguage,
-      });
-      if (!result?.translatedText) throw new Error("The translation service returned no translated listing.");
-      const parts = result.translatedText.split(/\n\s*\n/);
+      const [translatedTitle, translatedDescription, translatedAccessibility] = await Promise.all([
+        translateContent({
+          sourceId: `marketplace-listing-${item.id}-title`,
+          sourceType: "marketplace-listing",
+          text: title,
+          targetLanguage: activeLanguage,
+        }),
+        translateContent({
+          sourceId: `marketplace-listing-${item.id}-description`,
+          sourceType: "marketplace-listing",
+          text: description,
+          targetLanguage: activeLanguage,
+        }),
+        accessibilityDetails
+          ? translateContent({
+              sourceId: `marketplace-listing-${item.id}-accessibility`,
+              sourceType: "marketplace-listing",
+              text: accessibilityDetails,
+              targetLanguage: activeLanguage,
+            })
+          : Promise.resolve(null),
+      ]);
+      if (!translatedTitle?.translatedText || !translatedDescription?.translatedText) {
+        throw new Error("The translation service returned an incomplete listing translation.");
+      }
       setTranslations((current) => ({
         ...current,
         [item.id]: {
           language: activeLanguage,
-          title: parts[0] || title,
-          description: parts.slice(1).join("\n\n") || description,
+          title: translatedTitle.translatedText,
+          description: translatedDescription.translatedText,
+          accessibilityDetails: translatedAccessibility?.translatedText || accessibilityDetails,
         },
       }));
     } catch (translationError) {
@@ -104,7 +123,7 @@ function Marketplace() {
   }
 
   function contactSeller(item) {
-    const sellerId = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;
+    const sellerCandidate = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;\n            const sellerId = typeof sellerCandidate === "string" ? sellerCandidate : "";
     if (!sellerId) return;
     navigate("/messages", {
       state: {
@@ -117,7 +136,7 @@ function Marketplace() {
 
   return (
     <DashboardLayout>
-      <main className="inclura-marketplace" style={{ ...page, fontSize: `${fontScale}em`, ...(highContrast ? highContrastPage : {}) }}>
+      <main className={`inclura-marketplace${highContrast ? " high-contrast" : ""}${reducedMotion ? " reduced-motion" : ""}`} style={{ ...page, fontSize: `${fontScale}em`, ...(highContrast ? highContrastPage : {}) }}>
         <h1 id="marketplace-heading">🛒 Marketplace</h1>
         <p style={muted}>Browse Inclura listings. Search and filter listings, translate descriptions, review accessibility information and contact sellers.</p>
 
