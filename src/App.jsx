@@ -146,7 +146,11 @@ function App() {
 
       <Route
         path="/post/:id"
-        element={<PostPage />}
+        element={
+          <ProtectedRoute>
+            <PostPage />
+          </ProtectedRoute>
+        }
       />
 
       <Route
