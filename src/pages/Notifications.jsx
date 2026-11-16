@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
 
 import {
   collection,
@@ -12,6 +13,7 @@ import {
 } from "firebase/firestore";
 
 function Notifications() {
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState([]);
   const [error, setError] = useState("");
 
@@ -94,7 +96,10 @@ function Notifications() {
         padding: "24px",
       }}
     >
-      <h1>🔔 Notifications</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
+        <h1>🔔 Notifications</h1>
+        <button type="button" onClick={() => navigate("/profile")} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 14px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer" }}>← Dashboard</button>
+      </div>
 
       {error ? (
         <p>{error}</p>
