@@ -28,3 +28,5 @@ ReactDOM.createRoot(rootElement).render(
     </AppErrorBoundary>
   </React.StrictMode>
 );
+
+rootElement.dataset.reactMounted = "true";
