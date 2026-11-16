@@ -251,6 +251,7 @@ function Marketplace() {
 
 const page = { color: "white", maxWidth: "1100px", margin: "0 auto", paddingBottom: 32 };
 const muted = { color: "#cbd5e1", lineHeight: 1.6 };
+const errorStyle = { color: "#fecaca", background: "#450a0a", border: "1px solid #f87171", borderRadius: 10, padding: 12, margin: "12px 0", lineHeight: 1.5 };
 const toolbar = { display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", margin: "14px 0" };
 const searchInput = { flex: "1 1 240px", minWidth: 0, background: "#0f172a", border: "1px solid #64748b", borderRadius: 10, padding: "12px", color: "white", fontSize: 16 };
 const button = { border: "1px solid #d4af37", background: "#064e3b", color: "white", borderRadius: 10, padding: "10px 14px", fontWeight: 700, cursor: "pointer", minHeight: 44 };
