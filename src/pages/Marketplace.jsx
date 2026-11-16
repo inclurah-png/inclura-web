@@ -123,7 +123,8 @@ function Marketplace() {
   }
 
   function contactSeller(item) {
-    const sellerCandidate = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;\n            const sellerId = typeof sellerCandidate === "string" ? sellerCandidate : "";
+    const sellerCandidate = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;
+    const sellerId = typeof sellerCandidate === "string" ? sellerCandidate : "";
     if (!sellerId) return;
     navigate("/messages", {
       state: {
@@ -176,8 +177,10 @@ function Marketplace() {
             const translated = savedTranslation?.language === activeLanguage ? savedTranslation : null;
             const title = translated?.title || originalTitle;
             const description = translated?.description || originalDescription;
-            const accessibilityDetails = listingText(item.accessibilityFeatures || item.accessibilityInfo || item.accessibilityNotes || item.accessibilityNeeds);
-            const sellerId = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;
+            const originalAccessibilityDetails = listingText(item.accessibilityFeatures || item.accessibilityInfo || item.accessibilityNotes || item.accessibilityNeeds);
+            const accessibilityDetails = translated?.accessibilityDetails || originalAccessibilityDetails;
+            const sellerCandidate = item.sellerId || item.sellerUid || item.ownerId || item.createdBy || item.userId;
+            const sellerId = typeof sellerCandidate === "string" ? sellerCandidate : "";
             const listingId = `marketplace-listing-${String(item.id).replace(/[^a-zA-Z0-9_-]/g, "-")}`;
 
             return (
@@ -229,9 +232,18 @@ function Marketplace() {
           outline: 3px solid #facc15;
           outline-offset: 3px;
         }
+        .inclura-marketplace.reduced-motion * {
+          scroll-behavior: auto !important;
+          transition: none !important;
+          animation: none !important;
+        }
         @media (prefers-reduced-motion: reduce) {
           .inclura-marketplace * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
         }
+        .inclura-marketplace.high-contrast p,
+        .inclura-marketplace.high-contrast label { color: #ffffff !important; }
+        .inclura-marketplace.high-contrast article,
+        .inclura-marketplace.high-contrast section { border-color: #ffffff !important; }
       `}</style>
     </DashboardLayout>
   );
