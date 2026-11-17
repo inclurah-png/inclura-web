@@ -405,7 +405,7 @@ function CreatePost() {
 
       if (postCreated) {
         alert(
-          `Your post was created, but the follow-up operation failed during ${operation}. Check the console for details.`
+          `${t("postFollowupFailed")} ${operation}.`
         );
       } else {
         alert(
@@ -535,7 +535,7 @@ function CreatePost() {
           onClick={() => imageInputRef.current?.click()}
           disabled={loading}
         >
-          📷 Photo
+          📷 {t("postPhoto")}
         </button>
 
         <button
@@ -544,7 +544,7 @@ function CreatePost() {
           onClick={() => videoInputRef.current?.click()}
           disabled={loading}
         >
-          🎥 Video
+          🎥 {t("postVideo")}
         </button>
 
         <button
@@ -556,7 +556,7 @@ function CreatePost() {
           aria-expanded={showAccessibilityOptions}
           disabled={loading}
         >
-          ♿ Accessibility
+          ♿ {t("accessibilityOptions")}
         </button>
       </div>
 
