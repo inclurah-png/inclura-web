@@ -10,6 +10,7 @@ function Search() {
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -35,15 +36,10 @@ function Search() {
           setUsers(data);
         }
       } catch (err) {
-        console.error(
-          "Failed to load search users:",
-          err
-        );
+        console.error("Failed to load search users:", err);
 
         if (isMounted) {
-          setError(
-            "Unable to load users. Please try again later."
-          );
+          setError("Unable to load users. Please try again later.");
         }
       } finally {
         if (isMounted) {
@@ -59,12 +55,15 @@ function Search() {
     };
   }, []);
 
-  const filteredUsers = users.filter((user) =>
-    typeof user.fullName === "string" &&
-    user.fullName
-      .toLowerCase()
-      .includes(query.trim().toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      typeof user.fullName === "string" &&
+      user.fullName.toLowerCase().includes(searchTerm.trim().toLowerCase())
   );
+
+  const handleSearch = () => {
+    setSearchTerm(query);
+  };
 
   return (
     <div
@@ -93,30 +92,57 @@ function Search() {
 
       <h1>Search Users</h1>
 
-      <input
-        type="text"
-        placeholder="Search users..."
-        value={query}
-        onChange={(event) =>
-          setQuery(event.target.value)
-        }
-        aria-label="Search users"
+      <div
         style={{
-          width: "100%",
-          boxSizing: "border-box",
-          padding: "16px",
-          borderRadius: "14px",
-          border: "none",
+          display: "flex",
+          gap: "10px",
+          alignItems: "stretch",
           marginBottom: "20px",
         }}
-      />
+      >
+        <input
+          type="text"
+          placeholder="Enter user's name..."
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              handleSearch();
+            }
+          }}
+          aria-label="Search users"
+          style={{
+            flex: 1,
+            minWidth: 0,
+            boxSizing: "border-box",
+            padding: "16px",
+            borderRadius: "14px",
+            border: "none",
+          }}
+        />
+
+        <button
+          type="button"
+          onClick={handleSearch}
+          style={{
+            background: "#16a34a",
+            color: "white",
+            padding: "0 18px",
+            border: "none",
+            borderRadius: "14px",
+            cursor: "pointer",
+            fontWeight: "600",
+          }}
+        >
+          Search
+        </button>
+      </div>
 
       {loading && <p>Loading users...</p>}
 
       {!loading && error && (
         <div>
           <p role="alert">{error}</p>
-
           <button
             type="button"
             onClick={() => window.location.reload()}
@@ -132,25 +158,22 @@ function Search() {
         </div>
       )}
 
-      {!loading && !error && filteredUsers.length === 0 && (
-        <p>No users found.</p>
-      )}
+      {!loading &&
+        !error &&
+        searchTerm.trim() !== "" &&
+        filteredUsers.length === 0 && <p>No users found.</p>}
 
       {!loading &&
         !error &&
+        searchTerm.trim() !== "" &&
         filteredUsers.map((user) => (
           <div
             key={user.id}
             role="button"
             tabIndex={0}
-            onClick={() =>
-              navigate(`/user/${user.id}`)
-            }
+            onClick={() => navigate(`/user/${user.id}`)}
             onKeyDown={(event) => {
-              if (
-                event.key === "Enter" ||
-                event.key === " "
-              ) {
+              if (event.key === "Enter" || event.key === " ") {
                 event.preventDefault();
                 navigate(`/user/${user.id}`);
               }
