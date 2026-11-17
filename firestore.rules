@@ -236,8 +236,10 @@ service cloud.firestore {
     // profile explicitly carries role: "admin" may read the single report.
     // Client-side writes and collection listing are never permitted.
     function isIncluraAdmin() {
+      // Match the server-issued Firebase Authentication admin claim used
+      // by the existing Users Management page. Never trust a profile field.
       return request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+        && request.auth.token.admin == true;
     }
 
     match /executiveReports/{reportId} {
