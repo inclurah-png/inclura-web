@@ -72,7 +72,7 @@ export default function PlatformAnalytics() {
       }
     } catch (loadError) {
       console.error("Platform analytics load failed:", loadError);
-      setError(loadError?.code === "permission-denied"
+      setError((loadError?.code === "permission-denied" || loadError?.message === "permission-denied")
         ? "Your account is not authorised to view executive analytics. Confirm that your Inclura profile has the administrator role."
         : "We could not retrieve the analytics report. Please try again.");
     } finally {
