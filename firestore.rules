@@ -514,6 +514,40 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // SOS readiness stores permission status only, never coordinates.
+    // Each member can read and maintain only their own readiness record.
+    match /sosReadiness/{userId} {
+      function isOwner() {
+        return request.auth != null && request.auth.uid == userId;
+      }
+      function validReadiness() {
+        return request.resource.data.userId == userId
+          && request.resource.data.locationVerified is bool
+          && request.resource.data.locationPermission in [
+            'granted', 'denied', 'unavailable', 'unknown'
+          ]
+          && request.resource.data.updatedAt is timestamp
+          && request.resource.data.keys().hasOnly([
+            'userId', 'locationVerified', 'locationPermission',
+            'verifiedAt', 'updatedAt'
+          ])
+          && (!('verifiedAt' in request.resource.data)
+              || request.resource.data.verifiedAt is timestamp);
+      }
+      allow get: if isOwner();
+      allow list: if false;
+      allow create: if isOwner() && validReadiness();
+      allow update: if isOwner()
+                    && resource.data.userId == userId
+                    && validReadiness()
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly([
+                         'locationVerified', 'locationPermission',
+                         'verifiedAt', 'updatedAt'
+                       ]);
+      allow delete: if false;
+    }
+
     // Trusted contacts are private to the member who created them.
     match /trustedContacts/{contactId} {
       function ownsContact() {
