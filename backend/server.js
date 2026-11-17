@@ -187,14 +187,14 @@ app.post("/api/analytics/platform", async (req, res) => {
       return res.status(401).json({ success: false, message: "Authentication required." });
     }
 
+    // Use the server-issued Firebase Authentication custom claim.
+    // This matches Inclura's existing Users Management authorization model.
     const decoded = await auth().verifyIdToken(match[1]);
-    const database = firestore();
-    const adminProfile = await database.collection("users").doc(decoded.uid).get();
-
-    if (!adminProfile.exists || adminProfile.data().role !== "admin") {
+    if (decoded.admin !== true) {
       return res.status(403).json({ success: false, message: "Administrator access required." });
     }
 
+    const database = firestore();
     const [usersSnap, campaignsSnap, listingsSnap, ordersSnap] = await Promise.all([
       database.collection("users").get(),
       database.collection("enterpriseCampaigns").get(),
