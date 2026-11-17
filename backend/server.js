@@ -12,6 +12,8 @@ import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 
 import {
   initializeFirebaseAdmin,
+  firestore,
+  auth,
 } from "./src/config/firebaseAdmin.js";
 
 import {
@@ -172,6 +174,108 @@ app.get(
 
   }
 );
+
+// =======================================================
+// Administrator-only Platform Analytics
+// =======================================================
+
+app.post("/api/analytics/platform", async (req, res) => {
+  try {
+    const authorization = req.headers.authorization || "";
+    const match = authorization.match(/^Bearer (.+)$/i);
+    if (!match) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const decoded = await auth().verifyIdToken(match[1]);
+    const database = firestore();
+    const adminProfile = await database.collection("users").doc(decoded.uid).get();
+
+    if (!adminProfile.exists || adminProfile.data().role !== "admin") {
+      return res.status(403).json({ success: false, message: "Administrator access required." });
+    }
+
+    const [usersSnap, campaignsSnap, listingsSnap, ordersSnap] = await Promise.all([
+      database.collection("users").get(),
+      database.collection("enterpriseCampaigns").get(),
+      database.collection("marketplaceListings").get(),
+      database.collection("marketplaceOrders").get(),
+    ]);
+
+    const now = Date.now();
+    let premiumUsers = 0;
+    let verifiedCreators = 0;
+    let qualifiedCreators = 0;
+    let activeUsers = 0;
+
+    usersSnap.forEach((userDoc) => {
+      const user = userDoc.data();
+      if (user.premiumPlan?.active === true) premiumUsers += 1;
+      if (user.creatorVerified === true) verifiedCreators += 1;
+      if (user.creatorEconomy?.premiumQualified === true) qualifiedCreators += 1;
+      const lastLogin = user.lastLogin?.toMillis
+        ? user.lastLogin.toMillis()
+        : (user.lastLogin ? new Date(user.lastLogin).getTime() : 0);
+      if (lastLogin && now - lastLogin < 30 * 24 * 60 * 60 * 1000) activeUsers += 1;
+    });
+
+    let activeEnterpriseCampaigns = 0;
+    let totalEnterpriseCampaignBudget = 0;
+    campaignsSnap.forEach((campaignDoc) => {
+      const campaign = campaignDoc.data();
+      if (campaign.status === "active") {
+        activeEnterpriseCampaigns += 1;
+        const budget = Number(campaign.budget);
+        if (Number.isFinite(budget) && budget > 0) totalEnterpriseCampaignBudget += budget;
+      }
+    });
+
+    let totalMarketplaceListings = listingsSnap.size;
+    let completedMarketplaceOrders = 0;
+    let marketplaceRevenue = 0;
+    ordersSnap.forEach((orderDoc) => {
+      const order = orderDoc.data();
+      if (order.status === "completed") {
+        completedMarketplaceOrders += 1;
+        const amount = Number(order.amount);
+        if (Number.isFinite(amount) && amount > 0) marketplaceRevenue += amount;
+      }
+    });
+
+    let platformHealth = "Excellent";
+    if (activeUsers < 10) platformHealth = "Needs attention";
+    else if (activeUsers < 100) platformHealth = "Developing";
+
+    let overallHealthScore = 100;
+    if (activeUsers < 100) overallHealthScore -= 15;
+    if (premiumUsers === 0) overallHealthScore -= 10;
+    if (verifiedCreators === 0) overallHealthScore -= 10;
+    if (qualifiedCreators === 0) overallHealthScore -= 10;
+    if (overallHealthScore < 0) overallHealthScore = 0;
+
+    const report = {
+      totalUsers: usersSnap.size,
+      activeCreators: activeUsers,
+      premiumUsers,
+      verifiedCreators,
+      qualifiedCreators,
+      activeEnterpriseCampaigns,
+      totalEnterpriseCampaignBudget,
+      marketplaceRevenue,
+      totalMarketplaceListings,
+      completedMarketplaceOrders,
+      platformHealth,
+      overallHealthScore,
+      generatedAt: new Date(),
+    };
+
+    await database.collection("executiveReports").doc("current").set(report, { merge: true });
+    return res.status(200).json({ success: true, report: { ...report, generatedAt: report.generatedAt.toISOString() } });
+  } catch (error) {
+    console.error("Platform analytics generation failed:", error);
+    return res.status(500).json({ success: false, message: "Platform analytics could not be generated." });
+  }
+});
 
 // =======================================================
 // IFSE Identity Routes
