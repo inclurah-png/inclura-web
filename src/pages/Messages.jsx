@@ -327,7 +327,7 @@ try {
     query(
       collection(
         db,
-        "users"
+        "memberDirectory"
       ),
       limit(50)
     );
@@ -356,17 +356,17 @@ try {
     (a, b) => {
       const aName =
         String(
+          a.fullName ||
           a.displayName ||
           a.username ||
-          a.email ||
           ""
         ).toLowerCase();
 
       const bName =
         String(
+          b.fullName ||
           b.displayName ||
           b.username ||
-          b.email ||
           ""
         ).toLowerCase();
 
@@ -660,9 +660,9 @@ useEffect(() => {
 
 function getUserDisplayName(user) {
 return (
+user.fullName ||
 user.displayName ||
 user.username ||
-user.email ||
 t(
 "messages.userFallback",
 {
@@ -701,23 +701,14 @@ userSearch
         ""
       ).toLowerCase();
 
-    const email =
-      String(
-        user.email ||
-        ""
-      ).toLowerCase();
-
-    const role =
-      String(
-        user.role ||
-        ""
-      ).toLowerCase();
+    const category = String(user.category || "").toLowerCase();
+    const accountType = String(user.accountType || "").toLowerCase();
 
     return (
       name.includes(search) ||
       username.includes(search) ||
-      email.includes(search) ||
-      role.includes(search)
+      category.includes(search) ||
+      accountType.includes(search)
     );
   }
 );
