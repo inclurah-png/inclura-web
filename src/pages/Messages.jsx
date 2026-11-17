@@ -462,9 +462,9 @@ try {
     );
 
   const targetDisplayName =
+    targetUser.fullName ||
     targetUser.displayName ||
     targetUser.username ||
-    targetUser.email ||
     t(
       "messages.userFallback",
       {
@@ -691,8 +691,7 @@ userSearch
 
     const name =
       String(
-        user.displayName ||
-        ""
+        user.fullName || user.displayName || ""
       ).toLowerCase();
 
     const username =
