@@ -5,6 +5,7 @@ import {
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
+// SOS trusted contacts are owner-managed; no external delivery is implied by saving a contact.
 const emptyForm = { fullName: "", relationship: "", phoneNumber: "", email: "" };
 
 function TrustedContacts() {
