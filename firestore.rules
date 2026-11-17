@@ -514,6 +514,46 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Emergency requests are private to their creator.
+    // Client accounts may submit and view their own SOS records, but cannot
+    // change dispatch decisions, responder assignments, or case outcomes.
+    match /emergencySOS/{emergencyId} {
+      function ownsRequest() {
+        return request.auth != null && resource.data.userId == request.auth.uid;
+      }
+      allow get, list: if ownsRequest();
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.emergencyType is string
+                    && request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical']
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() <= 5000
+                    && request.resource.data.location is string
+                    && request.resource.data.latitude is string
+                    && request.resource.data.longitude is string
+                    && request.resource.data.accuracy is string
+                    && request.resource.data.status == 'open'
+                    && request.resource.data.resolved == false
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.lastUpdated is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'systemPlaceholder', 'userId', 'userName', 'userPhoto',
+                      'emergencyType', 'priority', 'description', 'location',
+                      'latitude', 'longitude', 'accuracy', 'locationSource',
+                      'locationCapturedAt', 'gpsLatitude', 'gpsLongitude',
+                      'trustedContact', 'responderNotes', 'status', 'handledBy',
+                      'resolved', 'assignedResponder', 'assignedResponderId',
+                      'assignedAgency', 'assignedAgencyCode', 'assignedAgencyType',
+                      'incidentStatus', 'incidentNumber', 'assignedStation',
+                      'assignedVehicle', 'estimatedArrival', 'responseStatus',
+                      'assignmentStatus', 'ifseThreatScore', 'ifseClassification',
+                      'resolvedBy', 'resolutionNotes', 'closedAt', 'createdAt',
+                      'updatedAt', 'lastUpdated'
+                    ]);
+      allow update, delete: if false;
+    }
+
     // SOS readiness stores permission status only, never coordinates.
     // Each member can read and maintain only their own readiness record.
     match /sosReadiness/{userId} {
