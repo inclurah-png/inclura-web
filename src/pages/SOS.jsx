@@ -460,6 +460,49 @@ function SOS() {
       }
 
       // ============================================================
+      // STEP 0 — FAST GPS LOOKUP WITHOUT A CRISIS-TIME PERMISSION PROMPT
+      // ============================================================
+
+      let emergencyLocation = {
+        latitude: sosForm.latitude || "",
+        longitude: sosForm.longitude || "",
+        accuracy: sosForm.accuracy || "",
+        locationSource: sosForm.latitude && sosForm.longitude ? "previously_verified_or_manual_gps" : "unavailable",
+        locationCapturedAt: null,
+      };
+
+      // Only request a fresh fix when permission is already granted.
+      // Never trigger a first-time permission prompt during SOS.
+      try {
+        let permissionState = "unknown";
+        if (navigator.permissions?.query) {
+          try {
+            permissionState = (await navigator.permissions.query({ name: "geolocation" })).state;
+          } catch (_) {}
+        }
+        if (navigator.geolocation && permissionState === "granted") {
+          const freshFix = await new Promise((resolve) => {
+            navigator.geolocation.getCurrentPosition(
+              (position) => resolve({ ok: true, position }),
+              () => resolve({ ok: false }),
+              { enableHighAccuracy: true, timeout: 2500, maximumAge: 60000 }
+            );
+          });
+          if (freshFix.ok) {
+            emergencyLocation = {
+              latitude: String(freshFix.position.coords.latitude),
+              longitude: String(freshFix.position.coords.longitude),
+              accuracy: String(freshFix.position.coords.accuracy),
+              locationSource: "gps_permission_previously_granted",
+              locationCapturedAt: new Date().toISOString(),
+            };
+          }
+        }
+      } catch (locationError) {
+        console.warn("SOS proceeding without a fresh GPS fix:", locationError);
+      }
+
+      // ============================================================
       // STEP 1 — CREATE EMERGENCY SOS RECORD
       // ============================================================
 
@@ -498,27 +541,13 @@ function SOS() {
             location:
               sosForm.location,
 
-            latitude:
-              sosForm.latitude ||
-              "",
-
-            longitude:
-              sosForm.longitude ||
-              "",
-
-            accuracy:
-              sosForm.accuracy ||
-              "",
-
-            gpsLatitude:
-              Number(
-                sosForm.latitude
-              ) || 0,
-
-            gpsLongitude:
-              Number(
-                sosForm.longitude
-              ) || 0,
+            latitude: emergencyLocation.latitude,
+            longitude: emergencyLocation.longitude,
+            accuracy: emergencyLocation.accuracy,
+            locationSource: emergencyLocation.locationSource,
+            locationCapturedAt: emergencyLocation.locationCapturedAt,
+            gpsLatitude: Number(emergencyLocation.latitude) || 0,
+            gpsLongitude: Number(emergencyLocation.longitude) || 0,
 
             trustedContact:
               sosForm.trustedContact ||
@@ -642,27 +671,13 @@ function SOS() {
         location:
           sosForm.location,
 
-        latitude:
-          sosForm.latitude ||
-          "",
-
-        longitude:
-          sosForm.longitude ||
-          "",
-
-        accuracy:
-          sosForm.accuracy ||
-          "",
-
-        gpsLatitude:
-          Number(
-            sosForm.latitude
-          ) || 0,
-
-        gpsLongitude:
-          Number(
-            sosForm.longitude
-          ) || 0,
+        latitude: emergencyLocation.latitude,
+        longitude: emergencyLocation.longitude,
+        accuracy: emergencyLocation.accuracy,
+        locationSource: emergencyLocation.locationSource,
+        locationCapturedAt: emergencyLocation.locationCapturedAt,
+        gpsLatitude: Number(emergencyLocation.latitude) || 0,
+        gpsLongitude: Number(emergencyLocation.longitude) || 0,
 
         trustedContact:
           sosForm.trustedContact ||
