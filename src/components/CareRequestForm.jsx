@@ -17,6 +17,9 @@ function CareRequestForm({
     description: "",
     location: "",
     preferredDate: "",
+    accessibilityNeeds: "",
+    communicationPreference: "any",
+    urgency: "normal",
   });
 
   const [statusMessage, setStatusMessage] = useState("");
@@ -99,9 +102,9 @@ function CareRequestForm({
         location: form.location.trim(),
         preferredDate: form.preferredDate,
         preferredTime: "",
-        urgency: "normal",
-        communicationPreference: "",
-        accessibilityNeeds: "",
+        urgency: form.urgency,
+        communicationPreference: form.communicationPreference,
+        accessibilityNeeds: form.accessibilityNeeds.trim(),
       });
 
       setForm({
@@ -109,6 +112,9 @@ function CareRequestForm({
         description: "",
         location: "",
         preferredDate: "",
+        accessibilityNeeds: "",
+        communicationPreference: "any",
+        urgency: "normal",
       });
 
       setStatusMessage(
@@ -259,7 +265,46 @@ function CareRequestForm({
           value={form.preferredDate}
           onChange={handleChange}
           style={input}
+          required
         />
+      </div>
+
+      <div style={fieldGroup}>
+        <label htmlFor="care-accessibility-needs" style={label}>
+          Accessibility and communication needs (optional)
+        </label>
+        <textarea
+          id="care-accessibility-needs"
+          name="accessibilityNeeds"
+          value={form.accessibilityNeeds}
+          onChange={handleChange}
+          rows={3}
+          maxLength={1000}
+          aria-describedby="care-accessibility-help"
+          style={input}
+        />
+        <p id="care-accessibility-help" style={helpText}>
+          Share any mobility, hearing, vision, sensory, communication, personal assistance or other access requirements you want the care provider to know.
+        </p>
+      </div>
+
+      <div style={fieldGroup}>
+        <label htmlFor="care-communication" style={label}>Preferred communication</label>
+        <select id="care-communication" name="communicationPreference" value={form.communicationPreference} onChange={handleChange} style={input}>
+          <option value="any">Any suitable method</option>
+          <option value="text">Text / chat</option>
+          <option value="voice">Voice call</option>
+          <option value="video">Video call</option>
+        </select>
+      </div>
+
+      <div style={fieldGroup}>
+        <label htmlFor="care-urgency" style={label}>Urgency</label>
+        <select id="care-urgency" name="urgency" value={form.urgency} onChange={handleChange} style={input}>
+          <option value="low">Low</option>
+          <option value="normal">Normal</option>
+          <option value="high">High</option>
+        </select>
       </div>
 
       <button
