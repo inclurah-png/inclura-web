@@ -576,9 +576,9 @@ useEffect(() => {
       if (suppliedProfile?.id === recipientId) {
         targetProfile = suppliedProfile;
       } else {
-        const recipientSnapshot = await getDoc(doc(db, "users", recipientId));
+        const recipientSnapshot = await getDoc(doc(db, "memberDirectory", recipientId));
         if (!recipientSnapshot.exists()) {
-          throw new Error("This member account could not be found.");
+          throw new Error("This member is not yet listed in the public member directory.");
         }
         targetProfile = { id: recipientSnapshot.id, ...recipientSnapshot.data() };
       }
