@@ -14,11 +14,10 @@ import {
 import {
   doc,
   getDoc,
-  updateDoc,
   increment,
   collection,
-  addDoc,
   serverTimestamp,
+  writeBatch,
   query,
   where,
   getDocs,
@@ -377,53 +376,29 @@ function OpportunityDetails() {
         return;
       }
 
-      await addDoc(
-        collection(
-          db,
-          "applications"
-        ),
-        {
-          opportunityId:
-            job.id,
+      // Commit the application and its opportunity counter together.
+      // Firestore rules verify both writes as one atomic operation.
+      const applicationRef = doc(collection(db, "applications"));
+      const opportunityRef = doc(db, "opportunities", job.id);
+      const batch = writeBatch(db);
 
-          recruiterId:
-            job.recruiterId ||
-            "",
+      batch.set(applicationRef, {
+        opportunityId: job.id,
+        recruiterId: job.recruiterId || "",
+        applicantId: user.uid,
+        applicantName: user.displayName || "",
+        applicantEmail: user.email || "",
+        jobTitle: job.title || "",
+        status: "pending",
+        createdAt: serverTimestamp(),
+      });
 
-          applicantId:
-            user.uid,
+      batch.update(opportunityRef, {
+        applications: increment(1),
+        lastApplicationId: applicationRef.id,
+      });
 
-          applicantName:
-            user.displayName ||
-            "",
-
-          applicantEmail:
-            user.email ||
-            "",
-
-          status:
-            "pending",
-
-          createdAt:
-            serverTimestamp(),
-        }
-      );
-
-      /*
-       * Preserve the existing opportunity application
-       * counter used by the current Opportunity Hub.
-       */
-      await updateDoc(
-        doc(
-          db,
-          "opportunities",
-          job.id
-        ),
-        {
-          applications:
-            increment(1),
-        }
-      );
+      await batch.commit();
 
       setHasApplied(true);
 
