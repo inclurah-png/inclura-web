@@ -206,6 +206,63 @@ service cloud.firestore {
       allow list, create, update, delete: if false;
     }
 
+    // Care requests are private to their requester until a provider workflow is implemented.
+    // This allows members to create a request and read only their own requests.
+    // Provider discovery, applications, assignment and status changes remain disabled.
+    match /careRequests/{requestId} {
+      allow create: if request.auth != null
+                    && request.resource.data.requesterId == request.auth.uid
+                    && request.resource.data.serviceType in [
+                      'caregiver', 'home_assistance', 'transportation', 'support'
+                    ]
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() > 0
+                    && request.resource.data.description.size() <= 3000
+                    && request.resource.data.location is string
+                    && request.resource.data.location.size() > 0
+                    && request.resource.data.location.size() <= 250
+                    && request.resource.data.preferredDate is string
+                    && request.resource.data.preferredTime is string
+                    && request.resource.data.urgency in ['low', 'normal', 'high']
+                    && request.resource.data.communicationPreference in ['text', 'voice', 'video', 'any', '']
+                    && request.resource.data.accessibilityNeeds is string
+                    && request.resource.data.accessibilityNeeds.size() <= 1000
+                    && request.resource.data.status == 'open'
+                    && request.resource.data.providerId == null
+                    && request.resource.data.applicationCount == 0
+                    && request.resource.data.selectedProviderId == null
+                    && request.resource.data.ifseVerified == false
+                    && request.resource.data.ifseReviewRequired == true
+                    && request.resource.data.safetyReviewStatus == 'pending'
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'requesterId',
+                      'serviceType',
+                      'description',
+                      'location',
+                      'preferredDate',
+                      'preferredTime',
+                      'urgency',
+                      'communicationPreference',
+                      'accessibilityNeeds',
+                      'status',
+                      'providerId',
+                      'applicationCount',
+                      'selectedProviderId',
+                      'ifseVerified',
+                      'ifseReviewRequired',
+                      'safetyReviewStatus',
+                      'createdAt',
+                      'updatedAt'
+                    ]);
+
+      allow get, list: if request.auth != null
+                       && resource.data.requesterId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
     match /notifications/{notificationId} {
       allow read: if request.auth != null
                   && resource.data.receiverId == request.auth.uid;
