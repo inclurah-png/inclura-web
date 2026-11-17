@@ -389,7 +389,7 @@ function OpportunityDetails() {
         applicantName: user.displayName || "",
         applicantEmail: user.email || "",
         jobTitle: job.title || "",
-        status: "pending",
+        status: "Pending",
         createdAt: serverTimestamp(),
       });
 
