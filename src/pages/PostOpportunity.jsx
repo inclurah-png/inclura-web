@@ -222,14 +222,8 @@ function PostOpportunity() {
         }
       );
 
-      await updateDoc(
-        userRef,
-        {
-          "recruiter.activeJobs":
-            recruiter.activeJobs +
-            1,
-        }
-      );
+      // Active opportunity limits are counted from the opportunity records above.
+      // Do not write a client-controlled recruiter counter into the private user profile.
 
       alert(
         "Opportunity posted successfully."
