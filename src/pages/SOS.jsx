@@ -715,15 +715,8 @@ function SOS() {
 
       if (!dispatchResult || dispatchResult.success !== true) {
         console.error("IFSE dispatch failed:", dispatchResult);
-        await updateDoc(doc(db, "emergencySOS", emergencyId), {
-          status: "dispatch_failed",
-          incidentStatus: "Dispatch Failed",
-          responseStatus: "Not Dispatched",
-          assignmentStatus: "Failed",
-          dispatchError: dispatchResult?.error || "IFSE could not complete emergency dispatch.",
-          updatedAt: serverTimestamp(),
-          lastUpdated: serverTimestamp(),
-        });
+        // The member-owned SOS record is immutable from the client.
+        // Preserve the submitted emergency even when dispatch is unavailable.
         alert("Your SOS request was recorded, but IFSE could not dispatch a responder. No responder assignment is confirmed. Please contact local emergency services directly now if anyone is in immediate danger.");
         return;
       }
