@@ -148,21 +148,17 @@ function ApplicantManagement() {
                   marginBottom: "10px",
                 }}
               >
-                {app.fullName}
+                {app.applicantName || app.fullName || "Applicant"}
               </h2>
 
               <p>
-                📧 {app.email}
-              </p>
-
-              <p>
-                📱 {app.phone}
+                📧 {app.applicantEmail || app.email || "Not provided"}
               </p>
 
               <p>
                 💼 Applied For:
                 {" "}
-                {app.jobTitle}
+                {app.jobTitle || "Opportunity"}
               </p>
 
               <p>
