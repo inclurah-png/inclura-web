@@ -222,6 +222,7 @@ service cloud.firestore {
                            'accountType',
                            'verificationCategory',
                            'interests',
+                           'savedPosts',
                            'organizationName',
                            'website',
                            'groupName',
