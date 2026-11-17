@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function validImage(maxBytes) {
+      return request.resource != null
+        && request.resource.size <= maxBytes
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    function validVideo(maxBytes) {
+      return request.resource != null
+        && request.resource.size <= maxBytes
+        && request.resource.contentType.matches('video/.*');
+    }
+
+    function validChatFile() {
+      return request.resource != null
+        && request.resource.size <= 50 * 1024 * 1024
+        && request.resource.contentType.matches(
+          '(application/pdf|text/plain|text/csv|application/msword|application/vnd.openxmlformats-officedocument\\..*|application/vnd.ms-excel|application/vnd.ms-powerpoint|application/zip|application/x-rar-compressed|audio/.*)'
+        );
+    }
+
+    // Member profile pictures: owner uploads; signed-in members can view.
+    match /profilePhotos/{uid}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if owns(uid) && validImage(5 * 1024 * 1024);
+      allow delete: if false;
+    }
+
+    // Public community media is readable by signed-in Inclura members.
+    match /posts/images/{uid}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if owns(uid) && validImage(10 * 1024 * 1024);
+      allow delete: if false;
+    }
+
+    match /posts/videos/{uid}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if owns(uid) && validVideo(100 * 1024 * 1024);
+      allow delete: if false;
+    }
+
+    match /stories/{uid}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if owns(uid)
+        && (validImage(10 * 1024 * 1024) || validVideo(100 * 1024 * 1024));
+      allow delete: if false;
+    }
+
+    // Legacy chat uploads are stored under the sender UID. Only that sender
+    // may access the Storage object directly; recipients use the download URL
+    // attached to the corresponding participant-only Firestore message.
+    match /chatImages/{uid}/{fileName} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid) && validImage(15 * 1024 * 1024);
+      allow delete: if false;
+    }
+
+    match /chatVideos/{uid}/{fileName} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid) && validVideo(100 * 1024 * 1024);
+      allow delete: if false;
+    }
+
+    match /chatFiles/{uid}/{fileName} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid) && validChatFile();
+      allow delete: if false;
+    }
+
+    match /voiceNotes/{uid}/{fileName} {
+      allow read: if owns(uid);
+      allow create, update: if owns(uid)
+        && request.resource != null
+        && request.resource.size <= 25 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+      allow delete: if false;
+    }
+
+    // Verification files are private. Ownership is checked against the
+    // existing verificationRequests record, not a client-supplied UID.
+    match /verificationDocuments/{verificationId}/{fileName} {
+      function isApplicant() {
+        return signedIn()
+          && firestore.get(
+            /databases/(default)/documents/verificationRequests/$(verificationId)
+          ).data.userId == request.auth.uid;
+      }
+
+      allow read: if isApplicant()
+        || (signedIn() && request.auth.token.admin == true);
+
+      allow create, update: if isApplicant()
+        && request.resource != null
+        && request.resource.size <= 20 * 1024 * 1024
+        && request.resource.contentType.matches(
+          '(application/pdf|image/.*)'
+        );
+
+      allow delete: if false;
+    }
+
+    // Everything not explicitly listed above remains private and denied.
+  }
+}
