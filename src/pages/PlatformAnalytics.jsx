@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { doc, getDoc } from "firebase/firestore";
+import { auth } from "../firebase";
 import { BarChart3, RefreshCw, Users, Activity, Crown, BadgeCheck, Award, Building2, Wallet, ShoppingBag, Handshake, ShieldCheck } from "lucide-react";
 import DashboardLayout from "../components/DashboardLayout";
 import { db } from "../firebase";
@@ -38,6 +39,30 @@ export default function PlatformAnalytics() {
     setLoading(true);
     setError("");
     try {
+      // Generate the latest report through the IFSE backend. The backend
+      // verifies the Firebase ID token and the administrator role before
+      // reading platform-wide records or writing the executive report.
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("permission-denied");
+      const token = await currentUser.getIdToken();
+      const response = await fetch("https://inclura-ifse-backend.onrender.com/api/analytics/platform", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (!result.success || !result.report) throw new Error("Analytics generation failed.");
+        setReport(result.report);
+        return;
+      }
+
+      if (response.status === 403 || response.status === 401) {
+        throw new Error("permission-denied");
+      }
+
+      // Keep existing report readable if the backend is temporarily waking
+      // or deploying; Firestore rules still restrict this read to admins.
       const snapshot = await getDoc(doc(db, "executiveReports", "current"));
       if (snapshot.exists()) {
         setReport(snapshot.data());
