@@ -9,6 +9,7 @@ function MentorHub() {
   const [mentors, setMentors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [expandedMentorId, setExpandedMentorId] = useState(null);
 
   async function loadMentors() {
     setLoading(true);
@@ -54,7 +55,7 @@ function MentorHub() {
         {!loading && !error && mentors.length === 0 && (
           <div style={card}>
             <h2>No mentor profiles found</h2>
-            <p style={muted}>There are currently no accounts marked as Mentor.</p>
+            <p style={muted}>No public mentor profiles are listed yet. A member with a Mentor account can appear here after saving their profile. Private contact details and non-public accessibility preferences are not displayed.</p>
           </div>
         )}
 
@@ -83,6 +84,14 @@ function MentorHub() {
                 {mentor.location && <div style={role}>📍 {mentor.location}</div>}
                 {mentor.bio && <p style={text}>{mentor.bio}</p>}
 
+                {expandedMentorId === mentor.id && (
+                  <section id={`mentor-details-${mentor.id}`} aria-label={`More details about ${name}`} style={{ marginTop: 12, padding: 12, borderRadius: 12, background: "#111c2e", border: "1px solid #475569" }}>
+                    <p style={text}><strong>About:</strong> {mentor.bio || "No biography provided yet."}</p>
+                    <p style={text}><strong>Location:</strong> {mentor.location || "Not specified"}</p>
+                    <p style={text}><strong>Expertise:</strong> {expertise}</p>
+                  </section>
+                )}
+
                 {Array.isArray(mentor.accessibilityNeeds) && mentor.accessibilityNeeds.length > 0 && (
                   <div style={tags} aria-label="Mentor accessibility support">
                     {mentor.accessibilityNeeds.map((need) => <span key={need} style={tagStyle}>♿ {need}</span>)}
@@ -90,7 +99,15 @@ function MentorHub() {
                 )}
 
                 <div style={actions}>
-                  <button type="button" style={button} onClick={() => navigate(`/user/${mentor.id}`)}>View Mentor</button>
+                  <button
+                    type="button"
+                    style={button}
+                    aria-expanded={expandedMentorId === mentor.id}
+                    aria-controls={`mentor-details-${mentor.id}`}
+                    onClick={() => setExpandedMentorId((current) => current === mentor.id ? null : mentor.id)}
+                  >
+                    {expandedMentorId === mentor.id ? "Hide Details" : "View Details"}
+                  </button>
                   <button
                     type="button"
                     style={secondaryButton}
