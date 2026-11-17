@@ -321,6 +321,37 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Public member directory supports discovery without exposing private users/{uid} records.
+    // It intentionally excludes email, phone number and private accessibility settings.
+    match /memberDirectory/{memberId} {
+      allow get, list: if request.auth != null;
+
+      function isOwnerMember() {
+        return request.auth != null && request.auth.uid == memberId;
+      }
+
+      function hasSafeMemberFields() {
+        return request.resource.data.uid == memberId
+          && request.resource.data.fullName is string
+          && request.resource.data.fullName.size() <= 100
+          && request.resource.data.photoURL is string
+          && request.resource.data.location is string
+          && request.resource.data.location.size() <= 250
+          && request.resource.data.category is string
+          && request.resource.data.accountType is string
+          && request.resource.data.bio is string
+          && request.resource.data.bio.size() <= 1000
+          && request.resource.data.updatedAt is timestamp
+          && request.resource.data.keys().hasOnly([
+            'uid', 'fullName', 'photoURL', 'location',
+            'category', 'accountType', 'bio', 'updatedAt'
+          ]);
+      }
+
+      allow create, update: if isOwnerMember() && hasSafeMemberFields();
+      allow delete: if false;
+    }
+
     // Public mentor directory contains only deliberately selected profile fields.
     // Private contact details and non-public accessibility preferences stay in users/{uid}.
     match /mentorDirectory/{mentorId} {
