@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   collection,
+  doc,
+  getDoc,
   getDocs,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 function Search() {
   const navigate = useNavigate();
@@ -23,13 +27,69 @@ function Search() {
       setError("");
 
       try {
+        // Safely publish the signed-in member's own existing profile.
+        // This repairs older accounts that were created before memberDirectory
+        // publishing was added, without exposing other private user records.
+        const currentUser = auth.currentUser;
+
+        if (currentUser) {
+          try {
+            const ownProfileSnapshot = await getDoc(
+              doc(db, "users", currentUser.uid)
+            );
+
+            if (ownProfileSnapshot.exists()) {
+              const profile = ownProfileSnapshot.data();
+              const fullName =
+                typeof profile.fullName === "string" && profile.fullName.trim()
+                  ? profile.fullName.trim()
+                  : (currentUser.displayName || "").trim();
+
+              if (fullName) {
+                await setDoc(
+                  doc(db, "memberDirectory", currentUser.uid),
+                  {
+                    uid: currentUser.uid,
+                    fullName,
+                    photoURL:
+                      typeof profile.photoURL === "string"
+                        ? profile.photoURL
+                        : (profile.profilePhoto || currentUser.photoURL || ""),
+                    location:
+                      typeof profile.location === "string"
+                        ? profile.location
+                        : "",
+                    category:
+                      typeof profile.category === "string"
+                        ? profile.category
+                        : (typeof profile.verificationCategory === "string"
+                            ? profile.verificationCategory
+                            : ""),
+                    accountType:
+                      typeof profile.accountType === "string"
+                        ? profile.accountType
+                        : "individual",
+                    bio: typeof profile.bio === "string" ? profile.bio : "",
+                    updatedAt: serverTimestamp(),
+                  },
+                  { merge: true }
+                );
+              }
+            }
+          } catch (publishError) {
+            // Do not prevent directory search if this member's own profile
+            // cannot be synchronized; report the issue for diagnosis.
+            console.warn("Own member directory sync failed:", publishError);
+          }
+        }
+
         const snapshot = await getDocs(
           collection(db, "memberDirectory")
         );
 
-        const data = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        const data = snapshot.docs.map((directoryDoc) => ({
+          id: directoryDoc.id,
+          ...directoryDoc.data(),
         }));
 
         if (isMounted) {
