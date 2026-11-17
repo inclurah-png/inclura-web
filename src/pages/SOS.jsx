@@ -16,6 +16,8 @@ import {
   query,
   where,
   serverTimestamp,
+  getDoc,
+  setDoc,
 } from "firebase/firestore";
 
 import {
@@ -76,6 +78,98 @@ function SOS() {
     police: 0,
     responders: 0,
   });
+
+  const [locationReadiness, setLocationReadiness] = useState("Checking readiness…");
+  const [isPreparingLocation, setIsPreparingLocation] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    async function loadLocationReadiness() {
+      const user = auth.currentUser;
+      if (!user) {
+        if (active) setLocationReadiness("Sign in to prepare emergency location.");
+        return;
+      }
+      try {
+        const saved = await getDoc(doc(db, "sosReadiness", user.uid));
+        let permission = "unknown";
+        if (navigator.permissions?.query) {
+          try {
+            permission = (await navigator.permissions.query({ name: "geolocation" })).state;
+          } catch (_) {}
+        }
+        if (!active) return;
+        if (permission === "granted") {
+          setLocationReadiness("Location permission is already allowed on this device. Complete a test fix below to verify GPS.");
+        } else if (permission === "denied") {
+          setLocationReadiness("Location is blocked by your browser/device. Change this in Android site permissions, then run the readiness check again.");
+        } else if (saved.exists() && saved.data().locationVerified === true) {
+          setLocationReadiness("A previous readiness check was completed. Browser permission may have changed; verify again before relying on SOS.");
+        } else {
+          setLocationReadiness("Not prepared yet. Enable location now, during normal use—not during an emergency.");
+        }
+      } catch (error) {
+        console.error("SOS readiness load failed:", error);
+        if (active) setLocationReadiness("Readiness status could not be checked. You can still send an SOS.");
+      }
+    }
+    loadLocationReadiness();
+    return () => { active = false; };
+  }, []);
+
+  async function prepareEmergencyLocation() {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please sign in before preparing emergency location.");
+      return;
+    }
+    if (!navigator.geolocation) {
+      setLocationReadiness("This browser does not provide GPS location. SOS can still be sent with a written location.");
+      return;
+    }
+    setIsPreparingLocation(true);
+    setLocationReadiness("Requesting location permission and checking GPS…");
+    navigator.geolocation.getCurrentPosition(async (position) => {
+      try {
+        await setDoc(doc(db, "sosReadiness", user.uid), {
+          userId: user.uid,
+          locationVerified: true,
+          locationPermission: "granted",
+          verifiedAt: serverTimestamp(),
+          updatedAt: serverTimestamp()
+        });
+        setSosForm(previous => ({
+          ...previous,
+          latitude: String(position.coords.latitude),
+          longitude: String(position.coords.longitude),
+          accuracy: String(position.coords.accuracy)
+        }));
+        setLocationReadiness("READY: location permission is granted and GPS was verified. The coordinates shown are a readiness test, not a live tracking guarantee. Refresh this check when you change device or browser settings.");
+      } catch (error) {
+        console.error("SOS readiness save failed:", error);
+        setLocationReadiness("GPS works, but readiness could not be saved. SOS remains available.");
+      } finally {
+        setIsPreparingLocation(false);
+      }
+    }, async (error) => {
+      const denied = error.code === 1;
+      setLocationReadiness(denied
+        ? "Location permission was denied. Enable location for this site in Android/browser settings, then try again. SOS will still work with a written location."
+        : "GPS could not obtain a fix. Check device location settings and try again. SOS will still work with a written location.");
+      try {
+        await setDoc(doc(db, "sosReadiness", user.uid), {
+          userId: user.uid,
+          locationVerified: false,
+          locationPermission: denied ? "denied" : "unavailable",
+          updatedAt: serverTimestamp()
+        }, { merge: true });
+      } catch (saveError) {
+        console.error("SOS readiness status save failed:", saveError);
+      } finally {
+        setIsPreparingLocation(false);
+      }
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+  }
 
   const [isSubmittingSOS, setIsSubmittingSOS] =
   useState(false);
@@ -743,6 +837,25 @@ return (
     Use this emergency service to request authorized assistance
     through the Inclura Fortress Security Engine (IFSE).
   </p>
+
+  <div style={card}>
+    <h3>🛡 SOS Emergency Readiness — Prepare Before Danger</h3>
+    <p style={helpText}>
+      Allow location access now, during normal use. Inclura will not ask you to grant
+      permission for the first time while you are trying to send an SOS. This check
+      verifies permission and a GPS fix; it does not provide continuous background tracking.
+    </p>
+    <p role="status" aria-live="polite" style={gpsText}>{locationReadiness}</p>
+    <button type="button" onClick={prepareEmergencyLocation}
+      style={locationButton} disabled={isPreparingLocation || isSubmittingSOS}>
+      {isPreparingLocation ? "Checking GPS…" : "Enable & Verify Emergency Location"}
+    </button>
+    <p style={securityNotice}>
+      If GPS is unavailable or permission is denied, you can still submit an SOS using
+      the written location. A web app cannot guarantee GPS tracking while closed or
+      restricted by Android background settings.
+    </p>
+  </div>
 
 
   {/* ============================================================
