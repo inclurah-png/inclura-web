@@ -193,6 +193,19 @@ service cloud.firestore {
                        ]);
     }
 
+    // Executive analytics are private. Only a signed-in account whose own
+    // profile explicitly carries role: "admin" may read the single report.
+    // Client-side writes and collection listing are never permitted.
+    function isIncluraAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == "admin";
+    }
+
+    match /executiveReports/{reportId} {
+      allow get: if isIncluraAdmin() && reportId == "current";
+      allow list, create, update, delete: if false;
+    }
+
     match /notifications/{notificationId} {
       allow read: if request.auth != null
                   && resource.data.receiverId == request.auth.uid;
