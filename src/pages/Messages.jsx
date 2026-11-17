@@ -473,103 +473,55 @@ try {
       }
     );
 
-  await setDoc(
-    chatRef,
-    {
-      participants:
-        participantIds,
+  const existingChatSnapshot = await getDoc(chatRef);
+  let newChat;
 
+  if (existingChatSnapshot.exists()) {
+    const existingData = existingChatSnapshot.data() || {};
+    if (
+      !Array.isArray(existingData.participants) ||
+      !participantIds.every((participantId) =>
+        existingData.participants.includes(participantId)
+      )
+    ) {
+      throw new Error("This conversation does not match its participants.");
+    }
+
+    // Reuse the existing chat without rewriting its creator or metadata.
+    newChat = {
+      id: chatId,
+      ...existingData,
+    };
+  } else {
+    const chatData = {
+      participants: participantIds,
       participantNames: {
-        [currentUser.uid]:
-          currentDisplayName,
-
-        [targetUser.id]:
-          targetDisplayName,
+        [currentUser.uid]: currentDisplayName,
+        [targetUser.id]: targetDisplayName,
       },
-
       participantProfiles: {
         [currentUser.uid]: {
-          displayName:
-            currentDisplayName,
-
-          photoURL:
-            currentUser.photoURL ||
-            "",
+          displayName: currentDisplayName,
+          photoURL: currentUser.photoURL || "",
         },
-
         [targetUser.id]: {
-          displayName:
-            targetDisplayName,
-
-          photoURL:
-            targetUser.photoURL ||
-            "",
+          displayName: targetDisplayName,
+          photoURL: targetUser.photoURL || "",
         },
       },
+      createdBy: currentUser.uid,
+      updatedAt: serverTimestamp(),
+      lastMessage: "",
+      lastSenderId: "",
+    };
 
-      createdBy:
-        currentUser.uid,
-
-      updatedAt:
-        serverTimestamp(),
-
-      lastMessage:
-        "",
-
-      lastSenderId:
-        "",
-    },
-    {
-      merge: true,
-    }
-  );
-
-  const newChat = {
-    id: chatId,
-
-    participants:
-      participantIds,
-
-    participantNames: {
-      [currentUser.uid]:
-        currentDisplayName,
-
-      [targetUser.id]:
-        targetDisplayName,
-    },
-
-    participantProfiles: {
-      [currentUser.uid]: {
-        displayName:
-          currentDisplayName,
-
-        photoURL:
-          currentUser.photoURL ||
-          "",
-      },
-
-      [targetUser.id]: {
-        displayName:
-          targetDisplayName,
-
-        photoURL:
-          targetUser.photoURL ||
-          "",
-      },
-    },
-
-    createdBy:
-      currentUser.uid,
-
-    lastMessage:
-      "",
-
-    lastSenderId:
-      "",
-
-    updatedAt:
-      null,
-  };
+    await setDoc(chatRef, chatData);
+    newChat = {
+      id: chatId,
+      ...chatData,
+      updatedAt: null,
+    };
+  }
 
   setSelectedChat(
     newChat
