@@ -433,6 +433,29 @@ function CareGigs() {
                       </div>
 
                       <div>
+                        <dt style={detailLabel}>Preferred communication</dt>
+                        <dd style={detailValue}>
+                          {request.communicationPreference === "any"
+                            ? "Any suitable method"
+                            : request.communicationPreference || "Not specified"}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt style={detailLabel}>Urgency</dt>
+                        <dd style={detailValue}>
+                          {request.urgency || "Normal"}
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt style={detailLabel}>Accessibility needs</dt>
+                        <dd style={detailValue}>
+                          {request.accessibilityNeeds || "Not specified"}
+                        </dd>
+                      </div>
+
+                      <div>
                         <dt style={detailLabel}>
                           {t("careGigs.submittedDateLabel", {
                             defaultValue: "Submitted",
