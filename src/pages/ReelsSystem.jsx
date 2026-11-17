@@ -116,7 +116,7 @@ function ReelsSystem() {
             <p style={muted}>Published Inclura video posts are shown here as the Reels feed.</p>
           </div>
           <div style={actions}>
-            <button type="button" style={button} onClick={() => navigate("/profile")}>🎬 Create Reel</button>
+            <button type="button" style={button} onClick={() => navigate("/create-reel")}>🎬 Create Reel</button>
             <button type="button" style={secondaryButton} onClick={loadReels} disabled={loading}>{loading ? "Refreshing..." : "↻ Refresh"}</button>
           </div>
         </div>
@@ -134,7 +134,7 @@ function ReelsSystem() {
           <div style={card}>
             <h2>No Reels yet</h2>
             <p style={muted}>There are no published video posts yet. Use Create Reel to publish through the existing post system.</p>
-            <button type="button" style={button} onClick={() => navigate("/profile")}>🎬 Create the first Reel</button>
+            <button type="button" style={button} onClick={() => navigate("/create-reel")}>🎬 Create the first Reel</button>
           </div>
         )}
 
