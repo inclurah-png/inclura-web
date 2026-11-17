@@ -263,6 +263,38 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Public mentor directory contains only deliberately selected profile fields.
+    // Private contact details and non-public accessibility preferences stay in users/{uid}.
+    match /mentorDirectory/{mentorId} {
+      allow get, list: if request.auth != null;
+
+      function isOwnerMentor() {
+        return request.auth != null
+          && request.auth.uid == mentorId
+          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == "Mentor";
+      }
+
+      function hasSafeMentorFields() {
+        return request.resource.data.uid == mentorId
+          && request.resource.data.fullName is string
+          && request.resource.data.location is string
+          && request.resource.data.bio is string
+          && request.resource.data.expertise is string
+          && request.resource.data.photoURL is string
+          && request.resource.data.accessibilityNeeds is list
+          && request.resource.data.verified
+             == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.verified
+          && request.resource.data.updatedAt is timestamp
+          && request.resource.data.keys().hasOnly([
+            'uid', 'fullName', 'location', 'bio', 'expertise',
+            'photoURL', 'accessibilityNeeds', 'verified', 'updatedAt'
+          ]);
+      }
+
+      allow create, update: if isOwnerMentor() && hasSafeMentorFields();
+      allow delete: if false;
+    }
+
     match /notifications/{notificationId} {
       allow read: if request.auth != null
                   && resource.data.receiverId == request.auth.uid;
