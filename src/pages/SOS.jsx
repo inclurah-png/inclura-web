@@ -11,7 +11,6 @@ import {
   collection,
   addDoc,
   doc,
-  updateDoc,
   getCountFromServer,
   query,
   where,
@@ -199,6 +198,11 @@ function SOS() {
                 "status",
                 "==",
                 "open"
+              ),
+              where(
+                "userId",
+                "==",
+                auth.currentUser.uid
               )
             )
           );
@@ -215,6 +219,11 @@ function SOS() {
                 "status",
                 "==",
                 "resolved"
+              ),
+              where(
+                "userId",
+                "==",
+                auth.currentUser.uid
               )
             )
           );
@@ -231,6 +240,11 @@ function SOS() {
                 "priority",
                 "==",
                 "High"
+              ),
+              where(
+                "userId",
+                "==",
+                auth.currentUser.uid
               )
             )
           );
@@ -247,6 +261,11 @@ function SOS() {
                 "emergencyType",
                 "==",
                 "Medical"
+              ),
+              where(
+                "userId",
+                "==",
+                auth.currentUser.uid
               )
             )
           );
@@ -263,6 +282,11 @@ function SOS() {
                 "emergencyType",
                 "==",
                 "Fire"
+              ),
+              where(
+                "userId",
+                "==",
+                auth.currentUser.uid
               )
             )
           );
@@ -279,25 +303,19 @@ function SOS() {
                 "emergencyType",
                 "==",
                 "Police"
-              )
-            )
-          );
-
-
-        const responderSnap =
-          await getCountFromServer(
-            query(
-              collection(
-                db,
-                "users"
               ),
               where(
-                "isResponder",
+                "userId",
                 "==",
-                true
+                auth.currentUser.uid
               )
             )
           );
+
+
+        // The private users collection cannot be counted across all members
+        // from a standard member session. Keep this metric neutral here.
+        const responderCount = 0;
 
 
         setSosStats({
@@ -333,9 +351,7 @@ function SOS() {
               .count,
 
           responders:
-            responderSnap
-              .data()
-              .count,
+            responderCount,
 
         });
 
@@ -721,16 +737,8 @@ function SOS() {
         return;
       }
 
-      await updateDoc(doc(db, "emergencySOS", emergencyId), {
-        incidentStatus: "Assignment Created",
-        responseStatus: "Awaiting Responder Acceptance",
-        assignmentStatus: "Assigned - Acceptance Pending",
-        assignedAgency: dispatchResult.agency || "",
-        assignedResponder: dispatchResult.responderName || "",
-        assignedResponderId: dispatchResult.responderId || "",
-        updatedAt: serverTimestamp(),
-        lastUpdated: serverTimestamp(),
-      });
+      // IFSE dispatch owns assignment updates. Do not perform a second
+      // client-side write to the protected emergencySOS record here.
 
 
       // ============================================================
