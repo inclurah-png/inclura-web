@@ -513,5 +513,45 @@ service cloud.firestore {
 
       allow delete: if false;
     }
+
+    // Trusted contacts are private to the member who created them.
+    match /trustedContacts/{contactId} {
+      function ownsContact() {
+        return request.auth != null && resource.data.userId == request.auth.uid;
+      }
+      function validContact(data) {
+        return data.userId == request.auth.uid
+          && data.ownerId == request.auth.uid
+          && data.fullName is string
+          && data.fullName.size() > 0
+          && data.fullName.size() <= 100
+          && data.relationship is string
+          && data.relationship.size() <= 60
+          && data.phoneNumber is string
+          && data.phoneNumber.size() <= 40
+          && data.email is string
+          && data.email.size() <= 160
+          && (data.phoneNumber.size() > 0 || data.email.size() > 0)
+          && data.status == 'Active';
+      }
+      allow get, list: if ownsContact();
+      allow create: if request.auth != null
+                    && validContact(request.resource.data)
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'userId', 'ownerId', 'fullName', 'relationship',
+                      'phoneNumber', 'email', 'status', 'createdAt', 'updatedAt'
+                    ]);
+      allow update: if ownsContact()
+                    && request.resource.data.userId == resource.data.userId
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    && validContact(request.resource.data)
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['fullName', 'relationship', 'phoneNumber', 'email', 'status', 'updatedAt']);
+      allow delete: if ownsContact();
+    }
+
   }
 }
