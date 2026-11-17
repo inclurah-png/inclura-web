@@ -10,6 +10,7 @@ import {
   query,
   where,
   getDocs,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -118,6 +119,8 @@ function EditProfile() {
   const [accessibilityNeeds, setAccessibilityNeeds] = useState([]);
   const [accessibilityNeedsPublic, setAccessibilityNeedsPublic] =
     useState(false);
+  const [accountType, setAccountType] = useState("");
+  const [verified, setVerified] = useState(false);
 
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState("");
@@ -150,6 +153,8 @@ function EditProfile() {
         }
 
         const data = snap.exists() ? snap.data() || {} : {};
+        setAccountType(typeof data.accountType === "string" ? data.accountType : "");
+        setVerified(data.verified === true);
 
         let resolvedName = getValidName(data.fullName);
 
@@ -333,6 +338,27 @@ function EditProfile() {
       // Merge preserves existing user fields not edited on this page.
       // Firestore Security Rules must still authorize this write.
       await setDoc(profileRef, profileData, { merge: true });
+
+      // Mentor accounts publish only the fields approved for the public directory.
+      // Phone number, email and private accessibility preferences are never copied.
+      if (accountType === "Mentor") {
+        try {
+          await setDoc(doc(db, "mentorDirectory", currentUser.uid), {
+            uid: currentUser.uid,
+            fullName: cleanedName,
+            location: location.trim(),
+            bio: bio.trim(),
+            expertise: category.trim() || "Mentorship and community support",
+            photoURL: photoURL || "",
+            accessibilityNeeds: accessibilityNeedsPublic ? accessibilityNeeds : [],
+            verified,
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        } catch (directoryError) {
+          // Keep the successful private profile save successful if directory sync is unavailable.
+          console.warn("Mentor directory sync failed:", directoryError);
+        }
+      }
 
       try {
         await updateProfile(currentUser, {
