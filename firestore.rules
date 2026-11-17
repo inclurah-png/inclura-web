@@ -151,7 +151,14 @@ service cloud.firestore {
       // profile/accessibility fields belonging to that member.
       allow create: if request.auth != null
                     && request.auth.uid == userId
+                    && request.resource.data.uid == userId
+                    && request.resource.data.role == 'user'
+                    && request.resource.data.verified == false
+                    && request.resource.data.creatorVerified == false
+                    && request.resource.data.premium == false
+                    && request.resource.data.walletBalance == 0
                     && request.resource.data.keys().hasOnly([
+                      'uid',
                       'fullName',
                       'location',
                       'phoneNumber',
@@ -165,9 +172,23 @@ service cloud.firestore {
                       'voiceEnabled',
                       'accessibilityNeeds',
                       'accessibilityNeedsPublic',
+                      'accessibility',
                       'photoURL',
                       'profilePhoto',
-                      'email'
+                      'email',
+                      'createdAt',
+                      'verified',
+                      'badgeType',
+                      'creatorVerified',
+                      'creatorVerifiedAt',
+                      'premium',
+                      'premiumTier',
+                      'role',
+                      'walletBalance',
+                      'resumeCompleted',
+                      'followers',
+                      'following',
+                      'savedPosts'
                     ]);
 
       allow update: if request.auth != null
@@ -189,8 +210,26 @@ service cloud.firestore {
                          'accessibilityNeedsPublic',
                          'photoURL',
                          'profilePhoto',
-                         'email'
-                       ]);
+                         'email',
+                         'accountType',
+                         'verificationCategory',
+                         'interests',
+                         'organizationName',
+                         'website',
+                         'groupName',
+                         'groupDescription',
+                         'groupCategory',
+                         'onboardingCompleted',
+                         'updatedAt'
+                       ])
+                    && (!('accountType' in request.resource.data)
+                        || request.resource.data.accountType is string)
+                    && (!('onboardingCompleted' in request.resource.data)
+                        || request.resource.data.onboardingCompleted is bool)
+                    && (!('interests' in request.resource.data)
+                        || request.resource.data.interests is list)
+                    && (!('accessibilityNeeds' in request.resource.data)
+                        || request.resource.data.accessibilityNeeds is list);
     }
 
     // Executive analytics are private. Only a signed-in account whose own
