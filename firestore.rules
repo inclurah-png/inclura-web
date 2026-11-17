@@ -147,17 +147,49 @@ service cloud.firestore {
       // This is required by the publication Follow button to load the member's following list.
       allow get: if request.auth != null && request.auth.uid == userId;
 
+      // A member may create their own profile document and update only
+      // profile/accessibility fields belonging to that member.
+      allow create: if request.auth != null
+                    && request.auth.uid == userId
+                    && request.resource.data.keys().hasOnly([
+                      'fullName',
+                      'location',
+                      'phoneNumber',
+                      'bio',
+                      'category',
+                      'preferredLanguage',
+                      'language',
+                      'fontScale',
+                      'highContrast',
+                      'reducedMotion',
+                      'voiceEnabled',
+                      'accessibilityNeeds',
+                      'accessibilityNeedsPublic',
+                      'photoURL',
+                      'profilePhoto',
+                      'email'
+                    ]);
+
       allow update: if request.auth != null
                     && request.auth.uid == userId
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly([
-                         'language',
+                         'fullName',
+                         'location',
+                         'phoneNumber',
+                         'bio',
+                         'category',
                          'preferredLanguage',
+                         'language',
                          'fontScale',
                          'highContrast',
                          'reducedMotion',
                          'voiceEnabled',
-                         'accessibilityNeeds'
+                         'accessibilityNeeds',
+                         'accessibilityNeedsPublic',
+                         'photoURL',
+                         'profilePhoto',
+                         'email'
                        ]);
     }
 
