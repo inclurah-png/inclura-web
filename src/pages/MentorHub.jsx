@@ -91,7 +91,22 @@ function MentorHub() {
 
                 <div style={actions}>
                   <button type="button" style={button} onClick={() => navigate(`/user/${mentor.id}`)}>View Mentor</button>
-                  <button type="button" style={secondaryButton} onClick={() => navigate("/messages")}>Message</button>
+                  <button
+                    type="button"
+                    style={secondaryButton}
+                    onClick={() => navigate("/messages", {
+                      state: {
+                        recipientId: mentor.id,
+                        recipientProfile: {
+                          id: mentor.id,
+                          fullName: mentor.fullName,
+                          photoURL: mentor.photoURL || "",
+                          location: mentor.location || "",
+                          bio: mentor.bio || "",
+                        },
+                      },
+                    })}
+                  >Message</button>
                 </div>
               </article>
             );
