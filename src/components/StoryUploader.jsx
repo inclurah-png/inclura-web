@@ -20,64 +20,63 @@ import {
 } from "../firebase";
 
 function StoryUploader() {
-  const [uploading, setUploading] =
-    useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  async function uploadStory(e) {
-    const file =
-      e.target.files[0];
+  async function uploadStory(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
 
     if (!file) return;
+
+    const user = auth.currentUser;
+    if (!user) {
+      alert("Please sign in before uploading a story.");
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose an image for this story.");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Please choose an image smaller than 10 MB.");
+      return;
+    }
 
     try {
       setUploading(true);
 
+      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
       const storyRef = ref(
         storage,
-        `stories/${Date.now()}`
+        `stories/${user.uid}/${Date.now()}_${safeFileName}`
       );
 
-      await uploadBytes(
-        storyRef,
-        file
+      await uploadBytes(storyRef, file, {
+        contentType: file.type,
+      });
+
+      const storyUrl = await getDownloadURL(storyRef);
+      const expiresAt = Timestamp.fromDate(
+        new Date(Date.now() + 24 * 60 * 60 * 1000)
       );
 
-      const mediaUrl =
-        await getDownloadURL(
-          storyRef
-        );
+      await addDoc(collection(db, "stories"), {
+        userId: user.uid,
+        userName: user.displayName || "Inclura User",
+        storyType: "image",
+        storyText: "",
+        storyUrl,
+        createdAt: serverTimestamp(),
+        expiresAt,
+        views: [],
+      });
 
-      const user =
-        auth.currentUser;
-
-      const expiresAt =
-        Timestamp.fromDate(
-          new Date(
-            Date.now() +
-              24 * 60 * 60 * 1000
-          )
-        );
-
-      await addDoc(
-        collection(db, "stories"),
-        {
-          userId: user.uid,
-          userName:
-            user.displayName ||
-            "Inclura User",
-          mediaUrl,
-          mediaType: "image",
-          createdAt:
-            serverTimestamp(),
-          expiresAt,
-        }
-      );
-
-      alert(
-        "Story uploaded!"
-      );
+      alert("Story uploaded!");
     } catch (error) {
-      alert(error.message);
+      console.error("Inclura story upload failed:", error);
+      alert(error?.message || "Story upload failed. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -95,17 +94,16 @@ function StoryUploader() {
         alignItems: "center",
         color: "white",
         fontWeight: "700",
-        cursor: "pointer",
+        cursor: uploading ? "wait" : "pointer",
       }}
     >
-      {uploading
-        ? "Uploading..."
-        : "+ Story"}
+      {uploading ? "Uploading..." : "+ Story"}
 
       <input
         type="file"
         accept="image/*"
         hidden
+        disabled={uploading}
         onChange={uploadStory}
       />
     </label>
