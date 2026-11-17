@@ -174,6 +174,7 @@ function CareRequestForm({
           value={form.serviceType}
           onChange={handleChange}
           style={input}
+          required
         >
           <option value="">
             {t("careGigs.form.selectService", {
@@ -224,7 +225,10 @@ function CareRequestForm({
           value={form.description}
           onChange={handleChange}
           rows={5}
+          maxLength={3000}
           style={input}
+          required
+          aria-required="true"
         />
       </div>
 
@@ -245,6 +249,9 @@ function CareRequestForm({
           value={form.location}
           onChange={handleChange}
           style={input}
+          maxLength={250}
+          required
+          aria-required="true"
         />
       </div>
 
