@@ -616,18 +616,24 @@ useEffect(() => {
 
   async function openRequestedConversation() {
     try {
-      const recipientSnapshot = await getDoc(doc(db, "users", recipientId));
+      const suppliedProfile = location.state?.recipientProfile;
+      let targetProfile = null;
 
-      if (!recipientSnapshot.exists()) {
-        throw new Error("This seller account could not be found.");
+      // Mentor Hub supplies a privacy-safe public profile, avoiding an
+      // unrestricted read of the member's private users/{uid} document.
+      if (suppliedProfile?.id === recipientId) {
+        targetProfile = suppliedProfile;
+      } else {
+        const recipientSnapshot = await getDoc(doc(db, "users", recipientId));
+        if (!recipientSnapshot.exists()) {
+          throw new Error("This member account could not be found.");
+        }
+        targetProfile = { id: recipientSnapshot.id, ...recipientSnapshot.data() };
       }
 
       if (!active) return;
 
-      await startConversation({
-        id: recipientSnapshot.id,
-        ...recipientSnapshot.data(),
-      });
+      await startConversation(targetProfile);
 
       if (active) {
         navigate("/messages", { replace: true, state: null });
