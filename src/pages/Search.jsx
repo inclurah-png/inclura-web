@@ -23,7 +23,7 @@ function Search() {
 
       try {
         const snapshot = await getDocs(
-          collection(db, "users")
+          collection(db, "memberDirectory")
         );
 
         const data = snapshot.docs.map((doc) => ({
