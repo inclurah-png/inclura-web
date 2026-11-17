@@ -339,6 +339,23 @@ function EditProfile() {
       // Firestore Security Rules must still authorize this write.
       await setDoc(profileRef, profileData, { merge: true });
 
+      // Publish only safe discovery fields for the New Conversation list.
+      // Private email, phone number and non-public accessibility needs stay private.
+      try {
+        await setDoc(doc(db, "memberDirectory", currentUser.uid), {
+          uid: currentUser.uid,
+          fullName: cleanedName,
+          photoURL: photoURL || "",
+          location: location.trim(),
+          category: typeof category === "string" ? category : "",
+          accountType: accountType || "individual",
+          bio: bio.trim(),
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      } catch (directoryError) {
+        console.warn("Member directory sync failed:", directoryError);
+      }
+
       // Mentor accounts publish only the fields approved for the public directory.
       // Phone number, email and private accessibility preferences are never copied.
       if (accountType === "Mentor") {
