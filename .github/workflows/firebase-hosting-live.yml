@@ -62,6 +62,12 @@ jobs:
         run: |
           npx --yes firebase-tools@latest deploy --only firestore:rules --project inclura-prod-90734
 
+      - name: Deploy Firebase Storage security rules
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
+        run: |
+          npx --yes firebase-tools@latest deploy --only storage --project inclura-prod-90734
+
       - name: Deploy to Firebase Hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
