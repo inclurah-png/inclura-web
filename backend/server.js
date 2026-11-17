@@ -50,8 +50,10 @@ const PORT =
 
 app.use(
   cors({
-    origin:
+    origin: [
+      "https://inclura-web.pages.dev",
       "https://inclura-prod-90734.web.app",
+    ],
 
     methods: [
       "GET",
