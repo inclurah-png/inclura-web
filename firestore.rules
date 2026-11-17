@@ -353,6 +353,107 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Opportunities are public to signed-in members. Posting requires an
+    // active recruiter subscription recorded on the member's private profile.
+    match /opportunities/{opportunityId} {
+      allow get, list: if request.auth != null;
+
+      allow create: if request.auth != null
+                    && request.resource.data.recruiterId == request.auth.uid
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.status == 'active'
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan in ['starter', 'business', 'enterprise']
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.expiresAt is timestamp
+                    && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.expiresAt > request.time
+                    && request.resource.data.recruiterPlan
+                       == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan
+                    && request.resource.data.featured
+                       == (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan != 'starter')
+                    && request.resource.data.analyticsEnabled
+                       == (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan != 'starter')
+                    && request.resource.data.title is string
+                    && request.resource.data.title.size() > 0
+                    && request.resource.data.title.size() <= 150
+                    && request.resource.data.company is string
+                    && request.resource.data.company.size() > 0
+                    && request.resource.data.company.size() <= 150
+                    && request.resource.data.location is string
+                    && request.resource.data.location.size() <= 200
+                    && request.resource.data.employmentType in [
+                      'Full Time', 'Part Time', 'Contract', 'Internship', 'Volunteer', 'Remote'
+                    ]
+                    && request.resource.data.salary is string
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() > 0
+                    && request.resource.data.description.size() <= 8000
+                    && request.resource.data.requirements is string
+                    && request.resource.data.requirements.size() <= 8000
+                    && request.resource.data.deadline is string
+                    && request.resource.data.recruiterName is string
+                    && request.resource.data.status == 'active'
+                    && request.resource.data.applications == 0
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'recruiterId', 'recruiterPlan', 'recruiterName',
+                      'title', 'company', 'location', 'employmentType',
+                      'salary', 'description', 'requirements', 'deadline',
+                      'status', 'applications', 'featured', 'analyticsEnabled',
+                      'createdAt', 'updatedAt'
+                    ]);
+
+      // The application and counter update must be committed together.
+      // getAfter() confirms that the matching application was created in
+      // the same atomic batch, and exists() prevents reusing an old one.
+      allow update: if request.auth != null
+                    && request.auth.uid != resource.data.recruiterId
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['applications', 'lastApplicationId'])
+                    && request.resource.data.applications == resource.data.applications + 1
+                    && request.resource.data.lastApplicationId is string
+                    && !exists(/databases/$(database)/documents/applications/$(request.resource.data.lastApplicationId))
+                    && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.lastApplicationId)).data.applicantId == request.auth.uid
+                    && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.lastApplicationId)).data.opportunityId == opportunityId
+                    && getAfter(/databases/$(database)/documents/applications/$(request.resource.data.lastApplicationId)).data.recruiterId == resource.data.recruiterId;
+
+      allow delete: if false;
+    }
+
+    // Applications are private to the applicant and the recruiter who posted
+    // the opportunity. Applicants create their own pending applications.
+    match /applications/{applicationId} {
+      allow get, list: if request.auth != null
+                       && (resource.data.applicantId == request.auth.uid
+                           || resource.data.recruiterId == request.auth.uid);
+
+      allow create: if request.auth != null
+                    && request.resource.data.applicantId == request.auth.uid
+                    && request.resource.data.opportunityId is string
+                    && get(/databases/$(database)/documents/opportunities/$(request.resource.data.opportunityId)).data.status == 'active'
+                    && request.resource.data.recruiterId
+                       == get(/databases/$(database)/documents/opportunities/$(request.resource.data.opportunityId)).data.recruiterId
+                    && request.resource.data.jobTitle
+                       == get(/databases/$(database)/documents/opportunities/$(request.resource.data.opportunityId)).data.title
+                    && request.auth.uid != request.resource.data.recruiterId
+                    && request.resource.data.applicantName is string
+                    && request.resource.data.applicantEmail is string
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'opportunityId', 'recruiterId', 'applicantId',
+                      'applicantName', 'applicantEmail', 'jobTitle',
+                      'status', 'createdAt'
+                    ]);
+
+      allow update: if request.auth != null
+                    && resource.data.recruiterId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+                    && request.resource.data.status in [
+                      'Pending', 'Shortlisted', 'Interview', 'Hired', 'Rejected'
+                    ];
+
+      allow delete: if false;
+    }
+
     match /notifications/{notificationId} {
       allow read: if request.auth != null
                   && resource.data.receiverId == request.auth.uid;
