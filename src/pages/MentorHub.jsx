@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, limit, query, where } from "firebase/firestore";
+import { collection, getDocs, limit, query } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
 import { db } from "../firebase";
@@ -14,7 +14,7 @@ function MentorHub() {
     setLoading(true);
     setError("");
     try {
-      const snapshot = await getDocs(query(collection(db, "users"), where("accountType", "==", "Mentor"), limit(50)));
+      const snapshot = await getDocs(query(collection(db, "mentorDirectory"), limit(50)));
       setMentors(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
     } catch (loadError) {
       console.error("Inclura Mentor Hub Load Error:", loadError);
@@ -26,7 +26,7 @@ function MentorHub() {
 
   useEffect(() => { loadMentors(); }, []);
 
-  const activeMentors = useMemo(() => mentors.filter((mentor) => mentor.verified !== false), [mentors]);
+  const activeMentors = useMemo(() => mentors.filter((mentor) => mentor.verified === true), [mentors]);
 
   return (
     <DashboardLayout>
@@ -34,7 +34,7 @@ function MentorHub() {
         <div style={header}>
           <div>
             <h1 id="mentor-title">🎓 Mentor Hub</h1>
-            <p style={muted}>Find mentors using existing Inclura Mentor account profiles.</p>
+            <p style={muted}>Find mentors who have chosen the Mentor account type. Only approved public profile fields are shown here.</p>
           </div>
           <div style={actions}>
             <button type="button" style={button} onClick={() => navigate("/edit-profile")}>🙋 Mentor Profile</button>
@@ -46,7 +46,7 @@ function MentorHub() {
 
         <section style={statsGrid}>
           <Stat label="Mentor accounts" value={mentors.length} />
-          <Stat label="Verified / active profiles" value={activeMentors.length} />
+          <Stat label="Verified mentors" value={activeMentors.length} />
         </section>
 
         {loading && !mentors.length && <div style={card} role="status">Loading mentor profiles...</div>}
@@ -80,6 +80,7 @@ function MentorHub() {
                   </div>
                 </div>
 
+                {mentor.location && <div style={role}>📍 {mentor.location}</div>}
                 {mentor.bio && <p style={text}>{mentor.bio}</p>}
 
                 {Array.isArray(mentor.accessibilityNeeds) && mentor.accessibilityNeeds.length > 0 && (
