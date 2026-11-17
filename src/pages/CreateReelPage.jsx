@@ -1,9 +1,11 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "../components/DashboardLayout";
 import CreatePost from "../components/CreatePost";
 
 function CreateReelPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   return (
     <DashboardLayout>
@@ -21,11 +23,11 @@ function CreateReelPage() {
             cursor: "pointer",
           }}
         >
-          ← Back to Reels
+          ← {t("backToReels")}
         </button>
-        <h1 style={{ marginBottom: "8px" }}>🎬 Create a Reel</h1>
+        <h1 style={{ marginBottom: "8px" }}>🎬 {t("createReel")}</h1>
         <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>
-          Upload a video, add a description, and choose the accessibility features available in your video.
+          {t("createReelInstructions")}
         </p>
         <CreatePost />
       </main>
