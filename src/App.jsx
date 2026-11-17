@@ -35,6 +35,7 @@ const Transfer = lazy(() => import("./pages/Transfer"));
 const Transactions = lazy(() => import("./pages/Transactions"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const ReelsSystem = lazy(() => import("./pages/ReelsSystem"));
+const CreateReelPage = lazy(() => import("./pages/CreateReelPage"));
 const AccessibilityHub = lazy(() => import("./pages/AccessibilityHub"));
 const OpportunitiesHub = lazy(() => import("./pages/OpportunitiesHub"));
 const CareGigs = lazy(() => import("./pages/CareGigs"));
@@ -269,6 +270,15 @@ function App() {
         element={
           <ProtectedRoute>
             <ReelsSystem />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/create-reel"
+        element={
+          <ProtectedRoute>
+            <CreateReelPage />
           </ProtectedRoute>
         }
       />
