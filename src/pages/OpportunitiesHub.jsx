@@ -113,6 +113,21 @@ function OpportunitiesHub() {
         snapshot.forEach((opportunityDoc) => {
           const data = opportunityDoc.data();
 
+          // Only publish currently active opportunities in the public hub.
+          // Expired deadlines are hidden even if a recruiter has not closed
+          // the listing manually yet.
+          if (data.status !== "active") return;
+
+          if (data.deadline) {
+            const deadlineDate = new Date(data.deadline);
+            if (
+              !Number.isNaN(deadlineDate.getTime()) &&
+              deadlineDate.getTime() < new Date().setHours(0, 0, 0, 0)
+            ) {
+              return;
+            }
+          }
+
           jobs.push({
             id: opportunityDoc.id,
             ...data,
