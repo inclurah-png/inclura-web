@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { collection, getDocs, limit, orderBy, query } from "firebase/firestore";
+import { arrayRemove, arrayUnion, collection, doc, getDoc, getDocs, limit, orderBy, query, updateDoc } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "../components/DashboardLayout";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 function ReelsSystem() {
   const navigate = useNavigate();
   const [reels, setReels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [reacting, setReacting] = useState({});
+  const [saving, setSaving] = useState({});
+  const API_BASE_URL = import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com";
 
   async function loadReels() {
     setLoading(true);
@@ -26,6 +29,74 @@ function ReelsSystem() {
   }
 
   useEffect(() => { loadReels(); }, []);
+
+
+  async function reactToReel(reelId) {
+    const user = auth.currentUser;
+    if (!user) { alert("Please sign in to react to a Reel."); return; }
+    if (reacting[reelId]) return;
+    setReacting((current) => ({ ...current, [reelId]: true }));
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(API_BASE_URL + "/api/posts/" + encodeURIComponent(reelId) + "/react", {
+        method: "POST",
+        headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+        body: JSON.stringify({ emoji: "❤️" })
+      });
+      const result = await response.json();
+      if (!response.ok || result?.success !== true || !result.reactions) throw new Error(result?.detail || result?.message || "Reaction could not be saved.");
+      setReels((current) => current.map((item) => item.id === reelId ? { ...item, reactions: result.reactions, userReactions: result.userReactions || item.userReactions } : item));
+    } catch (actionError) {
+      console.error("Inclura Reel reaction error:", actionError);
+      alert(actionError.message || "Unable to save your reaction.");
+    } finally {
+      setReacting((current) => ({ ...current, [reelId]: false }));
+    }
+  }
+
+  async function toggleSave(reelId) {
+    const user = auth.currentUser;
+    if (!user) { alert("Please sign in to save a Reel."); return; }
+    if (saving[reelId]) return;
+    setSaving((current) => ({ ...current, [reelId]: true }));
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) throw new Error("Your member profile could not be found.");
+      const savedPosts = Array.isArray(userSnap.data().savedPosts) ? userSnap.data().savedPosts : [];
+      if (savedPosts.includes(reelId)) {
+        await updateDoc(userRef, { savedPosts: arrayRemove(reelId) });
+        alert("Reel removed from Saved Posts.");
+      } else {
+        await updateDoc(userRef, { savedPosts: arrayUnion(reelId) });
+        alert("Reel saved successfully.");
+      }
+    } catch (actionError) {
+      console.error("Inclura Reel save error:", actionError);
+      alert(actionError.message || "Unable to save this Reel.");
+    } finally {
+      setSaving((current) => ({ ...current, [reelId]: false }));
+    }
+  }
+
+  async function shareReel(reelId) {
+    const url = window.location.origin + "/post/" + reelId;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: "Inclura Reel", url });
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        alert("Reel link copied.");
+      } else {
+        throw new Error("Sharing is not available in this browser.");
+      }
+    } catch (shareError) {
+      if (shareError?.name !== "AbortError") {
+        console.error("Inclura Reel share error:", shareError);
+        alert(shareError.message || "Unable to share this Reel.");
+      }
+    }
+  }
 
   const stats = useMemo(() => {
     let likes = 0, comments = 0;
@@ -89,6 +160,12 @@ function ReelsSystem() {
                 <div style={meta}>
                   <span>❤️ {reactions}</span>
                   <span>💬 {Number(reel.commentCount || 0)}</span>
+                </div>
+                <div style={{ ...meta, marginTop: "12px" }}>
+                  <button type="button" style={linkButton} disabled={Boolean(reacting[reel.id])} onClick={() => reactToReel(reel.id)}>{reacting[reel.id] ? "Reacting..." : "❤️ Like"}</button>
+                  <button type="button" style={linkButton} onClick={() => navigate(`/post/${reel.id}`)}>💬 Comment</button>
+                  <button type="button" style={linkButton} disabled={Boolean(saving[reel.id])} onClick={() => toggleSave(reel.id)}>{saving[reel.id] ? "Saving..." : "🔖 Save"}</button>
+                  <button type="button" style={linkButton} onClick={() => shareReel(reel.id)}>↗ Share</button>
                   <button type="button" style={linkButton} onClick={() => navigate(`/post/${reel.id}`)}>Open publication</button>
                 </div>
               </article>
