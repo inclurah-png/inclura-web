@@ -9,6 +9,7 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -202,6 +203,25 @@ function Onboarding() {
             serverTimestamp(),
         }
       );
+
+      // Add this member to the safe discovery directory used by Messages.
+      // Email, phone number and private accessibility settings are excluded.
+      try {
+        const profileSnapshot = await getDoc(doc(db, "users", user.uid));
+        const profile = profileSnapshot.exists() ? profileSnapshot.data() : {};
+        await setDoc(doc(db, "memberDirectory", user.uid), {
+          uid: user.uid,
+          fullName: typeof profile.fullName === "string" ? profile.fullName : (user.displayName || ""),
+          photoURL: typeof profile.photoURL === "string" ? profile.photoURL : (user.photoURL || ""),
+          location: typeof location === "string" ? location : "",
+          category: typeof verificationCategory === "string" ? verificationCategory : "",
+          accountType: typeof accountType === "string" ? accountType : "individual",
+          bio: typeof bio === "string" ? bio : "",
+          updatedAt: serverTimestamp(),
+        }, { merge: true });
+      } catch (directoryError) {
+        console.warn("Member directory setup failed:", directoryError);
+      }
 
       navigate("/profile");
     } catch (error) {
