@@ -10,6 +10,8 @@ import {
 import {
   collection,
   addDoc,
+  doc,
+  updateDoc,
   getCountFromServer,
   query,
   where,
@@ -469,9 +471,6 @@ useEffect(() => {
               currentUser.displayName ||
               "",
 
-            userEmail:
-              currentUser.email ||
-              "",
 
             userPhoto:
               currentUser.photoURL ||
@@ -616,9 +615,6 @@ useEffect(() => {
           currentUser.displayName ||
           "",
 
-        userEmail:
-          currentUser.email ||
-          "",
 
         userPhoto:
           currentUser.photoURL ||
@@ -692,22 +688,31 @@ useEffect(() => {
         dispatchResult
       );
 
-      if (
-        !dispatchResult ||
-        dispatchResult.success !== true
-      ) {
-
-        console.error(
-          "IFSE dispatch failed:",
-          dispatchResult
-        );
-
-        alert(
-          dispatchResult?.error ||
-          "SOS was created, but IFSE could not complete emergency dispatch."
-        );
-
+      if (!dispatchResult || dispatchResult.success !== true) {
+        console.error("IFSE dispatch failed:", dispatchResult);
+        await updateDoc(doc(db, "emergencySOS", emergencyId), {
+          status: "dispatch_failed",
+          incidentStatus: "Dispatch Failed",
+          responseStatus: "Not Dispatched",
+          assignmentStatus: "Failed",
+          dispatchError: dispatchResult?.error || "IFSE could not complete emergency dispatch.",
+          updatedAt: serverTimestamp(),
+          lastUpdated: serverTimestamp(),
+        });
+        alert("Your SOS request was recorded, but IFSE could not dispatch a responder. No responder assignment is confirmed. Please contact local emergency services directly now if anyone is in immediate danger.");
+        return;
       }
+
+      await updateDoc(doc(db, "emergencySOS", emergencyId), {
+        incidentStatus: "Assignment Created",
+        responseStatus: "Awaiting Responder Acceptance",
+        assignmentStatus: "Assigned - Acceptance Pending",
+        assignedAgency: dispatchResult.agency || "",
+        assignedResponder: dispatchResult.responderName || "",
+        assignedResponderId: dispatchResult.responderId || "",
+        updatedAt: serverTimestamp(),
+        lastUpdated: serverTimestamp(),
+      });
 
 
       // ============================================================
@@ -738,20 +743,11 @@ useEffect(() => {
       // ============================================================
 
       alert(
-        `Emergency SOS dispatched successfully.\n\n` +
-        `Emergency ID: ${emergencyId}\n` +
-        `Agency: ${
-          dispatchResult.agency ||
-          "Authorized Response Agency"
-        }\n` +
-        `Responder: ${
-          dispatchResult.responderName ||
-          "Responder Assigned"
-        }\n` +
-        `Escalation ID: ${
-          escalationResult.escalationId ||
-          "Already Existing"
-        }`
+        "Your SOS was recorded and an IFSE responder assignment was created. Responder acceptance and arrival are not yet confirmed.\n\n" +
+        "Emergency ID: " + emergencyId + "\n" +
+        "Agency: " + (dispatchResult.agency || "Not specified") + "\n" +
+        "Assigned responder: " + (dispatchResult.responderName || "Pending") + "\n\n" +
+        "If this is an immediate life-threatening emergency, contact local emergency services directly as well."
       );
 
 
