@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -114,6 +115,7 @@ function getErrorMessage(error) {
 }
 
 function CreatePost() {
+  const { t } = useTranslation();
   const [postText, setPostText] = useState("");
   const [category, setCategory] = useState("General");
   const [loading, setLoading] = useState(false);
@@ -136,13 +138,13 @@ function CreatePost() {
     const cleanPostText = postText.trim();
 
     if (!cleanPostText && !imageFile && !videoFile) {
-      alert("Add text, image or video first.");
+      alert(t("postAddContent"));
       return;
     }
 
     if (imageFile && videoFile) {
       alert(
-        "Please create a post with either a photo or a video, not both."
+        t("postOneMediaOnly")
       );
       return;
     }
@@ -156,7 +158,7 @@ function CreatePost() {
       const user = auth.currentUser;
 
       if (!user) {
-        alert("Please login again.");
+        alert(t("postLoginAgain"));
         return;
       }
 
@@ -174,7 +176,7 @@ function CreatePost() {
 
       if (!userName) {
         alert(
-          "Your profile name is not available yet. Please complete your profile name and try again."
+          t("postProfileNameMissing")
         );
         return;
       }
@@ -383,10 +385,10 @@ function CreatePost() {
       }
 
       if (scoringRecorded) {
-        alert("Post created successfully!");
+        alert(t("postCreated"));
       } else {
         alert(
-          "Your post was created successfully, but creator scoring could not be recorded. Please try again later."
+          t("postCreatedScoringWarning")
         );
       }
     } catch (error) {
@@ -407,7 +409,7 @@ function CreatePost() {
         );
       } else {
         alert(
-          `Unable to complete ${operation}: ${getErrorMessage(error)}`
+          `${t("postUnableToComplete")} ${operation}: ${getErrorMessage(error)}`
         );
       }
     } finally {
@@ -460,14 +462,14 @@ function CreatePost() {
       }}
     >
       <h3 style={{ marginBottom: "16px" }}>
-        ✍ Create Post
+        ✍ {t("createPost")}
       </h3>
 
       <textarea
         value={postText}
         onChange={(event) => setPostText(event.target.value)}
-        placeholder="Share something with the Inclura community..."
-        aria-label="Post text"
+        placeholder={t("postPlaceholder")}
+        aria-label={t("postTextLabel")}
         disabled={loading}
         style={{
           width: "100%",
@@ -511,7 +513,7 @@ function CreatePost() {
         <select
           value={category}
           onChange={(event) => setCategory(event.target.value)}
-          aria-label="Post category"
+          aria-label={t("postCategory")}
           disabled={loading}
           style={{
             padding: "10px",
@@ -567,13 +569,10 @@ function CreatePost() {
             borderRadius: "12px",
           }}
         >
-          <legend>Accessibility tags for this post</legend>
+          <legend>{t("postAccessibilityTags")}</legend>
 
           <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
-            Select the accessibility features provided by your
-            content. These tags describe the post; they do not
-            automatically generate captions, alt text, or sign
-            language.
+            {t("postAccessibilityHelp")}
           </p>
 
           <div
@@ -613,7 +612,7 @@ function CreatePost() {
         onChange={handleImageSelect}
         style={{ display: "none" }}
         disabled={loading}
-        aria-label="Choose a photo"
+        aria-label={t("postChoosePhoto")}
       />
 
       <input
@@ -623,7 +622,7 @@ function CreatePost() {
         onChange={handleVideoSelect}
         style={{ display: "none" }}
         disabled={loading}
-        aria-label="Choose a video"
+        aria-label={t("postChooseVideo")}
       />
 
       <button
@@ -642,7 +641,7 @@ function CreatePost() {
           opacity: loading ? 0.7 : 1,
         }}
       >
-        {loading ? "Posting..." : "Post"}
+        {loading ? t("postPosting") : t("postPublish")}
       </button>
     </div>
   );
