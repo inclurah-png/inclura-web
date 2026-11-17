@@ -45,7 +45,7 @@ function UserProfile() {
       }
 
       try {
-        const docRef = doc(db, "users", userId);
+        const docRef = doc(db, "memberDirectory", userId);
         const docSnap = await getDoc(docRef);
 
         if (!isCurrent) return;
@@ -329,18 +329,18 @@ function UserProfile() {
 
         <p>{user.bio || "No bio provided."}</p>
 
-        <p>Role: {user.role || "User"}</p>
+        <p>Role: {user.role || user.accountType || "User"}</p>
 
         <p>Category: {user.category || "Not set"}</p>
 
         <p>
           Followers:{" "}
-          {Array.isArray(user.followers) ? user.followers.length : 0}
+          {Array.isArray(user.followers) ? user.followers.length : "Not shared"}
         </p>
 
         <p>
           Following:{" "}
-          {Array.isArray(user.following) ? user.following.length : 0}
+          {Array.isArray(user.following) ? user.following.length : "Not shared"}
         </p>
 
         <div
