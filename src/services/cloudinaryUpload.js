@@ -4,7 +4,7 @@ const IFSE_API_BASE =
   import.meta.env.VITE_IFSE_API_BASE ||
   "https://inclura-ifse-backend.onrender.com";
 
-const ALLOWED_PROFILE_IMAGE_TYPES = new Set([
+const ALLOWED_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -12,19 +12,19 @@ const ALLOWED_PROFILE_IMAGE_TYPES = new Set([
   "image/avif",
 ]);
 
-export async function uploadProfilePhotoToCloudinary(file) {
+async function uploadImageToCloudinary(file, category, maxSize, sizeMessage) {
   const user = auth.currentUser;
 
   if (!user) {
-    throw new Error("Please log in again before uploading a photo.");
+    throw new Error("Please log in again before uploading media.");
   }
 
-  if (!ALLOWED_PROFILE_IMAGE_TYPES.has(file?.type)) {
+  if (!ALLOWED_IMAGE_TYPES.has(file?.type)) {
     throw new Error("Choose a JPEG, PNG, WebP, GIF, or AVIF image.");
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("Please choose an image smaller than 5 MB.");
+  if (!file.size || file.size > maxSize) {
+    throw new Error(sizeMessage);
   }
 
   const token = await user.getIdToken();
@@ -37,7 +37,7 @@ export async function uploadProfilePhotoToCloudinary(file) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        category: "profilePhoto",
+        category,
         mimeType: file.type,
       }),
     }
@@ -46,7 +46,7 @@ export async function uploadProfilePhotoToCloudinary(file) {
   const signingData = await signingResponse.json().catch(() => ({}));
   if (!signingResponse.ok || !signingData.success) {
     throw new Error(
-      signingData.message || "The server could not authorize this photo upload."
+      signingData.message || "The server could not authorize this media upload."
     );
   }
 
@@ -69,11 +69,29 @@ export async function uploadProfilePhotoToCloudinary(file) {
 
   const uploadData = await uploadResponse.json().catch(() => ({}));
   if (!uploadResponse.ok || !uploadData.secure_url) {
-    console.error("Cloudinary profile photo upload response:", uploadData);
+    console.error("Cloudinary media upload response:", uploadData);
     throw new Error(
-      uploadData.error?.message || "Cloudinary could not complete the photo upload."
+      uploadData.error?.message || "Cloudinary could not complete the media upload."
     );
   }
 
   return uploadData.secure_url;
+}
+
+export function uploadProfilePhotoToCloudinary(file) {
+  return uploadImageToCloudinary(
+    file,
+    "profilePhoto",
+    5 * 1024 * 1024,
+    "Please choose an image smaller than 5 MB."
+  );
+}
+
+export function uploadStoryImageToCloudinary(file) {
+  return uploadImageToCloudinary(
+    file,
+    "story",
+    10 * 1024 * 1024,
+    "Please choose an image smaller than 10 MB."
+  );
 }
