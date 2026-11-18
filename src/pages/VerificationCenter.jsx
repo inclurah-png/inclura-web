@@ -21,6 +21,25 @@ import {
   VERIFICATION_PLANS,
 } from "../config";
 
+function getIFSEAssessment(record = {}) {
+  const trustScoreValue = record.ifseScore ?? record.ifseTrustScore;
+  const hasTrustScore =
+    trustScoreValue !== null &&
+    trustScoreValue !== undefined &&
+    Number.isFinite(Number(trustScoreValue));
+
+  const riskScore = hasTrustScore
+    ? Math.max(0, Math.min(100, 100 - Number(trustScoreValue)))
+    : Math.max(0, Math.min(100, Number(record.riskScore) || 0));
+
+  const threatLevel =
+    riskScore >= 80 ? "CRITICAL" :
+    riskScore >= 60 ? "HIGH" :
+    riskScore >= 35 ? "MEDIUM" : "LOW";
+
+  return { riskScore, threatLevel };
+}
+
 function VerificationCenter() {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -44,6 +63,11 @@ const [loading, setLoading] = useState(true);
 const [error, setError] = useState("");
 
 const [verification, setVerification] = useState(null);
+
+const assessment = useMemo(
+  () => getIFSEAssessment(verification || {}),
+  [verification]
+);
 
 const [verificationHistory, setVerificationHistory] = useState([]);
 
@@ -353,12 +377,12 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <p>
     <strong>{t("riskScore")}:</strong>{" "}
-    {verification.riskScore}%
+    {assessment.riskScore}%
   </p>
 
   <p>
     <strong>{t("threatLevel")}:</strong>{" "}
-    {verification.threatLevel}
+    {t(assessment.threatLevel.toLowerCase(), { defaultValue: assessment.threatLevel })}
   </p>
 
   <p>
@@ -521,7 +545,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {item.threatLevel}
+                {t(getIFSEAssessment(item).threatLevel.toLowerCase(), { defaultValue: getIFSEAssessment(item).threatLevel })}
               </td>
 
               <td
@@ -529,7 +553,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {item.riskScore}%
+                {getIFSEAssessment(item).riskScore}%
               </td>
 
               <td
@@ -1097,7 +1121,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
       <p style={{ marginTop: "10px" }}>
         {verification
-          ? `${100 - verification.riskScore}%`
+          ? `${Number(verification.ifseScore ?? (100 - assessment.riskScore))}%`
           : "--"}
       </p>
 
