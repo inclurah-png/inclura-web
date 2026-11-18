@@ -64,7 +64,8 @@ function SettingRow({ label, description, children }) {
   );
 }
 
-function AccessibilitySettings() {\n  const { t } = useTranslation();
+function AccessibilitySettings() {
+  const { t } = useTranslation();
   const {
     language,
     setLanguage,
@@ -120,7 +121,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
           id="accessibility-display-heading"
           style={{ fontSize: "16px", margin: "0 0 8px" }}
         >
-          Display and language
+          {t("accessibilityDisplayLanguage")}
         </h3>
 
         <div style={{ padding: "12px 0" }}>
@@ -128,7 +129,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
             htmlFor="accessibility-language"
             style={{ fontSize: "14px", fontWeight: 600 }}
           >
-            Preferred language
+            {t("preferredLanguage")}
           </label>
 
           <select
@@ -171,7 +172,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
         >
           <input
             type="checkbox"
-            aria-label="Enable high contrast"
+            aria-label={t("highContrast")}
             checked={highContrast}
             onChange={(event) => setHighContrast(event.target.checked)}
             style={checkboxStyle}
@@ -184,7 +185,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
         >
           <input
             type="checkbox"
-            aria-label="Enable reduced motion"
+            aria-label={t("reduceMotion")}
             checked={reducedMotion}
             onChange={(event) => setReducedMotion(event.target.checked)}
             style={checkboxStyle}
@@ -257,7 +258,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
           </div>
         ) : (
           <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
-            Speech synthesis is not supported by this browser.
+            {t("speechUnsupported")}
           </p>
         )}
       </section>
@@ -274,7 +275,7 @@ function AccessibilitySettings() {\n  const { t } = useTranslation();
         </h3>
 
         <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
-          Select any needs you want Inclura to take into account.
+          {t("accessibilityProfileDesc")}
         </p>
 
         {PROFILE_OPTIONS.map((option) => (
