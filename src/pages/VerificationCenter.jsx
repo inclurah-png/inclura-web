@@ -30,8 +30,8 @@ function VerificationCenter() {
       approved: "verified",
       pending: "pending",
       submitted: "submitted",
-      rejected: "vc_rejected",
-      under_review: "vc_underReview",
+      rejected: "rejected",
+      under_review: "pending",
     };
     const key = statusKeys[String(value || "").toLowerCase()];
     return key ? t(key) : value;
@@ -319,7 +319,7 @@ const [verificationStatistics, setVerificationStatistics] =
         border: "1px solid #ef4444",
       }}
     >
-      <h3>{t("vc_rejected")}</h3>
+      <h3>{t("rejected")}</h3>
       <h1>{verificationStatistics.rejected}</h1>
     </div>
 
@@ -953,7 +953,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   marginBottom: "10px",
                 }}
               >
-                ⭐ {benefit}
+                ⭐ {t(benefit)}
               </li>
             )
           )}
