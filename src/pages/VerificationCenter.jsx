@@ -348,7 +348,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <p>
     <strong>{t("status")}:</strong>{" "}
-    {verification.status}
+    {translateStatus(verification.status)}
   </p>
 
   <p>
@@ -538,7 +538,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 }}
               >
                 {item.createdAt?.toDate?.().toLocaleString?.() ??
-                  "Pending"}
+                  t("pending")}
               </td>
 
             </tr>
