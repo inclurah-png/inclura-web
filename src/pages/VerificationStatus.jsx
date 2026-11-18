@@ -20,6 +20,7 @@ import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
+import { getVerificationDocumentAccess } from "../services/cloudinaryUpload";
 
 function VerificationStatus() {
   
@@ -39,6 +40,8 @@ const [timeline, setTimeline] = useState([]);
 const [securityEvents, setSecurityEvents] = useState([]);
 
 const [auditLogs, setAuditLogs] = useState([]);
+const [openingDocument, setOpeningDocument] = useState("");
+const [documentError, setDocumentError] = useState("");
 
 const IFSE_PROGRESS = [
 
@@ -308,6 +311,28 @@ const loadAuditLogs = async () => {
 loadAuditLogs();
 
 }, [verification]);
+
+const openVerificationDocument = async (documentRecord) => {
+  const popup = window.open("about:blank", "_blank");
+  if (!popup) {
+    setDocumentError("Allow pop-ups for Inclura to open your secure document.");
+    return;
+  }
+  try {
+    setOpeningDocument(documentRecord.fileName || documentRecord.cloudinaryPublicId);
+    setDocumentError("");
+    popup.document.title = "Opening secure verification document";
+    popup.document.body.innerText = "Authorizing secure document access…";
+    const access = await getVerificationDocumentAccess(verification.id, documentRecord.cloudinaryPublicId);
+    popup.location.replace(access.downloadUrl);
+  } catch (err) {
+    popup.close();
+    setDocumentError(err.message || "Unable to open this document.");
+  } finally {
+    setOpeningDocument("");
+  }
+};
+
   return (
 
 <DashboardLayout>
@@ -430,6 +455,32 @@ Track your verification progress through the
 </section>
 
 )}
+
+{verification && (
+  <section style={{ marginBottom: "24px", padding: "20px", background: "#0f172a", border: "1px solid #334155", borderRadius: "12px" }}>
+    <h2>Securely Uploaded Documents</h2>
+    <p>Only the application owner or an authorized administrator can open these private files. Access links expire automatically.</p>
+    {documentError && <p role="alert" style={{ color: "#fca5a5" }}>{documentError}</p>}
+    {Object.entries(verification.uploadedDocuments || {}).length === 0 ? (
+      <p>No verification documents have been uploaded to this application yet.</p>
+    ) : (
+      <div style={{ display: "grid", gap: "12px" }}>
+        {Object.entries(verification.uploadedDocuments || {}).map(([documentName, documentRecord]) => (
+          <div key={documentName} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "12px", background: "#1e293b", borderRadius: "8px" }}>
+            <div><strong>{documentName}</strong><p style={{ margin: "4px 0 0", color: "#cbd5e1" }}>{documentRecord.fileName || "Uploaded document"}</p></div>
+            {documentRecord.cloudinaryPublicId ? (
+              <button type="button" disabled={Boolean(openingDocument)} onClick={() => openVerificationDocument(documentRecord)} style={{ padding: "10px 14px", borderRadius: "8px", border: "none", background: "#0f766e", color: "white", cursor: openingDocument ? "wait" : "pointer" }}>
+                {openingDocument === (documentRecord.fileName || documentRecord.cloudinaryPublicId) ? "Authorizing…" : "Open securely"}
+              </button>
+            ) : <span style={{ color: "#fbbf24" }}>Legacy file — secure link unavailable</span>}
+          </div>
+        ))}
+      </div>
+    )}
+  </section>
+)}
+
+
 <section
   style={{
     marginBottom: "24px",
