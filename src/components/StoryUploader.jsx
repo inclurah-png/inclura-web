@@ -7,17 +7,8 @@ import {
   Timestamp,
 } from "firebase/firestore";
 
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
-  db,
-  storage,
-  auth,
-} from "../firebase";
+import { db, auth } from "../firebase";
+import { uploadStoryImageToCloudinary } from "../services/cloudinaryUpload";
 
 function StoryUploader() {
   const [uploading, setUploading] = useState(false);
@@ -47,17 +38,7 @@ function StoryUploader() {
     try {
       setUploading(true);
 
-      const safeFileName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-      const storyRef = ref(
-        storage,
-        `stories/${user.uid}/${Date.now()}_${safeFileName}`
-      );
-
-      await uploadBytes(storyRef, file, {
-        contentType: file.type,
-      });
-
-      const storyUrl = await getDownloadURL(storyRef);
+      const storyUrl = await uploadStoryImageToCloudinary(file);
       const expiresAt = Timestamp.fromDate(
         new Date(Date.now() + 24 * 60 * 60 * 1000)
       );
