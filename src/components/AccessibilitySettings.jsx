@@ -139,7 +139,7 @@ function AccessibilitySettings() {
             style={selectStyle}
           >
             {LANGUAGE_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
+              <option key={option.value} value={option.value} lang={option.value}>
                 {option.label}
               </option>
             ))}
@@ -218,10 +218,7 @@ function AccessibilitySettings() {
         </SettingRow>
 
         {effectiveVoiceEnabled && (
-          <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
-            Voice guidance is active because it is enabled or your
-            accessibility profile indicates that it may be helpful.
-          </p>
+          <p style={{ fontSize: "12px", color: "#cbd5e1" }}>{t("voiceGuidanceActive")}</p>
         )}
 
         {speechSupported ? (
@@ -282,7 +279,7 @@ function AccessibilitySettings() {
           <SettingRow key={option.key} label={t(option.labelKey)}>
             <input
               type="checkbox"
-              aria-label={option.label}
+              aria-label={t(option.labelKey)}
               checked={Boolean(accessibilityProfile[option.key])}
               onChange={(event) => {
                 void setAccessibilityProfile({
