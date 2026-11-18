@@ -391,7 +391,7 @@ Track your verification progress through the
 
       <strong>{t("verificationType")}</strong>
 
-      <p>{verification.verificationType}</p>
+      <p>{t(verification.verificationType, { defaultValue: String(verification.verificationType || "").replaceAll("_", " ") })}</p>
 
     </div>
 
@@ -399,7 +399,7 @@ Track your verification progress through the
 
       <strong>{t("status")}</strong>
 
-      <p>{verification.status}</p>
+      <p>{t(String(verification.status || "").toLowerCase(), { defaultValue: verification.status })}</p>
 
     </div>
 
@@ -422,9 +422,7 @@ Track your verification progress through the
       <strong>{t("threatLevel")}</strong>
 
 <p>
-  {verification.threatLevel ??
-    verification.ifseStatus ??
-    "Pending Assessment"}
+  {t(String(verification.threatLevel ?? verification.ifseStatus ?? "pending").toLowerCase(), { defaultValue: verification.threatLevel ?? verification.ifseStatus ?? "Pending Assessment" })}
 </p>
 
     </div>
