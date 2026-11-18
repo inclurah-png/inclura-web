@@ -404,16 +404,12 @@ async function handleContinue() {
     // Paid verification
     if (paymentAmount > 0) {
       navigate(
-        "/creator-verification-payment",
+        "/verification-payment",
         {
           state: {
-            verificationId:
-              verificationRef.id,
-
+            verificationId: verificationRef.id,
             verificationType,
-
             category,
-
             paymentAmount,
           },
         }
