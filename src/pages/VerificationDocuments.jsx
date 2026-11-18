@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   addDoc,
@@ -26,6 +27,7 @@ import { VERIFICATION_PLANS } from "../config";
 
 function VerificationDocuments() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -743,6 +745,8 @@ function VerificationDocuments() {
 
         {error && (
           <div
+            role="alert"
+            aria-live="assertive"
             className="error-message"
             style={{
               whiteSpace: "pre-line",
@@ -760,6 +764,8 @@ function VerificationDocuments() {
 
         {success && (
           <div
+            role="status"
+            aria-live="polite"
             className="success-message"
             style={{
               marginBottom: "20px",
@@ -775,6 +781,7 @@ function VerificationDocuments() {
 
 
         <form
+  aria-label={t("vdFormLabel")}
   onSubmit={handleSubmit}
 >
 
@@ -792,7 +799,10 @@ function VerificationDocuments() {
               Verification Type
             </h2>
 
+            <label htmlFor="verification-type">{t("vdVerificationType")}</label>
             <select
+              id="verification-type"
+              aria-label={t("vdVerificationType")}
               value={verificationType}
               onChange={(e) =>
                 setVerificationType(
@@ -842,7 +852,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="Organization / Company Name"
+              aria-label={t("vdOrganizationName")}
+              placeholder={t("vdOrganizationName")}
               value={organizationName}
               onChange={(e) =>
                 setOrganizationName(
@@ -860,7 +871,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="Contact Name"
+              aria-label={t("vdContactName")}
+              placeholder={t("vdContactName")}
               value={contactName}
               onChange={(e) =>
                 setContactName(
@@ -879,7 +891,8 @@ function VerificationDocuments() {
 
             <input
               type="email"
-              placeholder="Contact Email"
+              aria-label={t("vdContactEmail")}
+              placeholder={t("vdContactEmail")}
               value={contactEmail}
               onChange={(e) =>
                 setContactEmail(
@@ -898,7 +911,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="Country"
+              aria-label={t("vdCountry")}
+              placeholder={t("vdCountry")}
               value={country}
               onChange={(e) =>
                 setCountry(
@@ -916,7 +930,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="State"
+              aria-label={t("vdState")}
+              placeholder={t("vdState")}
               value={state}
               onChange={(e) =>
                 setState(
@@ -934,7 +949,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="City"
+              aria-label={t("vdCity")}
+              placeholder={t("vdCity")}
               value={city}
               onChange={(e) =>
                 setCity(
@@ -952,7 +968,8 @@ function VerificationDocuments() {
 
             <textarea
               rows={4}
-              placeholder="Additional Notes"
+              aria-label={t("vdAdditionalNotes")}
+              placeholder={t("vdAdditionalNotes")}
               value={notes}
               onChange={(e) =>
                 setNotes(
@@ -1007,6 +1024,7 @@ function VerificationDocuments() {
 
 
                   <input
+                    aria-label={t("vdUploadDocument", { document: documentName })}
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) =>
@@ -1134,6 +1152,7 @@ function VerificationDocuments() {
 
 
               <progress
+                aria-label={t("vdDocumentProgress")}
                 value={
                   Object.keys(
                     uploadedDocuments
@@ -1431,7 +1450,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="State / Province"
+              aria-label={t("vdState")}
+              placeholder={t("vdState")}
               value={state}
               onChange={(e) =>
                 setState(
@@ -2195,6 +2215,7 @@ function VerificationDocuments() {
 
             <button
               type="submit"
+              aria-label={t("vdSubmit")}
               disabled={
                 loading ||
                 Object.keys(uploadedDocuments).length !==
