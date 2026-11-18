@@ -218,6 +218,36 @@ const [verificationStatistics, setVerificationStatistics] =
         </p>
 
         <section
+          aria-label="Verification status access"
+          style={{
+            marginTop: "20px",
+            marginBottom: "24px",
+            padding: "18px",
+            background: "#0f172a",
+            border: "1px solid #0d9488",
+            borderRadius: "14px",
+          }}
+        >
+          <h2>Track Your Verification</h2>
+          <p>View your application progress, review updates and securely access documents you have submitted.</p>
+          <button
+            type="button"
+            onClick={() => navigate("/verification-status")}
+            style={{
+              padding: "12px 18px",
+              border: "none",
+              borderRadius: "10px",
+              background: "#0f766e",
+              color: "#ffffff",
+              fontWeight: "700",
+              cursor: "pointer",
+            }}
+          >
+            View Verification Status
+          </button>
+        </section>
+
+        <section
   style={{
     marginTop: "30px",
     marginBottom: "30px",
