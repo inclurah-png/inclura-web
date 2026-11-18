@@ -48,7 +48,7 @@ const isAdmin = role === "admin";
       navigate("/login", { replace: true });
     } catch (error) {
       console.error("Logout failed:", error);
-      alert("We could not sign you out. Please try again.");
+      alert(t("error"));
       setLoggingOut(false);
     }
   }
@@ -101,57 +101,78 @@ const isAdmin = role === "admin";
           cursor: loggingOut ? "wait" : "pointer",
         }}
       >
-        🚪 {loggingOut ? "Signing out..." : t("logout")}
+        🚪 {loggingOut ? t("loading") : t("logout")}
       </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("dashboard")}
+        title={t("dashboard")}
         onClick={() => navigate("/profile")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         🏠 {t("dashboard")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("notifications")}
+        title={t("notifications")}
         onClick={() => navigate("/notifications")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         🔔 {t("notifications")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("messages")}
+        title={t("messages")}
         onClick={() => navigate("/messages")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         💬 {t("messages")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("wallet")}
+        title={t("wallet")}
         onClick={() => navigate("/wallet")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         💰 {t("wallet")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("savedPosts")}
+        title={t("savedPosts")}
         onClick={() => navigate("/saved-posts")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         🔖 {t("savedPosts")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("search")}
+        title={t("search")}
         onClick={() => navigate("/search")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         🔍 {t("search")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
+      <button
+        type="button"
+        aria-label={t("editProfile")}
+        title={t("editProfile")}
         onClick={() => navigate("/edit-profile")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
         ⚙ {t("editProfile")}
-      </div>
+      </button>
 
       <div
         style={itemStyle}
