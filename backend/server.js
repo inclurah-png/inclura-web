@@ -9,6 +9,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import passkeyRoutes from "./src/routes/passkeyRoutes.js";
+import mediaRoutes from "./src/routes/mediaRoutes.js";
 
 import {
   initializeFirebaseAdmin,
@@ -278,6 +279,12 @@ app.post("/api/analytics/platform", async (req, res) => {
     return res.status(500).json({ success: false, message: "Platform analytics could not be generated." });
   }
 });
+
+// =======================================================
+// Protected Media Upload Routes
+// =======================================================
+
+app.use("/api/media", mediaRoutes);
 
 // =======================================================
 // IFSE Identity Routes
