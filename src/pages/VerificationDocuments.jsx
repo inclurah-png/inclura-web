@@ -13,16 +13,11 @@ import {
 } from "firebase/firestore";
 
 import {
-  getDownloadURL,
-  ref,
-  uploadBytes,
-} from "firebase/storage";
-
-import {
   auth,
   db,
-  storage,
 } from "../firebase";
+
+import { uploadVerificationDocumentToCloudinary } from "../services/cloudinaryUpload";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -483,29 +478,9 @@ function VerificationDocuments() {
           continue;
         }
 
-        const safeFileName =
-          documentInfo.file.name.replace(
-            /[^a-zA-Z0-9._-]/g,
-            "_"
-          );
-
-        const storagePath =
-          `verificationDocuments/${verificationId}/${Date.now()}_${safeFileName}`;
-
-        const storageRef =
-          ref(
-            storage,
-            storagePath
-          );
-
-        await uploadBytes(
-          storageRef,
-          documentInfo.file
-        );
-
-        const downloadURL =
-          await getDownloadURL(
-            storageRef
+        const cloudinaryAsset =
+          await uploadVerificationDocumentToCloudinary(
+            documentInfo.file
           );
 
         uploadedFiles[
@@ -520,9 +495,14 @@ function VerificationDocuments() {
           fileType:
             documentInfo.file.type,
 
-          storagePath,
+          cloudinaryPublicId:
+            cloudinaryAsset.publicId,
 
-          downloadURL,
+          cloudinaryResourceType:
+            cloudinaryAsset.resourceType,
+
+          cloudinaryAssetId:
+            cloudinaryAsset.assetId,
 
           uploadedAt:
             new Date().toISOString(),
