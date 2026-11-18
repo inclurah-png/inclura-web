@@ -905,7 +905,7 @@ const openVerificationDocument = async (documentRecord) => {
       type="button"
       onClick={() => navigate("/verification-center")}
     >
-      Verification Centre
+      {t("verificationCentre")}
     </button>
 
     <button
@@ -919,14 +919,14 @@ const openVerificationDocument = async (documentRecord) => {
       type="button"
       onClick={() => navigate("/verification-payment")}
     >
-      Verification Payment
+      {t("verificationPayment")}
     </button>
 
     <button
       type="button"
       onClick={() => navigate("/home")}
     >
-      Return Home
+      {t("returnHome")}
     </button>
 
   </div>
@@ -947,7 +947,7 @@ const openVerificationDocument = async (documentRecord) => {
 
   <p>
 
-    Your verification is continuously protected through:
+    {t("vc_ifseDescription")}
 
   </p>
 
@@ -984,7 +984,7 @@ const openVerificationDocument = async (documentRecord) => {
     }}
   >
 
-    Powered by the Inclura Fortress Security Engine (IFSE).
+    {t("vc_securePoweredByIFSE")}
 
   </p>
 
@@ -992,15 +992,7 @@ const openVerificationDocument = async (documentRecord) => {
 
 <p>
 
-Verification requests are protected by the
-
-Inclura Fortress Security Engine (IFSE).
-
-Your documents, payment, audit history,
-
-and verification progress are continuously
-
-monitored until verification is completed.
+{t("vc_ifseDescription")}
 
 </p>
 
