@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "../components/DashboardLayout";
 import AccessibilitySettings from "../components/AccessibilitySettings";
 
-function AccessibilityHub() {
+function AccessibilityHub() {\nconst { t } = useTranslation();
 const [activeSection, setActiveSection] =
 useState("settings");
 
@@ -10,49 +11,49 @@ const sections = [
 {
 id: "settings",
 icon: "⚙️",
-title: "Accessibility Settings",
+titleKey: "accessibilityDisplayLanguage",
 description:
 "Adjust language, text size, contrast, motion, and voice guidance.",
 },
 {
 id: "requests",
 icon: "🆘",
-title: "Accessibility Requests",
+titleKey: "accessibilityRequests",
 description:
 "A dedicated place for accessibility assistance requests.",
-status: "Not yet connected",
+statusKey: "notConnected",
 },
 {
 id: "resources",
 icon: "📚",
-title: "Accessibility Resources",
+titleKey: "accessibilityResources",
 description:
 "A future collection of guides and practical accessibility resources.",
-status: "Resources not yet connected",
+statusKey: "resourcesNotConnected",
 },
 {
 id: "directory",
 icon: "🏢",
-title: "Accessibility Directory",
+titleKey: "accessibilityDirectory",
 description:
 "A future directory of accessible services and organizations.",
-status: "Directory not yet connected",
+statusKey: "directoryNotConnected",
 },
 {
 id: "community",
 icon: "🤝",
-title: "Community Support",
+titleKey: "communitySupport",
 description:
 "A future space for accessibility-focused community support.",
-status: "Community feature not yet connected",
+statusKey: "communityNotConnected",
 },
 {
 id: "emergency",
 icon: "🚨",
-title: "Emergency Accessibility Help",
+titleKey: "emergencyAccessibilityHelp",
 description:
 "Emergency assistance needs a verified contact and dispatch workflow before it can be activated.",
-status: "Emergency workflow not yet connected",
+statusKey: "emergencyNotConnected",
 },
 ];
 
@@ -65,7 +66,7 @@ return (
 <main style={styles.page}>
 <header style={styles.header}>
 <h1 style={styles.heading}>
-♿ Accessibility Hub
+♿ {t("accessibilityHubTitle")}
 </h1>
 
       <p style={styles.intro}>
@@ -75,7 +76,7 @@ return (
     </header>
 
     <nav
-      aria-label="Accessibility Hub sections"
+      aria-label={t("accessibilitySections")}
       style={styles.navigation}
     >
       {sections.map((section) => (
@@ -115,17 +116,17 @@ return (
       style={styles.content}
     >
       <h2 id="accessibility-section-heading">
-        {activeItem?.title}
+        {t(activeItem?.titleKey || "accessibilityDisplayLanguage")}
       </h2>
 
       {activeSection === "settings" ? (
         <AccessibilitySettings />
       ) : (
         <div style={styles.notice}>
-          <p>{activeItem?.description}</p>
+          <p>{t(activeItem?.descriptionKey || "accessibilityHubIntro")}</p>
 
           <p style={styles.status}>
-            {activeItem?.status}
+            {t(activeItem?.statusKey || "notConnected")}
           </p>
 
           {activeSection === "emergency" && (
