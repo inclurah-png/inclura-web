@@ -49,8 +49,8 @@ const [verificationStatistics, setVerificationStatistics] =
   );
 
   const IFSE_STAGES = [
-  "{t("verificationType")}",
-  "{t("secureUploadedDocuments")}",
+  "Identity Verification",
+  "Document Authentication",
   "AI Fraud Detection",
   "Forgery Detection",
   "Duplicate Detection",
@@ -61,8 +61,8 @@ const [verificationStatistics, setVerificationStatistics] =
 ];
   
   const ifseLayers = [
-    "{t("verificationType")}",
-    "{t("secureUploadedDocuments")}",
+    "Identity Verification",
+    "Document Authentication",
     "AI Fraud Detection",
     "Forgery Detection",
     "Duplicate Detection",
@@ -166,7 +166,7 @@ const [verificationStatistics, setVerificationStatistics] =
       console.error(err);
 
       setError(
-        "{t("error")}"
+        t("error")
       );
 
     }
@@ -193,9 +193,7 @@ const [verificationStatistics, setVerificationStatistics] =
           padding: "24px",
         }}
       >
-        <h1>
-          {t("verificationCenter")}
-        </h1>
+        <h1>{t("verificationCenter")}</h1>
         {loading && (
 
   <p>{t("loading")}</p>
@@ -231,7 +229,7 @@ const [verificationStatistics, setVerificationStatistics] =
           }}
         >
           <h2>{t("trackVerification")}</h2>
-          <p>{t("privateDocumentsNotice")}</p>
+          <p>View your application progress, review updates and securely access documents you have submitted.</p>
           <button
             type="button"
             onClick={() => navigate("/verification-status")}
@@ -245,7 +243,7 @@ const [verificationStatistics, setVerificationStatistics] =
               cursor: "pointer",
             }}
           >
-            {t("verificationStatusTitle")}
+            View Verification Status
           </button>
         </section>
 
@@ -312,7 +310,7 @@ const [verificationStatistics, setVerificationStatistics] =
         border: "1px solid #ef4444",
       }}
     >
-      <h3>{t("rejected", { defaultValue: "Rejected" })}</h3>
+      <h3>Rejected</h3>
       <h1>{verificationStatistics.rejected}</h1>
     </div>
 
@@ -335,8 +333,8 @@ const [verificationStatistics, setVerificationStatistics] =
   <h2>{t("verificationSummary")}</h2>
 
   <p>
-    <strong>{t("verification{t("verificationType")}")}:</strong>{" "}
-    {verification.verification{t("verificationType")}}
+    <strong>{t("verificationType")}:</strong>{" "}
+    {verification.verificationType}
   </p>
 
   <p>
@@ -356,15 +354,15 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <p>
     <strong>{t("executiveReview")}:</strong>{" "}
-    {verification.executiveReview{t("required")}
-      ? "{t("required")}"
-      : "Not {t("required")}"}
+    {verification.executiveReviewRequired
+      ? "Required"
+      : "Not Required"}
   </p>
 
   <p>
-    <strong>{t("submitted")}:</strong>{" "}
+    <strong>Submitted:</strong>{" "}
     {verification.createdAt?.toDate?.().toLocaleString?.() ??
-      "{t("pending")}"}
+      "Pending"}
   </p>
 
   <div
@@ -381,7 +379,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-status")
       }
     >
-      {t("verificationStatusTitle")}
+      View Status
     </button>
 
     <button
@@ -389,7 +387,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-documents")
       }
     >
-      {t("uploadAdditionalDocuments")}
+      Upload Documents
     </button>
 
     <button
@@ -397,7 +395,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-payment")
       }
     >
-      {t("verificationPayment")}
+      Continue Payment
     </button>
 
   </div>
@@ -444,7 +442,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              {t("verificationType")}
+              Type
             </th>
 
             <th
@@ -462,7 +460,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              {t("threatLevel")}
+              Threat
             </th>
 
             <th
@@ -471,7 +469,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              {t("riskScore")}
+              Risk
             </th>
 
             <th
@@ -480,7 +478,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              {t("submitted")}
+              Submitted
             </th>
 
           </tr>
@@ -498,7 +496,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {item.verification{t("verificationType")}}
+                {item.verificationType}
               </td>
 
               <td
@@ -531,7 +529,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 }}
               >
                 {item.createdAt?.toDate?.().toLocaleString?.() ??
-                  "{t("pending")}"}
+                  "Pending"}
               </td>
 
             </tr>
@@ -577,7 +575,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>{t("verificationType")}</strong>
+      <strong>Identity Verification</strong>
       <p>🟢 Active</p>
     </div>
 
@@ -588,7 +586,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>{t("secureUploadedDocuments")}</strong>
+      <strong>Document Authentication</strong>
       <p>🟢 Active</p>
     </div>
 
@@ -621,7 +619,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>{t("accessibilityNeeds")}</strong>
+      <strong>Accessibility Validation</strong>
       <p>🟢 Enabled</p>
     </div>
 
@@ -632,11 +630,11 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>{t("executiveReview")}</strong>
+      <strong>Executive Review Engine</strong>
       <p>
-        {verification?.executiveReview{t("required")}
+        {verification?.executiveReviewRequired
           ? "🟡 Waiting"
-          : "🟢 Not {t("required")}"}
+          : "🟢 Not Required"}
       </p>
     </div>
 
@@ -690,7 +688,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          {t("verificationCenter")}
+          Choose Verification Category
         </h2>
 
         <div
@@ -732,7 +730,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
                 <p>
                   <strong>
-                    Available {t("verificationType")}s:
+                    Available Types:
                   </strong>
                 </p>
 
@@ -742,7 +740,7 @@ const [verificationStatistics, setVerificationStatistics] =
                     marginBottom: "18px",
                   }}
                 >
-                  {plan.verification{t("verificationType")}s
+                  {plan.verificationTypes
                     ?.slice(0, 4)
                     .map((item) => (
                       <li key={item.id}>
@@ -750,11 +748,11 @@ const [verificationStatistics, setVerificationStatistics] =
                       </li>
                     ))}
 
-                  {plan.verification{t("verificationType")}s
+                  {plan.verificationTypes
                     ?.length > 4 && (
                     <li>
                       +
-                      {plan.verification{t("verificationType")}s.length - 4}
+                      {plan.verificationTypes.length - 4}
                       {" "}more...
                     </li>
                   )}
@@ -777,7 +775,7 @@ const [verificationStatistics, setVerificationStatistics] =
                     cursor: "pointer",
                   }}
                 >
-                  {t("continue")}
+                  Start Verification
                 </button>
               </div>
             );
@@ -790,7 +788,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          {t("ifseProtection")}
+          IFSE Security Layers
         </h2>
 
         <ul>
@@ -844,7 +842,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <h3>{t("verificationRequests")}</h3>
+      <h3>Total Requests</h3>
       <p
         style={{
           fontSize: "28px",
@@ -910,7 +908,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <h3>{t("rejected", { defaultValue: "Rejected" })}</h3>
+      <h3>Rejected</h3>
       <p
         style={{
           fontSize: "28px",
@@ -935,7 +933,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          {t("verified")}
+          Benefits of Verification
         </h2>
 
         <ul>
@@ -959,7 +957,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          {t("verificationProgress")}
+          Verification Process
         </h2>
 
         <ol
@@ -1065,7 +1063,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <p style={{ marginTop: "10px" }}>
         {verification?.status === "approved"
           ? "✅ Issued"
-          : "⏳ {t("pending")} Approval"}
+          : "⏳ Pending Approval"}
       </p>
 
     </div>
@@ -1196,9 +1194,9 @@ const [verificationStatistics, setVerificationStatistics] =
       <strong>Executive Review Queue</strong>
 
       <p style={{ marginTop: "10px" }}>
-        {verification?.executiveReview{t("required")}
+        {verification?.executiveReviewRequired
           ? "🟡 Waiting for Executive Review"
-          : "🟢 Not {t("required")}"}
+          : "🟢 Not Required"}
       </p>
 
     </div>
@@ -1286,7 +1284,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <p style={{ marginTop: "10px" }}>
         {verification?.status === "approved"
           ? "Certificate Available"
-          : "Certificate {t("pending")} Approval"}
+          : "Certificate Pending Approval"}
       </p>
 
     </div>
@@ -1331,7 +1329,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-documents")
       }
     >
-      {t("uploadAdditionalDocuments")}
+      Upload Documents
     </button>
 
     <button
@@ -1339,7 +1337,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-status")
       }
     >
-      {t("verificationStatusTitle")}
+      View Verification Status
     </button>
 
     <button
@@ -1348,7 +1346,7 @@ const [verificationStatistics, setVerificationStatistics] =
           state: {
             verificationId: verification?.id || "",
             category: verification?.category || "creator",
-            verification{t("verificationType")}: verification?.verification{t("verificationType")} || "",
+            verificationType: verification?.verificationType || "",
             paymentAmount: verification?.paymentAmount || 0,
           },
         })
@@ -1356,7 +1354,7 @@ const [verificationStatistics, setVerificationStatistics] =
       disabled={!verification}
       title={!verification ? "Submit a verification application first" : "Continue to secure payment"}
     >
-      {t("verificationPayment")}
+      Continue Payment
     </button>
 
     <button
@@ -1385,7 +1383,7 @@ const [verificationStatistics, setVerificationStatistics] =
     color: "#94a3b8",
   }}
 >
-  © {t("verificationCenter")}
+  © Inclura Verification Center
 
   <br />
 
