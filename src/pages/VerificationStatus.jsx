@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
 
@@ -25,6 +26,7 @@ import { getVerificationDocumentAccess } from "../services/cloudinaryUpload";
 function VerificationStatus() {
   
 const navigate = useNavigate();
+const { t } = useTranslation();
 
 // Track the currently signed-in user
 const [currentUser, setCurrentUser] = useState(null);
@@ -315,14 +317,14 @@ loadAuditLogs();
 const openVerificationDocument = async (documentRecord) => {
   const popup = window.open("about:blank", "_blank");
   if (!popup) {
-    setDocumentError("Allow pop-ups for Inclura to open your secure document.");
+    setDocumentError(t("allowPopups"));
     return;
   }
   try {
     setOpeningDocument(documentRecord.fileName || documentRecord.cloudinaryPublicId);
     setDocumentError("");
-    popup.document.title = "Opening secure verification document";
-    popup.document.body.innerText = "Authorizing secure document access…";
+    popup.document.title = t("openingSecureDocument");
+    popup.document.body.innerText = t("authorizingDocument");
     const access = await getVerificationDocumentAccess(verification.id, documentRecord.cloudinaryPublicId);
     popup.location.replace(access.downloadUrl);
   } catch (err) {
@@ -339,7 +341,7 @@ const openVerificationDocument = async (documentRecord) => {
 
 <div className="verification-status-page">
 
-<h1>Verification Status</h1>
+<h1>{t("verificationStatusTitle")}</h1>
 
 <p>
 
@@ -373,7 +375,7 @@ Track your verification progress through the
   }}
 >
 
-  <h2>Verification Summary</h2>
+  <h2>{t("verificationSummary")}</h2>
 
   <div
     style={{
@@ -387,7 +389,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Verification Type</strong>
+      <strong>{t("verificationType")}</strong>
 
       <p>{verification.verificationType}</p>
 
@@ -395,7 +397,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Status</strong>
+      <strong>{t("status")}</strong>
 
       <p>{verification.status}</p>
 
@@ -403,7 +405,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Risk Score</strong>
+      <strong>{t("riskScore")}</strong>
 
       <p>
   {Number(
@@ -417,7 +419,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Threat Level</strong>
+      <strong>{t("threatLevel")}</strong>
 
 <p>
   {verification.threatLevel ??
@@ -429,7 +431,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Executive Review</strong>
+      <strong>{t("executiveReview")}</strong>
 
       <p>
         {verification.executiveReview
@@ -441,7 +443,7 @@ Track your verification progress through the
 
     <div>
 
-      <strong>Submitted</strong>
+      <strong>{t("submitted")}</strong>
 
       <p>
         {verification.createdAt?.toDate?.().toLocaleString?.() ||
@@ -458,11 +460,11 @@ Track your verification progress through the
 
 {verification && (
   <section style={{ marginBottom: "24px", padding: "20px", background: "#0f172a", border: "1px solid #334155", borderRadius: "12px" }}>
-    <h2>Securely Uploaded Documents</h2>
-    <p>Only the application owner or an authorized administrator can open these private files. Access links expire automatically.</p>
+    <h2>{t("secureUploadedDocuments")}</h2>
+    <p>{t("privateDocumentsNotice")}</p>
     {documentError && <p role="alert" style={{ color: "#fca5a5" }}>{documentError}</p>}
     {Object.entries(verification.uploadedDocuments || {}).length === 0 ? (
-      <p>No verification documents have been uploaded to this application yet.</p>
+      <p>{t("noDocumentsUploaded")}</p>
     ) : (
       <div style={{ display: "grid", gap: "12px" }}>
         {Object.entries(verification.uploadedDocuments || {}).map(([documentName, documentRecord]) => (
@@ -470,7 +472,7 @@ Track your verification progress through the
             <div><strong>{documentName}</strong><p style={{ margin: "4px 0 0", color: "#cbd5e1" }}>{documentRecord.fileName || "Uploaded document"}</p></div>
             {documentRecord.cloudinaryPublicId ? (
               <button type="button" disabled={Boolean(openingDocument)} onClick={() => openVerificationDocument(documentRecord)} style={{ padding: "10px 14px", borderRadius: "8px", border: "none", background: "#0f766e", color: "white", cursor: openingDocument ? "wait" : "pointer" }}>
-                {openingDocument === (documentRecord.fileName || documentRecord.cloudinaryPublicId) ? "Authorizing…" : "Open securely"}
+                {openingDocument === (documentRecord.fileName || documentRecord.cloudinaryPublicId) ? t("authorizing") : t("openSecurely")}
               </button>
             ) : <span style={{ color: "#fbbf24" }}>Legacy file — secure link unavailable</span>}
           </div>
@@ -491,14 +493,14 @@ Track your verification progress through the
   }}
 >
 
-  <h2>IFSE Verification Progress</h2>
+  <h2>{t("verificationProgress")}</h2>
 
   <p
     style={{
       marginBottom: "16px",
     }}
   >
-    Overall Progress: <strong>{progress}%</strong>
+    {t("overallProgress")}: <strong>{progress}%</strong>
   </p>
 
   <div
@@ -589,11 +591,11 @@ Track your verification progress through the
   }}
 >
 
-  <h2>Verification Timeline</h2>
+  <h2>{t("verificationTimeline")}</h2>
 
   {timeline.length === 0 ? (
 
-    <p>No verification events yet.</p>
+    <p>{t("noVerificationEvents")}</p>
 
   ) : (
 
@@ -682,11 +684,11 @@ Track your verification progress through the
   }}
 >
 
-  <h2>IFSE Security Events</h2>
+  <h2>{t("ifseSecurityEvents")}</h2>
 
   {securityEvents.length === 0 ? (
 
-    <p>No IFSE security events recorded.</p>
+    <p>{t("noSecurityEvents")}</p>
 
   ) : (
 
@@ -746,7 +748,7 @@ Track your verification progress through the
 
 <p>
 
-<strong>Resolved:</strong>{" "}
+<strong>{t("resolved")}:</strong>{" "}
 
 {event.resolved
 ? "Yes"
@@ -783,11 +785,11 @@ Track your verification progress through the
   }}
 >
 
-  <h2>IFSE Audit Logs</h2>
+  <h2>{t("ifseAuditLogs")}</h2>
 
   {auditLogs.length === 0 ? (
 
-    <p>No audit logs available.</p>
+    <p>{t("noAuditLogs")}</p>
 
   ) : (
 
@@ -868,7 +870,7 @@ Track your verification progress through the
 
   <section>
 
-<h2>IFSE Protection</h2>
+<h2>{t("ifseProtection")}</h2>
 
 <ul>
 
