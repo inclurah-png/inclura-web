@@ -392,7 +392,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
     <button
       onClick={() =>
-        navigate("/creator-verification-payment")
+        navigate("/verification-payment")
       }
     >
       Continue Payment
