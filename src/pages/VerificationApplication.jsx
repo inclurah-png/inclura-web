@@ -1,5 +1,6 @@
 import { processVerification } from "../utils/processVerification";
 import { useState, useMemo, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -21,6 +22,7 @@ import { VERIFICATION_PLANS } from "../config";
 function VerificationApplication() {
 
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const categories = useMemo(
     () => Object.keys(VERIFICATION_PLANS),
@@ -85,10 +87,10 @@ if (verificationTypes?.length > 0) {
 
 const paymentFrequency =
   selectedVerification?.monthlyUSD
-    ? "Monthly"
+    ? t("vaMonthly")
     : selectedVerification?.yearlyUSD
-    ? "Yearly"
-    : "One Time";
+    ? t("vaYearly")
+    : t("vaOneTime");
 
   const isEnterprise =
   selectedVerification?.enterprise === true;
@@ -103,27 +105,27 @@ async function handleContinue() {
   const user = auth.currentUser;
 
   if (!user) {
-    alert("Please login first.");
+    alert(t("vaLoginFirst"));
     return;
   }
 
   if (!fullName.trim()) {
-    alert("Enter your full name.");
+    alert(t("vaEnterName"));
     return;
   }
 
   if (!email.trim()) {
-    alert("Enter your email.");
+    alert(t("vaEnterEmail"));
     return;
   }
 
   if (!phone.trim()) {
-    alert("Enter your phone number.");
+    alert(t("vaEnterPhone"));
     return;
   }
 
   if (!verificationType) {
-    alert("Select a verification type.");
+    alert(t("vaSelectType"));
     return;
   }
 
@@ -427,7 +429,7 @@ async function handleContinue() {
     // ==========================================
 
     alert(
-      "Verification request submitted successfully."
+      t("vaSubmitSuccess")
     );
 
     navigate(
@@ -441,7 +443,7 @@ async function handleContinue() {
     );
 
     alert(
-      "Unable to submit verification request."
+      t("vaSubmitError")
     );
   }
 }
@@ -468,15 +470,13 @@ async function handleContinue() {
           margin: "0 auto",
         }}
       >
-        <h1>
-          Verification Application
-        </h1>
+        <h1>{t("vaTitle")}</h1>
 
         <p>
-          Complete the form below to apply for verification.
+          {t("vaIntro")}
         </p>
                 <label>
-          Verification Category
+          {t("vaCategory")}
         </label>
 
         <select
@@ -494,15 +494,14 @@ async function handleContinue() {
               value={key}
             >
               {
-                VERIFICATION_PLANS[key]
-                  ?.title
+                t(`vaCategory_${key}`, { defaultValue: VERIFICATION_PLANS[key]?.title })
               }
             </option>
           ))}
         </select>
 
         <label>
-          Verification Type
+          {t("vaTypeLabel")}
         </label>
 
         <select
@@ -520,14 +519,14 @@ async function handleContinue() {
                 key={item.id}
                 value={item.id}
               >
-                {item.name}
+                {t(`vaType_${item.id}`, { defaultValue: item.name })}
               </option>
             )
           )}
         </select>
 
         <label>
-          Full Name
+          {t("fullName")}
         </label>
 
         <input
@@ -542,7 +541,7 @@ async function handleContinue() {
         />
 
         <label>
-          Email Address
+          {t("email")}
         </label>
 
         <input
@@ -557,7 +556,7 @@ async function handleContinue() {
         />
 
         <label>
-          Phone Number
+          {t("vaPhone")}
         </label>
 
         <input
@@ -572,7 +571,7 @@ async function handleContinue() {
         />
 
         <label>
-          Organization / Brand Name
+          {t("vaOrganization")}
         </label>
 
         <input
@@ -587,7 +586,7 @@ async function handleContinue() {
         />
 
         <label>
-          Official Website
+          {t("vaWebsite")}
         </label>
 
         <input
@@ -603,7 +602,7 @@ async function handleContinue() {
                 {category === "creator" && (
           <>
             <label>
-              Primary Social Link
+              {t("vaPrimarySocial")}
             </label>
 
             <input
@@ -615,11 +614,11 @@ async function handleContinue() {
                 )
               }
               style={inputStyle}
-              placeholder="https://..."
+              placeholder={t("vaUrlPlaceholder")}
             />
 
             <label>
-              Secondary Social Link
+              {t("vaSecondarySocial")}
             </label>
 
             <input
@@ -648,13 +647,11 @@ async function handleContinue() {
                 fontWeight: "600",
               }}
             >
-              🏛 Government verification is reviewed
-              manually by Inclura and does not require
-              online payment.
+              🏛 {t("vaGovernmentNotice")}
             </div>
 
             <label>
-              Official Government Email
+              {t("vaOfficialEmail")}
             </label>
 
             <input
@@ -672,7 +669,7 @@ async function handleContinue() {
         )}
 
         <label>
-          Upload Supporting Document
+          {t("vaUploadSupporting")}
         </label>
 
         <input
@@ -697,19 +694,19 @@ async function handleContinue() {
     marginBottom: "24px",
   }}
 >
-  <h3>Verification Fee</h3>
+  <h3>{t("vaFee")}</h3>
 
   {requiresContract ? (
     <p>
-      <strong>Contract Required</strong>
+      <strong>{t("vaContractRequired")}</strong>
       <br />
-      Pricing will be determined after IFSE due diligence and partnership review.
+      {t("vaContractDescription")}
     </p>
   ) : isEnterprise ? (
     <p>
-      <strong>Enterprise Pricing</strong>
+      <strong>{t("vaEnterprisePricing")}</strong>
       <br />
-      Contact Inclura for a customized quotation.
+      {t("vaEnterpriseQuote")}
     </p>
   ) : (
     <>
@@ -730,7 +727,7 @@ async function handleContinue() {
           fontWeight: "600",
         }}
       >
-        {paymentFrequency} Subscription
+        {paymentFrequency} {t("vaSubscription")}
       </p>
     </>
   )}
@@ -751,12 +748,12 @@ async function handleContinue() {
           }}
         >
 {requiresContract
-  ? "Continue To Corporate Partnership"
+  ? t("vaContinueCorporate")
   : isEnterprise
-  ? "Submit Partnership Request"
+  ? t("vaSubmitPartnership")
   : paymentAmount > 0
-  ? "Continue To Payment"
-  : "Submit Verification Request"}
+  ? t("vaContinuePayment")
+  : t("vaSubmitRequest")}
         </button>
       </div>
     </DashboardLayout>
