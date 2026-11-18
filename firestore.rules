@@ -654,5 +654,138 @@ service cloud.firestore {
       allow delete: if ownsContact();
     }
 
+    // Verification applications and supporting records are private to the applicant.
+    function ownsVerification(verificationId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/verificationRequests/$(verificationId))
+        && (
+          get(/databases/$(database)/documents/verificationRequests/$(verificationId)).data.userId == request.auth.uid
+          || get(/databases/$(database)/documents/verificationRequests/$(verificationId)).data.submittedBy == request.auth.uid
+        );
+    }
+
+    function ownsPayment(paymentId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/verificationPayments/$(paymentId))
+        && get(/databases/$(database)/documents/verificationPayments/$(paymentId)).data.userId == request.auth.uid;
+    }
+
+    match /verificationRequests/{verificationId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.category is string
+        && request.resource.data.verificationType is string
+        && request.resource.data.fullName is string
+        && request.resource.data.email is string
+        && request.resource.data.phone is string
+        && request.resource.data.paymentAmount is number
+        && request.resource.data.paymentAmount >= 0
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt is timestamp;
+
+      allow get, list: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || resource.data.submittedBy == request.auth.uid);
+
+      allow update: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || resource.data.submittedBy == request.auth.uid)
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.submittedBy == resource.data.submittedBy
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'verificationType', 'organizationName', 'contactName', 'contactEmail',
+          'country', 'state', 'city', 'notes', 'uploadedDocuments',
+          'documentsSubmitted', 'documentSubmissionStatus', 'status',
+          'updatedAt', 'paymentStatus', 'paymentId'
+        ]);
+
+      allow delete: if false;
+    }
+
+    match /verificationTimeline/{entryId} {
+      allow create: if request.auth != null
+        && request.resource.data.verificationId is string
+        && ownsVerification(request.resource.data.verificationId)
+        && request.resource.data.createdBy == request.auth.uid;
+      allow get, list: if request.auth != null
+        && ownsVerification(resource.data.verificationId);
+      allow update, delete: if false;
+    }
+
+    match /verificationDocuments/{documentId} {
+      allow create: if request.auth != null
+        && request.resource.data.verificationId is string
+        && request.resource.data.submittedBy == request.auth.uid
+        && ownsVerification(request.resource.data.verificationId);
+      allow get, list: if request.auth != null
+        && ownsVerification(resource.data.verificationId);
+      allow update, delete: if false;
+    }
+
+    match /verificationAuditLogs/{logId} {
+      allow create: if request.auth != null
+        && request.resource.data.verificationId is string
+        && (request.resource.data.performedBy == request.auth.uid
+            || request.resource.data.actor == request.auth.uid)
+        && ownsVerification(request.resource.data.verificationId);
+      allow get, list: if request.auth != null
+        && ownsVerification(resource.data.verificationId);
+      allow update, delete: if false;
+    }
+
+    match /ifseSecurityEvents/{eventId} {
+      allow create: if request.auth != null
+        && request.resource.data.verificationId is string
+        && ownsVerification(request.resource.data.verificationId);
+      allow get, list: if request.auth != null
+        && ownsVerification(resource.data.verificationId);
+      allow update, delete: if false;
+    }
+
+    // Payment records are visible only to the member who paid.
+    match /verificationPayments/{paymentId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.verificationId is string
+        && ownsVerification(request.resource.data.verificationId)
+        && request.resource.data.amount is number
+        && request.resource.data.amount > 0
+        && request.resource.data.currency == 'USD'
+        && request.resource.data.paymentStatus == 'paid'
+        && request.resource.data.status == 'completed';
+      allow get, list: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /ifsePaymentEvents/{eventId} {
+      allow create: if request.auth != null
+        && request.resource.data.paymentId is string
+        && ownsPayment(request.resource.data.paymentId);
+      allow get, list: if request.auth != null
+        && ownsPayment(resource.data.paymentId);
+      allow update, delete: if false;
+    }
+
+    match /paymentAuditLogs/{logId} {
+      allow create: if request.auth != null
+        && request.resource.data.paymentId is string
+        && request.resource.data.actor == request.auth.uid
+        && ownsPayment(request.resource.data.paymentId);
+      allow get, list: if request.auth != null
+        && ownsPayment(resource.data.paymentId);
+      allow update, delete: if false;
+    }
+
+    match /paymentTimeline/{entryId} {
+      allow create: if request.auth != null
+        && request.resource.data.paymentId is string
+        && ownsPayment(request.resource.data.paymentId);
+      allow get, list: if request.auth != null
+        && ownsPayment(resource.data.paymentId);
+      allow update, delete: if false;
+    }
+
   }
 }
