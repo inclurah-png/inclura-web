@@ -1,0 +1,12 @@
+# Cloudflare Pages cache policy
+# Revalidate the app shell on every visit so it always references the
+# JavaScript chunks from the currently deployed build.
+/
+  Cache-Control: no-cache
+/index.html
+  Cache-Control: no-cache
+/*.html
+  Cache-Control: no-cache
+# Vite emits content-hashed assets; these are safe to cache immutably.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
