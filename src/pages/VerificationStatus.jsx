@@ -427,7 +427,7 @@ const openVerificationDocument = async (documentRecord) => {
       <strong>{t("threatLevel")}</strong>
 
 <p>
-  {t(assessment.threatLevel.toLowerCase(), { defaultValue: assessment.threatLevel })}
+  {t("ifseThreat" + assessment.threatLevel.charAt(0) + assessment.threatLevel.slice(1).toLowerCase())}
 </p>
 
     </div>
