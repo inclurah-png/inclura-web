@@ -50,6 +50,18 @@ function signCloudinaryParams(params, secret) {
     .digest("hex");
 }
 
+router.get("/status", (req, res) => {
+  const configured = Boolean(CLOUD_NAME && API_KEY && API_SECRET);
+  return res.status(configured ? 200 : 503).json({
+    success: configured,
+    service: "Inclura Media Upload",
+    configured,
+    message: configured
+      ? "Cloudinary credentials are available to the backend."
+      : "Cloudinary configuration is incomplete.",
+  });
+});
+
 router.post("/sign-upload", async (req, res) => {
   try {
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
