@@ -25,6 +25,18 @@ function VerificationCenter() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  const translateStatus = (value) => {
+    const statusKeys = {
+      approved: "verified",
+      pending: "pending",
+      submitted: "submitted",
+      rejected: "vc_rejected",
+      under_review: "vc_underReview",
+    };
+    const key = statusKeys[String(value || "").toLowerCase()];
+    return key ? t(key) : value;
+  };
+
   const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(true);
@@ -215,7 +227,7 @@ const [verificationStatistics, setVerificationStatistics] =
         </p>
 
         <section
-          aria-label="Verification status access"
+          aria-label={t("vc_verificationStatusAccess")}
           style={{
             marginTop: "20px",
             marginBottom: "24px",
@@ -240,7 +252,7 @@ const [verificationStatistics, setVerificationStatistics] =
               cursor: "pointer",
             }}
           >
-            View Verification Status
+            {t("vc_viewVerificationStatus")}
           </button>
         </section>
 
@@ -359,7 +371,7 @@ const [verificationStatistics, setVerificationStatistics] =
   <p>
     <strong>{t("submitted")}:</strong>{" "}
     {verification.createdAt?.toDate?.().toLocaleString?.() ??
-      "Pending"}
+      t("pending")}
   </p>
 
   <div
@@ -376,7 +388,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-status")
       }
     >
-      View Status
+      {t("vc_viewStatus")}
     </button>
 
     <button
@@ -384,7 +396,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-documents")
       }
     >
-      Upload Documents
+      {t("vc_uploadDocuments")}
     </button>
 
     <button
@@ -392,7 +404,7 @@ const [verificationStatistics, setVerificationStatistics] =
         navigate("/verification-payment")
       }
     >
-      Continue Payment
+      {t("vc_continuePayment")}
     </button>
 
   </div>
@@ -501,7 +513,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {item.status}
+                {translateStatus(item.status)}
               </td>
 
               <td
