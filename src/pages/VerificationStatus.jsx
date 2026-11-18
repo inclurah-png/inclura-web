@@ -727,7 +727,7 @@ const openVerificationDocument = async (documentRecord) => {
 
             <strong>{t("riskScore")}:</strong>{" "}
 
-            {event.riskScore}%
+            {Math.max(0, Math.min(100, Number(event.riskScore) || 0))}%
 
           </p>
 
@@ -735,7 +735,14 @@ const openVerificationDocument = async (documentRecord) => {
 
             <strong>{t("threatLevel")}:</strong>{" "}
 
-            {event.threatLevel}
+            {(() => {
+              const eventRisk = Math.max(0, Math.min(100, Number(event.riskScore) || 0));
+              const eventThreat =
+                eventRisk >= 80 ? "CRITICAL" :
+                eventRisk >= 60 ? "HIGH" :
+                eventRisk >= 35 ? "MEDIUM" : "LOW";
+              return t("ifseThreat" + eventThreat.charAt(0) + eventThreat.slice(1).toLowerCase());
+            })()}
 
           </p>
 
