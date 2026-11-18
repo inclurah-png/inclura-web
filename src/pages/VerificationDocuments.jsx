@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
@@ -7,6 +7,7 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   query,
   serverTimestamp,
   updateDoc,
@@ -59,6 +60,38 @@ function VerificationDocuments() {
 
   const [uploadedDocuments, setUploadedDocuments] =
     useState({});
+  const [accessibilityNeeds, setAccessibilityNeeds] = useState([]);
+  const [accessibilityNeedsLoading, setAccessibilityNeedsLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    async function loadAccessibilityNeeds() {
+      const user = auth.currentUser;
+      if (!user) {
+        if (active) setAccessibilityNeedsLoading(false);
+        return;
+      }
+      try {
+        const profileSnapshot = await getDoc(doc(db, "users", user.uid));
+        const savedNeeds = profileSnapshot.exists()
+          ? profileSnapshot.data()?.accessibilityNeeds
+          : [];
+        if (active) {
+          setAccessibilityNeeds(
+            Array.isArray(savedNeeds)
+              ? savedNeeds.filter((need) => typeof need === "string")
+              : []
+          );
+        }
+      } catch (loadError) {
+        console.warn("Could not load saved accessibility needs:", loadError);
+      } finally {
+        if (active) setAccessibilityNeedsLoading(false);
+      }
+    }
+    loadAccessibilityNeeds();
+    return () => { active = false; };
+  }, []);
 
 
   const IFSE_STAGES = [
@@ -541,6 +574,8 @@ function VerificationDocuments() {
 
           notes,
 
+          accessibilityNeeds,
+
           uploadedDocuments:
             uploadedFiles,
 
@@ -730,16 +765,11 @@ function VerificationDocuments() {
         }}
       >
 
-        <h1>
-          IFSE Verification Documents
-        </h1>
+        <h1>{t("vdPageTitle")}</h1>
 
         <p>
-          Upload your verification documents securely.
-          Every submission is protected by the{" "}
-          <strong>
-            Inclura Fortress Security Engine (IFSE)
-          </strong>
+          {t("vdPageIntro")}{" "}
+          <strong>Inclura Fortress Security Engine (IFSE)</strong>
         </p>
 
 
@@ -795,9 +825,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              Verification Type
-            </h2>
+            <h2>{t("vdVerificationType")}</h2>
 
             <label htmlFor="verification-type">{t("vdVerificationType")}</label>
             <select
@@ -845,13 +873,12 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              Applicant Information
-            </h2>
+            <h2>{t("vdApplicantInformation")}</h2>
 
             <input
               type="text"
-              placeholder="Organization / Company Name"
+              aria-label={t("vdOrganizationName")}
+              placeholder={t("vdOrganizationName")}
               value={organizationName}
               onChange={(e) =>
                 setOrganizationName(
@@ -870,7 +897,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="Contact Name"
+              aria-label={t("vdContactName")}
+              placeholder={t("vdContactName")}
               value={contactName}
               onChange={(e) =>
                 setContactName(
@@ -890,7 +918,8 @@ function VerificationDocuments() {
 
             <input
               type="email"
-              placeholder="Contact Email"
+              aria-label={t("vdContactEmail")}
+              placeholder={t("vdContactEmail")}
               value={contactEmail}
               onChange={(e) =>
                 setContactEmail(
@@ -910,7 +939,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="Country"
+              aria-label={t("vdCountry")}
+              placeholder={t("vdCountry")}
               value={country}
               onChange={(e) =>
                 setCountry(
@@ -949,7 +979,8 @@ function VerificationDocuments() {
 
             <input
               type="text"
-              placeholder="City"
+              aria-label={t("vdCity")}
+              placeholder={t("vdCity")}
               value={city}
               onChange={(e) =>
                 setCity(
@@ -968,7 +999,8 @@ function VerificationDocuments() {
 
             <textarea
               rows={4}
-              placeholder="Additional Notes"
+              aria-label={t("vdAdditionalNotes")}
+              placeholder={t("vdAdditionalNotes")}
               value={notes}
               onChange={(e) =>
                 setNotes(
@@ -986,6 +1018,48 @@ function VerificationDocuments() {
             />
 
           </section>
+
+          <section
+            aria-labelledby="vd-accessibility-heading"
+            style={{
+              marginBottom: "24px",
+              padding: "18px",
+              border: "1px solid #475569",
+              borderRadius: "12px",
+              background: "#0f172a",
+            }}
+          >
+            <h2 id="vd-accessibility-heading">{t("epAccessibilityNeeds")}</h2>
+            <p>{t("vdAccessibilityIntro")}</p>
+            {accessibilityNeedsLoading ? (
+              <p role="status">{t("loading")}</p>
+            ) : (
+              <>
+                {[
+                  { value: "Visual Impairment", label: t("epVisualImpairment") },
+                  { value: "Hearing Impairment", label: t("epHearingImpairment") },
+                  { value: "Mobility Impairment", label: t("epMobilityImpairment") },
+                  { value: "Speech Impairment", label: t("epSpeechImpairment") },
+                ].map((need) => (
+                  <label key={need.value} style={{ display: "flex", gap: "10px", alignItems: "center", margin: "12px 0" }}>
+                    <input
+                      type="checkbox"
+                      checked={accessibilityNeeds.includes(need.value)}
+                      onChange={() => setAccessibilityNeeds((current) =>
+                        current.includes(need.value)
+                          ? current.filter((item) => item !== need.value)
+                          : [...current, need.value]
+                      )}
+                    />
+                    {need.label}
+                  </label>
+                ))}
+                {accessibilityNeeds.length === 0 && (
+                  <p>{t("vdNoAccessibilityNeeds")}</p>
+                )}
+              </>
+            )}
+          </section>
                     /*
            * ============================================
            * REQUIRED DOCUMENTS
@@ -998,9 +1072,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              Required Documents
-            </h2>
+            <h2>{t("vdRequiredDocuments")}</h2>
 
             {(
               DOCUMENT_REQUIREMENTS[
@@ -1096,12 +1168,10 @@ function VerificationDocuments() {
               }}
             >
 
-              <h3>
-                Document Progress
-              </h3>
+              <h3>{t("vdDocumentProgress")}</h3>
 
               <p>
-                Uploaded Documents
+                {t("vdUploadedDocuments")}
               </p>
 
               <p>
@@ -1114,7 +1184,7 @@ function VerificationDocuments() {
                   }
                 </strong>
 
-                {" "}of{" "}
+                {" "}{t("vdOf")}{" "}
 
                 <strong>
                   {
@@ -1126,13 +1196,13 @@ function VerificationDocuments() {
                   }
                 </strong>
 
-                {" "}uploaded
+                {" "}{t("vdUploaded")}
 
               </p>
 
               <p>
 
-                Completion:
+                {t("vdCompletion")}:
 
                 <strong>
                   {" "}
@@ -1199,9 +1269,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              IFSE Security Assessment
-            </h2>
+            <h2>{t("vdSecurityAssessment")}</h2>
 
             <div
               style={{
@@ -1303,9 +1371,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              IFSE Protection Layers
-            </h2>
+            <h2>{t("vdProtectionLayers")}</h2>
 
             <p
               style={{
@@ -1381,9 +1447,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              Verification Workflow
-            </h2>
+            <h2>{t("vdWorkflow")}</h2>
 
             <p
               style={{
@@ -1476,9 +1540,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              Selected Verification Plan
-            </h2>
+            <h2>{t("vdSelectedPlan")}</h2>
 
             <div
               style={{
@@ -1607,9 +1669,7 @@ function VerificationDocuments() {
             }}
           >
 
-            <h2>
-              IFSE Notice
-            </h2>
+            <h2>{t("vdIfseNotice")}</h2>
 
             <p>
               Every uploaded verification document is
@@ -1758,7 +1818,7 @@ function VerificationDocuments() {
                 fontSize: "16px",
               }}
             >
-              Cancel
+              {t("cancel")}
             </button>
 
           </div>
