@@ -795,7 +795,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 marginBottom: "10px",
               }}
             >
-              ✅ {item}
+              ✅ {t(item)}
             </li>
           ))}
         </ul>
