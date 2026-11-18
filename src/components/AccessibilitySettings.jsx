@@ -1,33 +1,8 @@
 import { useAccessibility } from "../context/AccessibilityProvider";
 import { useTranslation } from "react-i18next";
+import { SUPPORTED_LANGUAGES } from "../config/languages";
 
-const LANGUAGE_OPTIONS = [
-  { value: "en", label: "English" },
-  { value: "yo", label: "Yoruba" },
-  { value: "ig", label: "Igbo" },
-  { value: "ha", label: "Hausa" },
-  { value: "pcm", label: "Nigerian Pidgin" },
-  { value: "fr", label: "French" },
-  { value: "es", label: "Spanish" },
-  { value: "pt", label: "Portuguese" },
-  { value: "sw", label: "Swahili" },
-  { value: "ar", label: "Arabic" },
-  { value: "zh", label: "Chinese (Simplified)" },
-  { value: "zh-TW", label: "Chinese (Traditional)" },
-  { value: "ja", label: "Japanese" },
-  { value: "de", label: "German" },
-  { value: "hi", label: "Hindi" },
-  { value: "ru", label: "Russian" },
-  { value: "it", label: "Italian" },
-  { value: "nl", label: "Dutch" },
-  { value: "ko", label: "Korean" },
-  { value: "vi", label: "Vietnamese" },
-  { value: "th", label: "Thai" },
-  { value: "id", label: "Indonesian" },
-  { value: "ms", label: "Malay" },
-  { value: "bn", label: "Bengali" },
-  { value: "tr", label: "Turkish" },
-];
+const LANGUAGE_OPTIONS = SUPPORTED_LANGUAGES.map((language) => ({ value: language.code, label: language.nativeName }));
 
 const PROFILE_OPTIONS = [
   { key: "blind", labelKey: "blindness" },
