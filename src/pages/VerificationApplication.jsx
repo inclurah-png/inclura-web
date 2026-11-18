@@ -156,6 +156,18 @@ async function handleContinue() {
         paymentAmount === 0,
     });
 
+    // The processor score represents completed verification checks
+    // (a higher score is better), not risk. Keep both measures separate.
+    const ifseTrustScore = Math.max(
+      0,
+      Math.min(100, Number(ifseResult.score) || 0)
+    );
+    const riskScore = 100 - ifseTrustScore;
+    const threatLevel =
+      riskScore >= 80 ? "CRITICAL" :
+      riskScore >= 60 ? "HIGH" :
+      riskScore >= 35 ? "MEDIUM" : "LOW";
+
     // ==========================================
     // CREATE VERIFICATION REQUEST
     // ==========================================
@@ -220,7 +232,7 @@ async function handleContinue() {
         // ========================================
 
         ifseScore:
-          ifseResult.score || 0,
+          ifseTrustScore,
 
         ifseStatus:
           ifseResult.status || "PENDING",
@@ -239,13 +251,9 @@ async function handleContinue() {
         // Used by VerificationCenter
         // ========================================
 
-        riskScore:
-          ifseResult.score || 0,
+        riskScore,
 
-        threatLevel:
-          ifseResult.status === "REJECTED"
-            ? "High"
-            : "Low",
+        threatLevel,
 
         executiveReviewRequired:
           !!ifseResult.executiveReview,
@@ -353,13 +361,9 @@ async function handleContinue() {
         eventType:
           "Application Received",
 
-        threatLevel:
-          ifseResult.status === "REJECTED"
-            ? "High"
-            : "Low",
+        threatLevel,
 
-        riskScore:
-          ifseResult.score || 0,
+        riskScore,
 
         // The security lifecycle is not finished
         // simply because the application was received.
