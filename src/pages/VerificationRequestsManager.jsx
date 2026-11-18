@@ -104,13 +104,34 @@ await addDoc(
   }
 );
 
+const approvalTrustScore = Math.max(
+  0,
+  Math.min(
+    100,
+    Number(request.ifseScore ?? request.ifseTrustScore ?? 0) || 0
+  )
+);
+
+const approvalRiskScore = Math.max(
+  0,
+  Math.min(
+    100,
+    Number(request.riskScore ?? (100 - approvalTrustScore)) || 0
+  )
+);
+
+const approvalThreatLevel =
+  approvalRiskScore >= 80 ? "CRITICAL" :
+  approvalRiskScore >= 60 ? "HIGH" :
+  approvalRiskScore >= 35 ? "MEDIUM" : "LOW";
+
 await addDoc(
   collection(db, "ifseSecurityEvents"),
   {
     verificationId: request.id,
     eventType: "Verification Approved",
-    threatLevel: "None",
-    riskScore: request.ifseScore || 0,
+    threatLevel: approvalThreatLevel,
+    riskScore: approvalRiskScore,
     resolved: true,
     createdAt: serverTimestamp(),
   }
