@@ -1386,7 +1386,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <br />
 
-  Powered by the Inclura Fortress Security Engine (IFSE)
+  {t("vc_securePoweredByIFSE")}
 
 </footer>
 
