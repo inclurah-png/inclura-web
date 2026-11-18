@@ -11,12 +11,6 @@ import {
 } from "../config/verificationMigration";
 
 import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import {
   doc,
   updateDoc,
 } from "firebase/firestore";
@@ -24,8 +18,8 @@ import {
 import {
   auth,
   db,
-  storage,
 } from "../firebase";
+import { uploadProfilePhotoToCloudinary } from "../services/cloudinaryUpload";
 
 function isPlaceholderName(
   value
@@ -169,52 +163,31 @@ function ProfileHeader({
       profile
     );
 
-  async function uploadPhoto(
-    e
-  ) {
+  async function uploadPhoto(e) {
+    const input = e.target;
+    const file = input.files?.[0];
+    input.value = "";
+
+    if (!file) return;
+
     try {
-      const file =
-        e.target.files?.[0];
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Please log in again before changing your photo.");
+        return;
+      }
 
-      if (!file) return;
+      const url = await uploadProfilePhotoToCloudinary(file);
 
-      const user =
-        auth.currentUser;
-
-      if (!user) return;
-
-      // Use the same Storage path as EditProfile so both photo
-      // upload entry points update one consistent profile image.
-      const storageRef = ref(
-        storage,
-        `profilePhotos/${user.uid}`
-      );
-
-      await uploadBytes(
-        storageRef,
-        file
-      );
-
-      const url =
-        await getDownloadURL(
-          storageRef
-        );
-
-      await updateDoc(
-        doc(
-          db,
-          "users",
-          user.uid
-        ),
-        {
-          profilePhoto: url,
-          photoURL: url,
-        }
-      );
+      await updateDoc(doc(db, "users", user.uid), {
+        profilePhoto: url,
+        photoURL: url,
+      });
 
       window.location.reload();
     } catch (error) {
-      alert(error.message);
+      console.error("Profile photo upload failed:", error);
+      alert(error.message || "Profile photo upload failed. Please try again.");
     }
   }
 
