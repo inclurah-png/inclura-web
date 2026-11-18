@@ -737,7 +737,7 @@ const openVerificationDocument = async (documentRecord) => {
 <strong>{t("resolved")}:</strong>{" "}
 
 {event.resolved
-? "Yes"
+? t("yes")
 : t("pending")}
 
 </p>
@@ -864,15 +864,15 @@ const openVerificationDocument = async (documentRecord) => {
 
 <li>✅ {t("secureUploadedDocuments")}</li>
 
-<li>✅ AI Fraud Detection</li>
+<li>✅ {t("vc_aiFraudDetection")}</li>
 
-<li>✅ Malware Protection</li>
+<li>✅ {t("security")}</li>
 
-<li>✅ Accessibility Validation</li>
+<li>✅ {t("vc_accessibilityCompliance")}</li>
 
-<li>✅ Executive Review</li>
+<li>✅ {t("vc_executiveReview")}</li>
 
-<li>✅ Continuous Monitoring</li>
+<li>✅ {t("vc_continuousMonitoring")}</li>
 
 <li>✅ {t("ifseAuditLogs")}</li>
 
@@ -917,7 +917,7 @@ const openVerificationDocument = async (documentRecord) => {
 
     <button
       type="button"
-      onClick={() => navigate("/creator-verification-payment")}
+      onClick={() => navigate("/verification-payment")}
     >
       Verification Payment
     </button>
@@ -963,15 +963,15 @@ const openVerificationDocument = async (documentRecord) => {
 
     <li>✅ {t("secureUploadedDocuments")}</li>
 
-    <li>✅ OCR Validation</li>
+    <li>✅ {t("vc_documentAuthentication")}</li>
 
-    <li>✅ AI Fraud Detection</li>
+    <li>✅ {t("vc_aiFraudDetection")}</li>
 
-    <li>✅ Accessibility Compliance</li>
+    <li>✅ {t("vc_accessibilityCompliance")}</li>
 
-    <li>✅ Executive Review</li>
+    <li>✅ {t("vc_executiveReview")}</li>
 
-    <li>✅ Continuous Monitoring</li>
+    <li>✅ {t("vc_continuousMonitoring")}</li>
 
     <li>✅ {t("ifseAuditLogs")}</li>
 
