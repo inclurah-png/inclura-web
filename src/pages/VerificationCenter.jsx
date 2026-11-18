@@ -1342,8 +1342,17 @@ const [verificationStatistics, setVerificationStatistics] =
 
     <button
       onClick={() =>
-        navigate("/creator-verification-payment")
+        navigate("/verification-payment", {
+          state: {
+            verificationId: verification?.id || "",
+            category: verification?.category || "creator",
+            verificationType: verification?.verificationType || "",
+            paymentAmount: verification?.paymentAmount || 0,
+          },
+        })
       }
+      disabled={!verification}
+      title={!verification ? "Submit a verification application first" : "Continue to secure payment"}
     >
       Continue Payment
     </button>
