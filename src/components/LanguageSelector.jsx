@@ -70,9 +70,11 @@ return (
   >
 
     <button
-      onClick={() =>
-        setOpen(!open)
-      }
+      type="button"
+      aria-label={i18n.t("language")}
+      aria-haspopup="listbox"
+      aria-expanded={open}
+      onClick={() => setOpen(!open)}
       style={{
         background: "#0f172a",
         color: "white",
@@ -105,6 +107,8 @@ return (
     {open && (
 
       <div
+        role="listbox"
+        aria-label={i18n.t("language")}
         style={{
           position: "absolute",
           top: "55px",
@@ -125,6 +129,10 @@ return (
           (language) => (
 
             <button
+              type="button"
+              role="option"
+              aria-selected={i18n.language === language.code}
+              aria-label={`${language.nativeName} (${language.name})`}
               key={language.code}
 
               onClick={() =>
