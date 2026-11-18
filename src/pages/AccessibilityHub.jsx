@@ -3,7 +3,8 @@ import { useTranslation } from "react-i18next";
 import DashboardLayout from "../components/DashboardLayout";
 import AccessibilitySettings from "../components/AccessibilitySettings";
 
-function AccessibilityHub() {\nconst { t } = useTranslation();
+function AccessibilityHub() {
+const { t } = useTranslation();
 const [activeSection, setActiveSection] =
 useState("settings");
 
@@ -12,47 +13,41 @@ const sections = [
 id: "settings",
 icon: "⚙️",
 titleKey: "accessibilityDisplayLanguage",
-description:
-"Adjust language, text size, contrast, motion, and voice guidance.",
+descriptionKey: "accessibilityHubIntro",
 },
 {
 id: "requests",
 icon: "🆘",
 titleKey: "accessibilityRequests",
-description:
-"A dedicated place for accessibility assistance requests.",
+descriptionKey: "accessibilityRequests",
 statusKey: "notConnected",
 },
 {
 id: "resources",
 icon: "📚",
 titleKey: "accessibilityResources",
-description:
-"A future collection of guides and practical accessibility resources.",
+descriptionKey: "accessibilityResources",
 statusKey: "resourcesNotConnected",
 },
 {
 id: "directory",
 icon: "🏢",
 titleKey: "accessibilityDirectory",
-description:
-"A future directory of accessible services and organizations.",
+descriptionKey: "accessibilityDirectory",
 statusKey: "directoryNotConnected",
 },
 {
 id: "community",
 icon: "🤝",
 titleKey: "communitySupport",
-description:
-"A future space for accessibility-focused community support.",
+descriptionKey: "communitySupport",
 statusKey: "communityNotConnected",
 },
 {
 id: "emergency",
 icon: "🚨",
 titleKey: "emergencyAccessibilityHelp",
-description:
-"Emergency assistance needs a verified contact and dispatch workflow before it can be activated.",
+descriptionKey: "emergencyAccessibilityHelp",
 statusKey: "emergencyNotConnected",
 },
 ];
@@ -70,8 +65,7 @@ return (
 </h1>
 
       <p style={styles.intro}>
-        Explore accessibility settings and support
-        services designed to make Inclura easier to use.
+        {t("accessibilityHubIntro")}
       </p>
     </header>
 
@@ -131,10 +125,7 @@ return (
 
           {activeSection === "emergency" && (
             <p>
-              If someone is in immediate danger,
-              contact the appropriate local emergency
-              service directly. This Inclura section
-              does not dispatch emergency assistance.
+              {t("emergencyDisclaimer")}
             </p>
           )}
         </div>
