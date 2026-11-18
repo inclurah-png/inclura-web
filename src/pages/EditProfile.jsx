@@ -539,6 +539,7 @@ function EditProfile() {
           <option value="ha">Hausa</option>
           <option value="yo">Yoruba</option>
           <option value="ig">Igbo</option>
+          <option value="zh">中文</option>
         </select>
 
         <section
