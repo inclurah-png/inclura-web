@@ -84,6 +84,14 @@ export const SUPPORTED_LANGUAGES = Object.freeze([
   }),
 
   Object.freeze({
+    code: "zh",
+    name: "Chinese (Simplified)",
+    nativeName: "简体中文",
+    direction: "ltr",
+    flag: "🇨🇳",
+  }),
+
+  Object.freeze({
     code: "ig",
     name: "Igbo",
     nativeName: "Igbo",
