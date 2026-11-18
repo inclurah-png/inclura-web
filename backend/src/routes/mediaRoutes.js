@@ -188,6 +188,7 @@ router.post("/verification-document-access", async (req, res) => {
       expires_at: String(expiresAt),
       format,
       public_id: requestedPublicId,
+      timestamp: String(Math.floor(Date.now() / 1000)),
       type: "authenticated",
     };
     const signature = signCloudinaryParams(downloadParams, API_SECRET);
@@ -196,7 +197,7 @@ router.post("/verification-document-access", async (req, res) => {
       api_key: API_KEY,
       signature,
     });
-    const downloadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/private_download?${query.toString()}`;
+    const downloadUrl = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/download?${query.toString()}`;
 
     return res.status(200).json({
       success: true,
