@@ -309,9 +309,9 @@ function AccessibilitySettings() {
         }}
       >
         {saveStatus === "saving"
-          ? {t("savingAccessibility")}
+          ? t("savingAccessibility")
           : saveMessage ||
-            {t("accessibilitySavedFallback")}}
+            t("accessibilitySavedFallback")}
       </div>
     </div>
   );
