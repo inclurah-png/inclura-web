@@ -397,7 +397,7 @@ function EditProfile() {
             onClick={() => setReloadKey((key) => key + 1)}
             style={buttonStyle}
           >
-            Try Again
+            {t("retry")}
           </button>
 
           <button
@@ -405,7 +405,7 @@ function EditProfile() {
             onClick={() => navigate(-1)}
             style={secondaryButtonStyle}
           >
-            Go Back
+            {t("back")}
           </button>
         </div>
       </div>
@@ -515,7 +515,7 @@ function EditProfile() {
           <option value="Creator">{t("creator")}</option>
           <option value="Caregiver">{t("caregiver")}</option>
           <option value="Employer">{t("employer")}</option>
-          <option value="Job Seeker">Job Seeker</option>
+          <option value="Job Seeker">{t("jobSeeker")}</option>
           <option value="Volunteer">{t("volunteer")}</option>
           <option value="Organization">{t("organization")}</option>
           <option value="Advocate">{t("advocate")}</option>
@@ -547,25 +547,22 @@ function EditProfile() {
         >
           <h2 id="accessibility-heading">{t("epAccessibilityNeeds")}</h2>
 
-          <p>
-            Choose the accessibility needs you want Inclura to
-            remember for your experience.
-          </p>
+          <p>{t("epAccessibilityIntro")}</p>
 
           {[
-            t("epVisualImpairment"),
-            t("epHearingImpairment"),
-            t("epMobilityImpairment"),
-            t("epSpeechImpairment"),
+            { value: "Visual Impairment", label: t("epVisualImpairment") },
+            { value: "Hearing Impairment", label: t("epHearingImpairment") },
+            { value: "Mobility Impairment", label: t("epMobilityImpairment") },
+            { value: "Speech Impairment", label: t("epSpeechImpairment") },
           ].map((need) => (
-            <div key={need} style={{ marginBottom: "10px" }}>
+            <div key={need.value} style={{ marginBottom: "10px" }}>
               <label>
                 <input
                   type="checkbox"
-                  checked={accessibilityNeeds.includes(need)}
-                  onChange={() => toggleNeed(need)}
+                  checked={accessibilityNeeds.includes(need.value)}
+                  onChange={() => toggleNeed(need.value)}
                 />{" "}
-                {need}
+                {need.label}
               </label>
             </div>
           ))}
@@ -590,10 +587,7 @@ function EditProfile() {
             </label>
 
             <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
-              When disabled, your accessibility needs will not be
-              displayed in the public profile's Accessibility tab.
-              This setting controls display in the profile interface;
-              it does not replace database access rules.
+              {t("epShareNeedsDescription")}
             </p>
           </div>
         </section>
@@ -611,7 +605,7 @@ function EditProfile() {
           {saving
             ? t("epSaving")
             : uploadingPhoto
-              ? "Wait for Photo Upload..."
+              ? t("epWaitPhoto")
               : t("epSaveChanges")}
         </button>
 
@@ -621,7 +615,7 @@ function EditProfile() {
           disabled={saving}
           style={secondaryButtonStyle}
         >
-          Cancel
+          {t("cancel")}
         </button>
       </div>
     </div>
