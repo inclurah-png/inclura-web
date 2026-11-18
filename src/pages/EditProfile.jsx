@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { auth, db, storage } from "../firebase";
+import { auth, db } from "../firebase";
+import { uploadProfilePhotoToCloudinary } from "../services/cloudinaryUpload";
 
 import {
   doc,
@@ -12,12 +13,6 @@ import {
   getDocs,
   serverTimestamp,
 } from "firebase/firestore";
-
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
 
 import { updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
@@ -239,50 +234,18 @@ function EditProfile() {
       return;
     }
 
-    if (!file.type.startsWith("image/")) {
-      alert("Please select a valid image file.");
-      return;
-    }
-
-    const maxFileSize = 5 * 1024 * 1024;
-
-    if (file.size > maxFileSize) {
-      alert("Please choose an image smaller than 5 MB.");
-      return;
-    }
-
-    const currentUser = auth.currentUser;
-
-    if (!currentUser) {
-      alert("Please log in again.");
-      return;
-    }
-
     setUploadingPhoto(true);
 
     try {
-      const storageRef = ref(
-        storage,
-        `profilePhotos/${currentUser.uid}`
-      );
-
-      await uploadBytes(storageRef, file, {
-        contentType: file.type,
-      });
-
-      const downloadURL = await getDownloadURL(storageRef);
-
-      setPhotoURL(downloadURL);
+      const secureUrl = await uploadProfilePhotoToCloudinary(file);
+      setPhotoURL(secureUrl);
 
       alert(
-        "Photo uploaded. Select Save Changes to update your profile."
+        "Photo uploaded securely. Select Save Changes to update your profile."
       );
     } catch (error) {
       console.error("Profile photo upload failed:", error);
-
-      alert(
-        "Photo upload failed. Check your internet connection and Firebase Storage permissions."
-      );
+      alert(error.message || "Photo upload failed. Please try again.");
     } finally {
       setUploadingPhoto(false);
     }
