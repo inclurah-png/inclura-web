@@ -33,6 +33,7 @@ function VerificationPaymentEngine() {
 const navigate = useNavigate();
 const location = useLocation();
 const routeState = location.state || {};
+const verificationId = routeState.verificationId || "";
 
 const [currentUser, setCurrentUser] = useState(null);
 
