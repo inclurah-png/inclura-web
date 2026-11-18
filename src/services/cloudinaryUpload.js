@@ -174,3 +174,30 @@ export async function uploadVerificationDocumentToCloudinary(file) {
     originalFilename: uploadData.original_filename || file.name,
   };
 }
+
+export async function getVerificationDocumentAccess(verificationId, publicId) {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Please log in again to access verification documents.");
+  }
+
+  const token = await user.getIdToken();
+  const response = await fetch(
+    `${IFSE_API_BASE}/api/media/verification-document-access`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ verificationId, publicId }),
+    }
+  );
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success || !data.downloadUrl) {
+    throw new Error(data.message || "Unable to authorize this document.");
+  }
+
+  return data;
+}
