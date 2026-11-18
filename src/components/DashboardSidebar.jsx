@@ -174,255 +174,125 @@ const isAdmin = role === "admin";
         ⚙ {t("editProfile")}
       </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/verification-center")
-        }
-      >
+      <button type="button" aria-label={t("verificationCenter")} title={t("verificationCenter")} onClick={() => navigate("/verification-center")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🔐 {t("verificationCenter")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/accessibility")
-        }
-      >
+      <button type="button" aria-label={t("accessibilityHub")} title={t("accessibilityHub")} onClick={() => navigate("/accessibility")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         ♿ {t("accessibilityHub")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/opportunities")
-        }
-      >
+      <button type="button" aria-label={t("opportunitiesHub")} title={t("opportunitiesHub")} onClick={() => navigate("/opportunities")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         💼 {t("opportunitiesHub")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/care-gigs")
-        }
-      >
+      <button type="button" aria-label={t("careGigs")} title={t("careGigs")} onClick={() => navigate("/care-gigs")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🤝 {t("careGigs")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/mentor-hub")
-        }
-      >
+      <button type="button" aria-label={t("mentorHub")} title={t("mentorHub")} onClick={() => navigate("/mentor-hub")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🎓 {t("mentorHub")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/marketplace")
-        }
-      >
+      <button type="button" aria-label={t("marketplace")} title={t("marketplace")} onClick={() => navigate("/marketplace")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🛒 {t("marketplace")}
-      </div>
+      </button>
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/reels-system")
-        }
-      >
+      <button type="button" aria-label={t("reels")} title={t("reels")} onClick={() => navigate("/reels-system")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🎥 {t("reels")}
-      </div>
+      </button>
 
       {isCreator && (
   <>
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/creator-earnings")
-      }
-    >
-      💵 {t("creatorEarnings")}
-    </div>
+    <button type="button" aria-label={t("creatorEarnings")} title={t("creatorEarnings")} onClick={() => navigate("/creator-earnings")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        💵 {t("creatorEarnings")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/creator-monetization")
-      }
-    >
-      💵 {t("creatorMonetization")}
-    </div>
+    <button type="button" aria-label={t("creatorMonetization")} title={t("creatorMonetization")} onClick={() => navigate("/creator-monetization")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        💵 {t("creatorMonetization")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/creator-analytics")
-      }
-    >
-    📈 {t("creatorAnalytics")}
-    </div>
+    <button type="button" aria-label={t("creatorAnalytics")} title={t("creatorAnalytics")} onClick={() => navigate("/creator-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📈 {t("creatorAnalytics")}
+      </button>
   </>
 )}
 
 {isAdvertiser && (
   <>
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/advertiser-dashboard")
-      }
-    >
-      📢 {t("advertiserDashboard")}
-    </div>
+    <button type="button" aria-label={t("advertiserDashboard")} title={t("advertiserDashboard")} onClick={() => navigate("/advertiser-dashboard")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📢 {t("advertiserDashboard")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/ad-manager")
-      }
-    >
-      📢 {t("adManager")}
-    </div>
+    <button type="button" aria-label={t("adManager")} title={t("adManager")} onClick={() => navigate("/ad-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📢 {t("adManager")}
+      </button>
   </>
 )}
 
 {isEnterprise && (
   <>
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/enterprise")
-      }
-    >
-      🏢 {t("enterprise")}
-    </div>
+    <button type="button" aria-label={t("enterprise")} title={t("enterprise")} onClick={() => navigate("/enterprise")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        🏢 {t("enterprise")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/enterprise-ads")
-      }
-    >
-      🏢 {t("enterpriseAds")}
-    </div>
+    <button type="button" aria-label={t("enterpriseAds")} title={t("enterpriseAds")} onClick={() => navigate("/enterprise-ads")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        🏢 {t("enterpriseAds")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/enterprise-campaigns")
-      }
-    >
-      🏢 {t("enterpriseCampaigns")}
-    </div>
+    <button type="button" aria-label={t("enterpriseCampaigns")} title={t("enterpriseCampaigns")} onClick={() => navigate("/enterprise-campaigns")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        🏢 {t("enterpriseCampaigns")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/enterprise-analytics")
-      }
-    >
-      🏢 {t("enterpriseAnalytics")}
-    </div>
+    <button type="button" aria-label={t("enterpriseAnalytics")} title={t("enterpriseAnalytics")} onClick={() => navigate("/enterprise-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        🏢 {t("enterpriseAnalytics")}
+      </button>
   </>
 )}
       
 {isAdmin && (
   <>
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/platform-analytics")
-      }
-    >
-      📊 {t("platformAnalytics")}
-    </div>
+    <button type="button" aria-label={t("platformAnalytics")} title={t("platformAnalytics")} onClick={() => navigate("/platform-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📊 {t("platformAnalytics")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/pricing-manager")
-      }
-    >
-      💲 {t("pricingManager")}
-    </div>
+    <button type="button" aria-label={t("pricingManager")} title={t("pricingManager")} onClick={() => navigate("/pricing-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        💲 {t("pricingManager")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/users-management")
-      }
-    >
-      👥 {t("usersManagement")}
-    </div>
+    <button type="button" aria-label={t("usersManagement")} title={t("usersManagement")} onClick={() => navigate("/users-management")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        👥 {t("usersManagement")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/reports-violations")
-      }
-    >
-      🚨 {t("reportsViolations")}
-    </div>
+    <button type="button" aria-label={t("reportsViolations")} title={t("reportsViolations")} onClick={() => navigate("/reports-violations")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        🚨 {t("reportsViolations")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/verification-requests")
-      }
-    >
-      📋 {t("verificationRequests")}
-    </div>
+    <button type="button" aria-label={t("verificationRequests")} title={t("verificationRequests")} onClick={() => navigate("/verification-requests")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📋 {t("verificationRequests")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/verification-manager")
-      }
-    >
-      ✅ {t("verificationManager")}
-    </div>
+    <button type="button" aria-label={t("verificationManager")} title={t("verificationManager")} onClick={() => navigate("/verification-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        ✅ {t("verificationManager")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/wallet-monitoring")
-      }
-    >
-      💰 {t("walletMonitoring")}
-    </div>
+    <button type="button" aria-label={t("walletMonitoring")} title={t("walletMonitoring")} onClick={() => navigate("/wallet-monitoring")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        💰 {t("walletMonitoring")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/ad-approval")
-      }
-    >
-      📋 {t("adApprovalQueue")}
-    </div>
+    <button type="button" aria-label={t("adApprovalQueue")} title={t("adApprovalQueue")} onClick={() => navigate("/ad-approval")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📋 {t("adApprovalQueue")}
+      </button>
 
-    <div
-      style={itemStyle}
-      onClick={() =>
-        navigate("/admin")
-      }
-    >
-      👨‍💼 {t("adminPanel")}
-    </div>
+    <button type="button" aria-label={t("adminPanel")} title={t("adminPanel")} onClick={() => navigate("/admin")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        👨‍💼 {t("adminPanel")}
+      </button>
   </>
 )}
 
-      <div
-        style={itemStyle}
-        onClick={() =>
-          navigate("/sos")
-        }
-      >
+      <button type="button" aria-label={t("sos")} title={t("sos")} onClick={() => navigate("/sos")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         🚨 {t("sos")}
-      </div>
+      </button>
 
     </div>
   );
