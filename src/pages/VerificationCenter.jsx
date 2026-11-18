@@ -49,38 +49,38 @@ const [verificationStatistics, setVerificationStatistics] =
   );
 
   const IFSE_STAGES = [
-  "Identity Verification",
-  "Document Authentication",
-  "AI Fraud Detection",
-  "Forgery Detection",
-  "Duplicate Detection",
-  "Payment Protection",
-  "Accessibility Compliance",
-  "Executive Review",
-  "Continuous Monitoring",
+  "vc_identityVerification",
+  "vc_documentAuthentication",
+  "vc_aiFraudDetection",
+  "vc_forgeryDetection",
+  "vc_duplicateDetection",
+  "vc_paymentProtection",
+  "vc_accessibilityCompliance",
+  "vc_executiveReview",
+  "vc_continuousMonitoring",
 ];
   
   const ifseLayers = [
-    "Identity Verification",
-    "Document Authentication",
-    "AI Fraud Detection",
-    "Forgery Detection",
-    "Duplicate Detection",
-    "Payment Protection",
-    "Accessibility Compliance",
-    "Executive Review",
-    "Continuous Monitoring",
+    "vc_identityVerification",
+    "vc_documentAuthentication",
+    "vc_aiFraudDetection",
+    "vc_forgeryDetection",
+    "vc_duplicateDetection",
+    "vc_paymentProtection",
+    "vc_accessibilityCompliance",
+    "vc_executiveReview",
+    "vc_continuousMonitoring",
   ];
 
   const verificationBenefits = [
-    "Official Verified Badge",
-    "Higher Trust",
-    "Search Priority",
-    "Protection Against Impersonation",
-    "Premium Features",
-    "Priority Support",
-    "Business Opportunities",
-    "Continuous IFSE Protection",
+    "vc_officialBadge",
+    "vc_higherTrust",
+    "vc_searchPriority",
+    "vc_impersonationProtection",
+    "vc_premiumFeatures",
+    "vc_prioritySupport",
+    "vc_businessOpportunities",
+    "vc_continuousProtection",
   ];
 
   useEffect(() => {
@@ -211,10 +211,7 @@ const [verificationStatistics, setVerificationStatistics] =
 )}
 
         <p>
-          Secure your identity, organization,
-          institution or business using the
-          Inclura Fortress Security Engine
-          (IFSE).
+          {t("vc_intro")}
         </p>
 
         <section
@@ -229,7 +226,7 @@ const [verificationStatistics, setVerificationStatistics] =
           }}
         >
           <h2>{t("trackVerification")}</h2>
-          <p>View your application progress, review updates and securely access documents you have submitted.</p>
+          <p>{t("vc_trackDescription")}</p>
           <button
             type="button"
             onClick={() => navigate("/verification-status")}
@@ -310,7 +307,7 @@ const [verificationStatistics, setVerificationStatistics] =
         border: "1px solid #ef4444",
       }}
     >
-      <h3>Rejected</h3>
+      <h3>{t("vc_rejected")}</h3>
       <h1>{verificationStatistics.rejected}</h1>
     </div>
 
@@ -355,12 +352,12 @@ const [verificationStatistics, setVerificationStatistics] =
   <p>
     <strong>{t("executiveReview")}:</strong>{" "}
     {verification.executiveReviewRequired
-      ? "Required"
-      : "Not Required"}
+      ? t("required")
+      : t("notRequired")}
   </p>
 
   <p>
-    <strong>Submitted:</strong>{" "}
+    <strong>{t("submitted")}:</strong>{" "}
     {verification.createdAt?.toDate?.().toLocaleString?.() ??
       "Pending"}
   </p>
@@ -442,7 +439,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              Type
+              {t("verificationType")}
             </th>
 
             <th
@@ -451,7 +448,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              Status
+              {t("status")}
             </th>
 
             <th
@@ -460,7 +457,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              Threat
+              {t("threatLevel")}
             </th>
 
             <th
@@ -469,7 +466,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              Risk
+              {t("riskScore")}
             </th>
 
             <th
@@ -478,7 +475,7 @@ const [verificationStatistics, setVerificationStatistics] =
                 padding: "12px",
               }}
             >
-              Submitted
+              {t("submitted")}
             </th>
 
           </tr>
@@ -575,7 +572,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Identity Verification</strong>
+      <strong>{t("vc_identityVerification")}</strong>
       <p>🟢 Active</p>
     </div>
 
@@ -586,7 +583,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Document Authentication</strong>
+      <strong>{t("vc_documentAuthentication")}</strong>
       <p>🟢 Active</p>
     </div>
 
@@ -597,7 +594,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>AI Fraud Detection</strong>
+      <strong>{t("vc_aiFraudDetection")}</strong>
       <p>🟢 Monitoring</p>
     </div>
 
@@ -608,7 +605,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Duplicate Detection</strong>
+      <strong>{t("vc_duplicateDetection")}</strong>
       <p>🟢 Enabled</p>
     </div>
 
@@ -619,7 +616,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Accessibility Validation</strong>
+      <strong>{t("vc_accessibilityCompliance")}</strong>
       <p>🟢 Enabled</p>
     </div>
 
@@ -630,11 +627,11 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Executive Review Engine</strong>
+      <strong>{t("vc_executiveReviewEngine")}</strong>
       <p>
         {verification?.executiveReviewRequired
-          ? "🟡 Waiting"
-          : "🟢 Not Required"}
+          ? `🟡 ${t("vc_waiting")}`
+          : `🟢 ${t("notRequired")}`}
       </p>
     </div>
 
@@ -659,8 +656,7 @@ const [verificationStatistics, setVerificationStatistics] =
       marginBottom: "20px",
     }}
   >
-    Every verification passes through the complete
-    Inclura Fortress Security Engine workflow.
+    {t("vc_workflowIntro")}
   </p>
 <ol
   style={{
@@ -670,14 +666,14 @@ const [verificationStatistics, setVerificationStatistics] =
 >
   {IFSE_STAGES.map((stage, index) => (
     <li
-      key={stage}
+      key={t(stage)}
       style={{
         marginBottom: "10px",
       }}
     >
-      <strong>Step {index + 1}</strong>
+      <strong>{t("vc_step", { number: index + 1 })}</strong>
       {" — "}
-      {stage}
+      {t(stage)}
     </li>
   ))}
 </ol>
@@ -688,7 +684,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          Choose Verification Category
+          {t("vc_chooseCategory")}
         </h2>
 
         <div
@@ -725,12 +721,12 @@ const [verificationStatistics, setVerificationStatistics] =
                   }}
                 >
                   {plan.description ||
-                    "Secure verification powered by IFSE."}
+                    t("vc_securePoweredByIFSE")}
                 </p>
 
                 <p>
                   <strong>
-                    Available Types:
+                    {t("vc_availableTypes")}:
                   </strong>
                 </p>
 
@@ -753,7 +749,7 @@ const [verificationStatistics, setVerificationStatistics] =
                     <li>
                       +
                       {plan.verificationTypes.length - 4}
-                      {" "}more...
+                      {" "}{t("vc_more")}...
                     </li>
                   )}
                 </ul>
@@ -775,7 +771,7 @@ const [verificationStatistics, setVerificationStatistics] =
                     cursor: "pointer",
                   }}
                 >
-                  Start Verification
+                  {t("vc_startVerification")}
                 </button>
               </div>
             );
@@ -788,7 +784,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          IFSE Security Layers
+          {t("vc_securityLayers")}
         </h2>
 
         <ul>
@@ -823,7 +819,7 @@ const [verificationStatistics, setVerificationStatistics] =
       marginBottom: "24px",
     }}
   >
-    Overview of your verification activity.
+    {t("vc_activityOverview")}
   </p>
 
   <div
@@ -842,7 +838,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <h3>Total Requests</h3>
+      <h3>{t("vc_totalRequests")}</h3>
       <p
         style={{
           fontSize: "28px",
@@ -908,7 +904,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <h3>Rejected</h3>
+      <h3>{t("vc_rejected")}</h3>
       <p
         style={{
           fontSize: "28px",
@@ -933,14 +929,14 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          Benefits of Verification
+          {t("vc_benefits")}
         </h2>
 
         <ul>
           {verificationBenefits.map(
             (benefit) => (
               <li
-                key={benefit}
+                key={t(benefit)}
                 style={{
                   marginBottom: "10px",
                 }}
@@ -957,7 +953,7 @@ const [verificationStatistics, setVerificationStatistics] =
             marginBottom: "20px",
           }}
         >
-          Verification Process
+          {t("vc_process")}
         </h2>
 
         <ol
@@ -966,35 +962,35 @@ const [verificationStatistics, setVerificationStatistics] =
           }}
         >
           <li>
-            Choose your verification category.
+            {t("vc_processChooseCategory")}
           </li>
 
           <li>
-            Select the appropriate verification type.
+            {t("vc_processSelectType")}
           </li>
 
           <li>
-            Complete your application form.
+            {t("vc_processCompleteForm")}
           </li>
 
           <li>
-            Upload supporting documents.
+            {t("vc_processUploadDocs")}
           </li>
 
           <li>
-            Complete payment (if applicable).
+            {t("vc_processPayment")}
           </li>
 
           <li>
-            IFSE performs identity, document and fraud verification.
+            {t("vc_processIFSE")}
           </li>
 
           <li>
-            Your application is reviewed.
+            {t("vc_processReview")}
           </li>
 
           <li>
-            Your verification badge is issued after approval.
+            {t("vc_processBadge")}
           </li>
         </ol>
 
@@ -1008,7 +1004,7 @@ const [verificationStatistics, setVerificationStatistics] =
           }}
         >
           <h2>
-            Inclura Fortress Security Engine (IFSE)
+            {t("vc_ifseTitle")}
           </h2>
 
           <p
@@ -1017,14 +1013,7 @@ const [verificationStatistics, setVerificationStatistics] =
               lineHeight: "1.8",
             }}
           >
-            Every verification request submitted through
-            Inclura is protected by IFSE. The system
-            performs identity verification, document
-            authentication, AI fraud detection,
-            accessibility compliance, payment protection,
-            continuous monitoring and executive review to
-            ensure trusted verification across the
-            platform.
+            {t("vc_ifseDescription")}
           </p>
         </div>
 
