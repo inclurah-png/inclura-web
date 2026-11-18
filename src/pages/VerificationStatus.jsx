@@ -37,6 +37,27 @@ const [error, setError] = useState("");
 
 const [verification, setVerification] = useState(null);
 
+const assessment = useMemo(() => {
+  if (!verification) return { riskScore: 0, threatLevel: "PENDING" };
+
+  const trustScoreValue = verification.ifseScore ?? verification.ifseTrustScore;
+  const hasTrustScore =
+    trustScoreValue !== null &&
+    trustScoreValue !== undefined &&
+    Number.isFinite(Number(trustScoreValue));
+
+  const riskScore = hasTrustScore
+    ? Math.max(0, Math.min(100, 100 - Number(trustScoreValue)))
+    : Math.max(0, Math.min(100, Number(verification.riskScore) || 0));
+
+  const threatLevel =
+    riskScore >= 80 ? "CRITICAL" :
+    riskScore >= 60 ? "HIGH" :
+    riskScore >= 35 ? "MEDIUM" : "LOW";
+
+  return { riskScore, threatLevel };
+}, [verification]);
+
 const [timeline, setTimeline] = useState([]);
 
 const [securityEvents, setSecurityEvents] = useState([]);
@@ -396,11 +417,7 @@ const openVerificationDocument = async (documentRecord) => {
       <strong>{t("riskScore")}</strong>
 
       <p>
-  {Number(
-    verification.riskScore ??
-    verification.ifseScore ??
-    0
-  ).toFixed(0)}%
+  {assessment.riskScore.toFixed(0)}%
 </p>
 
     </div>
@@ -410,7 +427,7 @@ const openVerificationDocument = async (documentRecord) => {
       <strong>{t("threatLevel")}</strong>
 
 <p>
-  {t(String(verification.threatLevel ?? verification.ifseStatus ?? "pending").toLowerCase(), { defaultValue: verification.threatLevel ?? verification.ifseStatus ?? "Pending Assessment" })}
+  {t(assessment.threatLevel.toLowerCase(), { defaultValue: assessment.threatLevel })}
 </p>
 
     </div>
