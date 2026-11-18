@@ -11,7 +11,7 @@ import {
 
 import { useEffect, useMemo, useState } from "react";
 
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
 
@@ -31,6 +31,8 @@ import DashboardLayout from "../components/DashboardLayout";
 function VerificationPaymentEngine() {
 
 const navigate = useNavigate();
+const location = useLocation();
+const routeState = location.state || {};
 
 const [currentUser, setCurrentUser] = useState(null);
 
@@ -41,10 +43,10 @@ const [error, setError] = useState("");
 const [success, setSuccess] = useState("");
 
 const [verificationType, setVerificationType] =
-useState("Creator");
+useState(routeState.category || "creator");
 
 const [selectedTier, setSelectedTier] =
-useState("");
+useState(routeState.verificationType || "");
 
 const [paymentMethod, setPaymentMethod] =
 useState("");
@@ -74,10 +76,7 @@ useState(false);
 
   return () => unsubscribe();
 }, []);
-  const [verificationId, setVerificationId] =
-useState("");
-
-const PAYMENT_METHODS = [
+  const PAYMENT_METHODS = [
 
 "Credit Card",
 
@@ -166,70 +165,29 @@ paymentRiskScore >= 75
 
 : "Low";
 
+const selectedCategory =
+  VERIFICATION_PLANS[verificationType] ||
+  (verificationType === "Corporate" ? partnerships.corporate : null) ||
+  (verificationType === "Government" ? partnerships.government : null) ||
+  (verificationType === "Enterprise" ? partnerships.enterprise : null);
+
 const selectedVerification = useMemo(() => {
-
-switch (verificationType) {
-
-case "Creator":
-return VERIFICATION_PLANS.creator;
-
-case "Group":
-return VERIFICATION_PLANS.group;
-
-case "Organization":
-return VERIFICATION_PLANS.organization;
-
-case "NGO":
-return VERIFICATION_PLANS.ngo;
-
-case "Institution":
-return VERIFICATION_PLANS.institution;
-
-case "Healthcare":
-return VERIFICATION_PLANS.healthcare;
-
-case "Media":
-return VERIFICATION_PLANS.media;
-    case "Religious":
-  return VERIFICATION_PLANS.religious;
-
-case "Museum":
-  return VERIFICATION_PLANS.museum;
-
-case "Tourism":
-  return VERIFICATION_PLANS.tourism;
-
-case "Entertainment":
-  return VERIFICATION_PLANS.entertainment;
-
-case "Accessibility":
-  return VERIFICATION_PLANS.accessibility;
-
-case "Corporate":
-  return partnerships.corporate;
-
-case "Government":
-  return partnerships.government;
-
-case "Enterprise":
-  return partnerships.enterprise;
-default:
-return null;
-
-}
-
-}, [verificationType]);
+  if (!selectedCategory) return null;
+  const matchingTier = selectedCategory.verificationTypes?.find(
+    (item) => item.id === selectedTier
+  );
+  return matchingTier || selectedCategory.verificationTypes?.[0] || selectedCategory;
+}, [selectedCategory, selectedTier]);
 
 const paymentAmount = useMemo(() => {
-
   if (!selectedVerification) return 0;
-
-  return (
+  return Number(
     selectedVerification.monthlyUSD ??
+    selectedVerification.yearlyUSD ??
     selectedVerification.monthlyFee ??
+    selectedVerification.fee ??
     0
   );
-
 }, [selectedVerification]);
 
 const flutterwaveConfig = {
@@ -374,6 +332,16 @@ const handlePayment = async (e) => {
 
   if (!acceptedSecurity) {
     setError("You must consent to IFSE payment verification.");
+    return;
+  }
+
+  if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+    setError("A valid verification fee was not found for this application. Please return to your verification application and select a priced verification type.");
+    return;
+  }
+
+  if (!import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY) {
+    setError("Payment is temporarily unavailable because the payment gateway is not configured.");
     return;
   }
 
