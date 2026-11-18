@@ -16,6 +16,7 @@ import {
 
 import { updateProfile } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 function isPlaceholderName(value) {
   if (typeof value !== "string") {
@@ -103,6 +104,7 @@ async function recoverNameFromPosts(userId) {
 
 function EditProfile() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const [fullName, setFullName] = useState("");
   const [location, setLocation] = useState("");
@@ -135,7 +137,7 @@ function EditProfile() {
 
         if (!currentUser) {
           if (isCurrent) {
-            setProfileError("Please log in to edit your profile.");
+            setProfileError(t("epLoginRequired"));
           }
           return;
         }
@@ -207,7 +209,7 @@ function EditProfile() {
 
         if (isCurrent) {
           setProfileError(
-            "Unable to load your profile. Check your connection and Firebase permissions."
+            t("epLoadError")
           );
         }
       } finally {
@@ -241,11 +243,11 @@ function EditProfile() {
       setPhotoURL(secureUrl);
 
       alert(
-        "Photo uploaded securely. Select Save Changes to update your profile."
+        t("epPhotoUploaded")
       );
     } catch (error) {
       console.error("Profile photo upload failed:", error);
-      alert(error.message || "Photo upload failed. Please try again.");
+      alert(error.message || t("epPhotoUploadError"));
     } finally {
       setUploadingPhoto(false);
     }
@@ -259,24 +261,24 @@ function EditProfile() {
     const currentUser = auth.currentUser;
 
     if (!currentUser) {
-      alert("Please log in again.");
+      alert(t("epLoginAgain"));
       return;
     }
 
     const cleanedName = fullName.trim();
 
     if (!cleanedName || isPlaceholderName(cleanedName)) {
-      alert("Please enter your real profile name.");
+      alert(t("epRealNameRequired"));
       return;
     }
 
     if (cleanedName.length > 100) {
-      alert("Your name must be 100 characters or fewer.");
+      alert(t("epNameTooLong"));
       return;
     }
 
     if (bio.trim().length > 1000) {
-      alert("Your bio must be 1,000 characters or fewer.");
+      alert(t("epBioTooLong"));
       return;
     }
 
@@ -353,14 +355,14 @@ function EditProfile() {
         );
       }
 
-      alert("Profile updated successfully.");
+      alert(t("epSaved"));
 
       navigate("/profile");
     } catch (error) {
       console.error("Save profile error:", error);
 
       alert(
-        "Profile could not be saved. Check your connection and Firebase Security Rules, then try again."
+        t("epSaveError")
       );
     } finally {
       setSaving(false);
@@ -378,7 +380,7 @@ function EditProfile() {
   if (profileLoading) {
     return (
       <div style={pageStyle} role="status" aria-live="polite">
-        Loading your profile...
+        {t("epLoading")}
       </div>
     );
   }
@@ -387,7 +389,7 @@ function EditProfile() {
     return (
       <div style={pageStyle}>
         <div style={panelStyle}>
-          <h1>Profile unavailable</h1>
+          <h1>{t("epUnavailable")}</h1>
           <p role="alert">{profileError}</p>
 
           <button
@@ -413,19 +415,19 @@ function EditProfile() {
   return (
     <div style={pageStyle}>
       <div style={panelStyle}>
-        <h1>Edit Profile</h1>
+        <h1>{t("epTitle")}</h1>
 
         <div style={{ textAlign: "center", marginBottom: "24px" }}>
           {photoURL ? (
             <img
               src={photoURL}
-              alt="Profile"
+              alt={t("profile")}
               referrerPolicy="no-referrer"
               style={photoStyle}
             />
           ) : (
             <div
-              aria-label="No profile photo"
+              aria-label={t("epNoPhoto")}
               style={{
                 ...photoStyle,
                 margin: "0 auto",
@@ -446,7 +448,7 @@ function EditProfile() {
               htmlFor="profile-photo"
               style={{ display: "block", marginTop: "12px" }}
             >
-              Change profile photo
+              {t("epChangePhoto")}
             </label>
 
             <input
@@ -460,11 +462,11 @@ function EditProfile() {
           </div>
 
           {uploadingPhoto && (
-            <p role="status">Uploading photo...</p>
+            <p role="status">{t("epUploadingPhoto")}</p>
           )}
         </div>
 
-        <label htmlFor="full-name">Full Name</label>
+        <label htmlFor="full-name">{t("fullName")}</label>
         <input
           id="full-name"
           autoComplete="name"
@@ -474,7 +476,7 @@ function EditProfile() {
           style={inputStyle}
         />
 
-        <label htmlFor="profile-location">Location</label>
+        <label htmlFor="profile-location">{t("epLocation")}</label>
         <input
           id="profile-location"
           autoComplete="address-level2"
@@ -483,7 +485,7 @@ function EditProfile() {
           style={inputStyle}
         />
 
-        <label htmlFor="phone-number">Phone Number</label>
+        <label htmlFor="phone-number">{t("epPhone")}</label>
         <input
           id="phone-number"
           type="tel"
@@ -493,7 +495,7 @@ function EditProfile() {
           style={inputStyle}
         />
 
-        <label htmlFor="profile-bio">Bio</label>
+        <label htmlFor="profile-bio">{t("epBio")}</label>
         <textarea
           id="profile-bio"
           maxLength={1000}
@@ -502,24 +504,24 @@ function EditProfile() {
           style={{ ...inputStyle, height: "120px" }}
         />
 
-        <label htmlFor="profile-category">Category</label>
+        <label htmlFor="profile-category">{t("epCategory")}</label>
         <select
           id="profile-category"
           value={category}
           onChange={(event) => setCategory(event.target.value)}
           style={selectStyle}
         >
-          <option value="">Select Category</option>
-          <option value="Creator">Creator</option>
-          <option value="Caregiver">Caregiver</option>
-          <option value="Employer">Employer</option>
+          <option value="">{t("epSelectCategory")}</option>
+          <option value="Creator">{t("creator")}</option>
+          <option value="Caregiver">{t("caregiver")}</option>
+          <option value="Employer">{t("employer")}</option>
           <option value="Job Seeker">Job Seeker</option>
-          <option value="Volunteer">Volunteer</option>
-          <option value="Organization">Organization</option>
-          <option value="Advocate">Advocate</option>
+          <option value="Volunteer">{t("volunteer")}</option>
+          <option value="Organization">{t("organization")}</option>
+          <option value="Advocate">{t("advocate")}</option>
         </select>
 
-        <label htmlFor="preferred-language">Preferred Language</label>
+        <label htmlFor="preferred-language">{t("preferredLanguage")}</label>
         <select
           id="preferred-language"
           value={preferredLanguage}
@@ -543,7 +545,7 @@ function EditProfile() {
           aria-labelledby="accessibility-heading"
           style={{ marginBottom: "20px" }}
         >
-          <h2 id="accessibility-heading">Accessibility Needs</h2>
+          <h2 id="accessibility-heading">{t("epAccessibilityNeeds")}</h2>
 
           <p>
             Choose the accessibility needs you want Inclura to
@@ -551,10 +553,10 @@ function EditProfile() {
           </p>
 
           {[
-            "Visual Impairment",
-            "Hearing Impairment",
-            "Mobility Impairment",
-            "Speech Impairment",
+            t("epVisualImpairment"),
+            t("epHearingImpairment"),
+            t("epMobilityImpairment"),
+            t("epSpeechImpairment"),
           ].map((need) => (
             <div key={need} style={{ marginBottom: "10px" }}>
               <label>
@@ -584,7 +586,7 @@ function EditProfile() {
                   setAccessibilityNeedsPublic(event.target.checked)
                 }
               />{" "}
-              Share my accessibility needs on my public profile
+              {t("epShareNeeds")}
             </label>
 
             <p style={{ fontSize: "13px", color: "#cbd5e1" }}>
@@ -607,10 +609,10 @@ function EditProfile() {
           }}
         >
           {saving
-            ? "Saving..."
+            ? t("epSaving")
             : uploadingPhoto
               ? "Wait for Photo Upload..."
-              : "Save Changes"}
+              : t("epSaveChanges")}
         </button>
 
         <button
