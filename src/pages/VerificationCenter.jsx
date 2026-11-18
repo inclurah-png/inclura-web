@@ -382,7 +382,7 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <p>
     <strong>{t("threatLevel")}:</strong>{" "}
-    {t(assessment.threatLevel.toLowerCase(), { defaultValue: assessment.threatLevel })}
+    {t("ifseThreat" + assessment.threatLevel.charAt(0) + assessment.threatLevel.slice(1).toLowerCase())}
   </p>
 
   <p>
