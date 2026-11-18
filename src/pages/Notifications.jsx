@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -14,6 +15,7 @@ import {
 
 function Notifications() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [error, setError] = useState("");
 
@@ -63,7 +65,7 @@ function Notifications() {
             snapshotError?.message || "Unknown Firebase error.";
 
           setError(
-            `Notifications error: ${code}. ${message}`
+            `${t("notificationsError")}: ${code}. ${message}`
           );
         }
       );
@@ -97,14 +99,14 @@ function Notifications() {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", flexWrap: "wrap" }}>
-        <h1>🔔 Notifications</h1>
-        <button type="button" onClick={() => navigate("/profile")} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 14px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer" }}>← Dashboard</button>
+        <h1>🔔 {t("notificationsTitle")}</h1>
+        <button type="button" onClick={() => navigate("/profile")} style={{ border: "1px solid #334155", borderRadius: "12px", padding: "10px 14px", background: "#1e293b", color: "#ffffff", fontWeight: "700", cursor: "pointer" }}>{`← ${t("returnDashboard")}`}</button>
       </div>
 
       {error ? (
         <p>{error}</p>
       ) : notifications.length === 0 ? (
-        <p>No notifications yet</p>
+        <p>{t("notificationsEmpty")}</p>
       ) : (
         notifications.map((item) => (
           <div
