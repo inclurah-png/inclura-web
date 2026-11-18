@@ -94,11 +94,11 @@ return (
             <span aria-hidden="true">
               {section.icon}
             </span>{" "}
-            {section.title}
+            {t(section.titleKey)}
           </span>
 
           <span style={styles.cardDescription}>
-            {section.description}
+            {t(section.descriptionKey)}
           </span>
         </button>
       ))}
