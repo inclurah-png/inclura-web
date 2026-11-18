@@ -91,153 +91,45 @@ export const SUPPORTED_LANGUAGES = Object.freeze([
     flag: "🇳🇬",
   }),
 
-  Object.freeze({
-    code: "am",
-    name: "Amharic",
-    nativeName: "አማርኛ",
-    direction: "ltr",
-    flag: "🇪🇹",
-  }),
 
-  Object.freeze({
-    code: "zu",
-    name: "Zulu",
-    nativeName: "isiZulu",
-    direction: "ltr",
-    flag: "🇿🇦",
-  }),
+
+
 
   // Asian
 
-  Object.freeze({
-    code: "zh-CN",
-    name: "Chinese (Simplified)",
-    nativeName: "简体中文",
-    direction: "ltr",
-    flag: "🇨🇳",
-  }),
 
-  Object.freeze({
-    code: "zh-TW",
-    name: "Chinese (Traditional)",
-    nativeName: "繁體中文",
-    direction: "ltr",
-    flag: "🇹🇼",
-  }),
 
-  Object.freeze({
-    code: "ja",
-    name: "Japanese",
-    nativeName: "日本語",
-    direction: "ltr",
-    flag: "🇯🇵",
-  }),
 
-  Object.freeze({
-    code: "ko",
-    name: "Korean",
-    nativeName: "한국어",
-    direction: "ltr",
-    flag: "🇰🇷",
-  }),
 
-  Object.freeze({
-    code: "hi",
-    name: "Hindi",
-    nativeName: "हिन्दी",
-    direction: "ltr",
-    flag: "🇮🇳",
-  }),
 
-  Object.freeze({
-    code: "bn",
-    name: "Bengali",
-    nativeName: "বাংলা",
-    direction: "ltr",
-    flag: "🇧🇩",
-  }),
 
-  Object.freeze({
-    code: "ur",
-    name: "Urdu",
-    nativeName: "اردو",
-    direction: "rtl",
-    flag: "🇵🇰",
-  }),
 
-  Object.freeze({
-    code: "ta",
-    name: "Tamil",
-    nativeName: "தமிழ்",
-    direction: "ltr",
-    flag: "🇮🇳",
-  }),
 
-  Object.freeze({
-    code: "id",
-    name: "Indonesian",
-    nativeName: "Bahasa Indonesia",
-    direction: "ltr",
-    flag: "🇮🇩",
-  }),
 
-  Object.freeze({
-    code: "th",
-    name: "Thai",
-    nativeName: "ไทย",
-    direction: "ltr",
-    flag: "🇹🇭",
-  }),
 
-  Object.freeze({
-    code: "vi",
-    name: "Vietnamese",
-    nativeName: "Tiếng Việt",
-    direction: "ltr",
-    flag: "🇻🇳",
-  }),
+
+
+
+
+
+
+
+
+
+
+
 
   // Europe
 
-  Object.freeze({
-    code: "de",
-    name: "German",
-    nativeName: "Deutsch",
-    direction: "ltr",
-    flag: "🇩🇪",
-  }),
 
-  Object.freeze({
-    code: "it",
-    name: "Italian",
-    nativeName: "Italiano",
-    direction: "ltr",
-    flag: "🇮🇹",
-  }),
 
-  Object.freeze({
-    code: "nl",
-    name: "Dutch",
-    nativeName: "Nederlands",
-    direction: "ltr",
-    flag: "🇳🇱",
-  }),
 
-  Object.freeze({
-    code: "ru",
-    name: "Russian",
-    nativeName: "Русский",
-    direction: "ltr",
-    flag: "🇷🇺",
-  }),
 
-  Object.freeze({
-    code: "tr",
-    name: "Turkish",
-    nativeName: "Türkçe",
-    direction: "ltr",
-    flag: "🇹🇷",
-  }),
+
+
+
+
+
 ]);
 
 /**
