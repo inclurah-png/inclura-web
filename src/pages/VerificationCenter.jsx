@@ -1195,8 +1195,8 @@ const [verificationStatistics, setVerificationStatistics] =
 
       <p style={{ marginTop: "10px" }}>
         {verification?.executiveReviewRequired
-          ? "🟡 {t("vc_waiting")}"
-          : "🟢 {t("notRequired")}"}
+          ? `🟡 ${t("vc_waiting")}`
+          : `🟢 ${t("notRequired")}`}
       </p>
 
     </div>
