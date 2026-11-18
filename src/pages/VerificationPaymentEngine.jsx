@@ -648,9 +648,11 @@ Complete your verification payment securely through the
         <div>
           <strong>Status</strong>
           <p>
-            {selectedVerification.status ??
-              "Active"}
+            Awaiting Payment
           </p>
+          <small style={{ color: "#facc15" }}>
+            Verification becomes active only after payment is confirmed and the application is approved.
+          </small>
         </div>
 
       </div>
