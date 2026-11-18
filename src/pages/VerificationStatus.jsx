@@ -46,29 +46,17 @@ const [openingDocument, setOpeningDocument] = useState("");
 const [documentError, setDocumentError] = useState("");
 
 const IFSE_PROGRESS = [
-
-"Application Submitted",
-
-"Payment Verified",
-
-"Documents Verified",
-
-"Identity Confirmed",
-
-"AI Fraud Detection",
-
-"Accessibility Validation",
-
-"Risk Assessment",
-
-"Executive Approval",
-
-"Badge Generated",
-
-"Certificate Generated",
-
-"Verification Activated",
-
+"submitted",
+"verified",
+"secureUploadedDocuments",
+"vc_identityVerification",
+"vc_aiFraudDetection",
+"vc_accessibilityCompliance",
+"riskScore",
+"vc_executiveReview",
+"vc_officialBadge",
+"vc_digitalCertificate",
+"verified",
 ];
 
 const progress = useMemo(() => {
@@ -567,7 +555,7 @@ const openVerificationDocument = async (documentRecord) => {
             {completed ? "✓" : index + 1}
           </div>
 
-          <span>{stage}</span>
+          <span>{t(stage)}</span>
 
         </div>
 
