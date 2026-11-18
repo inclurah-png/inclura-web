@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import {
   getVerificationBadge,
@@ -157,6 +157,17 @@ function ProfileHeader({
 }) {
   const fileInputRef =
     useRef(null);
+  const [uploadedPhotoURL, setUploadedPhotoURL] = useState("");
+  const [photoUploading, setPhotoUploading] = useState(false);
+
+  useEffect(() => {
+    setUploadedPhotoURL(
+      profile?.profilePhoto ||
+      profile?.photoURL ||
+      auth.currentUser?.photoURL ||
+      ""
+    );
+  }, [profile?.profilePhoto, profile?.photoURL]);
 
   const profileName =
     resolveProfileName(
@@ -177,6 +188,7 @@ function ProfileHeader({
         return;
       }
 
+      setPhotoUploading(true);
       const url = await uploadProfilePhotoToCloudinary(file);
 
       await updateDoc(doc(db, "users", user.uid), {
@@ -184,10 +196,13 @@ function ProfileHeader({
         photoURL: url,
       });
 
-      window.location.reload();
+      // Update this profile immediately; a full-page reload is unnecessary.
+      setUploadedPhotoURL(url);
     } catch (error) {
       console.error("Profile photo upload failed:", error);
       alert(error.message || "Profile photo upload failed. Please try again.");
+    } finally {
+      setPhotoUploading(false);
     }
   }
 
@@ -277,9 +292,7 @@ function ProfileHeader({
         >
           <img
             src={
-              profile?.profilePhoto ||
-              profile?.photoURL ||
-              auth.currentUser?.photoURL ||
+              uploadedPhotoURL ||
               "https://via.placeholder.com/120"
             }
             alt={`${profileName} profile`}
@@ -297,6 +310,7 @@ function ProfileHeader({
             onClick={() =>
               fileInputRef.current?.click()
             }
+            disabled={photoUploading}
             style={{
               marginTop: "10px",
               padding: "8px 14px",
@@ -304,10 +318,11 @@ function ProfileHeader({
               border: "none",
               background: "#38bdf8",
               color: "white",
-              cursor: "pointer",
+              cursor: photoUploading ? "wait" : "pointer",
+              opacity: photoUploading ? 0.65 : 1,
             }}
           >
-            📷 Change Photo
+            {photoUploading ? "Uploading Photo..." : "📷 Change Photo"}
           </button>
 
           <input
@@ -315,6 +330,7 @@ function ProfileHeader({
             accept="image/*"
             ref={fileInputRef}
             onChange={uploadPhoto}
+            disabled={photoUploading}
             style={{
               display: "none",
             }}
