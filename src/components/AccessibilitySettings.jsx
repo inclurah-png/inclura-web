@@ -1,4 +1,5 @@
 import { useAccessibility } from "../context/AccessibilityProvider";
+import { useTranslation } from "react-i18next";
 
 const LANGUAGE_OPTIONS = [
   { value: "en", label: "English" },
@@ -29,16 +30,16 @@ const LANGUAGE_OPTIONS = [
 ];
 
 const PROFILE_OPTIONS = [
-  { key: "blind", label: "Blindness" },
-  { key: "lowVision", label: "Low vision" },
-  { key: "deaf", label: "Deafness" },
-  { key: "hardOfHearing", label: "Hard of hearing" },
-  { key: "wheelchair", label: "Wheelchair user" },
-  { key: "motorImpaired", label: "Mobility impairment" },
-  { key: "speechImpairment", label: "Speech impairment" },
-  { key: "dyslexia", label: "Dyslexia" },
-  { key: "adhd", label: "ADHD" },
-  { key: "autism", label: "Autism" },
+  { key: "blind", labelKey: "blindness" },
+  { key: "lowVision", labelKey: "lowVision" },
+  { key: "deaf", labelKey: "deafness" },
+  { key: "hardOfHearing", labelKey: "hardOfHearing" },
+  { key: "wheelchair", labelKey: "wheelchairUser" },
+  { key: "motorImpaired", labelKey: "mobilityImpairment" },
+  { key: "speechImpairment", labelKey: "speechImpairment" },
+  { key: "dyslexia", labelKey: "dyslexia" },
+  { key: "adhd", labelKey: "adhd" },
+  { key: "autism", labelKey: "autism" },
 ];
 
 function SettingRow({ label, description, children }) {
@@ -88,7 +89,7 @@ function SettingRow({ label, description, children }) {
   );
 }
 
-function AccessibilitySettings() {
+function AccessibilitySettings() {\n  const { t } = useTranslation();
   const {
     language,
     setLanguage,
@@ -170,7 +171,7 @@ function AccessibilitySettings() {
         </div>
 
         <SettingRow
-          label="Text size"
+          label={t("textSize")}
           description={`Current scale: ${Math.round(fontScale * 100)}%`}
         >
           <span style={{ fontSize: "13px", whiteSpace: "nowrap" }}>
@@ -180,7 +181,7 @@ function AccessibilitySettings() {
 
         <input
           type="range"
-          aria-label="Text size"
+          aria-label={t("textSize")}
           min="0.8"
           max="1.6"
           step="0.1"
@@ -190,8 +191,8 @@ function AccessibilitySettings() {
         />
 
         <SettingRow
-          label="High contrast"
-          description="Use a dark background and bright text."
+          label={t("highContrast")}
+          description={t("highContrastDesc")}
         >
           <input
             type="checkbox"
@@ -203,8 +204,8 @@ function AccessibilitySettings() {
         </SettingRow>
 
         <SettingRow
-          label="Reduce motion"
-          description="Reduce animated transitions where supported."
+          label={t("reduceMotion")}
+          description={t("reduceMotionDesc")}
         >
           <input
             type="checkbox"
@@ -228,12 +229,12 @@ function AccessibilitySettings() {
         </h3>
 
         <SettingRow
-          label="Enable voice guidance"
-          description="Enable spoken guidance for supported features."
+          label={t("enableVoiceGuidance")}
+          description={t("voiceGuidanceDesc")}
         >
           <input
             type="checkbox"
-            aria-label="Enable voice guidance"
+            aria-label={t("enableVoiceGuidance")}
             checked={voiceEnabled}
             onChange={(event) => setVoiceEnabled(event.target.checked)}
             style={checkboxStyle}
@@ -302,7 +303,7 @@ function AccessibilitySettings() {
         </p>
 
         {PROFILE_OPTIONS.map((option) => (
-          <SettingRow key={option.key} label={option.label}>
+          <SettingRow key={option.key} label={t(option.labelKey)}>
             <input
               type="checkbox"
               aria-label={option.label}
@@ -332,9 +333,9 @@ function AccessibilitySettings() {
         }}
       >
         {saveStatus === "saving"
-          ? "Saving accessibility settings…"
+          ? {t("savingAccessibility")}
           : saveMessage ||
-            "Changes take effect immediately. Save status will appear here."}
+            {t("accessibilitySavedFallback")}}
       </div>
     </div>
   );
