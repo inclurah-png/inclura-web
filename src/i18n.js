@@ -265,92 +265,117 @@ cognitiveSupport: "Cognitive support",
     verificationCentre: "Verification Centre",
     uploadAdditionalDocuments: "Upload Additional Documents",
     verificationPayment: "Verification Payment",
-    vc_intro: "Secure your identity, organization, institution or business using the Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "View your application progress, review updates and securely access documents you have submitted.",
-    vc_viewVerificationStatus: "View Verification Status",
-    vc_rejected: "Rejected",
-    vc_viewStatus: "View Status",
-    vc_uploadDocuments: "Upload Documents",
-    vc_continuePayment: "Continue Payment",
-    vc_identityVerification: "Identity Verification",
-    vc_documentAuthentication: "Document Authentication",
-    vc_aiFraudDetection: "AI Fraud Detection",
-    vc_forgeryDetection: "Forgery Detection",
-    vc_duplicateDetection: "Duplicate Detection",
-    vc_paymentProtection: "Payment Protection",
-    vc_accessibilityCompliance: "Accessibility Compliance",
-    vc_executiveReview: "Executive Review",
-    vc_continuousMonitoring: "Continuous Monitoring",
-    vc_executiveReviewEngine: "Executive Review Engine",
-    vc_waiting: "Waiting",
-    vc_workflowIntro: "Every verification passes through the complete Inclura Fortress Security Engine workflow.",
-    vc_step: "Step {{number}}",
-    vc_chooseCategory: "Choose Verification Category",
-    vc_securePoweredByIFSE: "Secure verification powered by IFSE.",
-    vc_availableTypes: "Available Types",
-    vc_more: "more",
-    vc_startVerification: "Start Verification",
-    vc_securityLayers: "IFSE Security Layers",
-    vc_activityOverview: "Overview of your verification activity.",
-    vc_totalRequests: "Total Requests",
-    vc_benefits: "Benefits of Verification",
-    vc_process: "Verification Process",
-    vc_processChooseCategory: "Choose your verification category.",
-    vc_processSelectType: "Select the appropriate verification type.",
-    vc_processCompleteForm: "Complete your application form.",
-    vc_processUploadDocs: "Upload supporting documents.",
-    vc_processPayment: "Complete payment (if applicable).",
-    vc_processIFSE: "IFSE performs identity, document and fraud verification.",
-    vc_processReview: "Your application is reviewed.",
-    vc_processBadge: "Your verification badge is issued after approval.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "Every verification request submitted through Inclura is protected by IFSE. The system performs identity verification, document authentication, AI fraud detection, accessibility compliance, payment protection, continuous monitoring and executive review to ensure trusted verification across the platform.",
-    vc_intro: "Dáàbò bo ìdánimọ̀, ẹgbẹ́, ilé-ẹ̀kọ́ tàbí ilé-iṣẹ́ rẹ pẹ̀lú Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Wo bí ìbéèrè rẹ ṣe ń lọ, àwọn àtúnṣe, àti àwọn ìwé tí o fi sílẹ̀ ní ààbò.",
-    vc_viewVerificationStatus: "Wo Ipò Ìmúdájú",
-    vc_rejected: "A kọ̀",
-    vc_viewStatus: "Wo Ipò",
-    vc_uploadDocuments: "Gbé Àwọn Ìwé Sókè",
-    vc_continuePayment: "Tẹ̀síwájú sí Ìsanwó",
-    vc_identityVerification: "Ìmúdájú Ìdánimọ̀",
-    vc_documentAuthentication: "Ìmúdájú Ìwé",
-    vc_aiFraudDetection: "Ìṣàwárí Ẹ̀tàn AI",
-    vc_forgeryDetection: "Ìṣàwárí Ìwé Èké",
-    vc_duplicateDetection: "Ìṣàwárí Àtúnkọ",
-    vc_paymentProtection: "Ààbò Ìsanwó",
-    vc_accessibilityCompliance: "Ìbámu Ààyè Rírọrùn",
-    vc_executiveReview: "Àyẹ̀wò Olórí",
-    vc_continuousMonitoring: "Ìṣọ́ra Títílọ",
-    vc_executiveReviewEngine: "Ẹ̀rọ Àyẹ̀wò Olórí",
-    vc_waiting: "Ń dúró",
-    vc_workflowIntro: "Gbogbo ìmúdájú ń gba gbogbo ìgbésẹ̀ Inclura Fortress Security Engine kọjá.",
-    vc_step: "Ìgbésẹ̀ {{number}}",
-    vc_chooseCategory: "Yan Ẹ̀ka Ìmúdájú",
-    vc_securePoweredByIFSE: "Ìmúdájú tó ní ààbò láti ọwọ́ IFSE.",
-    vc_availableTypes: "Irú Tó Wà",
-    vc_more: "sí i",
-    vc_startVerification: "Bẹ̀rẹ̀ Ìmúdájú",
-    vc_securityLayers: "Àwọn Ìpele Ààbò IFSE",
-    vc_activityOverview: "Àkótán iṣẹ́ ìmúdájú rẹ.",
-    vc_totalRequests: "Àpapọ̀ Àwọn Ìbéèrè",
-    vc_benefits: "Àǹfààní Ìmúdájú",
-    vc_process: "Ìlànà Ìmúdájú",
-    vc_processChooseCategory: "Yan ẹ̀ka ìmúdájú rẹ.",
-    vc_processSelectType: "Yan irú ìmúdájú tó yẹ.",
-    vc_processCompleteForm: "Kún fọ́ọ̀mù ìbéèrè rẹ.",
-    vc_processUploadDocs: "Gbé àwọn ìwé ìrànlọ́wọ́ sókè.",
-    vc_processPayment: "San owó bí ó bá yẹ.",
-    vc_processIFSE: "IFSE ń ṣe ìmúdájú ìdánimọ̀, ìwé àti ẹ̀tàn.",
-    vc_processReview: "A ó ṣàyẹ̀wò ìbéèrè rẹ.",
-    vc_processBadge: "A ó fún ọ ní àmì ìmúdájú lẹ́yìn ìfọwọ́sí.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE ń dáàbò bo gbogbo ìbéèrè ìmúdájú lórí Inclura. Ó ń ṣàyẹ̀wò ìdánimọ̀ àti ìwé, ṣàwárí ẹ̀tàn, rí i dájú pé ààyè rọrùn, dáàbò bo ìsanwó, ń ṣọ́ra nígbà gbogbo, ó sì ń ṣe àyẹ̀wò olórí.",
-    vc_underReview: "Under review",
-    vc_verificationStatusAccess: "Verification status access",
     returnHome: "Return Home",
   },
 },
 
+  yo: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "Pẹpẹ Awujọ Alágbáṣiṣẹ fún Gbogbo Ènìyàn",
+
+    // Authentication
+    welcome: "Kaabọ sí Inclura",
+    welcomeBack: "Kaabọ Padà",
+
+    login: "Wọlé",
+    logout: "Jáde",
+
+    signup: "Forúkọsílẹ",
+    createAccount: "Ṣẹda Àkọọlẹ",
+
+    continueWithGoogle: "Tẹ̀síwájú pẹ̀lú Google",
+
+    email: "Adirẹsi Ímeèlì",
+    password: "Ọrọigbaniwọle",
+    fullName: "Orúkọ Kíkún",
+
+    // Dashboard
+    dashboard: "Dasibodu",
+    home: "Ilé",
+    profile: "Profaili",
+    notifications: "Ìfitónilétí",
+    messages: "Ìfiránṣẹ́",
+    wallet: "Apamọwọ",
+
+    // Navigation
+    search: "Wá",
+    searchPlaceholder: "Wá lórí Inclura...",
+    savedPosts: "Àwọn Ìfìwéránṣẹ́ Tí A Fipamọ́",
+    editProfile: "Ṣatúnṣe Profaili",
+
+    // Language
+    language: "Èdè",
+
+    // Accessibility
+    accessibilityHub: "Ilé-iṣẹ́ Ààyè Rírọrùn",
+    accessibilityNeeds: "Àwọn Àìní Ààyè Rírọrùn",
+
+    // Opportunities
+    opportunitiesHub: "Ilé-iṣẹ́ Àwọn Ànfààní",
+    careGigs: "Àwọn Iṣẹ́ Ìtọju",
+    mentorHub: "Ilé-iṣẹ́ Olùtọ́nisọ́nà",
+    marketplace: "Ọjà",
+    reels: "Fídíò Kúkúrú",
+
+    // Verification
+    verificationCenter: "Ilé-iṣẹ́ Ìmúdájú",
+
+    // Sidebar
+    creatorEarnings: "Owó Olùdá Àkóónú",
+    creatorMonetization: "Ìnáwó Olùdá Àkóónú",
+    creatorAnalytics: "Ìtúpalẹ̀ Olùdá Àkóónú",
+
+    advertiserDashboard: "Dasibodu Olùpolówó",
+    adManager: "Alákóso Ìpolówó",
+
+    enterprise: "Ilé-iṣẹ́",
+    enterpriseAds: "Ìpolówó Ilé-iṣẹ́",
+    enterpriseCampaigns: "Ìpolongo Ilé-iṣẹ́",
+    enterpriseAnalytics: "Ìtúpalẹ̀ Ilé-iṣẹ́",
+
+    platformAnalytics: "Ìtúpalẹ̀ Pẹpẹ",
+    pricingManager: "Alákóso Owó",
+    usersManagement: "Ìṣàkóso Àwọn Olùlò",
+    reportsViolations: "Ìròyìn àti Ìrúfin",
+    verificationRequests: "Ìbéèrè Ìmúdájú",
+    verificationManager: "Alákóso Ìmúdájú",
+    walletMonitoring: "Ìtọ́jú Apamọwọ",
+    adApprovalQueue: "Ìfọwọ́sí Ìpolówó",
+    adminPanel: "Pánẹ́lì Alákóso",
+
+    sos: "SOS Pàjáwìrì",
+
+    // General
+    add: "Fikún",
+    cancel: "Fagilé",
+    save: "Fipamọ́",
+    continue: "Tẹ̀síwájú",
+
+    yes: "Bẹ́ẹ̀ni",
+    no: "Rárá",
+
+    loading: "Ń Gbéyọ...",
+    submit: "Firanṣẹ́",
+    next: "Tẹ̀lé",
+    back: "Padà",
+    close: "Pàdé",
+
+    success: "Àṣeyọrí",
+    error: "Àṣìṣe kan ṣẹlẹ̀.",
+    retry: "Gbìyànjú Lẹ́ẹ̀kansi",
+
+    settings: "Ètò",
+    account: "Àkọọlẹ",
+    privacy: "Ìpamọ́",
+    security: "Ààbò",
+
+    followers: "Àwọn Olùtẹ̀lé",
+    following: "Àwọn Tí O N Tẹ̀lé",
+
+    verified: "Tí A Ti Múdájú",
+    creator: "Olùdá Àkóónú",
     organization: "Ẹgbẹ́",
     employer: "Agbanisiṣẹ́",
     volunteer: "Olùyọ̀ǹda",
@@ -506,51 +531,102 @@ cognitiveSupport: "Àtìlẹ́yìn ìmọ̀ àti òye",
     verificationCentre: "Ilé-iṣẹ́ Ìmúdájú",
     uploadAdditionalDocuments: "Gbé Àwọn Ìwé Mìíràn Sókè",
     verificationPayment: "Ìsanwó Ìmúdájú",
-    vc_intro: "Chekwaa njirimara gị, otu gị, ụlọ akwụkwọ gị ma ọ bụ azụmahịa gị site na Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Lelee ọganihu ngwa gị, mmelite na akwụkwọ i tinyere n'ụzọ nchekwa.",
-    vc_viewVerificationStatus: "Lelee Ọnọdụ Nkwenye",
-    vc_rejected: "Ajụrụ",
-    vc_viewStatus: "Lelee Ọnọdụ",
-    vc_uploadDocuments: "Bulite Akwụkwọ",
-    vc_continuePayment: "Gaa n'ihu na Ịkwụ Ụgwọ",
-    vc_identityVerification: "Nkwenye Njirimara",
-    vc_documentAuthentication: "Nyocha Akwụkwọ",
-    vc_aiFraudDetection: "Nchọpụta Aghụghọ AI",
-    vc_forgeryDetection: "Nchọpụta Akwụkwọ Adịgboroja",
-    vc_duplicateDetection: "Nchọpụta Ihe Abụọ",
-    vc_paymentProtection: "Nchekwa Ịkwụ Ụgwọ",
-    vc_accessibilityCompliance: "Nrube Isi Nnweta",
-    vc_executiveReview: "Nyocha Ndị Isi",
-    vc_continuousMonitoring: "Nlekọta Na-aga n'ihu",
-    vc_executiveReviewEngine: "Ngwa Nyocha Ndị Isi",
-    vc_waiting: "Na-eche",
-    vc_workflowIntro: "Nkwenye ọ bụla na-agafe usoro zuru ezu nke Inclura Fortress Security Engine.",
-    vc_step: "Nzọụkwụ {{number}}",
-    vc_chooseCategory: "Họrọ Ụdị Nkwenye",
-    vc_securePoweredByIFSE: "Nkwenye echekwara nke IFSE na-akwado.",
-    vc_availableTypes: "Ụdị Dị",
-    vc_more: "ọzọ",
-    vc_startVerification: "Malite Nkwenye",
-    vc_securityLayers: "Ọkwa Nchekwa IFSE",
-    vc_activityOverview: "Nchịkọta ọrụ nkwenye gị.",
-    vc_totalRequests: "Ngụkọta Arịrịọ",
-    vc_benefits: "Uru Nkwenye",
-    vc_process: "Usoro Nkwenye",
-    vc_processChooseCategory: "Họrọ ụdị nkwenye gị.",
-    vc_processSelectType: "Họrọ ụdị nkwenye kwesịrị ekwesị.",
-    vc_processCompleteForm: "Mejupụta fọm ngwa gị.",
-    vc_processUploadDocs: "Bulite akwụkwọ nkwado.",
-    vc_processPayment: "Kwụọ ụgwọ ma ọ bụrụ na ọ dị mkpa.",
-    vc_processIFSE: "IFSE na-enyocha njirimara, akwụkwọ na aghụghọ.",
-    vc_processReview: "A ga-enyocha ngwa gị.",
-    vc_processBadge: "A ga-enye gị akara nkwenye mgbe akwadoro ya.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE na-echekwa arịrịọ nkwenye niile e tinyere na Inclura. Ọ na-enyocha njirimara na akwụkwọ, achọpụta aghụghọ, kwado nnweta, chekwaa ịkwụ ụgwọ ma na-eme nlekọta na nyocha mgbe niile.",
     returnHome: "Padà sí Ilé",
   },
 },
 
-e: "Mechie",
+  ig: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "Ikpo okwu mmekọrịta mmadụ na ibe ya maka mmadụ niile",
+
+    // Authentication
+    welcome: "Nnọọ na Inclura",
+    welcomeBack: "Nnọọ ọzọ",
+
+    login: "Banye",
+    logout: "Pụọ",
+
+    signup: "Debanye aha",
+    createAccount: "Mepụta Akaụntụ",
+
+    continueWithGoogle: "Gaa n'ihu na Google",
+
+    email: "Adreesị Email",
+    password: "Okwuntughe",
+    fullName: "Aha zuru ezu",
+
+    // Dashboard
+    dashboard: "Dashboard",
+    home: "Ụlọ",
+    profile: "Profaịlụ",
+    notifications: "Ọkwa",
+    messages: "Ozi",
+    wallet: "Akpa Ego",
+
+    // Navigation
+    search: "Chọọ",
+    searchPlaceholder: "Chọọ na Inclura...",
+    savedPosts: "Edemede Echekwara",
+    editProfile: "Dezie Profaịlụ",
+
+    // Language
+    language: "Asụsụ",
+
+    // Accessibility
+    accessibilityHub: "Ebe Nkwado Ndị Nwere Nkwarụ",
+    accessibilityNeeds: "Mkpa Nkwado",
+
+    // Opportunities
+    opportunitiesHub: "Ebe Ohere Dị",
+    careGigs: "Ọrụ Nlekọta",
+    mentorHub: "Ebe Ndị Ndúzi",
+    marketplace: "Ahịa",
+    reels: "Reels",
+
+    // Verification
+    verificationCenter: "Ebe Nkwenye",
+
+    // Sidebar
+    creatorEarnings: "Ego Onye Okike",
+    creatorMonetization: "Ụzọ Inweta Ego",
+    creatorAnalytics: "Nyocha Onye Okike",
+
+    advertiserDashboard: "Dashboard Onye Mgbasa Ozi",
+    adManager: "Njikwa Mgbasa Ozi",
+
+    enterprise: "Ụlọ Ọrụ",
+    enterpriseAds: "Mgbasa Ozi Ụlọ Ọrụ",
+    enterpriseCampaigns: "Mmemme Mgbasa Ozi",
+    enterpriseAnalytics: "Nyocha Ụlọ Ọrụ",
+
+    platformAnalytics: "Nyocha Ikpo Okwu",
+    pricingManager: "Njikwa Ọnụahịa",
+    usersManagement: "Njikwa Ndị Ọrụ",
+    reportsViolations: "Akụkọ na Mmebi Iwu",
+    verificationRequests: "Arịrịọ Nkwenye",
+    verificationManager: "Njikwa Nkwenye",
+    walletMonitoring: "Nlekọta Akpa Ego",
+    adApprovalQueue: "Nkwenye Mgbasa Ozi",
+    adminPanel: "Ogwe Onye Nchịkwa",
+
+    sos: "SOS Mberede",
+
+    // General
+    add: "Tinye",
+    cancel: "Kagbuo",
+    save: "Chekwaa",
+    continue: "Gaa n'ihu",
+
+    yes: "Ee",
+    no: "Mba",
+
+    loading: "Na-ebudata...",
+    submit: "Zipu",
+    next: "Ọzọ",
+    back: "Laghachi",
+    close: "Mechie",
 
     success: "Ọganiihu",
     error: "Nsogbu mere.",
@@ -696,51 +772,100 @@ cognitiveSupport: "Nkwado nghọta",
     verificationCentre: "Ebe Nkwenye",
     uploadAdditionalDocuments: "Bulite Akwụkwọ Ndị Ọzọ",
     verificationPayment: "Ịkwụ Ụgwọ Nkwenye",
-    vc_intro: "Kare asalin ku, ƙungiyarku, makaranta ko kasuwancinku ta amfani da Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Duba ci gaban buƙatarku, sabuntawa da takardun da kuka aika cikin tsaro.",
-    vc_viewVerificationStatus: "Duba Matsayin Tabbatarwa",
-    vc_rejected: "An ƙi",
-    vc_viewStatus: "Duba Matsayi",
-    vc_uploadDocuments: "Loda Takardu",
-    vc_continuePayment: "Ci gaba da Biyan Kuɗi",
-    vc_identityVerification: "Tabbatar da Shaida",
-    vc_documentAuthentication: "Tabbatar da Takardu",
-    vc_aiFraudDetection: "Gano Damfara ta AI",
-    vc_forgeryDetection: "Gano Takardun Jabu",
-    vc_duplicateDetection: "Gano Kwafi",
-    vc_paymentProtection: "Kariyar Biyan Kuɗi",
-    vc_accessibilityCompliance: "Daidaiton Samun Dama",
-    vc_executiveReview: "Binciken Manyan Jami'ai",
-    vc_continuousMonitoring: "Sa Ido Ci Gaba",
-    vc_executiveReviewEngine: "Tsarin Binciken Manyan Jami'ai",
-    vc_waiting: "Ana jira",
-    vc_workflowIntro: "Kowane tabbaci yana bi ta cikakken tsarin Inclura Fortress Security Engine.",
-    vc_step: "Mataki na {{number}}",
-    vc_chooseCategory: "Zaɓi Rukunin Tabbatarwa",
-    vc_securePoweredByIFSE: "Tabbaci mai tsaro daga IFSE.",
-    vc_availableTypes: "Nau'o'in da Ake da su",
-    vc_more: "ƙari",
-    vc_startVerification: "Fara Tabbatarwa",
-    vc_securityLayers: "Matakan Tsaron IFSE",
-    vc_activityOverview: "Taƙaitaccen ayyukan tabbatarwarku.",
-    vc_totalRequests: "Jimillar Buƙatu",
-    vc_benefits: "Amfanin Tabbatarwa",
-    vc_process: "Tsarin Tabbatarwa",
-    vc_processChooseCategory: "Zaɓi rukunin tabbatarwarku.",
-    vc_processSelectType: "Zaɓi nau'in tabbatarwa da ya dace.",
-    vc_processCompleteForm: "Cika fom ɗin buƙatarku.",
-    vc_processUploadDocs: "Loda takardun tallafi.",
-    vc_processPayment: "Kammala biyan kuɗi idan ya dace.",
-    vc_processIFSE: "IFSE na tabbatar da shaida, takardu da gano damfara.",
-    vc_processReview: "Za a duba buƙatarku.",
-    vc_processBadge: "Za a ba ku alamar tabbaci bayan amincewa.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE na kare duk buƙatun tabbatarwa a Inclura. Tsarin na duba shaida da takardu, gano damfara, tabbatar da sauƙin amfani, kare biyan kuɗi da ci gaba da sa ido.",
     returnHome: "Laghachi n'ụlọ",
   },
 },
 
-,
+  ha: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "Dandalin Zamantakewa Mai Haɗa Kowa",
+
+    // Authentication
+    welcome: "Barka da zuwa Inclura",
+    welcomeBack: "Barka da dawowa",
+
+    login: "Shiga",
+    logout: "Fita",
+
+    signup: "Yi Rijista",
+    createAccount: "Ƙirƙiri Asusun",
+
+    continueWithGoogle: "Ci gaba da Google",
+
+    email: "Adireshin Imel",
+    password: "Kalmar Sirri",
+    fullName: "Cikakken Suna",
+
+    // Dashboard
+    dashboard: "Dashboard",
+    home: "Gida",
+    profile: "Bayanan Kai",
+    notifications: "Sanarwa",
+    messages: "Saƙonni",
+    wallet: "Walat",
+
+    // Navigation
+    search: "Bincika",
+    searchPlaceholder: "Bincika a Inclura...",
+    savedPosts: "Abubuwan da Aka Ajiye",
+    editProfile: "Gyara Bayanan Kai",
+
+    // Language
+    language: "Harshe",
+
+    // Accessibility
+    accessibilityHub: "Cibiyar Samun Dama",
+    accessibilityNeeds: "Bukatun Samun Dama",
+
+    // Opportunities
+    opportunitiesHub: "Cibiyar Dama",
+    careGigs: "Ayyukan Kulawa",
+    mentorHub: "Cibiyar Jagoranci",
+    marketplace: "Kasuwa",
+    reels: "Reels",
+
+    // Verification
+    verificationCenter: "Cibiyar Tabbatarwa",
+
+    // Sidebar
+    creatorEarnings: "Kuɗin Mai Ƙirƙira",
+    creatorMonetization: "Samun Kuɗi",
+    creatorAnalytics: "Nazarin Mai Ƙirƙira",
+
+    advertiserDashboard: "Dashboard na Mai Tallace-tallace",
+    adManager: "Mai Sarrafa Tallace-tallace",
+
+    enterprise: "Kamfani",
+    enterpriseAds: "Tallace-tallacen Kamfani",
+    enterpriseCampaigns: "Kamfen na Kamfani",
+    enterpriseAnalytics: "Nazarin Kamfani",
+
+    platformAnalytics: "Nazarin Dandali",
+    pricingManager: "Mai Sarrafa Farashi",
+    usersManagement: "Gudanar da Masu Amfani",
+    reportsViolations: "Rahotanni da Keta Dokoki",
+    verificationRequests: "Buƙatun Tabbatarwa",
+    verificationManager: "Mai Gudanar da Tabbatarwa",
+    walletMonitoring: "Sa Ido kan Walat",
+    adApprovalQueue: "Amincewa da Tallace-tallace",
+    adminPanel: "Kwamitin Gudanarwa",
+
+    sos: "SOS na Gaggawa",
+
+    // General
+    add: "Ƙara",
+    cancel: "Soke",
+    save: "Ajiye",
+    continue: "Ci gaba",
+
+    yes: "Eh",
+    no: "A'a",
+
+    loading: "Ana Lodawa...",
+    submit: "Aika",
+    next: "Na Gaba",
     back: "Komawa",
     close: "Rufe",
 
@@ -888,51 +1013,132 @@ cognitiveSupport: "Tallafin fahimta",
     verificationCentre: "Cibiyar Tabbatarwa",
     uploadAdditionalDocuments: "Ɗora ƙarin takardu",
     verificationPayment: "Biyan Kuɗin Tabbatarwa",
-    vc_intro: "Sécurisez votre identité, votre organisation, votre établissement ou votre entreprise grâce au moteur de sécurité Inclura Fortress (IFSE).",
-    vc_trackDescription: "Consultez l’avancement de votre demande, les mises à jour et accédez en toute sécurité aux documents soumis.",
-    vc_viewVerificationStatus: "Voir le statut de vérification",
-    vc_rejected: "Rejeté",
-    vc_viewStatus: "Voir le statut",
-    vc_uploadDocuments: "Téléverser des documents",
-    vc_continuePayment: "Continuer le paiement",
-    vc_identityVerification: "Vérification d’identité",
-    vc_documentAuthentication: "Authentification des documents",
-    vc_aiFraudDetection: "Détection des fraudes par IA",
-    vc_forgeryDetection: "Détection des falsifications",
-    vc_duplicateDetection: "Détection des doublons",
-    vc_paymentProtection: "Protection des paiements",
-    vc_accessibilityCompliance: "Conformité à l’accessibilité",
-    vc_executiveReview: "Examen exécutif",
-    vc_continuousMonitoring: "Surveillance continue",
-    vc_executiveReviewEngine: "Moteur d’examen exécutif",
-    vc_waiting: "En attente",
-    vc_workflowIntro: "Chaque vérification suit l’ensemble du processus du moteur de sécurité Inclura Fortress.",
-    vc_step: "Étape {{number}}",
-    vc_chooseCategory: "Choisir une catégorie de vérification",
-    vc_securePoweredByIFSE: "Vérification sécurisée par IFSE.",
-    vc_availableTypes: "Types disponibles",
-    vc_more: "autres",
-    vc_startVerification: "Commencer la vérification",
-    vc_securityLayers: "Couches de sécurité IFSE",
-    vc_activityOverview: "Aperçu de votre activité de vérification.",
-    vc_totalRequests: "Demandes totales",
-    vc_benefits: "Avantages de la vérification",
-    vc_process: "Processus de vérification",
-    vc_processChooseCategory: "Choisissez votre catégorie de vérification.",
-    vc_processSelectType: "Sélectionnez le type de vérification approprié.",
-    vc_processCompleteForm: "Remplissez votre formulaire de demande.",
-    vc_processUploadDocs: "Téléversez les documents justificatifs.",
-    vc_processPayment: "Effectuez le paiement, le cas échéant.",
-    vc_processIFSE: "IFSE effectue la vérification de l’identité, des documents et des fraudes.",
-    vc_processReview: "Votre demande est examinée.",
-    vc_processBadge: "Votre badge de vérification est délivré après approbation.",
-    vc_ifseTitle: "Moteur de sécurité Inclura Fortress (IFSE)",
-    vc_ifseDescription: "Chaque demande soumise sur Inclura est protégée par IFSE. Le système vérifie l’identité et les documents, détecte les fraudes, contrôle l’accessibilité, protège les paiements, assure une surveillance continue et un examen exécutif.",
     returnHome: "Komawa Gida",
   },
 },
 
+  fr: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "La plateforme sociale inclusive pour tous",
 
+    // Authentication
+    welcome: "Bienvenue sur Inclura",
+    welcomeBack: "Bon retour",
+
+    login: "Se connecter",
+    logout: "Se déconnecter",
+
+    signup: "S'inscrire",
+    createAccount: "Créer un compte",
+
+    continueWithGoogle:
+      "Continuer avec Google",
+
+    email: "Adresse e-mail",
+    password: "Mot de passe",
+    fullName: "Nom complet",
+
+    // Dashboard
+    dashboard: "Tableau de bord",
+    home: "Accueil",
+    profile: "Profil",
+    notifications: "Notifications",
+    messages: "Messages",
+    wallet: "Portefeuille",
+
+    // Navigation
+    search: "Rechercher",
+    searchPlaceholder:
+      "Rechercher sur Inclura...",
+
+    savedPosts:
+      "Publications enregistrées",
+
+    editProfile:
+      "Modifier le profil",
+
+    // Language
+    language: "Langue",
+
+    // Accessibility
+    accessibilityHub:
+      "Centre d'accessibilité",
+
+    accessibilityNeeds:
+      "Besoins d'accessibilité",
+
+    // Opportunities
+    opportunitiesHub:
+      "Centre des opportunités",
+
+    careGigs:
+      "Services d'assistance",
+
+    mentorHub:
+      "Centre de mentorat",
+
+    marketplace:
+      "Marché",
+
+    reels:
+      "Reels",
+
+    // Verification
+    verificationCenter:
+      "Centre de vérification",
+
+    // Sidebar
+    creatorEarnings:
+      "Revenus du créateur",
+
+    creatorMonetization:
+      "Monétisation du créateur",
+
+    creatorAnalytics:
+      "Analyses du créateur",
+
+    advertiserDashboard:
+      "Tableau de bord annonceur",
+
+    adManager:
+      "Gestionnaire de publicités",
+
+    enterprise:
+      "Entreprise",
+
+    enterpriseAds:
+      "Publicités d'entreprise",
+
+    enterpriseCampaigns:
+      "Campagnes d'entreprise",
+
+    enterpriseAnalytics:
+      "Analyses d'entreprise",
+
+    platformAnalytics:
+      "Analyses de la plateforme",
+
+    pricingManager:
+      "Gestionnaire des tarifs",
+
+    usersManagement:
+      "Gestion des utilisateurs",
+
+    reportsViolations:
+      "Signalements et violations",
+
+    verificationRequests:
+      "Demandes de vérification",
+
+    verificationManager:
+      "Gestionnaire des vérifications",
+
+    walletMonitoring:
+      "Surveillance du portefeuille",
+
+    adApprovalQueue:
       "File d'approbation des publicités",
 
     adminPanel:
@@ -1102,51 +1308,170 @@ cognitiveSupport: "Assistance cognitive",
     verificationCentre: "Centre de vérification",
     uploadAdditionalDocuments: "Téléverser d’autres documents",
     verificationPayment: "Paiement de vérification",
-    vc_intro: "احمِ هويتك أو مؤسستك أو مدرستك أو نشاطك التجاري باستخدام محرك أمان إنكلورا فورتريس (IFSE).",
-    vc_trackDescription: "تابع تقدم طلبك والتحديثات، وافتح المستندات التي قدمتها بأمان.",
-    vc_viewVerificationStatus: "عرض حالة التحقق",
-    vc_rejected: "مرفوض",
-    vc_viewStatus: "عرض الحالة",
-    vc_uploadDocuments: "تحميل المستندات",
-    vc_continuePayment: "متابعة الدفع",
-    vc_identityVerification: "التحقق من الهوية",
-    vc_documentAuthentication: "مصادقة المستندات",
-    vc_aiFraudDetection: "اكتشاف الاحتيال بالذكاء الاصطناعي",
-    vc_forgeryDetection: "اكتشاف التزوير",
-    vc_duplicateDetection: "اكتشاف التكرار",
-    vc_paymentProtection: "حماية المدفوعات",
-    vc_accessibilityCompliance: "الامتثال لإمكانية الوصول",
-    vc_executiveReview: "مراجعة الإدارة",
-    vc_continuousMonitoring: "المراقبة المستمرة",
-    vc_executiveReviewEngine: "محرك مراجعة الإدارة",
-    vc_waiting: "قيد الانتظار",
-    vc_workflowIntro: "تمر كل عملية تحقق عبر سير العمل الكامل لمحرك أمان إنكلورا فورتريس.",
-    vc_step: "الخطوة {{number}}",
-    vc_chooseCategory: "اختر فئة التحقق",
-    vc_securePoweredByIFSE: "تحقق آمن مدعوم من IFSE.",
-    vc_availableTypes: "الأنواع المتاحة",
-    vc_more: "المزيد",
-    vc_startVerification: "بدء التحقق",
-    vc_securityLayers: "طبقات أمان IFSE",
-    vc_activityOverview: "نظرة عامة على نشاط التحقق الخاص بك.",
-    vc_totalRequests: "إجمالي الطلبات",
-    vc_benefits: "فوائد التحقق",
-    vc_process: "عملية التحقق",
-    vc_processChooseCategory: "اختر فئة التحقق الخاصة بك.",
-    vc_processSelectType: "حدد نوع التحقق المناسب.",
-    vc_processCompleteForm: "أكمل نموذج الطلب.",
-    vc_processUploadDocs: "حمّل المستندات الداعمة.",
-    vc_processPayment: "أكمل الدفع إن كان مطلوبًا.",
-    vc_processIFSE: "يتحقق IFSE من الهوية والمستندات والاحتيال.",
-    vc_processReview: "ستتم مراجعة طلبك.",
-    vc_processBadge: "ستصدر شارة التحقق بعد الموافقة.",
-    vc_ifseTitle: "محرك أمان إنكلورا فورتريس (IFSE)",
-    vc_ifseDescription: "يحمي IFSE جميع طلبات التحقق المقدمة عبر إنكلورا. ويتحقق النظام من الهوية والمستندات، ويكتشف الاحتيال، ويدعم إمكانية الوصول، ويحمي المدفوعات ويوفر مراقبة مستمرة.",
     returnHome: "Retour à l’accueil",
   },
 },
 
-anization: "مؤسسة",
+  ar: {
+  translation: {
+    // Branding
+    appName: "إنكلورا",
+    slogan: "منصة التواصل الاجتماعي الشاملة للجميع",
+
+    // Authentication
+    welcome: "مرحبًا بك في إنكلورا",
+    welcomeBack: "مرحبًا بعودتك",
+
+    login: "تسجيل الدخول",
+    logout: "تسجيل الخروج",
+
+    signup: "إنشاء حساب",
+    createAccount: "إنشاء حساب",
+
+    continueWithGoogle:
+      "المتابعة باستخدام Google",
+
+    email: "البريد الإلكتروني",
+    password: "كلمة المرور",
+    fullName: "الاسم الكامل",
+
+    // Dashboard
+    dashboard: "لوحة التحكم",
+    home: "الرئيسية",
+    profile: "الملف الشخصي",
+    notifications: "الإشعارات",
+    messages: "الرسائل",
+    wallet: "المحفظة",
+
+    // Navigation
+    search: "بحث",
+    searchPlaceholder:
+      "ابحث في إنكلورا...",
+
+    savedPosts:
+      "المنشورات المحفوظة",
+
+    editProfile:
+      "تعديل الملف الشخصي",
+
+    // Language
+    language: "اللغة",
+
+    // Accessibility
+    accessibilityHub:
+      "مركز إمكانية الوصول",
+
+    accessibilityNeeds:
+      "احتياجات إمكانية الوصول",
+
+    // Opportunities
+    opportunitiesHub:
+      "مركز الفرص",
+
+    careGigs:
+      "أعمال الرعاية",
+
+    mentorHub:
+      "مركز الإرشاد",
+
+    marketplace:
+      "السوق",
+
+    reels:
+      "ريلز",
+
+    // Verification
+    verificationCenter:
+      "مركز التحقق",
+
+    // Sidebar
+    creatorEarnings:
+      "أرباح المنشئ",
+
+    creatorMonetization:
+      "تحقيق الدخل",
+
+    creatorAnalytics:
+      "تحليلات المنشئ",
+
+    advertiserDashboard:
+      "لوحة تحكم المعلن",
+
+    adManager:
+      "إدارة الإعلانات",
+
+    enterprise:
+      "المؤسسة",
+
+    enterpriseAds:
+      "إعلانات المؤسسة",
+
+    enterpriseCampaigns:
+      "حملات المؤسسة",
+
+    enterpriseAnalytics:
+      "تحليلات المؤسسة",
+
+    platformAnalytics:
+      "تحليلات المنصة",
+
+    pricingManager:
+      "إدارة الأسعار",
+
+    usersManagement:
+      "إدارة المستخدمين",
+
+    reportsViolations:
+      "البلاغات والانتهاكات",
+
+    verificationRequests:
+      "طلبات التحقق",
+
+    verificationManager:
+      "إدارة التحقق",
+
+    walletMonitoring:
+      "مراقبة المحفظة",
+
+    adApprovalQueue:
+      "قائمة موافقة الإعلانات",
+
+    adminPanel:
+      "لوحة الإدارة",
+
+    sos:
+      "استغاثة طارئة",
+
+    // General
+    add: "إضافة",
+    cancel: "إلغاء",
+    save: "حفظ",
+    continue: "متابعة",
+
+    yes: "نعم",
+    no: "لا",
+
+    loading: "جارٍ التحميل...",
+    submit: "إرسال",
+    next: "التالي",
+    back: "رجوع",
+    close: "إغلاق",
+
+    success: "تم بنجاح",
+    error: "حدث خطأ.",
+    retry: "إعادة المحاولة",
+
+    settings: "الإعدادات",
+    account: "الحساب",
+    privacy: "الخصوصية",
+    security: "الأمان",
+
+    followers: "المتابعون",
+    following: "يتابع",
+
+    verified: "موثق",
+    creator: "منشئ",
+    organization: "مؤسسة",
     employer: "صاحب عمل",
     volunteer: "متطوع",
     advocate: "مناصر",
@@ -1278,51 +1603,126 @@ cognitiveSupport: "دعم الإدراك",
     verificationCentre: "مركز التحقق",
     uploadAdditionalDocuments: "رفع مستندات إضافية",
     verificationPayment: "دفع رسوم التحقق",
-    vc_intro: "Protege tu identidad, organización, institución o empresa con Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Consulta el progreso de tu solicitud, las actualizaciones y accede de forma segura a los documentos enviados.",
-    vc_viewVerificationStatus: "Ver estado de verificación",
-    vc_rejected: "Rechazado",
-    vc_viewStatus: "Ver estado",
-    vc_uploadDocuments: "Subir documentos",
-    vc_continuePayment: "Continuar con el pago",
-    vc_identityVerification: "Verificación de identidad",
-    vc_documentAuthentication: "Autenticación de documentos",
-    vc_aiFraudDetection: "Detección de fraude con IA",
-    vc_forgeryDetection: "Detección de falsificaciones",
-    vc_duplicateDetection: "Detección de duplicados",
-    vc_paymentProtection: "Protección de pagos",
-    vc_accessibilityCompliance: "Cumplimiento de accesibilidad",
-    vc_executiveReview: "Revisión ejecutiva",
-    vc_continuousMonitoring: "Supervisión continua",
-    vc_executiveReviewEngine: "Motor de revisión ejecutiva",
-    vc_waiting: "En espera",
-    vc_workflowIntro: "Cada verificación pasa por todo el flujo de Inclura Fortress Security Engine.",
-    vc_step: "Paso {{number}}",
-    vc_chooseCategory: "Elegir categoría de verificación",
-    vc_securePoweredByIFSE: "Verificación segura con tecnología IFSE.",
-    vc_availableTypes: "Tipos disponibles",
-    vc_more: "más",
-    vc_startVerification: "Iniciar verificación",
-    vc_securityLayers: "Capas de seguridad IFSE",
-    vc_activityOverview: "Resumen de tu actividad de verificación.",
-    vc_totalRequests: "Solicitudes totales",
-    vc_benefits: "Beneficios de la verificación",
-    vc_process: "Proceso de verificación",
-    vc_processChooseCategory: "Elige tu categoría de verificación.",
-    vc_processSelectType: "Selecciona el tipo de verificación adecuado.",
-    vc_processCompleteForm: "Completa el formulario de solicitud.",
-    vc_processUploadDocs: "Sube los documentos de respaldo.",
-    vc_processPayment: "Completa el pago si corresponde.",
-    vc_processIFSE: "IFSE verifica la identidad, los documentos y el fraude.",
-    vc_processReview: "Tu solicitud será revisada.",
-    vc_processBadge: "Tu insignia de verificación se emitirá tras la aprobación.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE protege todas las solicitudes de verificación enviadas a través de Inclura. El sistema verifica identidad y documentos, detecta fraudes, garantiza la accesibilidad, protege los pagos y mantiene una supervisión continua.",
     returnHome: "العودة إلى الرئيسية",
   },
 },
 
-ionManager:
+  es: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "La plataforma social inclusiva para todos",
+
+    // Authentication
+    welcome: "Bienvenido a Inclura",
+    welcomeBack: "Bienvenido de nuevo",
+
+    login: "Iniciar sesión",
+    logout: "Cerrar sesión",
+
+    signup: "Crear cuenta",
+    createAccount: "Crear cuenta",
+
+    continueWithGoogle:
+      "Continuar con Google",
+
+    email: "Correo electrónico",
+    password: "Contraseña",
+    fullName: "Nombre completo",
+
+    // Dashboard
+    dashboard: "Panel",
+    home: "Inicio",
+    profile: "Perfil",
+    notifications: "Notificaciones",
+    messages: "Mensajes",
+    wallet: "Billetera",
+
+    // Navigation
+    search: "Buscar",
+    searchPlaceholder:
+      "Buscar en Inclura...",
+
+    savedPosts:
+      "Publicaciones guardadas",
+
+    editProfile:
+      "Editar perfil",
+
+    // Language
+    language: "Idioma",
+
+    // Accessibility
+    accessibilityHub:
+      "Centro de accesibilidad",
+
+    accessibilityNeeds:
+      "Necesidades de accesibilidad",
+
+    // Opportunities
+    opportunitiesHub:
+      "Centro de oportunidades",
+
+    careGigs:
+      "Trabajos de asistencia",
+
+    mentorHub:
+      "Centro de mentoría",
+
+    marketplace:
+      "Mercado",
+
+    reels:
+      "Reels",
+
+    // Verification
+    verificationCenter:
+      "Centro de verificación",
+
+    // Sidebar
+    creatorEarnings:
+      "Ingresos del creador",
+
+    creatorMonetization:
+      "Monetización del creador",
+
+    creatorAnalytics:
+      "Analíticas del creador",
+
+    advertiserDashboard:
+      "Panel del anunciante",
+
+    adManager:
+      "Administrador de anuncios",
+
+    enterprise:
+      "Empresa",
+
+    enterpriseAds:
+      "Anuncios empresariales",
+
+    enterpriseCampaigns:
+      "Campañas empresariales",
+
+    enterpriseAnalytics:
+      "Analíticas empresariales",
+
+    platformAnalytics:
+      "Analíticas de la plataforma",
+
+    pricingManager:
+      "Administrador de precios",
+
+    usersManagement:
+      "Gestión de usuarios",
+
+    reportsViolations:
+      "Reportes e infracciones",
+
+    verificationRequests:
+      "Solicitudes de verificación",
+
+    verificationManager:
       "Administrador de verificación",
 
     walletMonitoring:
@@ -1498,50 +1898,170 @@ cognitiveSupport: "Compatibilidad cognitiva",
     verificationCentre: "Centro de verificación",
     uploadAdditionalDocuments: "Cargar documentos adicionales",
     verificationPayment: "Pago de verificación",
-    vc_intro: "使用 Inclura Fortress Security Engine (IFSE) 保护您的身份、组织、机构或企业。",
-    vc_trackDescription: "查看申请进度和更新，并安全访问您提交的文件。",
-    vc_viewVerificationStatus: "查看验证状态",
-    vc_rejected: "已拒绝",
-    vc_viewStatus: "查看状态",
-    vc_uploadDocuments: "上传文件",
-    vc_continuePayment: "继续付款",
-    vc_identityVerification: "身份验证",
-    vc_documentAuthentication: "文件认证",
-    vc_aiFraudDetection: "人工智能欺诈检测",
-    vc_forgeryDetection: "伪造检测",
-    vc_duplicateDetection: "重复检测",
-    vc_paymentProtection: "付款保护",
-    vc_accessibilityCompliance: "无障碍合规",
-    vc_executiveReview: "高级审核",
-    vc_continuousMonitoring: "持续监控",
-    vc_executiveReviewEngine: "高级审核引擎",
-    vc_waiting: "等待中",
-    vc_workflowIntro: "每项验证都会经过完整的 Inclura Fortress Security Engine 流程。",
-    vc_step: "第 {{number}} 步",
-    vc_chooseCategory: "选择验证类别",
-    vc_securePoweredByIFSE: "由 IFSE 提供支持的安全验证。",
-    vc_availableTypes: "可用类型",
-    vc_more: "更多",
-    vc_startVerification: "开始验证",
-    vc_securityLayers: "IFSE 安全层",
-    vc_activityOverview: "您的验证活动概览。",
-    vc_totalRequests: "请求总数",
-    vc_benefits: "验证的优势",
-    vc_process: "验证流程",
-    vc_processChooseCategory: "选择验证类别。",
-    vc_processSelectType: "选择合适的验证类型。",
-    vc_processCompleteForm: "填写申请表。",
-    vc_processUploadDocs: "上传支持文件。",
-    vc_processPayment: "如适用，请完成付款。",
-    vc_processIFSE: "IFSE 执行身份、文件和欺诈验证。",
-    vc_processReview: "您的申请将接受审核。",
-    vc_processBadge: "批准后将颁发验证徽章。",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE 保护通过 Inclura 提交的所有验证申请。系统验证身份和文件、检测欺诈、确保无障碍合规、保护付款并持续监控。",
     returnHome: "Volver al inicio",
   },
 },
 
+  zh: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "面向所有人的包容性社交平台",
+
+    // Authentication
+    welcome: "欢迎来到 Inclura",
+    welcomeBack: "欢迎回来",
+
+    login: "登录",
+    logout: "退出登录",
+
+    signup: "注册",
+    createAccount: "创建账户",
+
+    continueWithGoogle: "使用 Google 继续",
+
+    email: "电子邮箱",
+    password: "密码",
+    fullName: "姓名",
+
+    // Dashboard
+    dashboard: "仪表板",
+    home: "首页",
+    profile: "个人资料",
+    notifications: "通知",
+    messages: "消息",
+    wallet: "钱包",
+
+    // Navigation
+    search: "搜索",
+    searchPlaceholder: "搜索 Inclura...",
+
+    savedPosts: "已保存的帖子",
+
+    editProfile: "编辑个人资料",
+
+    // Language
+    language: "语言",
+
+    // Accessibility
+    accessibilityHub: "无障碍中心",
+
+    accessibilityNeeds: "无障碍需求",
+
+    // Opportunities
+    opportunitiesHub: "机会中心",
+
+    careGigs: "护理工作",
+
+    mentorHub: "导师中心",
+
+    marketplace: "市场",
+
+    reels: "短视频",
+
+    // Verification
+    verificationCenter: "认证中心",
+
+    // Sidebar
+    creatorEarnings: "创作者收益",
+
+    creatorMonetization: "创作者变现",
+
+    creatorAnalytics: "创作者分析",
+
+    advertiserDashboard: "广告主仪表板",
+
+    adManager: "广告管理",
+
+    enterprise: "企业",
+
+    enterpriseAds: "企业广告",
+
+    enterpriseCampaigns: "企业活动",
+
+    enterpriseAnalytics: "企业分析",
+
+    platformAnalytics: "平台分析",
+
+    pricingManager: "价格管理",
+
+    usersManagement: "用户管理",
+
+    reportsViolations: "举报与违规",
+
+    verificationRequests: "认证申请",
+
+    verificationManager: "认证管理",
+
+    walletMonitoring: "钱包监控",
+
+    adApprovalQueue: "广告审核队列",
+
+    adminPanel: "管理面板",
+
+    sos: "紧急求助",
+
+    // General
+    add: "添加",
+    cancel: "取消",
+    save: "保存",
+    continue: "继续",
+
+    yes: "是",
+    no: "否",
+
+    loading: "加载中...",
+    submit: "提交",
+    next: "下一步",
+    back: "返回",
+    close: "关闭",
+
+    success: "成功",
+    error: "发生错误。",
+    retry: "重试",
+
+    settings: "设置",
+    account: "账户",
+    privacy: "隐私",
+    security: "安全",
+
+    followers: "粉丝",
+    following: "关注",
+
+    verified: "已认证",
+    creator: "创作者",
+    organization: "机构",
+    employer: "雇主",
+    volunteer: "志愿者",
+    advocate: "倡导者",
+    caregiver: "护理人员",
+    disability: "残障人士",
+    ally: "支持者",
+    jobSeeker: "求职者",
+
+    premium: "高级会员",
+    upgrade: "升级",
+
+    viewAll: "查看全部",
+
+    noResults: "未找到结果。",
+
+    comingSoon: "即将推出",
+
+    // Posts & Content
+translatePost: "翻译帖子",
+showOriginal: "显示原文",
+showTranslation: "显示翻译",
+originalLanguage: "原始语言",
+translated: "已翻译",
+translationUnavailable: "翻译不可用",
+translating: "正在翻译...",
+translateComments: "翻译评论",
+comment: "评论",
+comments: "评论",
+crossPost: "交叉发布",
+savePost: "保存帖子",
+sharePost: "分享帖子",
 readPostAloud: "朗读帖子",
 postImage: "帖子图片",
 postVideo: "帖子视频",
@@ -1640,51 +2160,96 @@ cognitiveSupport: "认知支持",
     verificationCentre: "验证中心",
     uploadAdditionalDocuments: "上传其他文件",
     verificationPayment: "验证付款",
-    vc_intro: "Proteja sua identidade, organização, instituição ou empresa com o Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Acompanhe o progresso da sua solicitação, atualizações e acesse com segurança os documentos enviados.",
-    vc_viewVerificationStatus: "Ver estado da verificação",
-    vc_rejected: "Rejeitado",
-    vc_viewStatus: "Ver estado",
-    vc_uploadDocuments: "Carregar documentos",
-    vc_continuePayment: "Continuar pagamento",
-    vc_identityVerification: "Verificação de identidade",
-    vc_documentAuthentication: "Autenticação de documentos",
-    vc_aiFraudDetection: "Deteção de fraude por IA",
-    vc_forgeryDetection: "Deteção de falsificações",
-    vc_duplicateDetection: "Deteção de duplicados",
-    vc_paymentProtection: "Proteção de pagamentos",
-    vc_accessibilityCompliance: "Conformidade de acessibilidade",
-    vc_executiveReview: "Revisão executiva",
-    vc_continuousMonitoring: "Monitorização contínua",
-    vc_executiveReviewEngine: "Motor de revisão executiva",
-    vc_waiting: "A aguardar",
-    vc_workflowIntro: "Cada verificação passa por todo o fluxo do Inclura Fortress Security Engine.",
-    vc_step: "Passo {{number}}",
-    vc_chooseCategory: "Escolher categoria de verificação",
-    vc_securePoweredByIFSE: "Verificação segura com tecnologia IFSE.",
-    vc_availableTypes: "Tipos disponíveis",
-    vc_more: "mais",
-    vc_startVerification: "Iniciar verificação",
-    vc_securityLayers: "Camadas de segurança IFSE",
-    vc_activityOverview: "Visão geral da sua atividade de verificação.",
-    vc_totalRequests: "Total de pedidos",
-    vc_benefits: "Benefícios da verificação",
-    vc_process: "Processo de verificação",
-    vc_processChooseCategory: "Escolha a categoria de verificação.",
-    vc_processSelectType: "Selecione o tipo de verificação adequado.",
-    vc_processCompleteForm: "Preencha o formulário de candidatura.",
-    vc_processUploadDocs: "Carregue os documentos comprovativos.",
-    vc_processPayment: "Conclua o pagamento, se aplicável.",
-    vc_processIFSE: "O IFSE verifica a identidade, os documentos e possíveis fraudes.",
-    vc_processReview: "A sua candidatura será analisada.",
-    vc_processBadge: "O selo de verificação será emitido após aprovação.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "O IFSE protege todos os pedidos de verificação enviados através da Inclura. O sistema verifica identidade e documentos, deteta fraudes, assegura acessibilidade, protege pagamentos e mantém monitorização contínua.",
     returnHome: "返回首页",
   },
 },
 
-Manager:
+  pt: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "A plataforma social inclusiva para todos",
+
+    // Authentication
+    welcome: "Bem-vindo ao Inclura",
+    welcomeBack: "Bem-vindo de volta",
+
+    login: "Entrar",
+    logout: "Sair",
+
+    signup: "Criar conta",
+    createAccount: "Criar conta",
+
+    continueWithGoogle:
+      "Continuar com Google",
+
+    email: "Endereço de e-mail",
+    password: "Senha",
+    fullName: "Nome completo",
+
+    // Dashboard
+    dashboard: "Painel",
+    home: "Início",
+    profile: "Perfil",
+    notifications: "Notificações",
+    messages: "Mensagens",
+    wallet: "Carteira",
+
+    // Navigation
+    search: "Pesquisar",
+    searchPlaceholder:
+      "Pesquisar no Inclura...",
+
+    savedPosts:
+      "Publicações salvas",
+
+    editProfile:
+      "Editar perfil",
+
+    // Language
+    language: "Idioma",
+
+    // Accessibility
+    accessibilityHub:
+      "Centro de acessibilidade",
+
+    accessibilityNeeds:
+      "Necessidades de acessibilidade",
+
+    // Opportunities
+    opportunitiesHub:
+      "Centro de oportunidades",
+
+    careGigs:
+      "Serviços de cuidado",
+
+    mentorHub:
+      "Centro de mentoria",
+
+    marketplace:
+      "Marketplace",
+
+    reels:
+      "Reels",
+
+    // Verification
+    verificationCenter:
+      "Centro de verificação",
+
+    // Sidebar
+    creatorEarnings:
+      "Ganhos do criador",
+
+    creatorMonetization:
+      "Monetização do criador",
+
+    creatorAnalytics:
+      "Análises do criador",
+
+    advertiserDashboard:
+      "Painel do anunciante",
+
+    adManager:
       "Gerenciador de anúncios",
 
     enterprise:
@@ -1890,51 +2455,157 @@ cognitiveSupport: "Suporte cognitivo",
     verificationCentre: "Centro de verificação",
     uploadAdditionalDocuments: "Carregar documentos adicionais",
     verificationPayment: "Pagamento da verificação",
-    vc_intro: "Linda utambulisho wako, shirika lako, taasisi au biashara yako kwa kutumia Inclura Fortress Security Engine (IFSE).",
-    vc_trackDescription: "Angalia maendeleo ya ombi lako, masasisho na ufikie hati ulizowasilisha kwa usalama.",
-    vc_viewVerificationStatus: "Angalia Hali ya Uthibitishaji",
-    vc_rejected: "Imekataliwa",
-    vc_viewStatus: "Angalia Hali",
-    vc_uploadDocuments: "Pakia Hati",
-    vc_continuePayment: "Endelea na Malipo",
-    vc_identityVerification: "Uthibitishaji wa Utambulisho",
-    vc_documentAuthentication: "Uthibitishaji wa Hati",
-    vc_aiFraudDetection: "Ugunduzi wa Udanganyifu wa AI",
-    vc_forgeryDetection: "Ugunduzi wa Hati Bandia",
-    vc_duplicateDetection: "Ugunduzi wa Nakala",
-    vc_paymentProtection: "Ulinzi wa Malipo",
-    vc_accessibilityCompliance: "Uzingatiaji wa Ufikivu",
-    vc_executiveReview: "Ukaguzi wa Uongozi",
-    vc_continuousMonitoring: "Ufuatiliaji Endelevu",
-    vc_executiveReviewEngine: "Mfumo wa Ukaguzi wa Uongozi",
-    vc_waiting: "Inasubiri",
-    vc_workflowIntro: "Kila uthibitishaji hupitia mchakato kamili wa Inclura Fortress Security Engine.",
-    vc_step: "Hatua ya {{number}}",
-    vc_chooseCategory: "Chagua Aina ya Uthibitishaji",
-    vc_securePoweredByIFSE: "Uthibitishaji salama unaoendeshwa na IFSE.",
-    vc_availableTypes: "Aina Zinazopatikana",
-    vc_more: "zaidi",
-    vc_startVerification: "Anza Uthibitishaji",
-    vc_securityLayers: "Tabaka za Usalama za IFSE",
-    vc_activityOverview: "Muhtasari wa shughuli zako za uthibitishaji.",
-    vc_totalRequests: "Jumla ya Maombi",
-    vc_benefits: "Faida za Uthibitishaji",
-    vc_process: "Mchakato wa Uthibitishaji",
-    vc_processChooseCategory: "Chagua aina ya uthibitishaji.",
-    vc_processSelectType: "Chagua aina inayofaa ya uthibitishaji.",
-    vc_processCompleteForm: "Jaza fomu yako ya maombi.",
-    vc_processUploadDocs: "Pakia hati za uthibitisho.",
-    vc_processPayment: "Kamilisha malipo inapohitajika.",
-    vc_processIFSE: "IFSE hukagua utambulisho, hati na udanganyifu.",
-    vc_processReview: "Ombi lako litakaguliwa.",
-    vc_processBadge: "Beji yako ya uthibitishaji itatolewa baada ya kuidhinishwa.",
-    vc_ifseTitle: "Inclura Fortress Security Engine (IFSE)",
-    vc_ifseDescription: "IFSE hulinda maombi yote ya uthibitishaji kwenye Inclura. Mfumo hukagua utambulisho na hati, hugundua udanganyifu, huhakikisha ufikivu, hulinda malipo na kufanya ufuatiliaji endelevu.",
     returnHome: "Voltar ao início",
   },
 },
   
-  error: "Hitilafu imetokea.",
+  sw: {
+  translation: {
+    // Branding
+    appName: "Inclura",
+    slogan: "Jukwaa la kijamii linalojumuisha kila mtu",
+
+    // Authentication
+    welcome: "Karibu Inclura",
+    welcomeBack: "Karibu tena",
+
+    login: "Ingia",
+    logout: "Ondoka",
+
+    signup: "Fungua Akaunti",
+    createAccount: "Fungua Akaunti",
+
+    continueWithGoogle:
+      "Endelea na Google",
+
+    email: "Barua pepe",
+    password: "Nenosiri",
+    fullName: "Jina kamili",
+
+    // Dashboard
+    dashboard: "Dashibodi",
+    home: "Nyumbani",
+    profile: "Wasifu",
+    notifications: "Arifa",
+    messages: "Ujumbe",
+    wallet: "Pochi",
+
+    // Navigation
+    search: "Tafuta",
+    searchPlaceholder:
+      "Tafuta kwenye Inclura...",
+
+    savedPosts:
+      "Machapisho yaliyohifadhiwa",
+
+    editProfile:
+      "Hariri Wasifu",
+
+    // Language
+    language: "Lugha",
+
+    // Accessibility
+    accessibilityHub:
+      "Kituo cha Upatikanaji",
+
+    accessibilityNeeds:
+      "Mahitaji ya Upatikanaji",
+
+    // Opportunities
+    opportunitiesHub:
+      "Kituo cha Fursa",
+
+    careGigs:
+      "Kazi za Huduma",
+
+    mentorHub:
+      "Kituo cha Ushauri",
+
+    marketplace:
+      "Soko",
+
+    reels:
+      "Reels",
+
+    // Verification
+    verificationCenter:
+      "Kituo cha Uthibitishaji",
+
+    // Sidebar
+    creatorEarnings:
+      "Mapato ya Mtayarishi",
+
+    creatorMonetization:
+      "Mapato ya Mtayarishi",
+
+    creatorAnalytics:
+      "Takwimu za Mtayarishi",
+
+    advertiserDashboard:
+      "Dashibodi ya Mtangazaji",
+
+    adManager:
+      "Msimamizi wa Matangazo",
+
+    enterprise:
+      "Biashara",
+
+    enterpriseAds:
+      "Matangazo ya Biashara",
+
+    enterpriseCampaigns:
+      "Kampeni za Biashara",
+
+    enterpriseAnalytics:
+      "Takwimu za Biashara",
+
+    platformAnalytics:
+      "Takwimu za Jukwaa",
+
+    pricingManager:
+      "Msimamizi wa Bei",
+
+    usersManagement:
+      "Usimamizi wa Watumiaji",
+
+    reportsViolations:
+      "Ripoti na Ukiukaji",
+
+    verificationRequests:
+      "Maombi ya Uthibitishaji",
+
+    verificationManager:
+      "Msimamizi wa Uthibitishaji",
+
+    walletMonitoring:
+      "Ufuatiliaji wa Pochi",
+
+    adApprovalQueue:
+      "Foleni ya Idhini ya Matangazo",
+
+    adminPanel:
+      "Jopo la Msimamizi",
+
+    sos:
+      "SOS ya Dharura",
+
+    // General
+    add: "Ongeza",
+    cancel: "Ghairi",
+    save: "Hifadhi",
+    continue: "Endelea",
+
+    yes: "Ndiyo",
+    no: "Hapana",
+
+    loading: "Inapakia...",
+    submit: "Wasilisha",
+    next: "Ifuatayo",
+    back: "Rudi",
+    close: "Funga",
+
+    success: "Imefanikiwa",
+    error: "Hitilafu imetokea.",
     retry: "Jaribu tena",
 
     settings: "Mipangilio",
@@ -2081,4 +2752,40 @@ cognitiveSupport: "Usaidizi wa utambuzi",
     verificationPayment: "Malipo ya Uthibitishaji",
     returnHome: "Rudi Nyumbani",
   },
-}
+},
+};
+
+i18n
+  .use(LanguageDetector)
+  .use(initReactI18next)
+  .init({
+    resources,
+    fallbackLng: "en",
+supportedLngs: ["en", "fr", "yo", "ig", "ha", "sw", "pt", "es", "ar", "zh"],
+    debug: false,
+    interpolation: {
+      escapeValue: false,
+    },
+
+    react: {
+  useSuspense: false,
+},
+    
+    detection: {
+  order: [
+    "localStorage",
+    "navigator",
+    "htmlTag",
+    "cookie",
+  ],
+
+  lookupLocalStorage:
+    "inclura-language",
+
+  caches: [
+    "localStorage",
+  ],
+},
+  });
+
+export default i18n;
