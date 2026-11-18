@@ -1040,7 +1040,7 @@ const [verificationStatistics, setVerificationStatistics] =
   }}
 >
 
-  <h2>Verification Badge & Certificate</h2>
+  <h2>{t("vc_badgeCertificate")}</h2>
 
   <div
     style={{
@@ -1059,7 +1059,7 @@ const [verificationStatistics, setVerificationStatistics] =
         padding: "18px",
       }}
     >
-      <strong>Verification Badge</strong>
+      <strong>{t("vc_verificationBadge")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification?.status === "approved"
@@ -1076,7 +1076,7 @@ const [verificationStatistics, setVerificationStatistics] =
         padding: "18px",
       }}
     >
-      <strong>Digital Certificate</strong>
+      <strong>{t("vc_digitalCertificate")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification?.status === "approved"
@@ -1093,7 +1093,7 @@ const [verificationStatistics, setVerificationStatistics] =
         padding: "18px",
       }}
     >
-      <strong>IFSE Trust Score</strong>
+      <strong>{t("vc_ifseTrustScore")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification
@@ -1119,7 +1119,7 @@ const [verificationStatistics, setVerificationStatistics] =
   }}
 >
 
-  <h2>IFSE Security Alerts</h2>
+  <h2>{t("vc_securityAlerts")}</h2>
 
   <p
     style={{
@@ -1147,7 +1147,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Identity Status</strong>
+      <strong>{t("vc_identityStatus")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         🟢 No suspicious activity detected
@@ -1162,7 +1162,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Document Monitoring</strong>
+      <strong>{t("vc_documentMonitoring")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         🟢 Documents remain valid
@@ -1177,7 +1177,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Fraud Monitoring</strong>
+      <strong>{t("vc_fraudMonitoring")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         🟢 No fraud indicators found
@@ -1192,7 +1192,7 @@ const [verificationStatistics, setVerificationStatistics] =
         borderRadius: "12px",
       }}
     >
-      <strong>Executive Review Queue</strong>
+      <strong>{t("vc_executiveReviewQueue")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification?.executiveReviewRequired
@@ -1217,7 +1217,7 @@ const [verificationStatistics, setVerificationStatistics] =
   }}
 >
 
-  <h2>Verification Renewal Monitor</h2>
+  <h2>{t("vc_renewalMonitor")}</h2>
 
   <p
     style={{
@@ -1246,7 +1246,7 @@ const [verificationStatistics, setVerificationStatistics] =
       }}
     >
 
-      <strong>Current Status</strong>
+      <strong>{t("vc_currentStatus")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification
@@ -1264,7 +1264,7 @@ const [verificationStatistics, setVerificationStatistics] =
       }}
     >
 
-      <strong>Renewal Monitoring</strong>
+      <strong>{t("vc_renewalMonitoring")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         Automatic Renewal Monitoring Enabled
@@ -1280,7 +1280,7 @@ const [verificationStatistics, setVerificationStatistics] =
       }}
     >
 
-      <strong>Certificate Status</strong>
+      <strong>{t("vc_certificateStatus")}</strong>
 
       <p style={{ marginTop: "10px" }}>
         {verification?.status === "approved"
@@ -1305,7 +1305,7 @@ const [verificationStatistics, setVerificationStatistics] =
   }}
 >
 
-  <h2>IFSE Quick Actions</h2>
+  <h2>{t("vc_quickActions")}</h2>
 
   <p
     style={{
