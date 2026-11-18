@@ -145,7 +145,7 @@ useEffect(() => {
       console.error(err);
 
       setError(
-        "Unable to load verification."
+        t("error")
       );
 
       setVerification(null);
@@ -329,7 +329,7 @@ const openVerificationDocument = async (documentRecord) => {
     popup.location.replace(access.downloadUrl);
   } catch (err) {
     popup.close();
-    setDocumentError(err.message || "Unable to open this document.");
+    setDocumentError(err.message || t("error"));
   } finally {
     setOpeningDocument("");
   }
@@ -345,13 +345,13 @@ const openVerificationDocument = async (documentRecord) => {
 
 <p>
 
-Track your verification progress through the
+{t("trackVerification")} 
 
 <strong> Inclura Fortress Security Engine (IFSE)</strong>.
 
 </p>
 
-{loading && <p>Loading verification...</p>}
+{loading && <p>{t("loading")}</p>}
 
 {error && (
 
@@ -433,8 +433,8 @@ Track your verification progress through the
 
       <p>
         {verification.executiveReview
-  ? "Required"
-  : "Not Required"}
+  ? t("required")
+  : t("notRequired")}
       </p>
 
     </div>
@@ -445,7 +445,7 @@ Track your verification progress through the
 
       <p>
         {verification.createdAt?.toDate?.().toLocaleString?.() ||
-          "Pending"}
+          t("pending")}
       </p>
 
     </div>
@@ -467,12 +467,12 @@ Track your verification progress through the
       <div style={{ display: "grid", gap: "12px" }}>
         {Object.entries(verification.uploadedDocuments || {}).map(([documentName, documentRecord]) => (
           <div key={documentName} style={{ display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "12px", background: "#1e293b", borderRadius: "8px" }}>
-            <div><strong>{documentName}</strong><p style={{ margin: "4px 0 0", color: "#cbd5e1" }}>{documentRecord.fileName || "Uploaded document"}</p></div>
+            <div><strong>{documentName}</strong><p style={{ margin: "4px 0 0", color: "#cbd5e1" }}>{documentRecord.fileName || t("secureUploadedDocuments")}</p></div>
             {documentRecord.cloudinaryPublicId ? (
               <button type="button" disabled={Boolean(openingDocument)} onClick={() => openVerificationDocument(documentRecord)} style={{ padding: "10px 14px", borderRadius: "8px", border: "none", background: "#0f766e", color: "white", cursor: openingDocument ? "wait" : "pointer" }}>
                 {openingDocument === (documentRecord.fileName || documentRecord.cloudinaryPublicId) ? t("authorizing") : t("openSecurely")}
               </button>
-            ) : <span style={{ color: "#fbbf24" }}>Legacy file — secure link unavailable</span>}
+            ) : <span style={{ color: "#fbbf24" }}>{t("privateDocumentsNotice")}</span>}
           </div>
         ))}
       </div>
@@ -657,7 +657,7 @@ Track your verification progress through the
               }}
             >
               {item.createdAt?.toDate?.().toLocaleString?.() ||
-                "Pending"}
+                t("pending")}
             </small>
 
           </div>
@@ -720,7 +720,7 @@ Track your verification progress through the
 
           <p>
 
-            <strong>Risk Score:</strong>{" "}
+            <strong>{t("riskScore")}:</strong>{" "}
 
             {event.riskScore}%
 
@@ -728,7 +728,7 @@ Track your verification progress through the
 
           <p>
 
-            <strong>Threat Level:</strong>{" "}
+            <strong>{t("threatLevel")}:</strong>{" "}
 
             {event.threatLevel}
 
@@ -736,11 +736,11 @@ Track your verification progress through the
 
           <p>
 
-<strong>Executive Review:</strong>{" "}
+<strong>{t("executiveReview")}:</strong>{" "}
 
 {event.executiveReview
-? "Required"
-: "Not Required"}
+? t("required")
+: t("notRequired")}
 
 </p>
 
@@ -750,16 +750,16 @@ Track your verification progress through the
 
 {event.resolved
 ? "Yes"
-: "Pending"}
+: t("pending")}
 
 </p>
 
           <p>
 
-            <strong>Date:</strong>{" "}
+            <strong>{t("submitted")}:</strong>{" "}
 
             {event.createdAt?.toDate?.().toLocaleString?.() ||
-              "Pending"}
+              t("pending")}
 
                </p>
 
@@ -813,7 +813,7 @@ Track your verification progress through the
 
           <p>
 
-            <strong>Action</strong>
+            <strong>{t("verificationRequests")}</strong>
 
           </p>
 
@@ -829,7 +829,7 @@ Track your verification progress through the
             }}
           >
 
-            <strong>Actor</strong>
+            <strong>{t("profile")}</strong>
 
           </p>
 
@@ -845,14 +845,14 @@ Track your verification progress through the
             }}
           >
 
-            <strong>Time</strong>
+            <strong>{t("submitted")}</strong>
 
           </p>
 
           <p>
 
             {log.createdAt?.toDate?.().toLocaleString?.() ||
-              "Pending"}
+              t("pending")}
 
           </p>
 
@@ -872,9 +872,9 @@ Track your verification progress through the
 
 <ul>
 
-<li>✅ Identity Verification</li>
+<li>✅ {t("verificationType")}</li>
 
-<li>✅ Document Authentication</li>
+<li>✅ {t("secureUploadedDocuments")}</li>
 
 <li>✅ AI Fraud Detection</li>
 
@@ -886,7 +886,7 @@ Track your verification progress through the
 
 <li>✅ Continuous Monitoring</li>
 
-<li>✅ Audit Logging</li>
+<li>✅ {t("ifseAuditLogs")}</li>
 
 </ul>
 
@@ -902,7 +902,7 @@ Track your verification progress through the
   }}
 >
 
-  <h2>IFSE Verification Centre</h2>
+  <h2>{t("verificationCentre")}</h2>
 
   <div
     style={{
@@ -924,7 +924,7 @@ Track your verification progress through the
       type="button"
       onClick={() => navigate("/verification-documents")}
     >
-      Upload Additional Documents
+      {t("uploadAdditionalDocuments")}
     </button>
 
     <button
@@ -971,9 +971,9 @@ Track your verification progress through the
     }}
   >
 
-    <li>✅ Identity Verification</li>
+    <li>✅ {t("verificationType")}</li>
 
-    <li>✅ Document Authentication</li>
+    <li>✅ {t("secureUploadedDocuments")}</li>
 
     <li>✅ OCR Validation</li>
 
@@ -985,7 +985,7 @@ Track your verification progress through the
 
     <li>✅ Continuous Monitoring</li>
 
-    <li>✅ Audit Logging</li>
+    <li>✅ {t("ifseAuditLogs")}</li>
 
   </ul>
 
