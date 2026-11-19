@@ -12,6 +12,15 @@ function Rightbar() {
     color: "white",
   };
 
+  const topics = [
+    t("communityTagAccessibility"),
+    t("communityTagInclusion"),
+    t("communityTagAI"),
+    t("communityTagCreators"),
+  ];
+
+  const suggestedPeople = ["Jane Doe", "Michael Smith", "Sophia Lee"];
+
   return (
     <aside
       aria-label={t("communitySidebarLabel")}
@@ -26,29 +35,43 @@ function Rightbar() {
     >
       <section aria-labelledby="trending-heading" style={panel}>
         <h3 id="trending-heading" style={{ marginTop: 0, marginBottom: "14px" }}>
-          🔥 {t("communityTrending")}
+          <span aria-hidden="true">🔥 </span>{t("communityTrending")}
         </h3>
-        <p>#Accessibility</p>
-        <p>#Inclusion</p>
-        <p>#AI</p>
-        <p style={{ marginBottom: 0 }}>#Creators</p>
+        <ul aria-label={t("communityTrending")} style={listStyle}>
+          {topics.map((topic) => (
+            <li key={topic} style={listItemStyle}>{topic}</li>
+          ))}
+        </ul>
       </section>
 
-      <section aria-labelledby="suggested-connections-heading" style={{ ...panel, marginBottom: 0 }}>
+      <section
+        aria-labelledby="suggested-connections-heading"
+        style={{ ...panel, marginBottom: 0 }}
+      >
         <h3 id="suggested-connections-heading" style={{ marginTop: 0, marginBottom: "14px" }}>
-          🤝 {t("communitySuggestedConnections")}
+          <span aria-hidden="true">🤝 </span>{t("communitySuggestedConnections")}
         </h3>
-        <ul
-          aria-label={t("communitySuggestedConnections")}
-          style={{ listStyle: "none", padding: 0, margin: 0 }}
-        >
-          <li><p>👤 Jane Doe</p></li>
-          <li><p>👤 Michael Smith</p></li>
-          <li><p style={{ marginBottom: 0 }}>👤 Sophia Lee</p></li>
+        <ul aria-label={t("communitySuggestedConnections")} style={listStyle}>
+          {suggestedPeople.map((person) => (
+            <li key={person} style={listItemStyle}>
+              <span aria-hidden="true">👤 </span>{person}
+            </li>
+          ))}
         </ul>
       </section>
     </aside>
   );
 }
+
+const listStyle = {
+  listStyle: "none",
+  padding: 0,
+  margin: 0,
+};
+
+const listItemStyle = {
+  padding: "7px 0",
+  lineHeight: 1.5,
+};
 
 export default Rightbar;
