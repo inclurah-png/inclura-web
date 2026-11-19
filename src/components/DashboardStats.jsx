@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import {
   getVerificationMetadata,
 } from "../config/verificationTypes";
@@ -7,6 +8,7 @@ import {
 } from "../config/verificationMigration";
 
 function DashboardStats({ profile }) {
+  const { t } = useTranslation();
   const verificationMeta =
     profile?.verified
       ? getVerificationMetadata(
@@ -14,9 +16,24 @@ function DashboardStats({ profile }) {
         )
       : null;
 
+  const cards = [
+    { id: "posts", icon: "📝", label: t("statsPosts"), value: profile?.postCount || 0 },
+    { id: "followers", icon: "👥", label: t("statsFollowers"), value: profile?.followers?.length || 0 },
+    { id: "following", icon: "➡️", label: t("statsFollowing"), value: profile?.following?.length || 0 },
+    { id: "wallet", icon: "💰", label: t("statsWallet"), value: `₦${profile?.walletBalance || 0}` },
+    { id: "verification", icon: "🛡️", label: t("statsVerification"), value: profile?.verified ? t("statsVerified") : t("statsNotVerified") },
+    { id: "role", icon: "🏷️", label: t("statsRole"), value: profile?.role || t("statsUser") },
+    { id: "creator-score", icon: "⭐", label: t("statsCreatorScore"), value: profile?.creatorScore || 0 },
+    { id: "saved-posts", icon: "📌", label: t("statsSavedPosts"), value: profile?.savedPosts?.length || 0 },
+    { id: "cross-posts", icon: "📤", label: t("statsCrossPosts"), value: profile?.crossPostCount || 0 },
+    { id: "referrals", icon: "👥", label: t("statsReferrals"), value: profile?.referralCount || 0 },
+    { id: "xp", icon: "📈", label: t("statsXP"), value: profile?.xp || 0 },
+    { id: "languages", icon: "🌍", label: t("statsLanguages"), value: profile?.languagesTranslated || 0 },
+  ];
+
   return (
     <section
-      aria-label="Account activity and statistics"
+      aria-label={t("dashboardStatsLabel")}
       style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 145px), 1fr))",
@@ -24,85 +41,30 @@ function DashboardStats({ profile }) {
         marginBottom: "24px",
       }}
     >
-      <div style={card}>
-        <div style={icon}>📝</div>
-        <h3>Posts</h3>
-        <strong>{profile?.postCount || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>👥</div>
-        <h3>Followers</h3>
-        <strong>{profile?.followers?.length || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>➡️</div>
-        <h3>Following</h3>
-        <strong>{profile?.following?.length || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>💰</div>
-        <h3>Wallet</h3>
-        <strong>₦{profile?.walletBalance || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>🛡️</div>
-        <h3>Verification</h3>
-        <strong style={{ fontSize: "16px" }}>
-          {profile?.verified ? "Verified" : "Not Verified"}
-        </strong>
-        {verificationMeta && (
-          <>
-            <span style={detail}>Trust Level: {verificationMeta.trustLevel}</span>
-            <span style={detail}>{verificationMeta.category}</span>
-          </>
-        )}
-      </div>
-
-      <div style={card}>
-        <div style={icon}>🏷️</div>
-        <h3>Role</h3>
-        <strong style={{ fontSize: "16px" }}>{profile?.role || "User"}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>⭐</div>
-        <h3>Creator Score</h3>
-        <strong>{profile?.creatorScore || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>📌</div>
-        <h3>Saved Posts</h3>
-        <strong>{profile?.savedPosts?.length || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>📤</div>
-        <h3>Cross-Posts</h3>
-        <strong>{profile?.crossPostCount || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>👥</div>
-        <h3>Referrals</h3>
-        <strong>{profile?.referralCount || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>📈</div>
-        <h3>XP</h3>
-        <strong>{profile?.xp || 0}</strong>
-      </div>
-
-      <div style={card}>
-        <div style={icon}>🌍</div>
-        <h3>Languages</h3>
-        <strong>{profile?.languagesTranslated || 0}</strong>
-      </div>
+      {cards.map((item) => (
+        <article
+          key={item.id}
+          aria-labelledby={`dashboard-stat-${item.id}`}
+          style={card}
+        >
+          <span aria-hidden="true" style={iconStyle}>{item.icon}</span>
+          <h3 id={`dashboard-stat-${item.id}`} style={heading}>{item.label}</h3>
+          <strong
+            aria-label={`${item.label}: ${item.value}`}
+            style={item.id === "verification" || item.id === "role" ? valueText : value}
+          >
+            {item.value}
+          </strong>
+          {item.id === "verification" && verificationMeta && (
+            <div aria-label={`${t("statsTrustLevel")}: ${verificationMeta.trustLevel}`}>
+              <span style={detail}>
+                {t("statsTrustLevel")}: {verificationMeta.trustLevel}
+              </span>
+              <span style={detail}>{verificationMeta.category}</span>
+            </div>
+          )}
+        </article>
+      ))}
     </section>
   );
 }
@@ -117,7 +79,7 @@ const card = {
   border: "1px solid #334155",
 };
 
-const icon = {
+const iconStyle = {
   width: "38px",
   height: "38px",
   borderRadius: "12px",
@@ -129,10 +91,28 @@ const icon = {
   marginBottom: "10px",
 };
 
+const heading = {
+  margin: "0 0 8px",
+  fontSize: "15px",
+  lineHeight: 1.4,
+};
+
+const value = {
+  display: "block",
+  fontSize: "22px",
+  lineHeight: 1.35,
+  overflowWrap: "anywhere",
+};
+
+const valueText = {
+  ...value,
+  fontSize: "16px",
+};
+
 const detail = {
   display: "block",
   fontSize: "12px",
-  color: "#94a3b8",
+  color: "#cbd5e1",
   marginTop: "5px",
 };
 
