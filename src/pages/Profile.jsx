@@ -65,7 +65,7 @@ function Profile() {
         // Private email, phone and accessibility preferences are never copied.
         const directoryProfile = {
           uid: user.uid,
-          fullName: data.fullName || data.name || user.displayName || "",
+          fullName: typeof data.fullName === "string" ? data.fullName : (typeof data.name === "string" ? data.name : (user.displayName || "")),
           photoURL: data.profilePhoto || data.photoURL || user.photoURL || "",
           location: typeof data.location === "string" ? data.location : "",
           category: typeof data.category === "string" ? data.category : "",
