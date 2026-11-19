@@ -3676,7 +3676,7 @@ captions: "字幕",
 
 // Accessibility
 accessibilityOptions: "无障碍选项",
-screenReader: "قارئ الشاشة",
+screenReader: "屏幕阅读器",
 voiceNavigation: "语音导航",
 signLanguage: "手语",
 braille: "盲文",
