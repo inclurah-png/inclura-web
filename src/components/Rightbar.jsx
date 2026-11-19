@@ -49,6 +49,7 @@ function Rightbar() {
   const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [following, setFollowing] = useState([]);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
@@ -80,6 +81,24 @@ function Rightbar() {
       }
     );
 
+    const stopMembers = onSnapshot(
+      query(
+        collection(db, "memberDirectory"),
+        orderBy("updatedAt", "desc"),
+        limit(100)
+      ),
+      (snapshot) => {
+        setMembers(snapshot.docs.map((memberDoc) => ({
+          uid: memberDoc.id,
+          ...memberDoc.data(),
+        })));
+      },
+      (error) => {
+        console.error("Member directory loading failed:", error);
+        setLoadError(true);
+      }
+    );
+
     const stopProfile = onSnapshot(
       doc(db, "users", user.uid),
       (snapshot) => {
@@ -93,6 +112,7 @@ function Rightbar() {
 
     return () => {
       stopPosts();
+      stopMembers();
       stopProfile();
     };
   }, []);
@@ -114,26 +134,20 @@ function Rightbar() {
   const suggestedPeople = useMemo(() => {
     const currentUid = auth.currentUser?.uid;
     const excluded = new Set([currentUid, ...following]);
-    const seen = new Set();
 
-    return posts
-      .filter((post) => {
-        const uid = post.userId;
-        const name = post.userName || post.fullName || post.displayName;
-        if (!uid || excluded.has(uid) || seen.has(uid) || !isUsableName(name)) {
-          return false;
-        }
-        seen.add(uid);
-        return true;
+    return members
+      .filter((member) => {
+        const name = member.fullName || member.name || "";
+        return member.uid && !excluded.has(member.uid) && isUsableName(name);
       })
       .slice(0, 3)
-      .map((post) => ({
-        uid: post.userId,
-        name: post.userName || post.fullName || post.displayName,
-        photo: post.profilePhoto || post.photoURL || "",
-        role: post.role || "",
+      .map((member) => ({
+        uid: member.uid,
+        name: member.fullName || member.name,
+        photo: member.photoURL || "",
+        role: member.accountType || member.category || "",
       }));
-  }, [posts, following]);
+  }, [members, following]);
 
   const panel = {
     background: "#0f172a",
