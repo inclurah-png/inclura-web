@@ -14,6 +14,8 @@ import {
 
 import { auth, db } from "../firebase";
 
+const INCLURA_WATERMARK = "INCLURA — Inclusion comes first. Connect across languages. Create with purpose. Be seen, heard and included. Built for accessibility and meaningful connection, with support for 10 languages.";
+
 function CrossPost() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -162,7 +164,10 @@ function CrossPost() {
         },
         watermark: {
           required: true,
-          text: "Created on Inclura — The most accessible network.",
+          text: INCLURA_WATERMARK,
+          brand: "Inclura",
+          positioning: "Inclusion comes first",
+          languagesSupported: 10,
           status: "pending",
           processedBy: "authorized_backend",
         },
@@ -352,8 +357,9 @@ function CrossPost() {
           )}
 
           <div style={styles.watermarkPreview}>
-            <strong>Inclura watermark</strong>
-            <span>Created on Inclura — The most accessible network.</span>
+            <strong>🌍 INCLURA — INCLUSION COMES FIRST</strong>
+            <span>Connect across languages. Create with purpose. Be seen, heard and included.</span>
+            <span>Built for accessibility and meaningful connection, with support for 10 languages.</span>
           </div>
         </div>
 
@@ -600,10 +606,13 @@ const styles = {
     marginTop: "16px",
     padding: "14px",
     borderRadius: "12px",
-    background: "#334155",
+    background: "linear-gradient(135deg, #064e3b, #0f172a)",
+    border: "1px solid #d4af37",
+    color: "#f8fafc",
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
+    gap: "7px",
+    lineHeight: 1.5,
   },
   securityNotice: {
     marginTop: "14px",
