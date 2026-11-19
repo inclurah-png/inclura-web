@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { sendNotification } from "../utils/notificationHelper";
 import DashboardLayout from "../components/DashboardLayout";
@@ -23,92 +23,114 @@ import {
 import { auth, db } from "../firebase";
 
 import {
+  collection,
   doc,
-  getDoc,
+  onSnapshot,
+  query,
+  where,
   updateDoc,
 } from "firebase/firestore";
 
 function Profile() {
-  const [profile, setProfile] =
-    useState(null);
+  const [profile, setProfile] = useState(null);
+  const [postCount, setPostCount] = useState(0);
+  const premiumNoticeHandled = useRef(null);
+  const premiumExpiryHandled = useRef(null);
 
   useEffect(() => {
-    async function loadProfile() {
-      try {
-        const user =
-          auth.currentUser;
+    const user = auth.currentUser;
+    if (!user) return undefined;
 
-        if (!user) return;
+    const userRef = doc(db, "users", user.uid);
+    const postsQuery = query(
+      collection(db, "posts"),
+      where("userId", "==", user.uid)
+    );
 
-        const snap =
-          await getDoc(
-            doc(
-              db,
-              "users",
-              user.uid
-            )
-          );
-
-        if (snap.exists()) {
-          const data =
-            snap.data();
-
-          if (data?.premiumExpiryDate) {
-            const daysLeft =
-              Math.ceil(
-                (
-                  data.premiumExpiryDate.toDate() -
-                  new Date()
-                ) /
-                  (1000 * 60 * 60 * 24)
-              );
-
-            if (daysLeft <= 7 && daysLeft > 0) {
-              await sendNotification({
-                receiverId: user.uid,
-                senderId: "system",
-                type: "premium",
-                text:
-                  "Your premium subscription expires in " +
-                  daysLeft +
-                  " days",
-              });
-            }
-          }
-
-          if (
-            data?.premiumExpiryDate &&
-            data.premiumExpiryDate.toDate() < new Date()
-          ) {
-            await updateDoc(
-              doc(db, "users", user.uid),
-              {
-                premium: false,
-                premiumActive: false,
-                premiumTier: "",
-              }
-            );
-
-            data.premium = false;
-            data.premiumActive = false;
-            data.premiumTier = "";
-          }
-
-          setProfile(data);
+    const stopProfile = onSnapshot(
+      userRef,
+      async (snapshot) => {
+        if (!snapshot.exists()) {
+          setProfile({});
+          return;
         }
-      } catch (error) {
-        console.log(error);
-      }
-    }
 
-    loadProfile();
+        const data = snapshot.data() || {};
+        setProfile(data);
+
+        const expiryValue = data.premiumExpiryDate;
+        const expiryDate = expiryValue && typeof expiryValue.toDate === "function"
+          ? expiryValue.toDate()
+          : expiryValue
+            ? new Date(expiryValue)
+            : null;
+
+        if (!expiryDate || Number.isNaN(expiryDate.getTime())) return;
+
+        const expiryKey = expiryDate.getTime();
+        const daysLeft = Math.ceil(
+          (expiryDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (
+          daysLeft <= 7 &&
+          daysLeft > 0 &&
+          premiumNoticeHandled.current !== expiryKey
+        ) {
+          premiumNoticeHandled.current = expiryKey;
+          try {
+            await sendNotification({
+              receiverId: user.uid,
+              senderId: "system",
+              type: "premium",
+              text: "Your premium subscription expires in " + daysLeft + " days",
+            });
+          } catch (error) {
+            console.warn("Premium expiry notification failed:", error);
+          }
+        }
+
+        if (
+          expiryDate < new Date() &&
+          data.premium === true &&
+          premiumExpiryHandled.current !== expiryKey
+        ) {
+          premiumExpiryHandled.current = expiryKey;
+          try {
+            await updateDoc(userRef, {
+              premium: false,
+              premiumActive: false,
+              premiumTier: "",
+            });
+          } catch (error) {
+            console.warn("Premium expiry status update requires authorized processing:", error);
+          }
+        }
+      },
+      (error) => {
+        console.error("Live profile loading failed:", error);
+      }
+    );
+
+    const stopPosts = onSnapshot(
+      postsQuery,
+      (snapshot) => setPostCount(snapshot.size),
+      (error) => {
+        console.error("Live post count loading failed:", error);
+      }
+    );
+
+    return () => {
+      stopProfile();
+      stopPosts();
+    };
   }, []);
 
   return (
     <DashboardLayout>
       <ProfileHeader profile={profile} />
 
-      <DashboardStats profile={profile} />
+      <DashboardStats profile={profile ? { ...profile, postCount } : null} />
 
       <StoriesSection />
 
