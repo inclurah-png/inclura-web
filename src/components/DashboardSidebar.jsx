@@ -146,6 +146,16 @@ const isAdmin = role === "admin";
 
       <button
         type="button"
+        aria-label={t("digitalServicesTitle")}
+        title={t("digitalServicesTitle")}
+        onClick={() => navigate("/digital-services")}
+        style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
+      >
+        📱 {t("digitalServicesTitle")}
+      </button>
+
+      <button
+        type="button"
         aria-label={t("savedPosts")}
         title={t("savedPosts")}
         onClick={() => navigate("/saved-posts")}
