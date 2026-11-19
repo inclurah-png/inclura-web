@@ -8,9 +8,12 @@ function Rightbar() {
     <aside
       aria-label={t("communitySidebarLabel")}
       style={{
-        width: "100%",\n        maxWidth: "100%",\n        boxSizing: "border-box",
+        width: "100%",
+        maxWidth: "100%",
+        boxSizing: "border-box",
         padding: "24px",
-        borderTop: "1px solid #1e293b",\n        borderLeft: "none",
+        borderTop: "1px solid #1e293b",
+        borderLeft: "none",
         background: "#020617",
       }}
     >
