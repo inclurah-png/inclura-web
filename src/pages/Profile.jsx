@@ -114,11 +114,11 @@ function Profile() {
 
       <CommunityHighlights />
 
+      <Rightbar />
+
       <CreatePost />
 
       <Feed profile={profile} />
-
-      <Rightbar />
     </DashboardLayout>
   );
 }
