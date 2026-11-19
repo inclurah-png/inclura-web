@@ -22,7 +22,7 @@ function DashboardStats({ profile }) {
     { id: "following", icon: "➡️", label: t("statsFollowing"), value: profile?.following?.length || 0 },
     { id: "wallet", icon: "💰", label: t("statsWallet"), value: `₦${profile?.walletBalance || 0}` },
     { id: "verification", icon: "🛡️", label: t("statsVerification"), value: profile?.verified ? t("statsVerified") : t("statsNotVerified") },
-    { id: "role", icon: "🏷️", label: t("statsRole"), value: profile?.role || t("statsUser") },
+    { id: "role", icon: "🏷️", label: t("statsRole"), value: profile?.role || profile?.accountType || t("statsUser") },
     { id: "creator-score", icon: "⭐", label: t("statsCreatorScore"), value: profile?.creatorEconomy?.creatorScore ?? profile?.creatorScore ?? 0 },
     { id: "saved-posts", icon: "📌", label: t("statsSavedPosts"), value: profile?.savedPosts?.length || 0 },
     { id: "cross-posts", icon: "📤", label: t("statsCrossPosts"), value: profile?.creatorEconomy?.monthlyCrossPosts ?? profile?.crossPostCount ?? 0 },
