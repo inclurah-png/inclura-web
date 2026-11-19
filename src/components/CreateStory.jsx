@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
 collection,
@@ -25,6 +26,8 @@ import {
 } from "../config/verificationMigration";
 
 function CreateStory() {
+const { t } = useTranslation();
+
 const [storyText, setStoryText] =
 useState("");
 
@@ -52,13 +55,13 @@ const user =
 auth.currentUser;
 
   if (!user) {
-    alert("Login required");
+    alert(t("storyLoginRequired"));
     return;
   }
 
   if (!storyText.trim()) {
     alert(
-      "Write a story first"
+      t("storyWriteFirst")
     );
     return;
   }
@@ -104,7 +107,7 @@ auth.currentUser;
     12
   ) {
     alert(
-      "Maximum of 12 active stories allowed"
+      t("storyMaxActive")
     );
     return;
   }
@@ -201,13 +204,13 @@ verificationMetadata:
   setStoryText("");
 
   alert(
-    "Story posted successfully"
+    t("storyPosted")
   );
 } catch (error) {
   console.error(error);
 
   alert(
-    "Failed to post story"
+    t("storyPostFailed")
   );
 } finally {
   setUploading(false);
@@ -217,13 +220,13 @@ verificationMetadata:
 
 function imageStoryComingSoon() {
 alert(
-"Image stories will activate automatically when Firebase Storage is enabled."
+t("storyImageComingSoon")
 );
 }
 
 function videoStoryComingSoon() {
 alert(
-"Video stories will activate automatically when Firebase Storage is enabled."
+t("storyVideoComingSoon")
 );
 }
 
@@ -245,7 +248,7 @@ marginBottom:
 "12px",
 }}
 >
-Create Story
+{t("createStoryTitle")}
 </h3>
 
   <textarea
@@ -255,7 +258,8 @@ Create Story
         e.target.value
       )
     }
-    placeholder="Share a story..."
+    placeholder={t("storyPlaceholder")}
+    aria-label={t("storyInputLabel")}
     style={{
       width: "100%",
       minHeight: "90px",
@@ -301,8 +305,7 @@ Create Story
         }
       />
       {" "}
-      🔊 Screen Reader
-      Support
+      🔊 {t("screenReader")} {t("support")}
     </label>
 
     <label>
@@ -319,7 +322,7 @@ Create Story
         }
       />
       {" "}
-      📄 Text Only Story
+      📄 {t("textOnlyStory")}
     </label>
 
     <label>
@@ -336,7 +339,7 @@ Create Story
         }
       />
       {" "}
-      🎤 Voice Story
+      🎤 {t("voiceStory")}
     </label>
 
     <label>
@@ -353,7 +356,7 @@ Create Story
         }
       />
       {" "}
-      🎨 High Contrast
+      🎨 {t("highContrast")}
     </label>
 
     <label>
@@ -370,7 +373,7 @@ Create Story
         }
       />
       {" "}
-      🔠 Large Text Mode
+      🔠 {t("largeTextMode")}
     </label>
   </div>
 
@@ -390,7 +393,7 @@ Create Story
         buttonStyle
       }
     >
-      📝 Post Story
+      📝 {t("postStory")}
     </button>
 
     <button
@@ -401,7 +404,7 @@ Create Story
         buttonStyle
       }
     >
-      📷 Image Story
+      📷 {t("imageStory")}
     </button>
 
     <button
@@ -412,7 +415,7 @@ Create Story
         buttonStyle
       }
     >
-      🎥 Video Story
+      🎥 {t("videoStory")}
     </button>
   </div>
 
@@ -425,7 +428,7 @@ Create Story
           "#38bdf8",
       }}
     >
-      Posting story...
+      {t("postingStory")}
     </p>
   )}
 </div>
