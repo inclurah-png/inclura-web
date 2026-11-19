@@ -24,7 +24,7 @@ function CrossPost() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [message, setMessage] = useState("Discover Inclura — a social network built around inclusion, accessibility and meaningful connection. Connect. Create. Participate. Grow. Join the Inclura community.");
+  const [message, setMessage] = useState("One post can travel further. One community can make the difference.\n\nInclura brings social connection, accessibility, inclusion, trusted identity, creator opportunities, community support and everyday digital services together in one place.\n\nDiscover Inclura — a social network built around inclusion, accessibility and meaningful connection. Connect. Create. Participate. Grow. Join the Inclura community.");
   const [visibility, setVisibility] = useState("public");
   const [creatingRequest, setCreatingRequest] = useState(false);
   const [requestCreated, setRequestCreated] = useState(false);
