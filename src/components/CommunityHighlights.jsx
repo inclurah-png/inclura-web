@@ -6,6 +6,7 @@ function CommunityHighlights() {
   return (
     <section
       aria-labelledby="community-highlights-heading"
+      aria-describedby="community-highlights-description"
       style={{
         background: "#1e293b",
         padding: "18px",
@@ -14,9 +15,11 @@ function CommunityHighlights() {
       }}
     >
       <h2 id="community-highlights-heading">
-        🌟 {t("communityHighlightsTitle")}
+        <span aria-hidden="true">🌟 </span>{t("communityHighlightsTitle")}
       </h2>
-      <p>{t("communityHighlightsDescription")}</p>
+      <p id="community-highlights-description">
+        {t("communityHighlightsDescription")}
+      </p>
     </section>
   );
 }
