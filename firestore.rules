@@ -223,6 +223,7 @@ service cloud.firestore {
                            'verificationCategory',
                            'interests',
                            'savedPosts',
+                           'following',
                            'organizationName',
                            'website',
                            'groupName',
@@ -239,6 +240,22 @@ service cloud.firestore {
                           || request.resource.data.interests is list)
                       && (!('accessibilityNeeds' in request.resource.data)
                           || request.resource.data.accessibilityNeeds is list)
+                    ) || (
+                      request.auth != null
+                      && request.auth.uid != userId
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['followers'])
+                      && request.resource.data.followers is list
+                      && (
+                        (
+                          request.auth.uid in request.resource.data.followers
+                          && !(request.auth.uid in resource.data.get('followers', []))
+                        )
+                        || (
+                          !(request.auth.uid in request.resource.data.followers)
+                          && request.auth.uid in resource.data.get('followers', [])
+                        )
+                      )
                     ) || (
                       request.auth != null
                       && request.auth.token.admin == true
