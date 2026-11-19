@@ -10,6 +10,7 @@ import {
   query,
   where,
   serverTimestamp,
+  limit,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
@@ -23,7 +24,7 @@ function CrossPost() {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState("Discover Inclura — a social network built around inclusion, accessibility and meaningful connection. Connect. Create. Participate. Grow. Join the Inclura community.");
   const [visibility, setVisibility] = useState("public");
   const [creatingRequest, setCreatingRequest] = useState(false);
   const [requestCreated, setRequestCreated] = useState(false);
@@ -58,7 +59,12 @@ function CrossPost() {
       }
     }
 
-    if (id) loadPost();
+    if (id) {
+      loadPost();
+    } else {
+      setError("This cross-post link is missing its source post ID.");
+      setLoading(false);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -67,7 +73,8 @@ function CrossPost() {
 
     const requestsQuery = query(
       collection(db, "crossPostRequests"),
-      where("creatorId", "==", uid)
+      where("creatorId", "==", uid),
+      limit(25)
     );
 
     return onSnapshot(
