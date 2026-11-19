@@ -23,12 +23,12 @@ function DashboardStats({ profile }) {
     { id: "wallet", icon: "💰", label: t("statsWallet"), value: `₦${profile?.walletBalance || 0}` },
     { id: "verification", icon: "🛡️", label: t("statsVerification"), value: profile?.verified ? t("statsVerified") : t("statsNotVerified") },
     { id: "role", icon: "🏷️", label: t("statsRole"), value: profile?.role || t("statsUser") },
-    { id: "creator-score", icon: "⭐", label: t("statsCreatorScore"), value: profile?.creatorScore || 0 },
+    { id: "creator-score", icon: "⭐", label: t("statsCreatorScore"), value: profile?.creatorEconomy?.creatorScore ?? profile?.creatorScore ?? 0 },
     { id: "saved-posts", icon: "📌", label: t("statsSavedPosts"), value: profile?.savedPosts?.length || 0 },
-    { id: "cross-posts", icon: "📤", label: t("statsCrossPosts"), value: profile?.crossPostCount || 0 },
-    { id: "referrals", icon: "👥", label: t("statsReferrals"), value: profile?.referralCount || 0 },
-    { id: "xp", icon: "📈", label: t("statsXP"), value: profile?.xp || 0 },
-    { id: "languages", icon: "🌍", label: t("statsLanguages"), value: profile?.languagesTranslated || 0 },
+    { id: "cross-posts", icon: "📤", label: t("statsCrossPosts"), value: profile?.creatorEconomy?.monthlyCrossPosts ?? profile?.crossPostCount ?? 0 },
+    { id: "referrals", icon: "👥", label: t("statsReferrals"), value: profile?.referralsTotal ?? profile?.referralCount ?? 0 },
+    { id: "xp", icon: "📈", label: t("statsXP"), value: profile?.creatorEconomy?.xp ?? profile?.xp ?? 0 },
+    { id: "languages", icon: "🌍", label: t("statsLanguages"), value: profile?.languagesTranslated ?? (Array.isArray(profile?.languages) ? profile.languages.length : 0) },
   ];
 
   return (
