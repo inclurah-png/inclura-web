@@ -346,6 +346,48 @@ service cloud.firestore {
 
     // Public member directory supports discovery without exposing private users/{uid} records.
     // It intentionally excludes email, phone number and private accessibility settings.
+    // Cross-post requests are private to the authenticated creator.
+    // The browser may request preparation, but it can never publish externally
+    // or alter watermark/XP outcomes. Those fields are reserved for an
+    // authorized backend workflow.
+    match /crossPostRequests/{requestId} {
+      allow create: if request.auth != null
+                    && request.resource.data.creatorId == request.auth.uid
+                    && request.resource.data.sourcePostId is string
+                    && request.resource.data.sourcePostId.size() > 0
+                    && request.resource.data.sourcePostOwnerId is string
+                    && request.resource.data.platforms is list
+                    && request.resource.data.platforms.size() > 0
+                    && request.resource.data.platforms.size() <= 8
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() <= 1000
+                    && request.resource.data.visibility in ['public', 'followers']
+                    && request.resource.data.status == 'pending'
+                    && request.resource.data.requestVersion == 2
+                    && request.resource.data.security.frontendCreated == true
+                    && request.resource.data.security.backendRequired == true
+                    && request.resource.data.security.clientPublishingAllowed == false
+                    && request.resource.data.security.clientWatermarkProcessingAllowed == false
+                    && request.resource.data.watermark.required == true
+                    && request.resource.data.watermark.status == 'pending'
+                    && request.resource.data.publishing.status == 'pending'
+                    && request.resource.data.publishing.completed == false
+                    && request.resource.data.creatorGrowth.eligible == false
+                    && request.resource.data.creatorGrowth.points == 0
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'creatorId', 'sourcePostId', 'sourcePostOwnerId',
+                      'platforms', 'message', 'visibility', 'status',
+                      'requestVersion', 'security', 'watermark', 'publishing',
+                      'creatorGrowth', 'createdAt'
+                    ]);
+
+      allow get, list: if request.auth != null
+                       && resource.data.creatorId == request.auth.uid;
+
+      allow update, delete: if false;
+    }
+
     match /memberDirectory/{memberId} {
       allow get, list: if request.auth != null;
 
