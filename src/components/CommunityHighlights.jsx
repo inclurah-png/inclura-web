@@ -1,6 +1,11 @@
+import { useTranslation } from "react-i18next";
+
 function CommunityHighlights() {
+  const { t } = useTranslation();
+
   return (
-    <div
+    <section
+      aria-labelledby="community-highlights-heading"
       style={{
         background: "#1e293b",
         padding: "18px",
@@ -8,17 +13,11 @@ function CommunityHighlights() {
         marginBottom: "16px",
       }}
     >
-      <h2>🌟 Community Highlights</h2>
-
-      <p>
-        Featured creators,
-        entrepreneurs,
-        students,
-        employers,
-        advocates and caregivers
-        from the Inclura community.
-      </p>
-    </div>
+      <h2 id="community-highlights-heading">
+        🌟 {t("communityHighlightsTitle")}
+      </h2>
+      <p>{t("communityHighlightsDescription")}</p>
+    </section>
   );
 }
 
