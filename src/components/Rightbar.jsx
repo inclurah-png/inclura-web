@@ -1,8 +1,12 @@
+import { useTranslation } from "react-i18next";
 import ProfileCard from "./ProfileCard";
 
 function Rightbar() {
+  const { t } = useTranslation();
+
   return (
-    <div
+    <aside
+      aria-label={t("communitySidebarLabel")}
       style={{
         width: "300px",
         padding: "24px",
@@ -12,8 +16,8 @@ function Rightbar() {
     >
       <ProfileCard />
 
-      {/* Trending */}
-      <div
+      <section
+        aria-labelledby="trending-heading"
         style={{
           background: "#0f172a",
           padding: "20px",
@@ -21,41 +25,33 @@ function Rightbar() {
           marginBottom: "24px",
         }}
       >
-        <h3
-          style={{
-            marginBottom: "16px",
-          }}
-        >
-          Trending
+        <h3 id="trending-heading" style={{ marginBottom: "16px" }}>
+          {t("communityTrending")}
         </h3>
-
         <p>#Accessibility</p>
         <p>#Inclusion</p>
         <p>#AI</p>
         <p>#Creators</p>
-      </div>
+      </section>
 
-      {/* Suggested Connections */}
-      <div
+      <section
+        aria-labelledby="suggested-connections-heading"
         style={{
           background: "#0f172a",
           padding: "20px",
           borderRadius: "20px",
         }}
       >
-        <h3
-          style={{
-            marginBottom: "16px",
-          }}
-        >
-          Suggested Connections
+        <h3 id="suggested-connections-heading" style={{ marginBottom: "16px" }}>
+          {t("communitySuggestedConnections")}
         </h3>
-
-        <p>👤 Jane Doe</p>
-        <p>👤 Michael Smith</p>
-        <p>👤 Sophia Lee</p>
-      </div>
-    </div>
+        <ul aria-label={t("communitySuggestedConnections")} style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          <li><p>👤 Jane Doe</p></li>
+          <li><p>👤 Michael Smith</p></li>
+          <li><p>👤 Sophia Lee</p></li>
+        </ul>
+      </section>
+    </aside>
   );
 }
 
