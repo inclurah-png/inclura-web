@@ -5,6 +5,13 @@ import LanguageDetector from "i18next-browser-languagedetector";
 const resources = {
   en: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Community",
+    communityTrending: "Trending",
+    communitySuggestedConnections: "Suggested Connections",
+    communityHighlightsTitle: "Community Highlights",
+    communityHighlightsDescription: "Featured creators, entrepreneurs, students, employers, advocates and caregivers from the Inclura community.",
+
     // Branding
     appName: "Inclura",
     slogan: "The Inclusive Social Platform for Everyone",
@@ -464,6 +471,13 @@ returnHome: "Return Home",
 
   yo: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Àwùjọ",
+    communityTrending: "Ohun tó gbajúmọ̀",
+    communitySuggestedConnections: "Àwọn ẹni tí a dábàá pé kí o bá ṣe ìbáṣepọ̀",
+    communityHighlightsTitle: "Àwọn ìṣẹ̀lẹ̀ pàtàkì àwùjọ",
+    communityHighlightsDescription: "Àwọn olùṣẹ̀dá, àwọn oníṣòwò, àwọn akẹ́kọ̀ọ́, àwọn agbanisíṣẹ́, àwọn agbèjà àti àwọn olùtọ́jú tí a ṣe àfihàn láti àwùjọ Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "Pẹpẹ Awujọ Alágbáṣiṣẹ fún Gbogbo Ènìyàn",
@@ -923,6 +937,13 @@ returnHome: "Padà sí Ilé",
 
   ig: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Obodo",
+    communityTrending: "Ihe na-ewu ewu",
+    communitySuggestedConnections: "Ndị a tụrụ aro ka gị na ha jikọọ",
+    communityHighlightsTitle: "Ihe ndị pụtara ìhè n'obodo",
+    communityHighlightsDescription: "Ndị okike, ndị ọchụnta ego, ụmụ akwụkwọ, ndị were mmadụ n'ọrụ, ndị na-akwado mmadụ na ndị nlekọta e gosipụtara n'obodo Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "Ikpo okwu mmekọrịta mmadụ na ibe ya maka mmadụ niile",
@@ -1357,6 +1378,13 @@ returnHome: "Laghachi n'ụlọ",
 
   ha: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Al'umma",
+    communityTrending: "Abubuwan da suka shahara",
+    communitySuggestedConnections: "Mutanen da aka ba da shawarar ka haɗu da su",
+    communityHighlightsTitle: "Fitattun abubuwan al'umma",
+    communityHighlightsDescription: "Fitattun masu ƙirƙira, 'yan kasuwa, ɗalibai, ma'aikata, masu fafutuka da masu kulawa daga al'ummar Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "Dandalin Zamantakewa Mai Haɗa Kowa",
@@ -1791,6 +1819,13 @@ returnHome: "Komawa Gida",
 
   fr: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Communauté",
+    communityTrending: "Tendances",
+    communitySuggestedConnections: "Suggestions de contacts",
+    communityHighlightsTitle: "À la une de la communauté",
+    communityHighlightsDescription: "Créateurs, entrepreneurs, étudiants, employeurs, défenseurs et aidants mis en avant dans la communauté Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "La plateforme sociale inclusive pour tous",
@@ -2279,6 +2314,13 @@ returnHome: "Retour à l’accueil",
 
   ar: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "المجتمع",
+    communityTrending: "الأكثر تداولًا",
+    communitySuggestedConnections: "اقتراحات للتواصل",
+    communityHighlightsTitle: "أبرز أنشطة المجتمع",
+    communityHighlightsDescription: "مبدعون ورواد أعمال وطلاب وأصحاب عمل ومدافعون ومقدمو رعاية مميزون من مجتمع Inclura.",
+
     // Branding
     appName: "إنكلورا",
     slogan: "منصة التواصل الاجتماعي الشاملة للجميع",
@@ -2767,6 +2809,13 @@ returnHome: "العودة إلى الرئيسية",
 
   es: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Comunidad",
+    communityTrending: "Tendencias",
+    communitySuggestedConnections: "Conexiones sugeridas",
+    communityHighlightsTitle: "Lo más destacado de la comunidad",
+    communityHighlightsDescription: "Creadores, emprendedores, estudiantes, empleadores, defensores y cuidadores destacados de la comunidad Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "La plataforma social inclusiva para todos",
@@ -3255,6 +3304,13 @@ returnHome: "Volver al inicio",
 
   zh: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "社区",
+    communityTrending: "热门话题",
+    communitySuggestedConnections: "推荐联系人",
+    communityHighlightsTitle: "社区精选",
+    communityHighlightsDescription: "Inclura 社区中精选的创作者、企业家、学生、雇主、倡导者和照护者。",
+
     // Branding
     appName: "Inclura",
     slogan: "面向所有人的包容性社交平台",
@@ -3710,6 +3766,13 @@ returnHome: "返回首页",
 
   pt: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Comunidade",
+    communityTrending: "Em alta",
+    communitySuggestedConnections: "Conexões sugeridas",
+    communityHighlightsTitle: "Destaques da comunidade",
+    communityHighlightsDescription: "Criadores, empreendedores, estudantes, empregadores, defensores e cuidadores em destaque na comunidade Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "A plataforma social inclusiva para todos",
@@ -4198,6 +4261,13 @@ returnHome: "Voltar ao início",
   
   sw: {
   translation: {
+    // Community and connection
+    communitySidebarLabel: "Jumuiya",
+    communityTrending: "Maarufu",
+    communitySuggestedConnections: "Miunganisho inayopendekezwa",
+    communityHighlightsTitle: "Vivutio vya jumuiya",
+    communityHighlightsDescription: "Watayarishi, wajasiriamali, wanafunzi, waajiri, watetezi na walezi walioangaziwa kutoka jumuiya ya Inclura.",
+
     // Branding
     appName: "Inclura",
     slogan: "Jukwaa la kijamii linalojumuisha kila mtu",
