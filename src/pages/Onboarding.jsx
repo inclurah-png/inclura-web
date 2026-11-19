@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import DashboardLayout from "../components/DashboardLayout";
 
@@ -17,6 +18,7 @@ import { VERIFICATION_PLANS } from "../config";
 
 function Onboarding() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const categories = useMemo(
     () => Object.keys(VERIFICATION_PLANS),
@@ -24,15 +26,15 @@ function Onboarding() {
   );
 
   const availableAccessibilityNeeds = [
-    "Screen Reader",
-    "Braille",
-    "Large Text",
-    "High Contrast",
-    "Voice Navigation",
-    "Keyboard Navigation",
-    "Captions",
-    "Sign Language",
-    "Color Blind Support",
+    { value: "Screen Reader", label: t("screenReader") },
+    { value: "Braille", label: t("braille") },
+    { value: "Large Text", label: t("largeText") },
+    { value: "High Contrast", label: t("highContrast") },
+    { value: "Voice Navigation", label: t("voiceNavigation") },
+    { value: "Keyboard Navigation", label: t("keyboardNavigation") },
+    { value: "Captions", label: t("captions") },
+    { value: "Sign Language", label: t("signLanguage") },
+    { value: "Color Blind Support", label: t("colorBlindSupport") },
   ];
 
   const [accountType, setAccountType] =
@@ -108,9 +110,26 @@ function Onboarding() {
         data.location || ""
       );
 
-      setLanguage(
-        data.language || "English"
-      );
+      const savedLanguage = data.language || "English";
+      setLanguage(savedLanguage);
+
+      const languageCodeMap = {
+        English: "en",
+        French: "fr",
+        Spanish: "es",
+        Arabic: "ar",
+        Portuguese: "pt",
+        Swahili: "sw",
+        "Yorùbá": "yo",
+        Yoruba: "yo",
+        Igbo: "ig",
+        Hausa: "ha",
+      };
+
+      const savedLanguageCode = languageCodeMap[savedLanguage];
+      if (savedLanguageCode && i18n.language !== savedLanguageCode) {
+        await i18n.changeLanguage(savedLanguageCode);
+      }
 
       setInterests(
         data.interests || []
@@ -353,22 +372,38 @@ function Onboarding() {
 
         <select
           value={language}
-          onChange={(e) =>
-            setLanguage(
-              e.target.value
-            )
-          }
+          onChange={(e) => {
+            const selectedLanguage = e.target.value;
+            setLanguage(selectedLanguage);
+
+            const languageCodeMap = {
+              English: "en",
+              French: "fr",
+              Spanish: "es",
+              Arabic: "ar",
+              Portuguese: "pt",
+              Swahili: "sw",
+              "Yorùbá": "yo",
+              Igbo: "ig",
+              Hausa: "ha",
+            };
+
+            const selectedCode = languageCodeMap[selectedLanguage];
+            if (selectedCode) {
+              i18n.changeLanguage(selectedCode);
+            }
+          }}
           style={inputStyle}
         >
-          <option>English</option>
-          <option>French</option>
-          <option>Spanish</option>
-          <option>Arabic</option>
-          <option>Portuguese</option>
-          <option>Swahili</option>
-          <option>Yorùbá</option>
-          <option>Igbo</option>
-          <option>Hausa</option>
+          <option value="English">English</option>
+          <option value="French">Français</option>
+          <option value="Spanish">Español</option>
+          <option value="Arabic">العربية</option>
+          <option value="Portuguese">Português</option>
+          <option value="Swahili">Kiswahili</option>
+          <option value="Yorùbá">Yorùbá</option>
+          <option value="Igbo">Igbo</option>
+          <option value="Hausa">Hausa</option>
         </select>
                 {verificationCategory ===
           "creator" && (
@@ -444,7 +479,7 @@ function Onboarding() {
             marginBottom: "16px",
           }}
         >
-          Accessibility Needs
+          {t("accessibilityNeeds")}
         </h2>
 
         <div
@@ -458,11 +493,12 @@ function Onboarding() {
           {availableAccessibilityNeeds.map(
             (need) => (
               <button
-                key={need}
+                key={need.value}
                 type="button"
+                aria-pressed={accessibilityNeeds.includes(need.value)}
                 onClick={() =>
                   toggleAccessibilityNeed(
-                    need
+                    need.value
                   )
                 }
                 style={{
@@ -470,13 +506,13 @@ function Onboarding() {
                   borderRadius: "30px",
                   border:
                     accessibilityNeeds.includes(
-                      need
+                      need.value
                     )
                       ? "2px solid #22c55e"
                       : "1px solid #334155",
                   background:
                     accessibilityNeeds.includes(
-                      need
+                      need.value
                     )
                       ? "#14532d"
                       : "#1e293b",
@@ -484,7 +520,7 @@ function Onboarding() {
                   cursor: "pointer",
                 }}
               >
-                {need}
+                {need.label}
               </button>
             )
           )}
@@ -504,7 +540,7 @@ function Onboarding() {
             marginTop: "20px",
           }}
         >
-          Complete Onboarding
+          {t("returnDashboard")}
         </button>
       </div>
     </DashboardLayout>
