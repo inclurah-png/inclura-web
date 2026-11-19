@@ -1,679 +1,660 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   doc,
   getDoc,
   addDoc,
   collection,
+  onSnapshot,
+  query,
+  where,
   serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 function CrossPost() {
   const { id } = useParams();
-
   const navigate = useNavigate();
 
   const [post, setPost] = useState(null);
-
   const [loading, setLoading] = useState(true);
+  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
+  const [message, setMessage] = useState("");
+  const [visibility, setVisibility] = useState("public");
+  const [creatingRequest, setCreatingRequest] = useState(false);
+  const [requestCreated, setRequestCreated] = useState(false);
+  const [requestId, setRequestId] = useState("");
+  const [error, setError] = useState("");
+  const [requestStats, setRequestStats] = useState([]);
 
-  const [crossPostStatus, setCrossPostStatus] =
-  useState("not_started");
-
-  const [creatingRequest, setCreatingRequest] =
-  useState(false);
-
-const [selectedPlatforms, setSelectedPlatforms] =
-  useState([]);
+  const platforms = [
+    { id: "facebook", label: "Facebook", icon: "ⓕ" },
+    { id: "instagram", label: "Instagram", icon: "◎" },
+    { id: "x", label: "X / Twitter", icon: "𝕏" },
+    { id: "linkedin", label: "LinkedIn", icon: "in" },
+    { id: "reddit", label: "Reddit", icon: "●" },
+    { id: "threads", label: "Threads", icon: "@" },
+    { id: "whatsapp", label: "WhatsApp", icon: "◉" },
+    { id: "telegram", label: "Telegram", icon: "➤" },
+  ];
 
   useEffect(() => {
     async function loadPost() {
-      const ref = doc(db, "posts", id);
+      try {
+        const snap = await getDoc(doc(db, "posts", id));
 
-      const snap = await getDoc(ref);
-
-      if (snap.exists()) {
-        setPost({
-          id: snap.id,
-          ...snap.data(),
-        });
+        if (snap.exists()) {
+          setPost({ id: snap.id, ...snap.data() });
+        }
+      } catch (err) {
+        console.error("Unable to load cross-post source:", err);
+        setError("Unable to load this post.");
+      } finally {
+        setLoading(false);
       }
-
-      setLoading(false);
     }
 
-    loadPost();
+    if (id) loadPost();
   }, [id]);
 
-  if (loading)
-    return <p>Loading...</p>;
+  useEffect(() => {
+    const uid = auth.currentUser?.uid;
+    if (!uid) return undefined;
 
-  if (!post)
-    return <p>Post not found.</p>;
+    const requestsQuery = query(
+      collection(db, "crossPostRequests"),
+      where("creatorId", "==", uid)
+    );
 
-  const platforms = [
-    "Facebook",
-    "Instagram",
-    "X / Twitter",
-    "LinkedIn",
-    "Reddit",
-    "Threads",
-    "WhatsApp",
-    "Telegram",
-  ];
+    return onSnapshot(
+      requestsQuery,
+      (snapshot) => {
+        setRequestStats(
+          snapshot.docs.map((item) => ({
+            id: item.id,
+            ...item.data(),
+          }))
+        );
+      },
+      (err) => {
+        console.error("Cross-post statistics listener failed:", err);
+      }
+    );
+  }, []);
 
-function togglePlatform(platform) {
-  setSelectedPlatforms((current) => {
-    if (current.includes(platform)) {
-      return current.filter(
-        (item) => item !== platform
-      );
+  const stats = useMemo(() => {
+    const successful = requestStats.filter(
+      (item) => item.status === "published" || item.status === "completed"
+    );
+
+    const activeReferrals = requestStats.reduce(
+      (total, item) => total + Number(item.referralSignups || 0),
+      0
+    );
+
+    const impressions = requestStats.reduce(
+      (total, item) => total + Number(item.impressions || 0),
+      0
+    );
+
+    const xp = requestStats.reduce(
+      (total, item) => total + Number(item.creatorGrowth?.points || 0),
+      0
+    );
+
+    return {
+      total: requestStats.length,
+      successful: successful.length,
+      xp,
+      referrals: activeReferrals,
+      impressions,
+    };
+  }, [requestStats]);
+
+  function togglePlatform(platformId) {
+    setSelectedPlatforms((current) =>
+      current.includes(platformId)
+        ? current.filter((item) => item !== platformId)
+        : [...current, platformId]
+    );
+  }
+
+  async function createCrossPostRequest() {
+    if (creatingRequest || requestCreated) return;
+
+    setError("");
+
+    const uid = auth.currentUser?.uid;
+    if (!uid) {
+      setError("Please sign in before creating a cross-post request.");
+      return;
     }
 
-    return [...current, platform];
-  });
-}
+    if (!post?.id) {
+      setError("Post information is unavailable.");
+      return;
+    }
 
-async function createCrossPostRequest() {
-  if (creatingRequest) return;
+    if (selectedPlatforms.length === 0) {
+      setError("Select at least one destination.");
+      return;
+    }
 
-  if (!post?.id) {
-    alert("Post information is unavailable.");
-    return;
+    setCreatingRequest(true);
+
+    try {
+      const requestRef = await addDoc(collection(db, "crossPostRequests"), {
+        creatorId: uid,
+        sourcePostId: post.id,
+        sourcePostOwnerId: post.userId || "",
+        platforms: selectedPlatforms,
+        message: message.trim().slice(0, 1000),
+        visibility,
+        status: "pending",
+        requestVersion: 2,
+        security: {
+          frontendCreated: true,
+          backendRequired: true,
+          clientPublishingAllowed: false,
+          clientWatermarkProcessingAllowed: false,
+        },
+        watermark: {
+          required: true,
+          text: "Created on Inclura — The most accessible network.",
+          status: "pending",
+          processedBy: "authorized_backend",
+        },
+        publishing: {
+          status: "pending",
+          completed: false,
+          processedBy: "authorized_backend",
+        },
+        creatorGrowth: {
+          eligible: false,
+          points: 0,
+          awardedBy: "authorized_backend",
+        },
+        createdAt: serverTimestamp(),
+      });
+
+      setRequestId(requestRef.id);
+      setRequestCreated(true);
+    } catch (err) {
+      console.error("Cross-post request failed:", err);
+      setError("Unable to create the secure cross-post request. Please try again.");
+    } finally {
+      setCreatingRequest(false);
+    }
   }
 
-  if (selectedPlatforms.length === 0) {
-    alert("Please select at least one platform.");
-    return;
+  if (loading) {
+    return (
+      <main style={styles.page}>
+        <p aria-live="polite">Loading cross-post…</p>
+      </main>
+    );
   }
 
-  setCreatingRequest(true);
-
-  try {
-    const requestRef = await addDoc(
-      collection(db, "crossPostRequests"),
-    {
-  sourcePostId: post.id,
-
-  platforms: selectedPlatforms,
-
-  status: "pending",
-
-  requestVersion: 1,
-
-  security: {
-    frontendCreated: true,
-    backendRequired: true,
-    clientPublishingAllowed: false,
-    watermarkClientProcessingAllowed: false,
-  },
-
-  watermark: {
-    required: true,
-    status: "pending",
-    text:
-      "Created on Inclura — The most accessible network.",
-    processedBy: "authorized_backend",
-  },
-
-  publishing: {
-    status: "pending",
-    completed: false,
-    processedBy: "authorized_backend",
-  },
-
-  creatorGrowth: {
-    eligible: false,
-    points: 0,
-    awardedBy: "authorized_backend",
-  },
-
-  createdAt: serverTimestamp(),
-}
+  if (!post) {
+    return (
+      <main style={styles.page}>
+        <button type="button" onClick={() => navigate(-1)} style={styles.backButton}>
+          ← Back
+        </button>
+        <section style={styles.card}>
+          <h1>Cross-Post</h1>
+          <p>Post not found.</p>
+        </section>
+      </main>
     );
-
-    console.log(
-      "CrossPost request created:",
-      requestRef.id
-    );
-
-    setCrossPostStatus("pending");
-    
-    alert(
-      "Cross-post request created successfully."
-    );
-  } catch (error) {
-    console.error(
-      "CrossPost request failed:",
-      error
-    );
-
-    setCrossPostStatus("failed");
-    
-    alert(
-      "Unable to create CrossPost request."
-    );
-  } finally {
-    setCreatingRequest(false);
   }
-}
 
   return (
-    <div
-      style={{
-        maxWidth: "850px",
-        margin: "0 auto",
-        padding: "28px",
-        color: "white",
-      }}
-    >
-      <button
-        onClick={() => navigate(-1)}
-      >
+    <main style={styles.page}>
+      <button type="button" onClick={() => navigate(-1)} style={styles.backButton}>
         ← Back
       </button>
 
-      <h1>
-        📤 Cross-Post Strategy
-      </h1>
-
-      <p>
-        Share your content from
-        Inclura to Facebook,
-        Instagram and others with
-        an automatic watermark
-        that grows the platform.
-      </p>
-
-      <div
-        style={{
-          background: "#0f172a",
-          borderRadius: "22px",
-          padding: "22px",
-          marginTop: "24px",
-        }}
-      >
-        <h2>How it works</h2>
-
-        <p>
-          <strong>1.</strong> Choose a
-          post from your Inclura
-          feed to share externally.
-        </p>
-
-        <p>
-          <strong>2.</strong> Select
-          your target platforms.
-        </p>
-
-        <p>
-          <strong>3.</strong> Inclura
-          automatically adds the
-          watermark:
-        </p>
-
-        <div
-          style={{
-            background: "#1e293b",
-            padding: "18px",
-            borderRadius: "14px",
-            marginBottom: "18px",
-          }}
-        >
-          Created on Inclura —
-          The most accessible
-          network.
+      <header style={styles.header}>
+        <span aria-hidden="true" style={styles.headerIcon}>📤</span>
+        <div>
+          <h1 style={styles.title}>Cross-Post</h1>
+          <p style={styles.subtitle}>
+            Share an Inclura post to selected external platforms through a controlled,
+            secure workflow.
+          </p>
         </div>
+      </header>
 
-        <p>
-          + Every successful
-          cross-post earns creator
-          growth points.
+      <section style={styles.steps} aria-label="Cross-post steps">
+        {[
+          ["1", "Choose destination"],
+          ["2", "Add message"],
+          ["3", "Preview"],
+          ["4", "Confirm request"],
+        ].map(([number, label]) => (
+          <div key={number} style={styles.step}>
+            <span style={styles.stepNumber}>{number}</span>
+            <span>{label}</span>
+          </div>
+        ))}
+      </section>
+
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>Original Inclura Post</h2>
+
+        <div style={styles.postPreview}>
+          <div style={styles.creator}>
+            <div style={styles.avatar}>
+              {post.userName?.charAt(0)?.toUpperCase() || "I"}
+            </div>
+            <strong>{post.userName || "Inclura Creator"}</strong>
+          </div>
+
+          {post.text && (
+            <p style={styles.postText}>{post.text}</p>
+          )}
+
+          {post.imageUrl && (
+            <img
+              src={post.imageUrl}
+              alt={post.imageAlt || "Inclura post image"}
+              style={styles.media}
+            />
+          )}
+
+          {post.videoUrl && (
+            <video controls style={styles.media}>
+              <source src={post.videoUrl} type="video/mp4" />
+            </video>
+          )}
+        </div>
+      </section>
+
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>1. Choose destination</h2>
+        <p style={styles.helper}>
+          Select one or more destinations. Inclura will create a secure publishing
+          request; the browser will never receive external platform credentials.
         </p>
-      </div>
 
-            <div
-        style={{
-          background: "#0f172a",
-          borderRadius: "22px",
-          padding: "22px",
-          marginTop: "24px",
-        }}
-      >
-        <h2>Select platform</h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(180px,1fr))",
-            gap: "14px",
-          }}
-        >
+        <div style={styles.platformGrid}>
           {platforms.map((platform) => {
-            const selected =
-              selectedPlatforms.includes(platform);
+            const selected = selectedPlatforms.includes(platform.id);
 
             return (
               <button
-                key={platform}
+                key={platform.id}
                 type="button"
-                onClick={() =>
-                  togglePlatform(platform)
-                }
+                onClick={() => togglePlatform(platform.id)}
                 aria-pressed={selected}
                 style={{
-                  padding: "18px",
-                  borderRadius: "16px",
-                  cursor: "pointer",
-                  border: selected
-                    ? "3px solid #22c55e"
-                    : "1px solid #475569",
-                  background: selected
-                    ? "#14532d"
-                    : "#1e293b",
-                  color: "white",
-                  fontWeight: selected
-                    ? "700"
-                    : "500",
+                  ...styles.platformButton,
+                  ...(selected ? styles.platformSelected : {}),
                 }}
               >
-                {selected ? "✓ " : ""}
-                {platform}
+                <span aria-hidden="true">{platform.icon}</span>
+                <span>{platform.label}</span>
+                {selected && <span aria-hidden="true">✓</span>}
               </button>
             );
           })}
         </div>
+      </section>
 
-        {selectedPlatforms.length > 0 && (
-          <div
-            style={{
-              marginTop: "22px",
-              padding: "18px",
-              borderRadius: "16px",
-              background: "#1e293b",
-            }}
-          >
-            <h3>Selected Platforms</h3>
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>2. Add optional message</h2>
+        <label htmlFor="crosspost-message" style={styles.label}>
+          Message or caption
+        </label>
+        <textarea
+          id="crosspost-message"
+          value={message}
+          onChange={(event) => setMessage(event.target.value.slice(0, 1000))}
+          placeholder="Add a short message for the external post…"
+          maxLength={1000}
+          rows={5}
+          style={styles.textarea}
+        />
+        <div style={styles.counter}>{message.length}/1000</div>
 
-            <p>
-              {selectedPlatforms.join(", ")}
-            </p>
-
-            <p
-              style={{
-                fontSize: "14px",
-                opacity: 0.8,
-              }}
-            >
-              Your selections will be prepared
-              for the secure CrossPost workflow.
-              Publishing and watermark processing
-              will occur only after backend
-              services are connected.
-            </p>
-          </div>
-        )}
-
-        {selectedPlatforms.length > 0 && (
-          <button
-            type="button"
-            onClick={createCrossPostRequest}
-            disabled={creatingRequest}
-            aria-busy={creatingRequest}
-            style={{
-              marginTop: "20px",
-              width: "100%",
-              padding: "16px",
-              borderRadius: "14px",
-              border: "none",
-              cursor: creatingRequest
-                ? "not-allowed"
-                : "pointer",
-              background: "#22c55e",
-              color: "white",
-              fontWeight: "700",
-              fontSize: "16px",
-              opacity: creatingRequest ? 0.7 : 1,
-            }}
-          >
-            {creatingRequest
-              ? "Preparing Secure Cross-Post..."
-              : "Prepare Secure Cross-Post"}
-          </button>
-        )}
-      </div>
-
-      {/* CROSS-POST PREVIEW */}
-      {selectedPlatforms.length > 0 && (
-        <div
-          style={{
-            background: "#0f172a",
-            borderRadius: "22px",
-            padding: "22px",
-            marginTop: "24px",
-          }}
+        <label htmlFor="crosspost-visibility" style={styles.label}>
+          Visibility
+        </label>
+        <select
+          id="crosspost-visibility"
+          value={visibility}
+          onChange={(event) => setVisibility(event.target.value)}
+          style={styles.select}
         >
-          <h2>👁️ Cross-Post Preview</h2>
+          <option value="public">Public</option>
+          <option value="followers">Followers / connections</option>
+        </select>
+      </section>
 
-          <p
-            style={{
-              opacity: 0.8,
-              marginBottom: "20px",
-            }}
-          >
-            Review your content before creating
-            the secure cross-post request.
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>3. Preview</h2>
+
+        <div style={styles.previewBox}>
+          <div style={styles.previewHeader}>
+            <span>Inclura Creator</span>
+            <span>→ {selectedPlatforms.length || 0} destination(s)</span>
+          </div>
+
+          {message.trim() && (
+            <p style={styles.messagePreview}>{message.trim()}</p>
+          )}
+
+          {post.text && (
+            <p style={styles.postText}>{post.text}</p>
+          )}
+
+          <div style={styles.watermarkPreview}>
+            <strong>Inclura watermark</strong>
+            <span>Created on Inclura — The most accessible network.</span>
+          </div>
+        </div>
+
+        <div style={styles.securityNotice}>
+          <strong>🔐 Security</strong>
+          <p>
+            Inclura does not store external platform passwords or publish directly
+            from the user's browser. Watermarking and external publishing are
+            reserved for an authorized backend workflow.
           </p>
+        </div>
+      </section>
 
-          {/* Original content */}
-
-          <div
-            style={{
-              background: "#1e293b",
-              borderRadius: "16px",
-              padding: "18px",
-            }}
-          >
-            <h3>Original Inclura Post</h3>
-
-            <p
-              style={{
-                fontWeight: "700",
-              }}
-            >
-              {post.userName || "Inclura Creator"}
-            </p>
-
-            {post.text && (
-              <p
-                style={{
-                  whiteSpace: "pre-wrap",
-                }}
-              >
-                {post.text}
-              </p>
-            )}
-
-            {post.imageUrl && (
-              <img
-                src={post.imageUrl}
-                alt={
-                  post.imageAlt ||
-                  "Inclura post image"
-                }
-                style={{
-                  width: "100%",
-                  maxHeight: "500px",
-                  objectFit: "contain",
-                  borderRadius: "14px",
-                  marginTop: "12px",
-                }}
-              />
-            )}
-
-            {post.videoUrl && (
-              <video
-                controls
-                style={{
-                  width: "100%",
-                  maxHeight: "500px",
-                  borderRadius: "14px",
-                  marginTop: "12px",
-                }}
-              >
-                <source
-                  src={post.videoUrl}
-                  type="video/mp4"
-                />
-              </video>
-            )}
-          </div>
-
-          {/* Target platforms */}
-
-          <div
-            style={{
-              marginTop: "20px",
-            }}
-          >
-            <h3>Target Platforms</h3>
-
-            <p>
-              {selectedPlatforms.join(", ")}
-            </p>
-          </div>
-
-          {/* Planned watermark */}
-
-          <div
-            style={{
-              marginTop: "20px",
-              background: "#1e293b",
-              borderRadius: "16px",
-              padding: "18px",
-            }}
-          >
-            <h3>🔐 Planned Inclura Watermark</h3>
-
-            <div
-              style={{
-                padding: "16px",
-                borderRadius: "12px",
-                background: "#334155",
-                fontWeight: "600",
-              }}
-            >
-              Created on Inclura —
-              The most accessible network.
-            </div>
-
-            <p
-              style={{
-                marginTop: "12px",
-                fontSize: "14px",
-                opacity: 0.8,
-              }}
-            >
-              This is a preview only. The actual
-              watermark will be generated and
-              applied by Inclura's secure backend
-              before external publishing.
-            </p>
-          </div>
-
-          {/* Processing status */}
-
-<div
-  style={{
-    marginTop: "20px",
-    padding: "16px",
-    borderRadius: "14px",
-    background: "#422006",
-  }}
->
-  <strong>
-    🔒 Cross-Post Processing Status
-  </strong>
-
-  <p
-    style={{
-      marginTop: "10px",
-      marginBottom: "8px",
-      fontWeight: "700",
-    }}
-  >
-    {crossPostStatus === "not_started" &&
-      "Not started"}
-    
-    {crossPostStatus === "pending" &&
-  "Request pending"}
-
-    {crossPostStatus === "request_created" &&
-      "Request created"}
-
-    {crossPostStatus === "processing" &&
-      "Processing"}
-
-    {crossPostStatus === "watermark_ready" &&
-      "Watermark ready"}
-
-    {crossPostStatus === "published" &&
-      "Published"}
-
-    {crossPostStatus === "failed" &&
-      "Failed"}
-  </p>
-
-  <p
-    style={{
-      marginBottom: 0,
-      fontSize: "14px",
-      opacity: 0.85,
-    }}
-  >
-    {crossPostStatus === "not_started" &&
-      "No cross-post request has been submitted yet. The secure backend will control watermark generation and external publishing."}
-
-    {crossPostStatus === "pending" &&
-  "Your CrossPost request has been securely recorded and is waiting for authorized backend processing. Watermark generation and external publishing have not occurred yet."}
-    
-    {crossPostStatus === "request_created" &&
-      "Your cross-post request has been created and is waiting for secure backend processing."}
-
-    {crossPostStatus === "processing" &&
-      "The secure backend is processing the media and applying the Inclura watermark."}
-
-    {crossPostStatus === "watermark_ready" &&
-      "The secure backend has completed watermark processing and the content is ready for the publishing stage."}
-
-    {crossPostStatus === "published" &&
-      "The external publication has been confirmed by the publishing service."}
-
-    {crossPostStatus === "failed" &&
-      "The cross-post process could not be completed. No successful publication should be recorded."}
-  </p>
-</div>
+      {error && (
+        <div role="alert" style={styles.error}>
+          {error}
         </div>
       )}
 
-    {crossPostStatus !== "not_started" && (
-  <div
-    style={{
-      background: "#0f172a",
-      borderRadius: "22px",
-      padding: "22px",
-      marginTop: "24px",
-    }}
-  >
-    <h2>
-      🔄 Cross-Post Status
-    </h2>
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>4. Confirm cross-post request</h2>
 
-    <p
-      style={{
-        fontSize: "18px",
-        fontWeight: "700",
-      }}
-    >
-      {crossPostStatus === "pending" &&
-        "⏳ Cross-post request is pending."}
+        {!requestCreated ? (
+          <>
+            <p style={styles.helper}>
+              {selectedPlatforms.length === 0
+                ? "Select at least one destination before continuing."
+                : "Review your selections, then create the secure request."}
+            </p>
 
-      {crossPostStatus === "failed" &&
-        "❌ Cross-post request failed."}
-    </p>
+            <button
+              type="button"
+              onClick={createCrossPostRequest}
+              disabled={creatingRequest || selectedPlatforms.length === 0}
+              style={{
+                ...styles.primaryButton,
+                opacity:
+                  creatingRequest || selectedPlatforms.length === 0 ? 0.6 : 1,
+              }}
+              aria-busy={creatingRequest}
+            >
+              {creatingRequest
+                ? "Creating secure request…"
+                : "Confirm & Prepare Cross-Post"}
+            </button>
+          </>
+        ) : (
+          <div style={styles.success} role="status">
+            <strong>✓ Cross-post request created</strong>
+            <p>
+              Request <span style={styles.code}>{requestId}</span> is now pending
+              secure backend processing.
+            </p>
+            <p style={styles.helper}>
+              No external publication is claimed until the authorized publishing
+              service confirms it.
+            </p>
+          </div>
+        )}
+      </section>
 
-    {crossPostStatus === "pending" && (
-      <p
-        style={{
-          fontSize: "14px",
-          opacity: 0.8,
-        }}
-      >
-        Your request has been securely
-        recorded. Watermark processing and
-        external publishing will begin only
-        when the authorized backend services
-        are connected.
-      </p>
-    )}
+      <section style={styles.card}>
+        <h2 style={styles.sectionTitle}>Cross-Post Activity</h2>
 
-    {crossPostStatus === "failed" && (
-      <p
-        style={{
-          fontSize: "14px",
-          opacity: 0.8,
-        }}
-      >
-        The request could not be created.
-        Please try again.
-      </p>
-    )}
-  </div>
-)}
-              <div
-        style={{
-          background: "#0f172a",
-          borderRadius: "22px",
-          padding: "22px",
-          marginTop: "24px",
-        }}
-      >
-        <h2>
-          📊 Your Cross-Post
-          Statistics
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns:
-              "repeat(auto-fit,minmax(180px,1fr))",
-            gap: "18px",
-            marginTop: "18px",
-          }}
-        >
-          <StatCard
-            title="Total Cross-Posts"
-            value="0"
-          />
-          
-          <StatCard
-            title="XP From Sharing"
-            value="0"
-          />
-
-          <StatCard
-            title="Active Referral Signups"
-            value="0"
-          />
-
-          <StatCard
-            title="Impressions Generated"
-            value="0"
-          />
+        <div style={styles.statsGrid}>
+          <StatCard title="Requests" value={stats.total} />
+          <StatCard title="Completed" value={stats.successful} />
+          <StatCard title="XP From Sharing" value={stats.xp} />
+          <StatCard title="Referral Signups" value={stats.referrals} />
+          <StatCard title="Impressions" value={stats.impressions} />
         </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }
 
 function StatCard({ title, value }) {
   return (
-    <div
-      style={{
-        background: "#1e293b",
-        padding: "18px",
-        borderRadius: "16px",
-      }}
-    >
-      <h3>{value}</h3>
-      <p>{title}</p>
-    </div>
+    <article style={styles.statCard} aria-label={title}>
+      <strong style={styles.statValue}>{value}</strong>
+      <span style={styles.statTitle}>{title}</span>
+    </article>
   );
 }
+
+const styles = {
+  page: {
+    maxWidth: "900px",
+    margin: "0 auto",
+    padding: "24px 16px 60px",
+    color: "#fff",
+  },
+  backButton: {
+    background: "transparent",
+    border: "1px solid #475569",
+    color: "#fff",
+    borderRadius: "10px",
+    padding: "9px 14px",
+    cursor: "pointer",
+    marginBottom: "18px",
+  },
+  header: {
+    display: "flex",
+    gap: "14px",
+    alignItems: "flex-start",
+    marginBottom: "22px",
+  },
+  headerIcon: { fontSize: "32px" },
+  title: { margin: 0, fontSize: "30px" },
+  subtitle: { margin: "8px 0 0", color: "#cbd5e1", lineHeight: 1.5 },
+  steps: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+    gap: "10px",
+    marginBottom: "18px",
+  },
+  step: {
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "14px",
+    padding: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "9px",
+    fontSize: "13px",
+  },
+  stepNumber: {
+    display: "inline-flex",
+    width: "28px",
+    height: "28px",
+    borderRadius: "50%",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "#166534",
+    fontWeight: 800,
+  },
+  card: {
+    background: "#0f172a",
+    borderRadius: "20px",
+    padding: "20px",
+    marginTop: "18px",
+    border: "1px solid #1e293b",
+  },
+  sectionTitle: { marginTop: 0, marginBottom: "12px" },
+  helper: { color: "#cbd5e1", lineHeight: 1.5, fontSize: "14px" },
+  postPreview: {
+    background: "#1e293b",
+    borderRadius: "16px",
+    padding: "16px",
+  },
+  creator: { display: "flex", alignItems: "center", gap: "10px" },
+  avatar: {
+    width: "38px",
+    height: "38px",
+    borderRadius: "50%",
+    background: "#166534",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: 800,
+  },
+  postText: { whiteSpace: "pre-wrap", lineHeight: 1.55 },
+  media: {
+    width: "100%",
+    maxHeight: "520px",
+    objectFit: "contain",
+    borderRadius: "14px",
+    marginTop: "10px",
+  },
+  platformGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))",
+    gap: "10px",
+  },
+  platformButton: {
+    minHeight: "56px",
+    borderRadius: "14px",
+    border: "1px solid #475569",
+    background: "#1e293b",
+    color: "#fff",
+    padding: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: "8px",
+    cursor: "pointer",
+    fontWeight: 600,
+  },
+  platformSelected: {
+    border: "2px solid #22c55e",
+    background: "#14532d",
+  },
+  label: {
+    display: "block",
+    fontWeight: 700,
+    margin: "18px 0 8px",
+  },
+  textarea: {
+    width: "100%",
+    boxSizing: "border-box",
+    borderRadius: "12px",
+    border: "1px solid #475569",
+    background: "#020617",
+    color: "#fff",
+    padding: "12px",
+    resize: "vertical",
+    font: "inherit",
+  },
+  counter: {
+    textAlign: "right",
+    color: "#94a3b8",
+    fontSize: "12px",
+    marginTop: "5px",
+  },
+  select: {
+    width: "100%",
+    boxSizing: "border-box",
+    borderRadius: "12px",
+    border: "1px solid #475569",
+    background: "#020617",
+    color: "#fff",
+    padding: "12px",
+    font: "inherit",
+  },
+  previewBox: {
+    background: "#1e293b",
+    borderRadius: "16px",
+    padding: "18px",
+  },
+  previewHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    color: "#cbd5e1",
+    fontSize: "13px",
+  },
+  messagePreview: {
+    background: "#334155",
+    borderRadius: "12px",
+    padding: "12px",
+    lineHeight: 1.5,
+  },
+  watermarkPreview: {
+    marginTop: "16px",
+    padding: "14px",
+    borderRadius: "12px",
+    background: "#334155",
+    display: "flex",
+    flexDirection: "column",
+    gap: "5px",
+  },
+  securityNotice: {
+    marginTop: "14px",
+    padding: "14px",
+    borderRadius: "12px",
+    background: "#052e16",
+    border: "1px solid #166534",
+    lineHeight: 1.5,
+  },
+  error: {
+    marginTop: "18px",
+    padding: "14px",
+    borderRadius: "12px",
+    background: "#450a0a",
+    border: "1px solid #991b1b",
+    color: "#fecaca",
+  },
+  success: {
+    padding: "16px",
+    borderRadius: "14px",
+    background: "#052e16",
+    border: "1px solid #166534",
+    lineHeight: 1.5,
+  },
+  code: { fontFamily: "monospace" },
+  primaryButton: {
+    width: "100%",
+    padding: "15px",
+    borderRadius: "13px",
+    border: "none",
+    background: "#22c55e",
+    color: "#fff",
+    fontWeight: 800,
+    fontSize: "16px",
+    cursor: "pointer",
+  },
+  statsGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))",
+    gap: "10px",
+  },
+  statCard: {
+    background: "#1e293b",
+    borderRadius: "14px",
+    padding: "15px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  statValue: { fontSize: "24px" },
+  statTitle: { color: "#cbd5e1", fontSize: "13px" },
+};
 
 export default CrossPost;
