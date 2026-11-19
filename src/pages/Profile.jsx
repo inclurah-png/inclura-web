@@ -29,6 +29,8 @@ import {
   query,
   where,
   updateDoc,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 function Profile() {
@@ -36,6 +38,7 @@ function Profile() {
   const [postCount, setPostCount] = useState(0);
   const premiumNoticeHandled = useRef(null);
   const premiumExpiryHandled = useRef(null);
+  const memberDirectorySyncKey = useRef("");
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -57,6 +60,29 @@ function Profile() {
 
         const data = snapshot.data() || {};
         setProfile(data);
+
+        // Publish only the approved public profile fields used for discovery.
+        // Private email, phone and accessibility preferences are never copied.
+        const directoryProfile = {
+          uid: user.uid,
+          fullName: data.fullName || data.name || user.displayName || "",
+          photoURL: data.profilePhoto || data.photoURL || user.photoURL || "",
+          location: typeof data.location === "string" ? data.location : "",
+          category: typeof data.category === "string" ? data.category : "",
+          accountType: typeof data.accountType === "string" ? data.accountType : "individual",
+          bio: typeof data.bio === "string" ? data.bio : "",
+        };
+        const directoryKey = JSON.stringify(directoryProfile);
+        if (directoryKey !== memberDirectorySyncKey.current) {
+          memberDirectorySyncKey.current = directoryKey;
+          setDoc(doc(db, "memberDirectory", user.uid), {
+            ...directoryProfile,
+            updatedAt: serverTimestamp(),
+          }, { merge: true }).catch((error) => {
+            memberDirectorySyncKey.current = "";
+            console.warn("Public member directory sync failed:", error);
+          });
+        }
 
         const expiryValue = data.premiumExpiryDate;
         const expiryDate = expiryValue && typeof expiryValue.toDate === "function"
