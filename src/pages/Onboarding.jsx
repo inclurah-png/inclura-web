@@ -540,7 +540,7 @@ function Onboarding() {
             marginTop: "20px",
           }}
         >
-          {t("returnDashboard")}
+          {t("completeOnboarding")}
         </button>
       </div>
     </DashboardLayout>
