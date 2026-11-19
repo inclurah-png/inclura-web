@@ -29,6 +29,7 @@ const Notifications = lazy(() => import("./pages/Notifications"));
 const SavedPosts = lazy(() => import("./pages/SavedPosts"));
 const Search = lazy(() => import("./pages/Search"));
 const Wallet = lazy(() => import("./pages/Wallet"));
+const DigitalServices = lazy(() => import("./pages/DigitalServices"));
 const PayTopup = lazy(() => import("./pages/PayTopup"));
 const Withdraw = lazy(() => import("./pages/Withdraw"));
 const Transfer = lazy(() => import("./pages/Transfer"));
@@ -216,6 +217,15 @@ function App() {
         element={
           <ProtectedRoute>
             <Wallet />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/digital-services"
+        element={
+          <ProtectedRoute>
+            <DigitalServices />
           </ProtectedRoute>
         }
       />
