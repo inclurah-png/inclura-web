@@ -707,9 +707,12 @@ function Feed() {
         error
       );
 
-      alert(
-        error?.message ||
-          "Translation failed. Please try again."
+      // Feed translations are started automatically in the background.
+      // A temporary translation-network failure must never interrupt
+      // sign-in or cover the Dashboard with a blocking browser alert.
+      console.warn(
+        "Inclura background post translation was unavailable:",
+        error?.message || error
       );
     } finally {
       setTranslatingPosts((previous) => {
