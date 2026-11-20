@@ -408,6 +408,14 @@ function CreatePost() {
 
     if (!file) return;
 
+    const maxImageSize = 5 * 1024 * 1024;
+
+    if (file.size > maxImageSize) {
+      alert("Please choose an image that is 5 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+
     setImageFile(file);
     setVideoFile(null);
 
