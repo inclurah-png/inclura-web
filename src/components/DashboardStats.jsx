@@ -20,7 +20,7 @@ function DashboardStats({ profile }) {
     { id: "posts", icon: "📝", label: t("statsPosts"), value: profile?.postCount || 0 },
     { id: "followers", icon: "👥", label: t("statsFollowers"), value: profile?.followers?.length || 0 },
     { id: "following", icon: "➡️", label: t("statsFollowing"), value: profile?.following?.length || 0 },
-    { id: "wallet", icon: "💰", label: t("statsWallet"), value: `₦${profile?.walletBalance || 0}` },
+    { id: "external-services", icon: "🔗", label: t("statsWallet"), value: t("statsExternalServicesValue") },
     { id: "verification", icon: "🛡️", label: t("statsVerification"), value: profile?.verified ? t("statsVerified") : t("statsNotVerified") },
     { id: "role", icon: "🏷️", label: t("statsRole"), value: profile?.role || profile?.accountType || t("statsUser") },
     { id: "creator-score", icon: "⭐", label: t("statsCreatorScore"), value: profile?.creatorEconomy?.creatorScore ?? profile?.creatorScore ?? 0 },
