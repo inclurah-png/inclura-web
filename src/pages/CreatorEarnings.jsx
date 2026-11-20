@@ -1,21 +1,17 @@
+import { useTranslation } from "react-i18next";
 import DashboardLayout from "../components/DashboardLayout";
 
 function CreatorEarnings() {
+  const { t } = useTranslation();
+
   return (
     <DashboardLayout>
       <main style={page} aria-labelledby="creator-activity-title">
-        <h1 id="creator-activity-title">Creator Activity</h1>
+        <h1 id="creator-activity-title">{t("creatorActivityTitle")}</h1>
         <section style={card}>
-          <h2 style={{ marginTop: 0 }}>Inclura financial boundary</h2>
-          <p style={muted}>
-            Inclura does not hold, receive, store, transfer or pay out user funds.
-            Creator balances, earnings records, withdrawals and payout services are
-            not provided by Inclura.
-          </p>
-          <p style={muted}>
-            You can continue building your presence through content, community
-            participation, creator analytics and non-financial opportunities.
-          </p>
+          <h2 style={{ marginTop: 0 }}>{t("creatorBoundaryTitle")}</h2>
+          <p style={muted}>{t("creatorBoundaryText")}</p>
+          <p style={muted}>{t("creatorActivityIntro")}</p>
         </section>
       </main>
     </DashboardLayout>
