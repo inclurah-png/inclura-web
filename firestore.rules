@@ -5,6 +5,42 @@ service cloud.firestore {
     // Feed posts must remain readable by authenticated Inclura members.
     match /posts/{postId} {
       allow read: if request.auth != null;
+
+      // Members may publish only posts under their own authenticated identity.
+      // Media URLs must come from Inclura's Cloudinary upload pipeline.
+      allow create: if request.auth != null
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() <= 10000
+                    && request.resource.data.category is string
+                    && request.resource.data.userName is string
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.videoUrl is string
+                    && request.resource.data.imagePublicId is string
+                    && request.resource.data.videoPublicId is string
+                    && request.resource.data.mediaProvider is string
+                    && (
+                      request.resource.data.imageUrl == ''
+                      || request.resource.data.imageUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && (
+                      request.resource.data.videoUrl == ''
+                      || request.resource.data.videoUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && !(
+                      request.resource.data.imageUrl.size() > 0
+                      && request.resource.data.videoUrl.size() > 0
+                    )
+                    && request.resource.data.keys().hasOnly([
+                      'text', 'language', 'originalLanguage', 'translatedText',
+                      'category', 'userId', 'userName', 'profilePhoto', 'role',
+                      'accessibilityNeeds', 'accessibilityTags', 'verified',
+                      'badgeType', 'verificationMetadata', 'premium', 'premiumTier',
+                      'imageUrl', 'videoUrl', 'imagePublicId', 'videoPublicId',
+                      'mediaProvider', 'likes', 'comments', 'reactions',
+                      'userReactions', 'creatorScore', 'commentCount', 'crossPosts',
+                      'saveCount', 'createdAt'
+                    ]);
     }
 
     // Comments are stored under each post.
