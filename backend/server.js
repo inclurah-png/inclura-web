@@ -10,7 +10,6 @@ import dotenv from "dotenv";
 
 import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
-import walletRoutes from "./src/routes/walletRoutes.js";
 
 
 import {
@@ -288,11 +287,7 @@ app.post("/api/analytics/platform", async (req, res) => {
 
 app.use("/api/media", mediaRoutes);
 
-// =======================================================
-// Secure Wallet / Marketplace Financial Routes
-// =======================================================
-// Client applications never write wallet balances or ledger entries.
-app.use("/api/wallet", walletRoutes);
+// No Inclura wallet, funding, withdrawal or transfer API is exposed.
 
 // =======================================================
 // IFSE Identity Routes
