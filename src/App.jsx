@@ -138,7 +138,11 @@ function App() {
 
       <Route
         path="/crosspost/:id"
-        element={<CrossPost />}
+        element={
+          <ProtectedRoute>
+            <CrossPost />
+          </ProtectedRoute>
+        }
       />
 
       {/* ========================= */}
