@@ -62,7 +62,6 @@ const PremiumPayment = lazy(() => import("./pages/PremiumPayment"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
 const VerificationManager = lazy(() => import("./pages/VerificationManager"));
 const VerificationRequestsManager = lazy(() => import("./pages/VerificationRequestsManager"));
-const WalletMonitoring = lazy(() => import("./pages/WalletMonitoring"));
 const AdApprovalQueue = lazy(() => import("./pages/AdApprovalQueue"));
 const UsersManagement = lazy(() => import("./pages/UsersManagement"));
 const ReportsAndViolations = lazy(() => import("./pages/ReportsAndViolations"));
@@ -522,15 +521,6 @@ function App() {
         element={
           <AdminRoute>
             <VerificationRequestsManager />
-          </AdminRoute>
-        }
-      />
-
-      <Route
-        path="/wallet-monitoring"
-        element={
-          <AdminRoute>
-            <WalletMonitoring />
           </AdminRoute>
         }
       />
