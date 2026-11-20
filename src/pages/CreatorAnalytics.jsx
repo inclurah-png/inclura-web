@@ -27,7 +27,6 @@ function CreatorAnalytics() {
         profileViews: user.profileViews ?? 0,
         reelViews: user.reelViews ?? 0,
         likes, comments, shares,
-        earnings: user.creatorEconomy?.lifetimeEarnings ?? user.lifetimeEarnings ?? 0,
         sponsoredPosts: user.sponsoredPostsCount ?? 0,
         engagement: user.engagementRate ?? 0,
       });
@@ -38,7 +37,7 @@ function CreatorAnalytics() {
   }
 
   useEffect(() => { loadStats(); }, []);
-  const labels=[["followers","👥 Followers"],["profileViews","👁 Profile Views"],["reelViews","🎥 Reel Views"],["likes","❤️ Likes"],["comments","💬 Comments"],["shares","🔁 Shares"],["earnings","💰 Lifetime Earnings"],["sponsoredPosts","📢 Sponsored Posts"],["engagement","📊 Engagement Rate"]];
+  const labels=[["followers","👥 Followers"],["profileViews","👁 Profile Views"],["reelViews","🎥 Reel Views"],["likes","❤️ Likes"],["comments","💬 Comments"],["shares","🔁 Shares"],["sponsoredPosts","📢 Sponsored Posts"],["engagement","📊 Engagement Rate"]];
   return (
     <DashboardLayout>
       <main style={page}>
