@@ -136,12 +136,12 @@ const isAdmin = role === "admin";
 
       <button
         type="button"
-        aria-label={t("wallet")}
-        title={t("wallet")}
+        aria-label={t("accountActivity")}
+        title={t("accountActivity")}
         onClick={() => navigate("/wallet")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        💰 {t("wallet")}
+        📋 {t("accountActivity")}
       </button>
 
       <button
@@ -284,10 +284,6 @@ const isAdmin = role === "admin";
 
     <button type="button" aria-label={t("verificationManager")} title={t("verificationManager")} onClick={() => navigate("/verification-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         ✅ {t("verificationManager")}
-      </button>
-
-    <button type="button" aria-label={t("walletMonitoring")} title={t("walletMonitoring")} onClick={() => navigate("/wallet-monitoring")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        💰 {t("walletMonitoring")}
       </button>
 
     <button type="button" aria-label={t("adApprovalQueue")} title={t("adApprovalQueue")} onClick={() => navigate("/ad-approval")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
