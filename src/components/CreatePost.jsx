@@ -9,13 +9,7 @@ import {
   getDoc,
 } from "firebase/firestore";
 
-import {
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-
-import { storage, db, auth } from "../firebase";
+import { db, auth } from "../firebase";
 
 import {
   addVideoPost,
@@ -112,6 +106,56 @@ function getErrorMessage(error) {
   }
 
   return error?.message || "Unknown error";
+}
+
+const MEDIA_API_BASE = "https://inclura-ifse-backend.onrender.com/api/media";
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
+
+async function uploadPostMedia(file, category, user) {
+  const token = await user.getIdToken();
+  const signingResponse = await fetch(`${MEDIA_API_BASE}/sign-upload`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      category: "post",
+      mimeType: file.type,
+    }),
+  });
+
+  const signingData = await signingResponse.json().catch(() => ({}));
+  if (!signingResponse.ok || !signingData.success) {
+    throw new Error(signingData.message || "Media upload authorization failed.");
+  }
+
+  const formData = new FormData();
+  Object.entries(signingData.params || {}).forEach(([key, value]) => {
+    formData.append(key, String(value));
+  });
+  formData.append("api_key", signingData.apiKey);
+  formData.append("signature", signingData.signature);
+  formData.append("file", file);
+
+  const uploadResponse = await fetch(signingData.uploadUrl, {
+    method: "POST",
+    body: formData,
+  });
+  const uploadData = await uploadResponse.json().catch(() => ({}));
+
+  if (!uploadResponse.ok || !uploadData.secure_url || !uploadData.public_id) {
+    throw new Error(
+      uploadData.error?.message || "Cloudinary could not complete the media upload."
+    );
+  }
+
+  return {
+    secureUrl: uploadData.secure_url,
+    publicId: uploadData.public_id,
+    resourceType: uploadData.resource_type,
+  };
 }
 
 function CreatePost() {
@@ -224,45 +268,25 @@ function CreatePost() {
         detectedLanguage?.code || "en"
       );
 
-      // 3. Upload media. Keep upload and URL retrieval
-      //    errors distinguishable in the diagnostic output.
+      // 3. Upload media through the authenticated Inclura backend.
+      // Cloudinary receives the file directly; Firebase Storage is not used.
       let imageUrl = "";
       let videoUrl = "";
+      let imagePublicId = "";
+      let videoPublicId = "";
 
       if (imageFile) {
-        const safeFileName = imageFile.name.replace(
-          /[^a-zA-Z0-9._-]/g,
-          "_"
-        );
-
-        const imageRef = ref(
-          storage,
-          `posts/images/${user.uid}/${Date.now()}_${safeFileName}`
-        );
-
         operation = "image upload";
-        await uploadBytes(imageRef, imageFile);
-
-        operation = "image download URL retrieval";
-        imageUrl = await getDownloadURL(imageRef);
+        const uploadedImage = await uploadPostMedia(imageFile, "post", user);
+        imageUrl = uploadedImage.secureUrl;
+        imagePublicId = uploadedImage.publicId;
       }
 
       if (videoFile) {
-        const safeFileName = videoFile.name.replace(
-          /[^a-zA-Z0-9._-]/g,
-          "_"
-        );
-
-        const videoRef = ref(
-          storage,
-          `posts/videos/${user.uid}/${Date.now()}_${safeFileName}`
-        );
-
         operation = "video upload";
-        await uploadBytes(videoRef, videoFile);
-
-        operation = "video download URL retrieval";
-        videoUrl = await getDownloadURL(videoRef);
+        const uploadedVideo = await uploadPostMedia(videoFile, "post", user);
+        videoUrl = uploadedVideo.secureUrl;
+        videoPublicId = uploadedVideo.publicId;
       }
 
       // 4. Prepare the existing verification fields.
@@ -317,6 +341,9 @@ function CreatePost() {
 
           imageUrl,
           videoUrl,
+          imagePublicId,
+          videoPublicId,
+          mediaProvider: imageUrl || videoUrl ? "cloudinary" : "",
 
           likes: [],
           comments: [],
@@ -408,9 +435,13 @@ function CreatePost() {
 
     if (!file) return;
 
-    const maxImageSize = 5 * 1024 * 1024;
+    if (!file.type.startsWith("image/")) {
+      alert("Please choose a supported image file.");
+      event.target.value = "";
+      return;
+    }
 
-    if (file.size > maxImageSize) {
+    if (file.size > MAX_IMAGE_SIZE) {
       alert("Please choose an image that is 5 MB or smaller.");
       event.target.value = "";
       return;
@@ -428,6 +459,24 @@ function CreatePost() {
     const file = event.target.files?.[0];
 
     if (!file) return;
+
+    const supportedVideoTypes = [
+      "video/mp4",
+      "video/webm",
+      "video/quicktime",
+    ];
+
+    if (!supportedVideoTypes.includes(file.type)) {
+      alert("Please choose an MP4, WebM, or MOV video.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > MAX_VIDEO_SIZE) {
+      alert("Please choose a video that is 50 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
 
     setVideoFile(file);
     setImageFile(null);
@@ -611,7 +660,7 @@ function CreatePost() {
 
       <input
         type="file"
-        accept="video/*"
+        accept="video/mp4,video/webm,video/quicktime"
         ref={videoInputRef}
         onChange={handleVideoSelect}
         style={{ display: "none" }}
