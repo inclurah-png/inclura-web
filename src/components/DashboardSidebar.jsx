@@ -215,7 +215,7 @@ const isAdmin = role === "admin";
       {isCreator && (
   <>
     <button type="button" aria-label={t("creatorMonetization")} title={t("creatorMonetization")} onClick={() => navigate("/creator-monetization")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        💵 {t("creatorMonetization")}
+        ✨ {t("creatorMonetization")}
       </button>
 
     <button type="button" aria-label={t("creatorAnalytics")} title={t("creatorAnalytics")} onClick={() => navigate("/creator-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
