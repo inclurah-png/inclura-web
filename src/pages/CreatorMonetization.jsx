@@ -7,7 +7,7 @@ function CreatorMonetization() {
     t("creatorProfile"),
     t("creatorContent"),
     t("creatorBrands"),
-    t("creatorAnalytics"),
+    t("creatorAnalyticsCard"),
   ];
 
   return (
