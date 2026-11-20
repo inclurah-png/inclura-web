@@ -127,8 +127,6 @@ await setDoc(
 
     role: "user",
 
-    walletBalance: 0,
-
     resumeCompleted: false,
 
 accessibilityNeeds,
@@ -224,8 +222,6 @@ await setDoc(
     premiumTier: "",
 
     role: "user",
-
-    walletBalance: 0,
 
     resumeCompleted: false,
 
