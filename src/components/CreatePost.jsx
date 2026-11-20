@@ -344,21 +344,13 @@ function CreatePost() {
 
       postCreated = true;
 
-      // 6. Award creator activity using the real document ID.
-      //    Scoring errors must not invalidate successful posting.
-      let scoringRecorded = true;
+      // 6. Record creator activity separately from publishing.
+      //    A slow scoring service must never keep a saved post spinning.
+      const scoringTask = videoFile
+        ? addVideoPost(user.uid, createdPost.id)
+        : addTextPost(user.uid, createdPost.id);
 
-      try {
-        operation = "creator scoring";
-
-        if (videoFile) {
-          await addVideoPost(user.uid, createdPost.id);
-        } else {
-          await addTextPost(user.uid, createdPost.id);
-        }
-      } catch (scoreError) {
-        scoringRecorded = false;
-
+      scoringTask.catch((scoreError) => {
         console.error(
           "Inclura Creator Scoring Error:",
           {
@@ -368,9 +360,9 @@ function CreatePost() {
             error: scoreError,
           }
         );
-      }
+      });
 
-      // 7. Reset the form only after the post is saved.
+      // 7. Reset the form as soon as the post is saved.
       setPostText("");
       setImageFile(null);
       setVideoFile(null);
@@ -384,13 +376,7 @@ function CreatePost() {
         videoInputRef.current.value = "";
       }
 
-      if (scoringRecorded) {
-        alert(t("postCreated"));
-      } else {
-        alert(
-          t("postCreatedScoringWarning")
-        );
-      }
+      alert(t("postCreated"));
     } catch (error) {
       console.error(
         "Inclura Create Post Error:",
