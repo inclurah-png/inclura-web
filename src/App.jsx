@@ -395,9 +395,9 @@ function App() {
       <Route
         path="/creator-analytics"
         element={
-          <CreatorRoute>
+          <ProtectedRoute>
             <CreatorAnalytics />
-          </CreatorRoute>
+          </ProtectedRoute>
         }
       />
 
