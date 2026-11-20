@@ -123,6 +123,202 @@ router.post("/sign-upload", async (req, res) => {
   }
 });
 
+// Prepare a separate, permanently watermarked copy for an owner's external-sharing request.
+// The source Firebase Storage asset is never modified.
+router.post("/prepare-crosspost", async (req, res) => {
+  let requestRef = null;
+  let requestData = null;
+
+  try {
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Media processing is not configured." });
+    }
+
+    const token = getBearerToken(req);
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const decoded = await auth().verifyIdToken(token);
+    const requestId = String(req.body?.requestId || "");
+    if (!requestId || requestId.length > 150) {
+      return res.status(400).json({ success: false, message: "A valid cross-post request ID is required." });
+    }
+
+    requestRef = firestore().collection("crossPostRequests").doc(requestId);
+    const requestSnapshot = await requestRef.get();
+    if (!requestSnapshot.exists) {
+      return res.status(404).json({ success: false, message: "Cross-post request not found." });
+    }
+
+    requestData = requestSnapshot.data() || {};
+    if (
+      requestData.creatorId !== decoded.uid ||
+      requestData.sourcePostOwnerId !== decoded.uid
+    ) {
+      return res.status(403).json({ success: false, message: "You are not authorized to prepare this post." });
+    }
+
+    if (requestData.watermark?.status === "completed" && requestData.watermark?.secureUrl) {
+      return res.status(200).json({
+        success: true,
+        watermark: {
+          status: "completed",
+          secureUrl: requestData.watermark.secureUrl,
+          resourceType: requestData.watermark.resourceType,
+        },
+      });
+    }
+
+    if (requestData.status !== "pending" || requestData.publishing?.completed === true) {
+      return res.status(409).json({ success: false, message: "This request is not available for watermark preparation." });
+    }
+
+    const sourceSnapshot = await firestore()
+      .collection("posts")
+      .doc(String(requestData.sourcePostId || ""))
+      .get();
+
+    if (!sourceSnapshot.exists) {
+      return res.status(404).json({ success: false, message: "The original post could not be found." });
+    }
+
+    const sourcePost = sourceSnapshot.data() || {};
+    if (sourcePost.userId !== decoded.uid) {
+      return res.status(403).json({ success: false, message: "The original post does not belong to this account." });
+    }
+
+    const imageUrl = typeof sourcePost.imageUrl === "string" ? sourcePost.imageUrl.trim() : "";
+    const videoUrl = typeof sourcePost.videoUrl === "string" ? sourcePost.videoUrl.trim() : "";
+    if ((!imageUrl && !videoUrl) || (imageUrl && videoUrl)) {
+      return res.status(400).json({
+        success: false,
+        message: "Permanent media watermarking currently requires exactly one image or video. Text-only posts are not yet supported.",
+      });
+    }
+
+    const sourceUrl = imageUrl || videoUrl;
+    const source = new URL(sourceUrl);
+    if (source.protocol !== "https:" || source.hostname !== "firebasestorage.googleapis.com") {
+      return res.status(400).json({ success: false, message: "The source media location is not an approved Inclura storage asset." });
+    }
+
+    const objectMarker = "/o/";
+    const markerIndex = source.pathname.indexOf(objectMarker);
+    if (markerIndex < 0) {
+      return res.status(400).json({ success: false, message: "The source media reference is invalid." });
+    }
+
+    let objectPath = "";
+    try {
+      objectPath = decodeURIComponent(source.pathname.slice(markerIndex + objectMarker.length));
+    } catch {
+      return res.status(400).json({ success: false, message: "The source media reference is invalid." });
+    }
+
+    const expectedPrefix = imageUrl
+      ? `posts/images/${decoded.uid}/`
+      : `posts/videos/${decoded.uid}/`;
+    if (!objectPath.startsWith(expectedPrefix)) {
+      return res.status(403).json({ success: false, message: "The source file is not in this account's post-media folder." });
+    }
+
+    const resourceType = imageUrl ? "image" : "video";
+    const timestamp = String(Math.floor(Date.now() / 1000));
+    const publicId = randomUUID();
+    const folder = `inclura/crosspost-watermarked/${decoded.uid}`;
+    const transformation =
+      "l_text:Arial_24:INCLURA%20-%20INCLUSION%20COMES%20FIRST,co_white,b_rgb:064E3B/fl_layer_apply,g_south_east,x_18,y_18";
+
+    // Incoming transformation stores the branded rendition as a separate asset.
+    // The Firebase Storage original remains unchanged.
+    const params = {
+      folder,
+      overwrite: "false",
+      public_id: publicId,
+      timestamp,
+      transformation,
+      unique_filename: "false",
+      use_filename: "false",
+    };
+    const signature = signCloudinaryParams(params, API_SECRET);
+    const form = new URLSearchParams({
+      ...params,
+      file: sourceUrl,
+      api_key: API_KEY,
+      signature,
+    });
+
+    const cloudinaryResponse = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: form,
+      }
+    );
+
+    const cloudinaryResult = await cloudinaryResponse.json().catch(() => ({}));
+    if (!cloudinaryResponse.ok || !cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
+      console.error("Cross-post watermark processing failed at Cloudinary.", {
+        status: cloudinaryResponse.status,
+      });
+      await requestRef.update({
+        watermark: {
+          ...(requestData.watermark || {}),
+          required: true,
+          status: "failed",
+          failureReason: "media_processing_failed",
+          processedBy: "authorized_backend",
+          processedAt: new Date(),
+        },
+      });
+      return res.status(502).json({ success: false, message: "Inclura could not create the watermarked media copy. The original post is unchanged." });
+    }
+
+    await requestRef.update({
+      watermark: {
+        ...(requestData.watermark || {}),
+        required: true,
+        status: "completed",
+        secureUrl: cloudinaryResult.secure_url,
+        publicId: cloudinaryResult.public_id,
+        resourceType,
+        processedBy: "authorized_backend",
+        processedAt: new Date(),
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      watermark: {
+        status: "completed",
+        secureUrl: cloudinaryResult.secure_url,
+        resourceType,
+      },
+    });
+  } catch (error) {
+    console.error("Cross-post watermark preparation failed:", error?.message || "Unknown error");
+    if (requestRef && requestData?.creatorId) {
+      try {
+        await requestRef.update({
+          watermark: {
+            ...(requestData.watermark || {}),
+            required: true,
+            status: "failed",
+            failureReason: "media_processing_failed",
+            processedBy: "authorized_backend",
+            processedAt: new Date(),
+          },
+        });
+      } catch {
+        // Preserve the generic API error; do not expose source URLs or credentials.
+      }
+    }
+    return res.status(500).json({ success: false, message: "Unable to prepare the watermarked media copy." });
+  }
+});
+
 // Issue a short-lived Cloudinary download URL only after checking the
 // authenticated user against the Firestore verification application.
 router.post("/verification-document-access", async (req, res) => {
