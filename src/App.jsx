@@ -386,9 +386,9 @@ function App() {
       <Route
         path="/creator-monetization"
         element={
-          <CreatorRoute>
+          <ProtectedRoute>
             <CreatorMonetization />
-          </CreatorRoute>
+          </ProtectedRoute>
         }
       />
 
