@@ -1,8 +1,14 @@
 import { createHash, randomUUID } from "node:crypto";
 import express from "express";
+import multer from "multer";
 import { auth, firestore } from "../config/firebaseAdmin.js";
 
 const router = express.Router();
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 
 const CLOUD_NAME = process.env.CLOUDINARY_CLOUD_NAME;
 const API_KEY = process.env.CLOUDINARY_API_KEY;
@@ -65,6 +71,107 @@ router.get("/status", (req, res) => {
       ? "Cloudinary credentials are available to the backend."
       : "Cloudinary configuration is incomplete.",
   });
+});
+
+
+router.post("/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
+    }
+
+    const token = getBearerToken(req);
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Authentication required." });
+    }
+
+    const decoded = await auth().verifyIdToken(token);
+    const category = String(req.body?.category || "");
+    const mimeType = String(req.file?.mimetype || "").toLowerCase();
+    const rule = CATEGORY_RULES[category];
+    const resourceType = MIME_RESOURCE_TYPES[mimeType];
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: "No media file was received." });
+    }
+
+    if (!rule || !resourceType || !rule.resources.includes(resourceType)) {
+      return res.status(400).json({
+        success: false,
+        message: "This media type is not allowed for the selected upload category.",
+      });
+    }
+
+    const maxSize = resourceType === "image"
+      ? 5 * 1024 * 1024
+      : resourceType === "video"
+        ? 50 * 1024 * 1024
+        : 10 * 1024 * 1024;
+
+    if (req.file.size > maxSize) {
+      return res.status(413).json({
+        success: false,
+        message: resourceType === "image"
+          ? "Image must be 5 MB or smaller."
+          : "Video must be 50 MB or smaller.",
+      });
+    }
+
+    const timestamp = Math.floor(Date.now() / 1000);
+    const publicId = randomUUID();
+    const folder = "inclura/" + rule.folder + "/" + decoded.uid;
+    const type = rule.private ? "authenticated" : "upload";
+    const params = {
+      folder,
+      overwrite: "false",
+      public_id: publicId,
+      timestamp: String(timestamp),
+      type,
+      unique_filename: "false",
+      use_filename: "false",
+    };
+    const signature = signCloudinaryParams(params, API_SECRET);
+
+    const cloudinaryForm = new FormData();
+    cloudinaryForm.append("file", new Blob([req.file.buffer], { type: mimeType }));
+    Object.entries(params).forEach(([key, value]) => cloudinaryForm.append(key, String(value)));
+    cloudinaryForm.append("api_key", API_KEY);
+    cloudinaryForm.append("signature", signature);
+
+    const cloudinaryResponse = await fetch(
+      "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/" + resourceType + "/upload",
+      {
+        method: "POST",
+        body: cloudinaryForm,
+      }
+    );
+
+    const cloudinaryResult = await cloudinaryResponse.json().catch(() => ({}));
+
+    if (!cloudinaryResponse.ok || !cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
+      console.error("Cloudinary media upload failed:", {
+        status: cloudinaryResponse.status,
+        message: cloudinaryResult?.error?.message || "Unknown Cloudinary error",
+      });
+      return res.status(502).json({
+        success: false,
+        message: "Cloudinary could not complete the media upload.",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      secureUrl: cloudinaryResult.secure_url,
+      publicId: cloudinaryResult.public_id,
+      resourceType: cloudinaryResult.resource_type,
+    });
+  } catch (error) {
+    console.error("Inclura media upload failed:", error?.message || "Unknown error");
+    return res.status(500).json({
+      success: false,
+      message: "Unable to complete the media upload.",
+    });
+  }
 });
 
 router.post("/sign-upload", async (req, res) => {
