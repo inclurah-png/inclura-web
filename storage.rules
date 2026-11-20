@@ -40,7 +40,7 @@ service firebase.storage {
     // Public community media is readable by signed-in Inclura members.
     match /posts/images/{uid}/{fileName} {
       allow read: if signedIn();
-      allow create, update: if owns(uid) && validImage(10 * 1024 * 1024);
+      allow create, update: if owns(uid) && validImage(5 * 1024 * 1024);
       allow delete: if false;
     }
 
