@@ -713,6 +713,19 @@ service cloud.firestore {
       allow delete: if ownsContact();
     }
 
+    // Financial records are server-controlled. Client applications may never
+    // create, update, or delete wallet balances or ledger entries.
+    match /walletAccounts/{userId} {
+      allow get: if request.auth != null && request.auth.uid == userId;
+      allow list, create, update, delete: if false;
+    }
+
+    match /walletTransactions/{transactionId} {
+      allow get, list: if request.auth != null
+                        && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
     // Verification applications and supporting records are private to the applicant.
     function ownsVerification(verificationId) {
       return request.auth != null
