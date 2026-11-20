@@ -217,28 +217,20 @@ router.post("/prepare-crosspost", async (req, res) => {
 
     const sourceUrl = imageUrl || videoUrl;
     const source = new URL(sourceUrl);
-    if (source.protocol !== "https:" || source.hostname !== "firebasestorage.googleapis.com") {
-      return res.status(400).json({ success: false, message: "The source media location is not an approved Inclura storage asset." });
-    }
+    const sourcePublicId = imageUrl
+      ? String(sourcePost.imagePublicId || "")
+      : String(sourcePost.videoPublicId || "");
+    const expectedPrefix = `inclura/posts/${decoded.uid}/`;
 
-    const objectMarker = "/o/";
-    const markerIndex = source.pathname.indexOf(objectMarker);
-    if (markerIndex < 0) {
-      return res.status(400).json({ success: false, message: "The source media reference is invalid." });
-    }
-
-    let objectPath = "";
-    try {
-      objectPath = decodeURIComponent(source.pathname.slice(markerIndex + objectMarker.length));
-    } catch {
-      return res.status(400).json({ success: false, message: "The source media reference is invalid." });
-    }
-
-    const expectedPrefix = imageUrl
-      ? `posts/images/${decoded.uid}/`
-      : `posts/videos/${decoded.uid}/`;
-    if (!objectPath.startsWith(expectedPrefix)) {
-      return res.status(403).json({ success: false, message: "The source file is not in this account's post-media folder." });
+    // Only accept the authenticated owner's Cloudinary post asset.
+    // The original Cloudinary upload remains unchanged; the watermarked copy is new.
+    if (
+      source.protocol !== "https:" ||
+      source.hostname !== "res.cloudinary.com" ||
+      sourcePost.mediaProvider !== "cloudinary" ||
+      !sourcePublicId.startsWith(expectedPrefix)
+    ) {
+      return res.status(403).json({ success: false, message: "The source file is not an approved media asset for this account." });
     }
 
     const resourceType = imageUrl ? "image" : "video";
@@ -249,7 +241,7 @@ router.post("/prepare-crosspost", async (req, res) => {
       "l_text:Arial_24:INCLURA%20-%20INCLUSION%20COMES%20FIRST,co_white,b_rgb:064E3B/fl_layer_apply,g_south_east,x_18,y_18";
 
     // Incoming transformation stores the branded rendition as a separate asset.
-    // The Firebase Storage original remains unchanged.
+    // The original Cloudinary post asset remains unchanged.
     const params = {
       folder,
       overwrite: "false",
