@@ -447,9 +447,21 @@ router.post("/prepare-crosspost", async (req, res) => {
         // Preserve the generic API error; do not expose source URLs or credentials.
       }
     }
+    const firestoreErrorCode = String(error?.code || "");
+    const safeFailureReason =
+      firestoreErrorCode === "7" || firestoreErrorCode === "permission-denied"
+        ? "firestore_permission_denied"
+        : firestoreErrorCode === "5" || firestoreErrorCode === "not-found"
+          ? "firestore_not_found"
+          : firestoreErrorCode === "14" || firestoreErrorCode === "unavailable"
+            ? "firestore_unavailable"
+            : firestoreErrorCode === "4" || firestoreErrorCode === "deadline-exceeded"
+              ? "firestore_timeout"
+              : "firestore_read_error";
+
     return res.status(500).json({
       success: false,
-      message: `Unable to prepare the watermarked media copy (stage: ${processingStage}). The original post is unchanged.`,
+      message: `Unable to prepare the watermarked media copy (stage: ${processingStage}; reason: ${safeFailureReason}). The original post is unchanged.`,
     });
   }
 });
