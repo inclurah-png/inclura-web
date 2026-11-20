@@ -30,6 +30,7 @@ function CrossPost() {
   const [requestCreated, setRequestCreated] = useState(false);
   const [requestId, setRequestId] = useState("");
   const [watermarkStatus, setWatermarkStatus] = useState("");
+  const [watermarkError, setWatermarkError] = useState("");
   const [watermarkedMediaUrl, setWatermarkedMediaUrl] = useState("");
   const [error, setError] = useState("");
   const [requestStats, setRequestStats] = useState([]);
@@ -116,6 +117,61 @@ function CrossPost() {
     );
   }
 
+  async function processWatermark(targetRequestId) {
+    setWatermarkStatus("processing");
+    setWatermarkError("");
+    setWatermarkedMediaUrl("");
+
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("Your session has expired. Please sign in again before retrying.");
+      }
+
+      const idToken = await user.getIdToken();
+      const processingResponse = await fetch(
+        "https://inclura-ifse-backend.onrender.com/api/media/prepare-crosspost",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
+          },
+          body: JSON.stringify({ requestId: targetRequestId }),
+        }
+      );
+      const processingResult = await processingResponse.json().catch(() => ({}));
+
+      if (!processingResponse.ok || processingResult.success !== true) {
+        const reason = typeof processingResult.message === "string"
+          ? processingResult.message
+          : `Watermark processing failed (HTTP ${processingResponse.status}).`;
+        throw new Error(reason);
+      }
+
+      const status = processingResult.watermark?.status || "";
+      if (status === "completed") {
+        setWatermarkStatus("completed");
+        setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
+        return;
+      }
+
+      if (status === "not_required") {
+        setWatermarkStatus("not_required");
+        return;
+      }
+
+      throw new Error("The server did not confirm that the watermarked copy is ready.");
+    } catch (processingError) {
+      console.error("Cross-post watermark processing was not confirmed:", processingError);
+      setWatermarkStatus("unconfirmed");
+      setWatermarkError(
+        processingError?.message ||
+        "The secure media-processing service did not confirm completion. Please try again later."
+      );
+    }
+  }
+
   async function createCrossPostRequest() {
     if (creatingRequest || requestCreated) return;
 
@@ -192,32 +248,7 @@ function CrossPost() {
         // Text-only posts do not need a media watermark or Cloudinary processing.
         setWatermarkStatus("not_required");
       } else {
-        setWatermarkStatus("processing");
-        try {
-          const idToken = await auth.currentUser.getIdToken();
-          const processingResponse = await fetch(
-            "https://inclura-ifse-backend.onrender.com/api/media/prepare-crosspost",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${idToken}`,
-              },
-              body: JSON.stringify({ requestId: requestRef.id }),
-            }
-          );
-          const processingResult = await processingResponse.json().catch(() => ({}));
-
-          if (!processingResponse.ok || processingResult.success !== true) {
-            throw new Error(processingResult.message || "Watermark processing could not be confirmed.");
-          }
-
-          setWatermarkStatus("completed");
-          setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
-        } catch (processingError) {
-          console.error("Cross-post watermark processing was not confirmed:", processingError);
-          setWatermarkStatus("unconfirmed");
-        }
+        await processWatermark(requestRef.id);
       }
     } catch (err) {
       console.error("Cross-post request failed:", err);
@@ -469,8 +500,28 @@ function CrossPost() {
               </div>
             )}
             {watermarkStatus === "unconfirmed" && (
-              <p style={{ ...styles.helper, color: "#fca5a5" }}>
-                Watermark processing was not confirmed. Do not share this copy yet. Your original post remains unchanged.
+              <div>
+                <p style={{ ...styles.helper, color: "#fca5a5" }}>
+                  Watermark processing was not confirmed. Do not share this copy yet. Your original post remains unchanged.
+                </p>
+                {watermarkError && (
+                  <p role="alert" style={{ ...styles.helper, color: "#fecaca" }}>
+                    Processing detail: {watermarkError}
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => processWatermark(requestId)}
+                  disabled={watermarkStatus === "processing"}
+                  style={{ ...styles.primaryButton, marginTop: "10px" }}
+                >
+                  Retry secure watermark processing
+                </button>
+              </div>
+            )}
+            {watermarkStatus === "processing" && requestCreated && (
+              <p role="status" aria-live="polite" style={styles.helper}>
+                Secure watermark processing is in progress. Keep this page open until it finishes.
               </p>
             )}
             <p style={styles.helper}>
