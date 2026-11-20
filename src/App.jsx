@@ -394,11 +394,20 @@ function App() {
       />
 
       <Route
-        path="/creator-analytics"
+        path="/my-creator-activity"
         element={
           <ProtectedRoute>
-            <CreatorAnalytics />
+            <MyCreatorActivity />
           </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/creator-analytics"
+        element={
+          <AdminRoute>
+            <CreatorAnalytics />
+          </AdminRoute>
         }
       />
 
