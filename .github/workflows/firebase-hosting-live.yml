@@ -60,8 +60,7 @@ jobs:
         env:
           GOOGLE_APPLICATION_CREDENTIALS: /tmp/firebase-service-account.json
         run: |
-          npx --yes firebase-tools@latest deploy --only firestore:rules,storage --project inclura-prod-90734
-
+          npx --yes firebase-tools@latest deploy --only firestore:rules --project inclura-prod-90734
 
       - name: Deploy to Firebase Hosting
         env:
