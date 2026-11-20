@@ -163,7 +163,6 @@ service cloud.firestore {
                     && request.resource.data.verified == false
                     && request.resource.data.creatorVerified == false
                     && request.resource.data.premium == false
-                    && request.resource.data.walletBalance == 0
                     && request.resource.data.keys().hasOnly([
                       'uid',
                       'fullName',
@@ -191,7 +190,6 @@ service cloud.firestore {
                       'premium',
                       'premiumTier',
                       'role',
-                      'walletBalance',
                       'resumeCompleted',
                       'followers',
                       'following',
