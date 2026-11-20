@@ -372,8 +372,17 @@ service cloud.firestore {
                     && request.resource.data.security.backendRequired == true
                     && request.resource.data.security.clientPublishingAllowed == false
                     && request.resource.data.security.clientWatermarkProcessingAllowed == false
-                    && request.resource.data.watermark.required == true
-                    && request.resource.data.watermark.status == 'pending'
+                    && request.resource.data.watermark.required is bool
+                    && request.resource.data.watermark.required == (
+                      (get(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId)).data.imageUrl is string
+                        && get(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId)).data.imageUrl.size() > 0)
+                      || (get(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId)).data.videoUrl is string
+                        && get(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId)).data.videoUrl.size() > 0)
+                    )
+                    && ((request.resource.data.watermark.required == true
+                          && request.resource.data.watermark.status == 'pending')
+                        || (request.resource.data.watermark.required == false
+                          && request.resource.data.watermark.status == 'not_required'))
                     && request.resource.data.publishing.status == 'pending'
                     && request.resource.data.publishing.completed == false
                     && request.resource.data.creatorGrowth.eligible == false
