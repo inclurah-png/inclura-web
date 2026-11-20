@@ -103,8 +103,20 @@ const resources = {
     verificationCenter: "Verification Center",
 
     // Sidebar
+        creatorActivityTitle: "Creator Activity",
+    creatorBoundaryTitle: "Inclura financial boundary",
+    creatorBoundaryText: "Inclura does not hold, receive, store, transfer or pay out user funds. Creator balances, earnings records, withdrawals and payout services are not provided.",
+    creatorActivityIntro: "Build your presence through content, community participation, creator analytics and non-financial opportunities.",
+    creatorOpportunitiesTitle: "Creator Opportunities",
+    creatorOpportunitiesIntro: "Explore non-financial tools to connect with communities and organizations.",
+    creatorToolsLabel: "Creator tools and opportunities",
+    creatorProfile: "Creator profile — Help communities discover your work.",
+    creatorContent: "Content and community — Publish accessible content and participate meaningfully.",
+    creatorBrands: "Brand and organization connections — Explore collaboration opportunities.",
+    creatorAnalytics: "Creator analytics — Review engagement and audience activity without financial balances.",
+    creatorImportantBoundaryText: "Inclura does not collect, hold, store, transfer or pay out money for creators. Independent agreements with third parties are outside Inclura.",
     creatorEarnings: "Creator Earnings",
-    creatorMonetization: "Creator Monetization",
+    creatorMonetization: "Creator Opportunities",
     creatorAnalytics: "Creator Analytics",
 
     advertiserDashboard: "Advertiser Dashboard",
@@ -610,8 +622,20 @@ returnHome: "Return Home",
     verificationCenter: "Ilé-iṣẹ́ Ìmúdájú",
 
     // Sidebar
+        creatorActivityTitle: "Ìṣe olùṣẹ̀dá",
+    creatorBoundaryTitle: "Ààlà owó Inclura",
+    creatorBoundaryText: "Inclura kò gba, kò dì mú, kò tọ́jú, kò gbé kiri, kò sì san owó fún àwọn olùlò. Kò sí àpapọ̀ owó, àkọsílẹ̀ èrè tàbí iṣẹ́ ìsanwó.",
+    creatorActivityIntro: "Mú ìfarahàn rẹ pọ̀ sí i nípasẹ̀ àkóónú, àwùjọ, ìṣàyẹ̀wò àti àǹfààní tí kì í ṣe ti owó.",
+    creatorOpportunitiesTitle: "Àǹfààní fún àwọn olùṣẹ̀dá",
+    creatorOpportunitiesIntro: "Ṣàwárí irinṣẹ́ tí kì í ṣe ti owó láti bá àwùjọ àti ilé-iṣẹ́ ṣe àjọṣe.",
+    creatorToolsLabel: "Àwọn irinṣẹ́ àti àǹfààní",
+    creatorProfile: "Profaili: jẹ́ kí àwùjọ mọ iṣẹ́ rẹ. Àkóónú àti àwùjọ: tẹ àkóónú tó rọrùn, kí o sì kópa. Àwọn ilé-iṣẹ́: ṣàwárí ìfọwọ́sowọ́pọ̀. Ìṣàyẹ̀wò: wo ìkópa láìsí àpapọ̀ owó.",
+    creatorContent: "Àkóónú àti àwùjọ",
+    creatorBrands: "Ìbáṣepọ̀ pẹ̀lú ilé-iṣẹ́ àti àmì ọjà",
+    creatorAnalytics: "Ìṣàyẹ̀wò olùṣẹ̀dá",
+    creatorImportantBoundaryText: "Inclura kò gba, kò dì mú, kò tọ́jú, kò gbé kiri, kò sì san owó fún àwọn olùṣẹ̀dá. Àdéhùn pẹ̀lú ẹlòmíràn kì í ṣe iṣẹ́ Inclura.",
     creatorEarnings: "Owó Olùdá Àkóónú",
-    creatorMonetization: "Ìnáwó Olùdá Àkóónú",
+    creatorMonetization: "Àǹfààní fún àwọn olùṣẹ̀dá",
     creatorAnalytics: "Ìtúpalẹ̀ Olùdá Àkóónú",
 
     advertiserDashboard: "Dasibodu Olùpolówó",
@@ -1117,8 +1141,20 @@ returnHome: "Padà sí Ilé",
     verificationCenter: "Ebe Nkwenye",
 
     // Sidebar
+        creatorActivityTitle: "Ọrụ onye okike",
+    creatorBoundaryTitle: "Oke ego Inclura",
+    creatorBoundaryText: "Inclura anaghị anata, ejide, echekwa, bufee ma ọ bụ kwụọ ndị ọrụ ego. Ọ naghị enye ego fọdụrụ, ndekọ ego ma ọ bụ ọrụ ịkwụ ụgwọ.",
+    creatorActivityIntro: "Wulite aha gị site na ọdịnaya, obodo, nyocha na ohere na-abụghị nke ego.",
+    creatorOpportunitiesTitle: "Ohere maka ndị okike",
+    creatorOpportunitiesIntro: "Chọpụta ngwaọrụ na-abụghị nke ego iji jikọọ na obodo na ụlọ ọrụ.",
+    creatorToolsLabel: "Ngwaọrụ na ohere",
+    creatorProfile: "Profaịlụ: nyere obodo aka ịchọpụta ọrụ gị. Ọdịnaya na obodo: bipụta ọdịnaya dị mfe ma sonye. Ụlọ ọrụ: chọpụta imekọ ihe ọnụ. Nyocha: lelee mmekọrịta na-enweghị ego.",
+    creatorContent: "Ọdịnaya na obodo",
+    creatorBrands: "Njikọ na akara azụmahịa na ụlọ ọrụ",
+    creatorAnalytics: "Nyocha onye okike",
+    creatorImportantBoundaryText: "Inclura anaghị anakọta, ejide, echekwa, bufee ma ọ bụ kwụọ ndị okike ego. Nkwekọrịta na ndị ọzọ abụghị ọrụ Inclura.",
     creatorEarnings: "Ego Onye Okike",
-    creatorMonetization: "Ụzọ Inweta Ego",
+    creatorMonetization: "Ohere maka ndị okike",
     creatorAnalytics: "Nyocha Onye Okike",
 
     advertiserDashboard: "Dashboard Onye Mgbasa Ozi",
@@ -1599,8 +1635,20 @@ returnHome: "Laghachi n'ụlọ",
     verificationCenter: "Cibiyar Tabbatarwa",
 
     // Sidebar
+        creatorActivityTitle: "Ayyukan mai ƙirƙira",
+    creatorBoundaryTitle: "Iyakar kuɗi ta Inclura",
+    creatorBoundaryText: "Inclura ba ta karɓa, riƙewa, adanawa, turawa ko biyan kuɗin masu amfani. Ba ta samar da ma'auni, bayanan kuɗin shiga ko ayyukan biyan kuɗi.",
+    creatorActivityIntro: "Gina kasancewarka ta hanyar abun ciki, al'umma, nazari da damarmaki marasa alaƙa da kuɗi.",
+    creatorOpportunitiesTitle: "Damar masu ƙirƙira",
+    creatorOpportunitiesIntro: "Binciki kayan aiki marasa alaƙa da kuɗi don haɗuwa da al'umma da ƙungiyoyi.",
+    creatorToolsLabel: "Kayan aiki da damarmaki",
+    creatorProfile: "Bayanan mai ƙirƙira: taimaka wa al'umma su gano aikinka. Abun ciki: wallafa kuma shiga. Kamfanoni: binciki haɗin gwiwa. Nazari: duba hulɗa ba tare da ma'aunin kuɗi ba.",
+    creatorContent: "Abun ciki da al'umma",
+    creatorBrands: "Haɗin kai da kamfanoni da ƙungiyoyi",
+    creatorAnalytics: "Nazarin mai ƙirƙira",
+    creatorImportantBoundaryText: "Inclura ba ta karɓa, riƙewa, adanawa, turawa ko biyan kuɗin masu ƙirƙira. Yarjejeniyoyi da wasu ba ƙarƙashin Inclura suke ba.",
     creatorEarnings: "Kuɗin Mai Ƙirƙira",
-    creatorMonetization: "Samun Kuɗi",
+    creatorMonetization: "Damarar masu ƙirƙira",
     creatorAnalytics: "Nazarin Mai Ƙirƙira",
 
     advertiserDashboard: "Dashboard na Mai Tallace-tallace",
@@ -2100,11 +2148,22 @@ returnHome: "Komawa Gida",
       "Centre de vérification",
 
     // Sidebar
+        creatorActivityTitle: "Activité du créateur",
+    creatorBoundaryTitle: "Limites financières d’Inclura",
+    creatorBoundaryText: "Inclura ne reçoit, ne détient, ne conserve, ne transfère et ne verse aucun fonds. Aucun solde, relevé de revenus, retrait ou service de versement n’est proposé.",
+    creatorActivityIntro: "Développez votre présence grâce au contenu, à la communauté, aux statistiques et aux opportunités non financières.",
+    creatorOpportunitiesTitle: "Opportunités pour les créateurs",
+    creatorOpportunitiesIntro: "Découvrez des outils non financiers pour créer des liens avec les communautés et organisations.",
+    creatorToolsLabel: "Outils et opportunités",
+    creatorProfile: "Profil : faites découvrir votre travail. Contenu et communauté : publiez du contenu accessible et participez activement. Marques et organisations : explorez les collaborations. Statistiques : consultez l’engagement sans solde financier.",
+    creatorContent: "Contenu et communauté",
+    creatorBrands: "Liens avec les marques et organisations",
+    creatorAnalytics: "Statistiques du créateur",
+    creatorImportantBoundaryText: "Inclura ne collecte, ne détient, ne conserve, ne transfère et ne verse aucun argent aux créateurs. Les accords avec des tiers restent extérieurs à Inclura.",
     creatorEarnings:
       "Revenus du créateur",
 
-    creatorMonetization:
-      "Monétisation du créateur",
+    creatorMonetization: "Opportunités pour les créateurs",
 
     creatorAnalytics:
       "Analyses du créateur",
@@ -2636,11 +2695,22 @@ returnHome: "Retour à l’accueil",
       "مركز التحقق",
 
     // Sidebar
+        creatorActivityTitle: "نشاط المبدع",
+    creatorBoundaryTitle: "الحدود المالية لمنصة Inclura",
+    creatorBoundaryText: "لا تستلم Inclura أموال المستخدمين ولا تحتفظ بها أو تخزنها أو تحولها أو تدفعها. ولا توفر أرصدة أو سجلات أرباح أو خدمات دفع.",
+    creatorActivityIntro: "واصل بناء حضورك من خلال المحتوى والمجتمع والتحليلات والفرص غير المالية.",
+    creatorOpportunitiesTitle: "فرص المبدعين",
+    creatorOpportunitiesIntro: "استكشف أدوات غير مالية للتواصل مع المجتمعات والمؤسسات.",
+    creatorToolsLabel: "أدوات وفرص المبدعين",
+    creatorProfile: "الملف الشخصي: ساعد المجتمع على اكتشاف عملك. المحتوى: انشر وشارك. العلامات التجارية: استكشف التعاون. التحليلات: راجع التفاعل دون أرصدة مالية.",
+    creatorContent: "المحتوى والمجتمع",
+    creatorBrands: "التواصل مع العلامات التجارية والمؤسسات",
+    creatorAnalytics: "تحليلات المبدع",
+    creatorImportantBoundaryText: "لا تجمع Inclura أموال المبدعين ولا تحتفظ بها أو تخزنها أو تحولها أو تدفعها. الاتفاقات مع أطراف ثالثة خارج نطاق Inclura.",
     creatorEarnings:
       "أرباح المنشئ",
 
-    creatorMonetization:
-      "تحقيق الدخل",
+    creatorMonetization: "فرص المبدعين",
 
     creatorAnalytics:
       "تحليلات المنشئ",
@@ -3172,11 +3242,22 @@ returnHome: "العودة إلى الرئيسية",
       "Centro de verificación",
 
     // Sidebar
+        creatorActivityTitle: "Actividad del creador",
+    creatorBoundaryTitle: "Límite financiero de Inclura",
+    creatorBoundaryText: "Inclura no recibe, retiene, almacena, transfiere ni paga fondos. No ofrece saldos, registros de ganancias ni servicios de pago.",
+    creatorActivityIntro: "Desarrolla tu presencia mediante contenido, comunidad, análisis y oportunidades no financieras.",
+    creatorOpportunitiesTitle: "Oportunidades para creadores",
+    creatorOpportunitiesIntro: "Explora herramientas no financieras para conectar con comunidades y organizaciones.",
+    creatorToolsLabel: "Herramientas y oportunidades",
+    creatorProfile: "Perfil: ayuda a descubrir tu trabajo. Contenido: publica y participa. Marcas: explora colaboraciones. Analíticas: consulta la interacción sin saldos financieros.",
+    creatorContent: "Contenido y comunidad",
+    creatorBrands: "Conexiones con marcas y organizaciones",
+    creatorAnalytics: "Analíticas del creador",
+    creatorImportantBoundaryText: "Inclura no recauda, retiene, almacena, transfiere ni paga dinero a creadores. Los acuerdos con terceros quedan fuera de Inclura.",
     creatorEarnings:
       "Ingresos del creador",
 
-    creatorMonetization:
-      "Monetización del creador",
+    creatorMonetization: "Oportunidades para creadores",
 
     creatorAnalytics:
       "Analíticas del creador",
@@ -3696,9 +3777,21 @@ returnHome: "Volver al inicio",
     verificationCenter: "认证中心",
 
     // Sidebar
+        creatorActivityTitle: "创作者动态",
+    creatorBoundaryTitle: "Inclura 财务边界",
+    creatorBoundaryText: "Inclura 不接收、持有、存储、转移或支付用户资金，也不提供余额、收入记录或付款服务。",
+    creatorActivityIntro: "通过内容发布、社区参与、创作者分析和非财务机会继续建立您的影响力。",
+    creatorOpportunitiesTitle: "创作者机会",
+    creatorOpportunitiesIntro: "探索帮助您与社区和组织建立联系的非财务工具。",
+    creatorToolsLabel: "创作者工具与机会",
+    creatorProfile: "创作者资料：帮助社区发现您的作品。内容与社区：发布无障碍内容并积极参与。品牌联系：探索合作。创作者分析：查看互动，不显示资金余额。",
+    creatorContent: "内容与社区",
+    creatorBrands: "品牌与组织联系",
+    creatorAnalytics: "创作者分析",
+    creatorImportantBoundaryText: "Inclura 不为创作者收集、持有、存储、转移或支付资金。与第三方的独立协议不属于 Inclura 的服务范围。",
     creatorEarnings: "创作者收益",
 
-    creatorMonetization: "创作者变现",
+    creatorMonetization: "创作者机会",
 
     creatorAnalytics: "创作者分析",
 
@@ -4211,11 +4304,22 @@ returnHome: "返回首页",
       "Centro de verificação",
 
     // Sidebar
+        creatorActivityTitle: "Atividade do criador",
+    creatorBoundaryTitle: "Limite financeiro da Inclura",
+    creatorBoundaryText: "A Inclura não recebe, mantém, armazena, transfere nem paga fundos. Não oferece saldos, registos de rendimentos ou serviços de pagamento.",
+    creatorActivityIntro: "Desenvolva a sua presença através de conteúdos, comunidade, análise e oportunidades não financeiras.",
+    creatorOpportunitiesTitle: "Oportunidades para criadores",
+    creatorOpportunitiesIntro: "Explore ferramentas não financeiras para criar ligações com comunidades e organizações.",
+    creatorToolsLabel: "Ferramentas e oportunidades",
+    creatorProfile: "Perfil: ajude as comunidades a descobrir o seu trabalho. Conteúdo: publique e participe. Marcas: explore colaborações. Análise: consulte o envolvimento sem saldos.",
+    creatorContent: "Conteúdo e comunidade",
+    creatorBrands: "Ligações com marcas e organizações",
+    creatorAnalytics: "Análise do criador",
+    creatorImportantBoundaryText: "A Inclura não recolhe, mantém, armazena, transfere nem paga dinheiro aos criadores. Acordos com terceiros estão fora da Inclura.",
     creatorEarnings:
       "Ganhos do criador",
 
-    creatorMonetization:
-      "Monetização do criador",
+    creatorMonetization: "Oportunidades para criadores",
 
     creatorAnalytics:
       "Análises do criador",
@@ -4747,11 +4851,22 @@ returnHome: "Voltar ao início",
       "Kituo cha Uthibitishaji",
 
     // Sidebar
+        creatorActivityTitle: "Shughuli za mbunifu",
+    creatorBoundaryTitle: "Mipaka ya kifedha ya Inclura",
+    creatorBoundaryText: "Inclura haipokei, haishikilii, haihifadhi, haihamishi wala kulipa fedha. Haitoi salio, rekodi za mapato au huduma za malipo.",
+    creatorActivityIntro: "Jenga uwepo wako kupitia maudhui, jamii, takwimu na fursa zisizo za kifedha.",
+    creatorOpportunitiesTitle: "Fursa kwa wabunifu",
+    creatorOpportunitiesIntro: "Gundua zana zisizo za kifedha za kuungana na jamii na mashirika.",
+    creatorToolsLabel: "Zana na fursa za wabunifu",
+    creatorProfile: "Wasifu: saidia jamii kugundua kazi yako. Maudhui: chapisha na ushiriki. Chapa: chunguza ushirikiano. Takwimu: kagua ushiriki bila salio la fedha.",
+    creatorContent: "Maudhui na jamii",
+    creatorBrands: "Miunganisho na chapa na mashirika",
+    creatorAnalytics: "Takwimu za mbunifu",
+    creatorImportantBoundaryText: "Inclura haikusanyi, haishikilii, haihifadhi, haihamishi wala kulipa fedha kwa wabunifu. Makubaliano na wahusika wengine yako nje ya Inclura.",
     creatorEarnings:
       "Mapato ya Mtayarishi",
 
-    creatorMonetization:
-      "Mapato ya Mtayarishi",
+    creatorMonetization: "Fursa kwa wabunifu",
 
     creatorAnalytics:
       "Takwimu za Mtayarishi",
