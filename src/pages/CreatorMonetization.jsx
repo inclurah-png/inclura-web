@@ -9,7 +9,7 @@ function CreatorMonetization() {
     { label: t("creatorProfile"), icon: "👤", destination: "/edit-profile" },
     { label: t("creatorContent"), icon: "🎬", destination: "/reels-system" },
     { label: t("creatorBrands"), icon: "🔎", destination: "/search" },
-    { label: t("creatorAnalyticsCard"), icon: "📊", destination: "/creator-analytics" },
+    { label: t("creatorActivityTitle"), icon: "📊", destination: "/my-creator-activity" },
   ];
 
   return (
