@@ -8,7 +8,7 @@ const FamilyEmergencyMap = lazy(() => import("./pages/FamilyEmergencyMap"));
 const FamilyEmergencyNotifications = lazy(() => import("./pages/FamilyEmergencyNotifications"));
 const IFSERiskPanel = lazy(() => import("./pages/IFSERiskPanel.jsx"));
 const SOSResponderDashboard = lazy(() => import("./pages/SOSResponderDashboard"));
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 import CreatorRoute from "./components/CreatorRoute";
@@ -30,10 +30,6 @@ const SavedPosts = lazy(() => import("./pages/SavedPosts"));
 const Search = lazy(() => import("./pages/Search"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const DigitalServices = lazy(() => import("./pages/DigitalServices"));
-const PayTopup = lazy(() => import("./pages/PayTopup"));
-const Withdraw = lazy(() => import("./pages/Withdraw"));
-const Transfer = lazy(() => import("./pages/Transfer"));
-const Transactions = lazy(() => import("./pages/Transactions"));
 const Marketplace = lazy(() => import("./pages/Marketplace"));
 const ReelsSystem = lazy(() => import("./pages/ReelsSystem"));
 const CreateReelPage = lazy(() => import("./pages/CreateReelPage"));
@@ -230,41 +226,11 @@ function App() {
         }
       />
 
-      <Route
-        path="/pay-topup"
-        element={
-          <ProtectedRoute>
-            <PayTopup />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/withdraw"
-        element={
-          <ProtectedRoute>
-            <Withdraw />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/transfer"
-        element={
-          <ProtectedRoute>
-            <Transfer />
-          </ProtectedRoute>
-        }
-      />
-
-      <Route
-        path="/transactions"
-        element={
-          <ProtectedRoute>
-            <Transactions />
-          </ProtectedRoute>
-        }
-      />
+      {/* Legacy money-action URLs now return to the non-custodial account activity page. */}
+      <Route path="/pay-topup" element={<Navigate to="/wallet" replace />} />
+      <Route path="/withdraw" element={<Navigate to="/wallet" replace />} />
+      <Route path="/transfer" element={<Navigate to="/wallet" replace />} />
+      <Route path="/transactions" element={<Navigate to="/wallet" replace />} />
 
       <Route
         path="/marketplace"
