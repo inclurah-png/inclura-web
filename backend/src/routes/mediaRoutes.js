@@ -130,10 +130,6 @@ router.post("/prepare-crosspost", async (req, res) => {
   let requestData = null;
 
   try {
-    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
-      return res.status(503).json({ success: false, message: "Media processing is not configured." });
-    }
-
     const token = getBearerToken(req);
     if (!token) {
       return res.status(401).json({ success: false, message: "Authentication required." });
@@ -190,11 +186,33 @@ router.post("/prepare-crosspost", async (req, res) => {
 
     const imageUrl = typeof sourcePost.imageUrl === "string" ? sourcePost.imageUrl.trim() : "";
     const videoUrl = typeof sourcePost.videoUrl === "string" ? sourcePost.videoUrl.trim() : "";
-    if ((!imageUrl && !videoUrl) || (imageUrl && videoUrl)) {
+
+    if (!imageUrl && !videoUrl) {
+      await requestRef.update({
+        watermark: {
+          ...(requestData.watermark || {}),
+          required: false,
+          status: "not_required",
+          processedBy: "authorized_backend",
+          processedAt: new Date(),
+        },
+      });
+      return res.status(200).json({
+        success: true,
+        watermark: { status: "not_required" },
+        message: "Text-only cross-post request needs no media watermark.",
+      });
+    }
+
+    if (imageUrl && videoUrl) {
       return res.status(400).json({
         success: false,
-        message: "Permanent media watermarking currently requires exactly one image or video. Text-only posts are not yet supported.",
+        message: "Permanent media watermarking currently supports one image or one video per post.",
       });
+    }
+
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Media processing is not configured." });
     }
 
     const sourceUrl = imageUrl || videoUrl;
