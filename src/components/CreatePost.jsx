@@ -114,47 +114,28 @@ const MAX_VIDEO_SIZE = 50 * 1024 * 1024;
 
 async function uploadPostMedia(file, category, user) {
   const token = await user.getIdToken();
-  const signingResponse = await fetch(`${MEDIA_API_BASE}/sign-upload`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      category: "post",
-      mimeType: file.type,
-    }),
-  });
-
-  const signingData = await signingResponse.json().catch(() => ({}));
-  if (!signingResponse.ok || !signingData.success) {
-    throw new Error(signingData.message || "Media upload authorization failed.");
-  }
-
   const formData = new FormData();
-  Object.entries(signingData.params || {}).forEach(([key, value]) => {
-    formData.append(key, String(value));
-  });
-  formData.append("api_key", signingData.apiKey);
-  formData.append("signature", signingData.signature);
+  formData.append("category", category);
   formData.append("file", file);
 
-  const uploadResponse = await fetch(signingData.uploadUrl, {
+  const response = await fetch(`${MEDIA_API_BASE}/upload`, {
     method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
     body: formData,
   });
-  const uploadData = await uploadResponse.json().catch(() => ({}));
 
-  if (!uploadResponse.ok || !uploadData.secure_url || !uploadData.public_id) {
-    throw new Error(
-      uploadData.error?.message || "Cloudinary could not complete the media upload."
-    );
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || !data.success || !data.secureUrl || !data.publicId) {
+    throw new Error(data.message || "Inclura could not complete the media upload.");
   }
 
   return {
-    secureUrl: uploadData.secure_url,
-    publicId: uploadData.public_id,
-    resourceType: uploadData.resource_type,
+    secureUrl: data.secureUrl,
+    publicId: data.publicId,
+    resourceType: data.resourceType,
   };
 }
 
