@@ -47,6 +47,7 @@ const VerificationPaymentEngine = lazy(() => import("./pages/VerificationPayment
 const VerificationStatus = lazy(() => import("./pages/VerificationStatus"));
 const CreatorMonetization = lazy(() => import("./pages/CreatorMonetization"));
 const CreatorAnalytics = lazy(() => import("./pages/CreatorAnalytics"));
+const MyCreatorActivity = lazy(() => import("./pages/MyCreatorActivity"));
 const CreatorEarnings = lazy(() => import("./pages/CreatorEarnings"));
 const AdvertiserDashboard = lazy(() => import("./pages/AdvertiserDashboard"));
 const AdManager = lazy(() => import("./pages/AdManager"));
