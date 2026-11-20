@@ -353,10 +353,16 @@ service cloud.firestore {
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.sourcePostId is string
                     && request.resource.data.sourcePostId.size() > 0
-                    && request.resource.data.sourcePostOwnerId is string
+                    && request.resource.data.sourcePostOwnerId == request.auth.uid
+                    && exists(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId))
+                    && get(/databases/$(database)/documents/posts/$(request.resource.data.sourcePostId)).data.userId == request.auth.uid
                     && request.resource.data.platforms is list
                     && request.resource.data.platforms.size() > 0
                     && request.resource.data.platforms.size() <= 8
+                    && request.resource.data.platforms.hasOnly([
+                      'facebook', 'instagram', 'x', 'linkedin',
+                      'reddit', 'threads', 'whatsapp', 'telegram'
+                    ])
                     && request.resource.data.message is string
                     && request.resource.data.message.size() <= 1000
                     && request.resource.data.visibility in ['public', 'followers']
