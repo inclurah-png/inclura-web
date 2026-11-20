@@ -29,6 +29,8 @@ function CrossPost() {
   const [creatingRequest, setCreatingRequest] = useState(false);
   const [requestCreated, setRequestCreated] = useState(false);
   const [requestId, setRequestId] = useState("");
+  const [watermarkStatus, setWatermarkStatus] = useState("");
+  const [watermarkedMediaUrl, setWatermarkedMediaUrl] = useState("");
   const [error, setError] = useState("");
   const [requestStats, setRequestStats] = useState([]);
 
@@ -130,6 +132,11 @@ function CrossPost() {
       return;
     }
 
+    if (Boolean(post.imageUrl) === Boolean(post.videoUrl)) {
+      setError("For permanent watermarking, select a post containing exactly one image or one video.");
+      return;
+    }
+
     if (selectedPlatforms.length === 0) {
       setError("Select at least one destination.");
       return;
@@ -177,6 +184,33 @@ function CrossPost() {
 
       setRequestId(requestRef.id);
       setRequestCreated(true);
+      setWatermarkStatus("processing");
+
+      try {
+        const idToken = await auth.currentUser.getIdToken();
+        const processingResponse = await fetch(
+          "https://inclura-ifse-backend.onrender.com/api/media/prepare-crosspost",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${idToken}`,
+            },
+            body: JSON.stringify({ requestId: requestRef.id }),
+          }
+        );
+        const processingResult = await processingResponse.json().catch(() => ({}));
+
+        if (!processingResponse.ok || processingResult.success !== true) {
+          throw new Error(processingResult.message || "Watermark processing could not be confirmed.");
+        }
+
+        setWatermarkStatus("completed");
+        setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
+      } catch (processingError) {
+        console.error("Cross-post watermark processing was not confirmed:", processingError);
+        setWatermarkStatus("unconfirmed");
+      }
     } catch (err) {
       console.error("Cross-post request failed:", err);
       setError("Unable to create the secure cross-post request. Please try again.");
@@ -401,12 +435,28 @@ function CrossPost() {
           <div style={styles.success} role="status">
             <strong>✓ Cross-post request created</strong>
             <p>
-              Request <span style={styles.code}>{requestId}</span> is now pending
-              secure backend processing.
+              Request <span style={styles.code}>{requestId}</span> has been created.
             </p>
+            {watermarkStatus === "processing" && (
+              <p style={styles.helper}>Inclura is creating the permanent watermark copy…</p>
+            )}
+            {watermarkStatus === "completed" && (
+              <div>
+                <p style={styles.helper}>✓ Permanent watermark copy prepared successfully. Your original Inclura post remains unchanged.</p>
+                {watermarkedMediaUrl && (
+                  <a href={watermarkedMediaUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#86efac", overflowWrap: "anywhere" }}>
+                    View watermarked copy
+                  </a>
+                )}
+              </div>
+            )}
+            {watermarkStatus === "unconfirmed" && (
+              <p style={{ ...styles.helper, color: "#fca5a5" }}>
+                Watermark processing was not confirmed. Do not share this copy yet. Your original post remains unchanged.
+              </p>
+            )}
             <p style={styles.helper}>
-              No external publication is claimed until the authorized publishing
-              service confirms it.
+              This prepares the media only; it does not publish automatically to external platforms.
             </p>
           </div>
         )}
