@@ -216,11 +216,7 @@ const isAdmin = role === "admin";
         ✨ {t("creatorMonetization")}
       </button>
 
-      {isCreator && (
-        <button type="button" aria-label={t("creatorAnalytics")} title={t("creatorAnalytics")} onClick={() => navigate("/creator-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-          📈 {t("creatorAnalytics")}
-        </button>
-      )}
+
 
 {isAdvertiser && (
   <>
@@ -256,6 +252,10 @@ const isAdmin = role === "admin";
       
 {isAdmin && (
   <>
+    <button type="button" aria-label={t("creatorAnalytics")} title={t("creatorAnalytics")} onClick={() => navigate("/creator-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
+        📈 {t("creatorAnalytics")}
+      </button>
+
     <button type="button" aria-label={t("platformAnalytics")} title={t("platformAnalytics")} onClick={() => navigate("/platform-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
         📊 {t("platformAnalytics")}
       </button>
