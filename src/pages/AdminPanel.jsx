@@ -16,7 +16,6 @@ function AdminPanel() {
     users: 0,
     verification: 0,
     reports: 0,
-    wallet: 0,
     enterprise: 0,
     adsPending: 0,
     emergencySOS: 0,
@@ -68,7 +67,6 @@ function AdminPanel() {
           usersSnap,
           verificationSnap,
           reportsSnap,
-          walletSnap,
           enterpriseSnap,
           adsPendingSnap,
           sosSnap,
@@ -92,13 +90,6 @@ function AdminPanel() {
           getCountFromServer(
             query(
               collection(db, "reports"),
-              where("status", "==", "open")
-            )
-          ),
-
-          getCountFromServer(
-            query(
-              collection(db, "walletAlerts"),
               where("status", "==", "open")
             )
           ),
@@ -175,7 +166,6 @@ function AdminPanel() {
           users: usersSnap.data().count,
           verification: verificationSnap.data().count,
           reports: reportsSnap.data().count,
-          wallet: walletSnap.data().count,
           enterprise: enterpriseSnap.data().count,
           adsPending: adsPendingSnap.data().count,
           emergencySOS: sosSnap.data().count,
@@ -220,7 +210,6 @@ function AdminPanel() {
       description: "Pending requests",
     },
     { title: "Reports", value: stats.reports, description: "Open cases" },
-    { title: "Wallet", value: stats.wallet, description: "Open alerts" },
     {
       title: "Enterprise",
       value: stats.enterprise,
@@ -293,11 +282,10 @@ function AdminPanel() {
       ],
     },
     {
-      title: "Finance & Revenue",
+      title: "Creator Programs",
       links: [
-        ["/wallet-monitoring", "💰 Wallet Monitoring"],
-        ["/creator-monetization", "💵 Creator Economy & Revenue"],
-        ["/pricing-manager", "⚙️ Creator Revenue Policy"],
+        ["/creator-monetization", "Creator Economy & Revenue"],
+        ["/pricing-manager", "Creator Program Policy"],
       ],
     },
     {
