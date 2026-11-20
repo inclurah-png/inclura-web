@@ -132,10 +132,13 @@ function CrossPost() {
       return;
     }
 
-    if (Boolean(post.imageUrl) === Boolean(post.videoUrl)) {
-      setError("For permanent watermarking, select a post containing exactly one image or one video.");
+    const hasImage = Boolean(post.imageUrl);
+    const hasVideo = Boolean(post.videoUrl);
+    if (hasImage && hasVideo) {
+      setError("This cross-post flow currently supports text-only posts or one media file at a time. Please use a post with either one image or one video.");
       return;
     }
+    const hasMedia = hasImage || hasVideo;
 
     if (selectedPlatforms.length === 0) {
       setError("Select at least one destination.");
@@ -161,13 +164,13 @@ function CrossPost() {
           clientWatermarkProcessingAllowed: false,
         },
         watermark: {
-          required: true,
+          required: hasMedia,
           text: INCLURA_WATERMARK,
           brand: "Inclura",
           positioning: "Inclusion comes first",
           languagesSupported: 10,
-          status: "pending",
-          processedBy: "authorized_backend",
+          status: hasMedia ? "pending" : "not_required",
+          processedBy: hasMedia ? "authorized_backend" : "not_applicable",
         },
         publishing: {
           status: "pending",
@@ -184,32 +187,37 @@ function CrossPost() {
 
       setRequestId(requestRef.id);
       setRequestCreated(true);
-      setWatermarkStatus("processing");
 
-      try {
-        const idToken = await auth.currentUser.getIdToken();
-        const processingResponse = await fetch(
-          "https://inclura-ifse-backend.onrender.com/api/media/prepare-crosspost",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${idToken}`,
-            },
-            body: JSON.stringify({ requestId: requestRef.id }),
+      if (!hasMedia) {
+        // Text-only posts do not need a media watermark or Cloudinary processing.
+        setWatermarkStatus("not_required");
+      } else {
+        setWatermarkStatus("processing");
+        try {
+          const idToken = await auth.currentUser.getIdToken();
+          const processingResponse = await fetch(
+            "https://inclura-ifse-backend.onrender.com/api/media/prepare-crosspost",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${idToken}`,
+              },
+              body: JSON.stringify({ requestId: requestRef.id }),
+            }
+          );
+          const processingResult = await processingResponse.json().catch(() => ({}));
+
+          if (!processingResponse.ok || processingResult.success !== true) {
+            throw new Error(processingResult.message || "Watermark processing could not be confirmed.");
           }
-        );
-        const processingResult = await processingResponse.json().catch(() => ({}));
 
-        if (!processingResponse.ok || processingResult.success !== true) {
-          throw new Error(processingResult.message || "Watermark processing could not be confirmed.");
+          setWatermarkStatus("completed");
+          setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
+        } catch (processingError) {
+          console.error("Cross-post watermark processing was not confirmed:", processingError);
+          setWatermarkStatus("unconfirmed");
         }
-
-        setWatermarkStatus("completed");
-        setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
-      } catch (processingError) {
-        console.error("Cross-post watermark processing was not confirmed:", processingError);
-        setWatermarkStatus("unconfirmed");
       }
     } catch (err) {
       console.error("Cross-post request failed:", err);
@@ -381,11 +389,18 @@ function CrossPost() {
             <p style={styles.postText}>{post.text}</p>
           )}
 
-          <div style={styles.watermarkPreview}>
-            <strong>🌍 INCLURA — INCLUSION COMES FIRST</strong>
-            <span>Connect across languages. Create with purpose. Be seen, heard and included.</span>
-            <span>Built for accessibility and meaningful connection, with support for 10 languages.</span>
-          </div>
+          {post.imageUrl || post.videoUrl ? (
+            <div style={styles.watermarkPreview}>
+              <strong>🌍 INCLURA — INCLUSION COMES FIRST</strong>
+              <span>Connect across languages. Create with purpose. Be seen, heard and included.</span>
+              <span>Built for accessibility and meaningful connection, with support for 10 languages.</span>
+              <span>Preview only; the permanent watermark is applied to the separate media copy.</span>
+            </div>
+          ) : (
+            <p style={styles.helper}>
+              Text-only post: no media watermark is needed. The original text will be included in the cross-post request.
+            </p>
+          )}
         </div>
 
         <div style={styles.securityNotice}>
@@ -437,6 +452,9 @@ function CrossPost() {
             <p>
               Request <span style={styles.code}>{requestId}</span> has been created.
             </p>
+            {watermarkStatus === "not_required" && (
+              <p style={styles.helper}>✓ Text-only cross-post request is ready. No image or video watermark is needed.</p>
+            )}
             {watermarkStatus === "processing" && (
               <p style={styles.helper}>Inclura is creating the permanent watermark copy…</p>
             )}
