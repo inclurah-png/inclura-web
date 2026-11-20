@@ -16,7 +16,7 @@ function CreatorMonetization() {
         <h1 id="creator-opportunities-title">{t("creatorOpportunitiesTitle")}</h1>
         <p style={intro}>{t("creatorOpportunitiesIntro")}</p>
         <section style={notice} aria-label={t("creatorBoundaryTitle")}>
-          <strong>{t("creatorImportantBoundary")}</strong>
+          <strong>{t("creatorBoundaryTitle")}</strong>
           <p style={{ marginBottom: 0 }}>{t("creatorImportantBoundaryText")}</p>
         </section>
         <section style={grid} aria-label={t("creatorToolsLabel")}>
