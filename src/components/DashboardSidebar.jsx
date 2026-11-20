@@ -141,7 +141,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/wallet")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        📋 {t("accountActivity")}
+        🔗 {t("accountActivity")}
       </button>
 
       <button
