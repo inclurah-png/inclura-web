@@ -49,7 +49,15 @@ function CrossPost() {
         const snap = await getDoc(doc(db, "posts", id));
 
         if (snap.exists()) {
-          setPost({ id: snap.id, ...snap.data() });
+          const sourcePost = { id: snap.id, ...snap.data() };
+          if (!auth.currentUser || sourcePost.userId !== auth.currentUser.uid) {
+            setError("You can only cross-post content that you created.");
+            setPost(null);
+          } else {
+            setPost(sourcePost);
+          }
+        } else {
+          setError("This source post could not be found.");
         }
       } catch (err) {
         console.error("Unable to load cross-post source:", err);
@@ -93,34 +101,10 @@ function CrossPost() {
     );
   }, []);
 
-  const stats = useMemo(() => {
-    const successful = requestStats.filter(
-      (item) => item.status === "published" || item.status === "completed"
-    );
-
-    const activeReferrals = requestStats.reduce(
-      (total, item) => total + Number(item.referralSignups || 0),
-      0
-    );
-
-    const impressions = requestStats.reduce(
-      (total, item) => total + Number(item.impressions || 0),
-      0
-    );
-
-    const xp = requestStats.reduce(
-      (total, item) => total + Number(item.creatorGrowth?.points || 0),
-      0
-    );
-
-    return {
-      total: requestStats.length,
-      successful: successful.length,
-      xp,
-      referrals: activeReferrals,
-      impressions,
-    };
-  }, [requestStats]);
+  const stats = useMemo(() => ({
+    requests: requestStats.length,
+    pending: requestStats.filter((item) => item.status === "pending").length,
+  }), [requestStats]);
 
   function togglePlatform(platformId) {
     setSelectedPlatforms((current) =>
@@ -432,12 +416,13 @@ function CrossPost() {
         <h2 style={styles.sectionTitle}>Cross-Post Activity</h2>
 
         <div style={styles.statsGrid}>
-          <StatCard title="Requests" value={stats.total} />
-          <StatCard title="Completed" value={stats.successful} />
-          <StatCard title="XP From Sharing" value={stats.xp} />
-          <StatCard title="Referral Signups" value={stats.referrals} />
-          <StatCard title="Impressions" value={stats.impressions} />
+          <StatCard title="Recent requests" value={stats.requests} />
+          <StatCard title="Awaiting secure processing" value={stats.pending} />
         </div>
+        <p style={styles.helper}>
+          These figures count requests only. A post is counted as published only
+          after an authorized external publishing service confirms publication.
+        </p>
       </section>
     </main>
   );
