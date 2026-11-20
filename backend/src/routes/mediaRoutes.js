@@ -235,6 +235,7 @@ router.post("/sign-upload", async (req, res) => {
 router.post("/prepare-crosspost", async (req, res) => {
   let requestRef = null;
   let requestData = null;
+  let processingStage = "authentication";
 
   try {
     const token = getBearerToken(req);
@@ -243,12 +244,14 @@ router.post("/prepare-crosspost", async (req, res) => {
     }
 
     const decoded = await auth().verifyIdToken(token);
+    processingStage = "request_validation";
     const requestId = String(req.body?.requestId || "");
     if (!requestId || requestId.length > 150) {
       return res.status(400).json({ success: false, message: "A valid cross-post request ID is required." });
     }
 
     requestRef = firestore().collection("crossPostRequests").doc(requestId);
+    processingStage = "load_crosspost_request";
     const requestSnapshot = await requestRef.get();
     if (!requestSnapshot.exists) {
       return res.status(404).json({ success: false, message: "Cross-post request not found." });
@@ -277,6 +280,7 @@ router.post("/prepare-crosspost", async (req, res) => {
       return res.status(409).json({ success: false, message: "This request is not available for watermark preparation." });
     }
 
+    processingStage = "load_original_post";
     const sourceSnapshot = await firestore()
       .collection("posts")
       .doc(String(requestData.sourcePostId || ""))
@@ -323,6 +327,7 @@ router.post("/prepare-crosspost", async (req, res) => {
     }
 
     const sourceUrl = imageUrl || videoUrl;
+    processingStage = "validate_source_media";
     const source = new URL(sourceUrl);
     const sourcePublicId = imageUrl
       ? String(sourcePost.imagePublicId || "")
@@ -366,6 +371,7 @@ router.post("/prepare-crosspost", async (req, res) => {
       signature,
     });
 
+    processingStage = "cloudinary_upload_request";
     const cloudinaryResponse = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/${resourceType}/upload`,
       {
@@ -375,10 +381,13 @@ router.post("/prepare-crosspost", async (req, res) => {
       }
     );
 
+    processingStage = "read_cloudinary_response";
     const cloudinaryResult = await cloudinaryResponse.json().catch(() => ({}));
     if (!cloudinaryResponse.ok || !cloudinaryResult.secure_url || !cloudinaryResult.public_id) {
       console.error("Cross-post watermark processing failed at Cloudinary.", {
         status: cloudinaryResponse.status,
+        providerCode: cloudinaryResult?.error?.http_code || null,
+        providerMessage: String(cloudinaryResult?.error?.message || "No provider message").slice(0, 240),
       });
       await requestRef.update({
         watermark: {
@@ -393,6 +402,7 @@ router.post("/prepare-crosspost", async (req, res) => {
       return res.status(502).json({ success: false, message: "Inclura could not create the watermarked media copy. The original post is unchanged." });
     }
 
+    processingStage = "save_completed_watermark";
     await requestRef.update({
       watermark: {
         ...(requestData.watermark || {}),
@@ -415,7 +425,12 @@ router.post("/prepare-crosspost", async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Cross-post watermark preparation failed:", error?.message || "Unknown error");
+    console.error("Cross-post watermark preparation failed:", {
+      stage: processingStage,
+      name: error?.name || "Error",
+      message: String(error?.message || "Unknown error").slice(0, 300),
+      code: error?.code || null,
+    });
     if (requestRef && requestData?.creatorId) {
       try {
         await requestRef.update({
@@ -423,7 +438,7 @@ router.post("/prepare-crosspost", async (req, res) => {
             ...(requestData.watermark || {}),
             required: true,
             status: "failed",
-            failureReason: "media_processing_failed",
+            failureReason: `processing_failed_${processingStage}`,
             processedBy: "authorized_backend",
             processedAt: new Date(),
           },
@@ -432,7 +447,10 @@ router.post("/prepare-crosspost", async (req, res) => {
         // Preserve the generic API error; do not expose source URLs or credentials.
       }
     }
-    return res.status(500).json({ success: false, message: "Unable to prepare the watermarked media copy." });
+    return res.status(500).json({
+      success: false,
+      message: `Unable to prepare the watermarked media copy (stage: ${processingStage}). The original post is unchanged.`,
+    });
   }
 });
 
