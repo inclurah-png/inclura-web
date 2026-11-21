@@ -26,6 +26,8 @@ jobs:
         run: npm ci
 
       - name: Build Vite app
+        env:
+          VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY }}
         run: npm run build
 
       - name: Prepare Firebase service account credentials
