@@ -181,7 +181,7 @@ try {
 const userCredential =
 await createUserWithEmailAndPassword(
 auth,
-email,
+cleanEmail,
 password
 );
 
