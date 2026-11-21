@@ -11,7 +11,7 @@ import {
 
 import { auth, db } from "../firebase";
 
-const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\\/+$/, "");
+const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\/+$/, "");
 
 function formatDate(value) {
   if (!value) return "Unavailable";
