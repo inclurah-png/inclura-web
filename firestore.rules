@@ -756,10 +756,11 @@ service cloud.firestore {
     }
 
     // IFSE SOS audit records are written only by the trusted backend.
-    // Only accounts carrying the Firebase admin custom claim may inspect them.
+    // Only administrators or separately designated SOS notification-only monitors may inspect them.
     match /ifseAuditLogs/{logId} {
       allow get, list: if request.auth != null
-                      && request.auth.token.admin == true;
+                      && (request.auth.token.admin == true
+                          || request.auth.token.sosNotificationOnly == true);
       allow create, update, delete: if false;
     }
 
