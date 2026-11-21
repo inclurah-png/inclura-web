@@ -2,10 +2,6 @@ import { useEffect, useState } from "react";
 import { getIdTokenResult } from "firebase/auth";
 import {
   collection,
-  query,
-  where,
-  orderBy,
-  limit,
   onSnapshot,
 } from "firebase/firestore";
 
@@ -116,25 +112,28 @@ function IFSEEmergencyMonitoring() {
 
         setAuthorized(true);
 
-        const eventsQuery = query(
-          collection(db, "ifseAuditLogs"),
-          where("module", "==", "SOS"),
-          where("ifseGenerated", "==", true),
-          orderBy("createdAt", "desc"),
-          limit(10)
-        );
-
+        // Read the audit collection once under Firestore rules, then filter
+        // locally. This avoids a composite-index dependency that can make
+        // authorized monitoring appear unavailable on a fresh Firebase project.
         unsubscribe = onSnapshot(
-          eventsQuery,
+          collection(db, "ifseAuditLogs"),
           (snapshot) => {
             if (cancelled) return;
 
-            setEvents(
-              snapshot.docs.map((eventDoc) => ({
+            const sosEvents = snapshot.docs
+              .map((eventDoc) => ({
                 ...eventDoc.data(),
                 id: eventDoc.id,
               }))
-            );
+              .filter((event) => event.module === "SOS" && event.ifseGenerated === true)
+              .sort((a, b) => {
+                const aTime = typeof a.createdAt?.toMillis === "function" ? a.createdAt.toMillis() : 0;
+                const bTime = typeof b.createdAt?.toMillis === "function" ? b.createdAt.toMillis() : 0;
+                return bTime - aTime;
+              })
+              .slice(0, 10);
+
+            setEvents(sosEvents);
 
             setLastUpdate(new Date());
             setMonitoringError("");
