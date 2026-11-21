@@ -152,13 +152,13 @@ option,
 async function handleSignup() {
 
 setError(null);
-const cleanName = fullName.trim().replace(/\\s+/g, " ");
+const cleanName = fullName.trim().replace(/\s+/g, " ");
 const cleanEmail = email.trim().toLowerCase();
 if (cleanName.length < 2 || cleanName.length > 80) {
   setError({ message: "Enter your real display name (2–80 characters)." });
   return;
 }
-if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(cleanEmail)) {
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
   setError({ message: "Enter a valid email address." });
   return;
 }
