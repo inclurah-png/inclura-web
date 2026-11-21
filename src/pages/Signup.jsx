@@ -67,6 +67,8 @@ useEffect(() => {
             uid: user.uid,
             fullName: user.displayName || "",
             email: user.email || "",
+            acceptedCommunityStandards: true,
+            acceptedCommunityStandardsAt: serverTimestamp(),
             createdAt: serverTimestamp(),
             verified: false,
             badgeType: "",
@@ -313,6 +315,9 @@ await setDoc(
     email:
       user.email || "",
 
+    acceptedCommunityStandards: true,
+    acceptedCommunityStandardsAt: serverTimestamp(),
+
     createdAt:
       serverTimestamp(),
 
@@ -365,7 +370,12 @@ profileError
 
 }
 
-navigate("/onboarding");
+if (user.emailVerified) {
+  navigate("/onboarding");
+} else {
+  await sendEmailVerification(user);
+  navigate("/verify-email");
+}
 
 } catch (signupError) {
 
