@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   addDoc,
+  updateDoc,
   collection,
   onSnapshot,
   query,
@@ -126,8 +127,13 @@ function CrossPost() {
       post?.text || "",
       mediaLink,
     ].filter(Boolean).join("\n\n");
+    if (visibility !== "public") {
+      setError("Choose Public visibility before sharing a direct post link. Followers-only posts are not available to external recipients.");
+      return;
+    }
+    const publicPostUrl = `https://inclura-prod-90734.web.app/share/${post.id}`;
     const shareUrl = "https://t.me/share/url?url=" +
-      encodeURIComponent("https://inclura-prod-90734.web.app/") +
+      encodeURIComponent(publicPostUrl) +
       "&text=" + encodeURIComponent(shareText);
     window.location.assign(shareUrl);
   }
@@ -219,6 +225,11 @@ function CrossPost() {
     setCreatingRequest(true);
 
     try {
+      if (visibility === "public" && post.externalShareEnabled !== true) {
+        await updateDoc(doc(db, "posts", post.id), { externalShareEnabled: true });
+        setPost((current) => ({ ...current, externalShareEnabled: true }));
+      }
+
       const requestRef = await addDoc(collection(db, "crossPostRequests"), {
         creatorId: uid,
         sourcePostId: post.id,
@@ -542,7 +553,10 @@ function CrossPost() {
             <p style={styles.helper}>
               This prepares the media only; it does not publish automatically to external platforms.
             </p>
-            {selectedPlatforms.includes("telegram") && (
+            {selectedPlatforms.includes("telegram") && visibility !== "public" && (
+              <p style={styles.helper}>Telegram direct links require Public visibility. Change Visibility to Public if you want recipients to open this post without signing in.</p>
+            )}
+            {selectedPlatforms.includes("telegram") && visibility === "public" && (
               <div style={{ marginTop: "14px" }}>
                 <button
                   type="button"
