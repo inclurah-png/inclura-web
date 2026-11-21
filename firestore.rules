@@ -43,11 +43,34 @@ service cloud.firestore {
                       && request.resource.data.videoUrl.size() > 0
                     );
 
-      // The owner may only activate or revoke the existing public snapshot.
+      // The owner may activate/revoke the snapshot and replace its original
+      // media URL with the secure watermarked Cloudinary copy after processing.
+      // All other approved display fields remain immutable.
       allow update: if request.auth != null
                     && resource.data.ownerId == request.auth.uid
-                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active'])
-                    && request.resource.data.active is bool;
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['active', 'imageUrl', 'videoUrl'])
+                    && request.resource.data.active is bool
+                    && request.resource.data.userName == resource.data.userName
+                    && request.resource.data.text == resource.data.text
+                    && request.resource.data.imageAlt == resource.data.imageAlt
+                    && request.resource.data.ownerId == resource.data.ownerId
+                    && request.resource.data.sourcePostId == resource.data.sourcePostId
+                    && request.resource.data.sharedAt == resource.data.sharedAt
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.videoUrl is string
+                    && (
+                      request.resource.data.imageUrl == ''
+                      || request.resource.data.imageUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && (
+                      request.resource.data.videoUrl == ''
+                      || request.resource.data.videoUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && !(
+                      request.resource.data.imageUrl.size() > 0
+                      && request.resource.data.videoUrl.size() > 0
+                    );
       allow delete: if false;
     }
 
