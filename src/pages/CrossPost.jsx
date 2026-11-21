@@ -130,45 +130,50 @@ function CrossPost() {
     }
 
     const publicPostUrl = `https://inclura-prod-90734.web.app/share/${post.id}`;
-    // Keep the creator's invitation and original post text, but add the public URL
-    // only where the destination does not provide a separate URL field.
-    const shareText = [message.trim(), post?.text || ""]
+    const brandInvitation = [
+      "🌍 INCLURA — A social world where everyone belongs.",
+      "Connect across abilities. Communicate across languages. Create with purpose. Be seen, heard and included.",
+      "Discover a community built around accessibility, meaningful connection and participation."
+    ].join("\n\n");
+    const shareText = [message.trim(), post?.text || "", brandInvitation]
+      .map((part) => String(part || "").trim())
       .filter(Boolean)
       .join("\n\n");
     const encodedUrl = encodeURIComponent(publicPostUrl);
     const encodedText = encodeURIComponent(shareText);
-    const encodedTextWithUrl = encodeURIComponent(`${shareText}\n\n${publicPostUrl}`);
-    const encodedTitle = encodeURIComponent("Discover Inclura — a social world where everyone belongs");
+    const encodedTitle = encodeURIComponent("Inclura — A social world where everyone belongs");
+    const shortXText = "🌍 A social world where everyone belongs. Connect across abilities, communicate across languages, and find your place with Inclura.";
+    const encodedXText = encodeURIComponent(shortXText);
 
     const destinations = {
       telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
-      whatsapp: `https://wa.me/?text=${encodedTextWithUrl}`,
-      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
-      x: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      whatsapp: `https://wa.me/?text=${encodeURIComponent(`${shareText}\n\nJoin Inclura: ${publicPostUrl}`)}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodeURIComponent(shareText)}`,
+      x: `https://twitter.com/intent/tweet?text=${encodedXText}&url=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
-      threads: `https://www.threads.net/intent/post?text=${encodedTextWithUrl}`,
+      threads: `https://www.threads.net/intent/post?text=${encodeURIComponent(`${shareText}\n\n${publicPostUrl}`)}`,
     };
 
     if (platformId === "instagram" || platformId === "native") {
       if (typeof navigator !== "undefined" && navigator.share) {
         try {
           await navigator.share({
-            title: "Discover Inclura",
+            title: "Inclura — A social world where everyone belongs",
             text: shareText,
             url: publicPostUrl,
           });
         } catch (shareError) {
           if (shareError?.name !== "AbortError") {
-            setError("Your device could not open its sharing menu. Copy the public Inclura link and share it from your preferred app.");
+            setError("Your device could not open its sharing menu. Copy the Inclura invitation and public post link, then share them from your preferred app.");
           }
         }
       } else {
         try {
-          await navigator.clipboard.writeText(`${shareText}\n\n${publicPostUrl}`);
-          setError("The Inclura link and invitation were copied. Open Instagram or another app and paste them into your post or message.");
+          await navigator.clipboard.writeText(`${shareText}\n\nJoin Inclura: ${publicPostUrl}`);
+          setError("The branded Inclura invitation and post link were copied. Open Instagram or another app and paste them into your post or message.");
         } catch {
-          setError("Instagram sharing needs your phone's share menu. Copy this link and paste it into Instagram: " + publicPostUrl);
+          setError("Open Instagram's sharing options and share this public Inclura post: " + publicPostUrl);
         }
       }
       return;
@@ -647,7 +652,7 @@ function CrossPost() {
               <div style={{ marginTop: "14px" }}>
                 <h3 style={{ marginBottom: "8px" }}>Share your Inclura invitation</h3>
                 <p style={styles.helper}>
-                  Choose a destination below. Each option opens that service or your phone's sharing menu; review the content and press Send or Post there. Instagram uses your phone's share menu. Media is displayed on the secure Inclura public post page; the watermarked copy is prepared separately.
+                  Every destination receives Inclura's consistent green, teal and gold brand identity through the public post page and its invitation. Captions are adapted to each platform: Telegram and WhatsApp carry the full invitation, X uses a concise version, and link-preview platforms use the branded Inclura page. Review the content and press Send or Post there. Instagram uses your phone's sharing menu.
                 </p>
                 <div style={styles.platformGrid}>
                   {selectedPlatforms.map((platformId) => {
