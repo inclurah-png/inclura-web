@@ -279,6 +279,7 @@ function CrossPost() {
     }
 
     setCreatingRequest(true);
+    let processingStage = "prepare_public_share";
 
     try {
       const publicShareRef = doc(db, "publicSharedPosts", post.id);
@@ -304,6 +305,7 @@ function CrossPost() {
         await updateDoc(publicShareRef, { active: false });
       }
 
+      processingStage = "create_cross_post_request";
       const requestRef = await addDoc(collection(db, "crossPostRequests"), {
         creatorId: uid,
         sourcePostId: post.id,
@@ -343,6 +345,7 @@ function CrossPost() {
 
       setRequestId(requestRef.id);
       setRequestCreated(true);
+      processingStage = "prepare_watermark";
 
       if (!hasMedia) {
         // Text-only posts do not need a media watermark or Cloudinary processing.
@@ -351,8 +354,18 @@ function CrossPost() {
         await processWatermark(requestRef.id);
       }
     } catch (err) {
-      console.error("Cross-post request failed:", err);
-      setError("Unable to create the secure cross-post request. Please try again.");
+      console.error("Cross-post request failed at", processingStage, err);
+      const errorCode = typeof err?.code === "string" ? err.code : "unknown";
+      const safeMessage = typeof err?.message === "string"
+        ? err.message.slice(0, 180)
+        : "No additional error details were provided.";
+      if (processingStage === "prepare_public_share") {
+        setError(`Inclura could not prepare the approved public post ( ${errorCode} ). ${safeMessage}`);
+      } else if (processingStage === "create_cross_post_request") {
+        setError(`Inclura could not save the cross-post request ( ${errorCode} ). ${safeMessage}`);
+      } else {
+        setError(`The request was created, but media preparation needs attention ( ${errorCode} ). ${safeMessage}`);
+      }
     } finally {
       setCreatingRequest(false);
     }
