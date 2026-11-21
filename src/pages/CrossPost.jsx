@@ -554,45 +554,92 @@ function CrossPost() {
                 item.watermark?.status !== "completed"
               )
               .map((item) => (
-                <div
+                <RequestActivityCard
                   key={item.id}
-                  style={{
-                    border: "1px solid #475569",
-                    borderRadius: "12px",
-                    padding: "12px",
-                    marginTop: "10px",
-                  }}
-                >
-                  <p style={styles.helper}>
-                    Request <span style={styles.code}>{item.id}</span>
-                  </p>
-                  <p style={styles.helper}>
-                    Status: {item.watermark?.status || "awaiting confirmation"}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => processWatermark(item.id)}
-                    disabled={watermarkStatus === "processing"}
-                    style={{
-                      ...styles.primaryButton,
-                      opacity: watermarkStatus === "processing" ? 0.6 : 1,
-                    }}
-                  >
-                    {watermarkStatus === "processing"
-                      ? "Processing securely…"
-                      : "Retry secure watermark processing"}
-                  </button>
-                </div>
+                  item={item}
+                  onRetry={processWatermark}
+                  processing={watermarkStatus === "processing"}
+                />
+              ))}
+          </div>
+        )}
+
+        {requestStats.filter((item) =>
+          item.watermark?.required === true &&
+          item.watermark?.status === "completed"
+        ).length > 0 && (
+          <div style={{ marginTop: "18px" }}>
+            <h3 style={{ marginBottom: "8px" }}>Watermark prepared</h3>
+            <p style={styles.helper}>
+              These media copies have been securely prepared. The original Inclura posts remain unchanged.
+            </p>
+            {requestStats
+              .filter((item) =>
+                item.watermark?.required === true &&
+                item.watermark?.status === "completed"
+              )
+              .map((item) => (
+                <RequestActivityCard
+                  key={item.id}
+                  item={item}
+                  prepared
+                />
               ))}
           </div>
         )}
 
         <p style={styles.helper}>
-          These figures count requests only. A post is counted as published only
-          after an authorized external publishing service confirms publication.
+          These figures count requests only. A request marked as watermark prepared is not the same as external publication.
+          A post is counted as published only after an authorized external publishing service confirms publication.
         </p>
       </section>
     </main>
+  );
+}
+
+function RequestActivityCard({ item, onRetry, processing, prepared = false }) {
+  const watermarkStatus = item.watermark?.status || "awaiting confirmation";
+  const platforms = Array.isArray(item.platforms) ? item.platforms.join(", ") : "No destination recorded";
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${prepared ? "#166534" : "#475569"}`,
+        borderRadius: "12px",
+        padding: "12px",
+        marginTop: "10px",
+        background: prepared ? "#052e16" : "transparent",
+      }}
+    >
+      <p style={styles.helper}>
+        Request <span style={styles.code}>{item.id}</span>
+      </p>
+      <p style={styles.helper}>Watermark: {prepared ? "completed" : watermarkStatus}</p>
+      <p style={styles.helper}>Destination(s): {platforms}</p>
+      {prepared && item.watermark?.secureUrl && (
+        <a
+          href={item.watermark.secureUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: "#86efac", overflowWrap: "anywhere" }}
+        >
+          View prepared watermarked copy
+        </a>
+      )}
+      {!prepared && (
+        <button
+          type="button"
+          onClick={() => onRetry(item.id)}
+          disabled={processing}
+          style={{
+            ...styles.primaryButton,
+            opacity: processing ? 0.6 : 1,
+          }}
+        >
+          {processing ? "Processing securely…" : "Retry secure watermark processing"}
+        </button>
+      )}
+    </div>
   );
 }
 
