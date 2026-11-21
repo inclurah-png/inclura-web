@@ -40,6 +40,7 @@ const CareGigs = lazy(() => import("./pages/CareGigs"));
 const CareRequestPage = lazy(() => import("./pages/CareRequestPage"));
 const MentorHub = lazy(() => import("./pages/MentorHub"));
 const PostPage = lazy(() => import("./pages/PostPage"));
+const SharedPostPage = lazy(() => import("./pages/SharedPostPage"));
 const CrossPost = lazy(() => import("./pages/CrossPost"));
 const SocialConnections = lazy(() => import("./pages/SocialConnections"));
 const VerificationCenter = lazy(() => import("./pages/VerificationCenter"));
@@ -128,6 +129,11 @@ function App() {
       <Route
         path="/onboarding"
         element={<Onboarding />}
+      />
+
+      <Route
+        path="/share/:id"
+        element={<SharedPostPage />}
       />
 
       <Route
