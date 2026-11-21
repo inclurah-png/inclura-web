@@ -213,8 +213,23 @@ function CrossPost() {
 
       const status = processingResult.watermark?.status || "";
       if (status === "completed") {
+        const preparedUrl = processingResult.watermark?.secureUrl || "";
+        if (!preparedUrl) {
+          throw new Error("The watermark service confirmed processing but did not return a prepared media link.");
+        }
+        // Public visitors must see the watermarked copy, never the original upload.
+        if (visibility === "public" && post?.id) {
+          const publicShareUpdate = post.imageUrl
+            ? { imageUrl: preparedUrl }
+            : post.videoUrl
+              ? { videoUrl: preparedUrl }
+              : null;
+          if (publicShareUpdate) {
+            await updateDoc(doc(db, "publicSharedPosts", post.id), publicShareUpdate);
+          }
+        }
         setWatermarkStatus("completed");
-        setWatermarkedMediaUrl(processingResult.watermark?.secureUrl || "");
+        setWatermarkedMediaUrl(preparedUrl);
         return;
       }
 
