@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
@@ -8,7 +8,7 @@ import {
   orderBy,
   query,
 } from "firebase/firestore";
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
 
 function CommunityHighlights() {
   const { t } = useTranslation();
@@ -17,26 +17,38 @@ function CommunityHighlights() {
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
-    const membersQuery = query(
+    // Read the wider member directory, not chats, follows, or interaction history.
+    const directoryQuery = query(
       collection(db, "memberDirectory"),
       orderBy("updatedAt", "desc"),
-      limit(4)
+      limit(100)
     );
 
     const unsubscribe = onSnapshot(
-      membersQuery,
+      directoryQuery,
       (snapshot) => {
-        const visibleMembers = snapshot.docs
-          .map((memberDoc) => ({
-            uid: memberDoc.id,
-            ...memberDoc.data(),
-          }))
-          .filter((member) => {
-            const name = member.fullName || member.name;
-            return typeof name === "string" && name.trim().length > 0;
-          });
+        const currentUid = auth.currentUser?.uid;
+        const uniqueMembers = new Map();
 
-        setMembers(visibleMembers);
+        snapshot.docs.forEach((memberDoc) => {
+          const member = { uid: memberDoc.id, ...memberDoc.data() };
+          const name = typeof member.fullName === "string"
+            ? member.fullName.trim()
+            : typeof member.name === "string"
+              ? member.name.trim()
+              : "";
+
+          if (
+            !member.uid ||
+            member.uid === currentUid ||
+            !name ||
+            ["inclura user", "inclura member", "user", "member", "friend"].includes(name.toLowerCase())
+          ) return;
+
+          uniqueMembers.set(member.uid, { ...member, displayName: name });
+        });
+
+        setMembers([...uniqueMembers.values()]);
         setLoading(false);
         setLoadError(false);
       },
@@ -50,26 +62,48 @@ function CommunityHighlights() {
     return () => unsubscribe();
   }, []);
 
+  // Rotate discovery order daily so the same recently updated profiles do not
+  // permanently occupy the first positions. This is independent of interactions.
+  const featuredMembers = useMemo(() => {
+    const day = Math.floor(Date.now() / 86400000);
+    const score = (uid) => {
+      let value = day + 2166136261;
+      for (let i = 0; i < uid.length; i += 1) {
+        value ^= uid.charCodeAt(i);
+        value = Math.imul(value, 16777619);
+      }
+      return value >>> 0;
+    };
+
+    return [...members]
+      .sort((a, b) => score(a.uid) - score(b.uid))
+      .slice(0, 8);
+  }, [members]);
+
   return (
     <section
       aria-labelledby="community-highlights-heading"
       style={{
-        background: "#1e293b",
+        background: "linear-gradient(135deg, #063b35 0%, #0f2929 58%, #172b25 100%)",
+        border: "1px solid rgba(212, 175, 55, 0.35)",
         padding: "18px",
         borderRadius: "18px",
         marginBottom: "16px",
         color: "#f8fafc",
       }}
     >
-      <h2 id="community-highlights-heading">
+      <h2 id="community-highlights-heading" style={{ marginTop: 0 }}>
         <span aria-hidden="true">🌟 </span>{t("communityHighlightsTitle")}
       </h2>
+      <p style={{ color: "#cbd5e1", marginTop: "-4px", lineHeight: 1.5 }}>
+        Discover members across Inclura — including people you have not connected with yet.
+      </p>
 
       {loading ? (
         <p role="status">{t("loading")}</p>
       ) : loadError ? (
         <p role="status">{t("error")}</p>
-      ) : members.length === 0 ? (
+      ) : featuredMembers.length === 0 ? (
         <p>{t("noResults")}</p>
       ) : (
         <ul
@@ -83,8 +117,7 @@ function CommunityHighlights() {
             gap: "12px",
           }}
         >
-          {members.map((member) => {
-            const name = (member.fullName || member.name).trim();
+          {featuredMembers.map((member) => {
             const role = member.accountType || member.category || "";
             const bio = typeof member.bio === "string" ? member.bio.trim() : "";
 
@@ -93,15 +126,15 @@ function CommunityHighlights() {
                 key={member.uid}
                 style={{
                   minWidth: 0,
-                  background: "#0f172a",
-                  border: "1px solid #334155",
+                  background: "rgba(2, 22, 20, 0.72)",
+                  border: "1px solid rgba(45, 212, 191, 0.28)",
                   borderRadius: "14px",
                   padding: "14px",
                 }}
               >
                 <Link
                   to={`/user/${member.uid}`}
-                  aria-label={name}
+                  aria-label={member.displayName}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -141,15 +174,21 @@ function CommunityHighlights() {
                         fontSize: "18px",
                       }}
                     >
-                      {name.charAt(0).toUpperCase()}
+                      {member.displayName.charAt(0).toUpperCase()}
                     </span>
                   )}
-                  <span>{name}</span>
+                  <span>{member.displayName}</span>
                 </Link>
 
                 {role ? (
                   <p style={{ color: "#fbbf24", fontSize: "13px", margin: "10px 0 0" }}>
                     {role}
+                  </p>
+                ) : null}
+
+                {member.location ? (
+                  <p style={{ color: "#99f6e4", fontSize: "12px", margin: "6px 0 0" }}>
+                    {member.location}
                   </p>
                 ) : null}
 
