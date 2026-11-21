@@ -5,7 +5,6 @@ import {
   collection,
   doc,
   getDoc,
-  limit,
   onSnapshot,
   orderBy,
   query,
@@ -41,8 +40,7 @@ function CommunityHighlights() {
     // Read the wider member directory, not chats, follows, or interaction history.
     const directoryQuery = query(
       collection(db, "memberDirectory"),
-      orderBy("updatedAt", "desc"),
-      limit(100)
+      orderBy("updatedAt", "desc")
     );
 
     const unsubscribe = onSnapshot(
