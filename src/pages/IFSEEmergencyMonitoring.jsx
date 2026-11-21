@@ -50,6 +50,7 @@ function IFSEEmergencyMonitoring() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [readiness, setReadiness] = useState(null);
   const [readinessError, setReadinessError] = useState("");
+  const [readinessLoading, setReadinessLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,20 +115,44 @@ function IFSEEmergencyMonitoring() {
 
         setAuthorized(true);
 
-        // Read-only backend diagnostics inspect the exact collections used by dispatch.
+        // Read-only diagnostics: always expose progress or a definite error.
+        if (!cancelled) {
+          setReadinessLoading(true);
+          setReadinessError("");
+          setReadiness(null);
+        }
+        const readinessController = new AbortController();
+        const readinessTimeout = setTimeout(() => readinessController.abort(), 15000);
         try {
-          const readinessToken = await currentUser.getIdToken();
+          const readinessToken = await currentUser.getIdToken(true);
           const readinessResponse = await fetch(
             SOS_BACKEND_URL + "/api/sos-responder-readiness",
-            { headers: { Authorization: "Bearer " + readinessToken } }
+            {
+              method: "GET",
+              headers: { Authorization: "Bearer " + readinessToken },
+              signal: readinessController.signal,
+              cache: "no-store",
+            }
           );
           const readinessResult = await readinessResponse.json().catch(() => ({}));
           if (!readinessResponse.ok || readinessResult.success !== true) {
-            throw new Error(readinessResult.detail || "Responder readiness could not be checked.");
+            throw new Error(
+              readinessResult.detail ||
+              ("Responder readiness request failed (HTTP " + readinessResponse.status + ").")
+            );
           }
           if (!cancelled) setReadiness(readinessResult);
         } catch (diagnosticError) {
-          if (!cancelled) setReadinessError(diagnosticError.message || "Responder readiness is unavailable.");
+          if (!cancelled) {
+            setReadinessError(
+              diagnosticError.name === "AbortError"
+                ? "The backend did not answer within 15 seconds. Check whether the Render service has deployed the latest backend commit."
+                : (diagnosticError.message || "Responder readiness is unavailable.")
+            );
+          }
+        } finally {
+          clearTimeout(readinessTimeout);
+          if (!cancelled) setReadinessLoading(false);
         }
 
         // Read the audit collection once under Firestore rules, then filter
@@ -254,7 +279,8 @@ function IFSEEmergencyMonitoring() {
 
           <h3>Responder readiness (read-only)</h3>
           <p>This checks the same agency collections used by automatic dispatch. It cannot approve, stop, or control dispatch.</p>
-          {readinessError && <p role="status">{readinessError}</p>}
+          {readinessLoading && <p role="status">Checking the live dispatch agency collections…</p>}
+          {readinessError && <p role="alert">{readinessError}</p>}
           {readiness && readiness.agencies.map((agency) => (
             <div key={agency.ruleId} style={{ background: "#0f172a", padding: "12px", borderRadius: "8px", marginTop: "10px" }}>
               <strong>{agency.primaryAgency || "Agency not resolved"}</strong>
