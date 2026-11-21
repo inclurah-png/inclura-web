@@ -13,13 +13,21 @@ function SharedPostPage() {
     let active = true;
     async function loadSharedPost() {
       try {
-        const snapshot = await getDoc(doc(db, "posts", id));
+        const snapshot = await getDoc(doc(db, "publicSharedPosts", id));
         if (!active) return;
-        if (!snapshot.exists() || snapshot.data().externalShareEnabled !== true) {
+        if (!snapshot.exists() || snapshot.data().active !== true) {
           setUnavailable(true);
           return;
         }
-        setPost({ id: snapshot.id, ...snapshot.data() });
+        const safeData = snapshot.data();
+        setPost({
+          id: snapshot.id,
+          userName: safeData.userName || "Inclura member",
+          text: safeData.text || "",
+          imageUrl: safeData.imageUrl || "",
+          videoUrl: safeData.videoUrl || "",
+          imageAlt: safeData.imageAlt || "",
+        });
       } catch (error) {
         console.error("Public Inclura post could not be loaded:", error);
         if (active) setUnavailable(true);
@@ -61,7 +69,7 @@ function SharedPostPage() {
         ) : unavailable ? (
           <>
             <h1>This post is not publicly available</h1>
-            <p>The creator has not enabled external sharing for this post, or the link is no longer available.</p>
+            <p>The creator has not enabled public sharing for this post, or the link has been revoked.</p>
             <Link to="/" style={linkStyle}>Visit Inclura</Link>
             <Link to="/signup" style={linkStyle}>Join Inclura</Link>
           </>
@@ -89,7 +97,7 @@ function SharedPostPage() {
         )}
       </section>
       <footer style={{ maxWidth: "720px", margin: "0 auto", color: "#94a3b8", fontSize: "13px" }}>
-        Inclura shares only posts whose creator has chosen Public visibility.
+        Inclura displays only the limited content the creator explicitly approved for public sharing.
       </footer>
     </main>
   );
