@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
 createUserWithEmailAndPassword,
@@ -45,6 +45,64 @@ useState("");
 const [accessibilityNeeds,
 setAccessibilityNeeds] =
 useState([]);
+
+// Complete Google sign-up when a mobile browser returns from Firebase.
+useEffect(() => {
+  let active = true;
+
+  getRedirectResult(auth)
+    .then(async (result) => {
+      if (!active || !result?.user) return;
+
+      const user = result.user;
+      try {
+        await setDoc(
+          doc(db, "users", user.uid),
+          {
+            uid: user.uid,
+            fullName: user.displayName || "",
+            email: user.email || "",
+            createdAt: serverTimestamp(),
+            verified: false,
+            badgeType: "",
+            creatorVerified: false,
+            creatorVerifiedAt: null,
+            premium: false,
+            premiumTier: "",
+            role: "user",
+            resumeCompleted: false,
+            accessibilityNeeds: [],
+            accessibility: {
+              deaf: false,
+              blindLowVision: false,
+              wheelchair: false,
+              nonVerbal: false,
+              motorImpaired: false,
+              neurodivergent: false,
+              noDisability: false,
+            },
+            followers: [],
+            following: [],
+            savedPosts: [],
+            profilePhoto: user.photoURL || "",
+          },
+          { merge: true }
+        );
+      } catch (profileError) {
+        console.error("Profile setup error:", profileError);
+      }
+
+      navigate("/onboarding");
+    })
+    .catch((redirectError) => {
+      console.error("Google signup redirect error:", redirectError);
+      if (active) setError(getAuthErrorInfo(redirectError));
+    });
+
+  return () => {
+    active = false;
+  };
+}, [navigate]);
 
 const accessibilityOptions = [
 "🦻 Deaf/HoH",
@@ -180,6 +238,16 @@ getAuthErrorInfo(signupError)
 async function handleGoogleSignup() {
 
 try {
+
+const isMobileBrowser =
+  /Android|iPhone|iPad|iPod/i.test(
+    navigator.userAgent
+  );
+
+if (isMobileBrowser) {
+  await signInWithRedirect(auth, googleProvider);
+  return;
+}
 
 const result =
 await signInWithPopup(
