@@ -15,6 +15,7 @@ function EmergencyResponders() {
   const [authorised, setAuthorised] = useState(false);
   const [error, setError] = useState("");
   const [accessChecked, setAccessChecked] = useState(false);
+  const [notificationOnly, setNotificationOnly] = useState(false);
 
   useEffect(() => {
     let unsubscribe = null;
@@ -36,9 +37,18 @@ function EmergencyResponders() {
 
         if (!active) return;
 
+        if (tokenResult.claims.sosNotificationOnly === true) {
+          // Notification-only accounts must not see responder-management controls.
+          setNotificationOnly(true);
+          setAuthorised(false);
+          setAccessChecked(true);
+          setLoading(false);
+          return;
+        }
+
         if (tokenResult.claims.admin !== true) {
           setAuthorised(false);
-          setError("Access denied. Administrator permission is required.");
+          setError("Responder management is restricted to authorized administrators.");
           setAccessChecked(true);
           setLoading(false);
           return;
@@ -148,6 +158,8 @@ function EmergencyResponders() {
   };
 
   const availableCount = responders.filter(isAvailable).length;
+
+  if (notificationOnly) return null;
 
   const cardStyle = {
     background: "#111827",
