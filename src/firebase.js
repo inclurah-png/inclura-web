@@ -12,7 +12,7 @@ import {
 } from "firebase/storage";
 import {
   initializeAppCheck,
-  ReCaptchaV3Provider,
+  ReCaptchaEnterpriseProvider,
 } from "firebase/app-check";
 
 // Only authDomain varies by environment: it is the origin Firebase serves
@@ -41,14 +41,15 @@ const firebaseConfig = {
 const app =
   initializeApp(firebaseConfig);
 
-// App Check uses the invisible reCAPTCHA v3 provider only when a public
-// production site key is configured. No Firebase enforcement is enabled here.
+// App Check uses the registered reCAPTCHA Enterprise (Fraud Defense) key.
+// Token auto-refresh is enabled; Firebase enforcement remains off until
+// legitimate traffic has been monitored and verified.
 const appCheckSiteKey =
-  import.meta.env.VITE_RECAPTCHA_V3_SITE_KEY;
+  import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY;
 
 export const appCheck = appCheckSiteKey
   ? initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(appCheckSiteKey),
+      provider: new ReCaptchaEnterpriseProvider(appCheckSiteKey),
       isTokenAutoRefreshEnabled: true,
     })
   : null;
