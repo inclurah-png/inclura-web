@@ -1,6 +1,4 @@
-import {
-  dispatchEmergency,
-} from "../services/ifseDispatchEngine";
+
 
 import {
   useEffect,
@@ -727,27 +725,50 @@ function SOS() {
       // ============================================================
       // STEP 3 — AUTHORITATIVE IFSE DISPATCH
       // ============================================================
+      // Dispatch is performed server-side because Firestore protects
+      // responder assignments and emergency status from client writes.
 
-      const dispatchResult =
-        await dispatchEmergency(
-          emergencyData
+      let dispatchResult = null;
+
+      try {
+        const signedInUser = auth.currentUser;
+
+        if (!signedInUser) {
+          throw new Error("Your Inclura session has expired. Please sign in again.");
+        }
+
+        const idToken = await signedInUser.getIdToken();
+
+        const dispatchResponse = await fetch(
+          SOS_BACKEND_URL + "/api/ifse-dispatch/" + encodeURIComponent(emergencyId) + "/dispatch",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + idToken
+            }
+          }
         );
 
-      console.log(
-        "IFSE Dispatch Result:",
-        dispatchResult
-      );
+        dispatchResult = await dispatchResponse.json().catch(() => ({}));
 
-      if (!dispatchResult || dispatchResult.success !== true) {
-        console.error("IFSE dispatch failed:", dispatchResult);
-        // The member-owned SOS record is immutable from the client.
-        // Preserve the submitted emergency even when dispatch is unavailable.
-        alert("Your SOS request was recorded, but IFSE could not dispatch a responder. No responder assignment is confirmed. Please contact local emergency services directly now if anyone is in immediate danger.");
+        if (!dispatchResponse.ok || dispatchResult.success !== true) {
+          console.error("IFSE server dispatch failed:", dispatchResult);
+          alert(
+            "Your SOS request was recorded, but IFSE could not dispatch a responder. " +
+            (dispatchResult.message || "No responder assignment is confirmed.") +
+            " Please contact local emergency services directly now if anyone is in immediate danger."
+          );
+          return;
+        }
+      } catch (dispatchError) {
+        console.error("IFSE server dispatch request failed:", dispatchError);
+        alert(
+          "Your SOS request was recorded, but the IFSE dispatch service could not be reached. " +
+          "No responder assignment is confirmed. Please contact local emergency services directly now if anyone is in immediate danger."
+        );
         return;
       }
-
-      // IFSE dispatch owns assignment updates. Do not perform a second
-      // client-side write to the protected emergencySOS record here.
 
 
       // ============================================================
