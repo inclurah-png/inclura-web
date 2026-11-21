@@ -33,7 +33,7 @@ import CommunityAssistance from "./CommunityAssistance";
 import IFSEEmergencyMonitoring from "./IFSEEmergencyMonitoring";
 import EmergencyAnalytics from "./EmergencyAnalytics";
 
-const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\\/+$/, "");
+const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\/+$/, "");
 
 
 function SOS() {
