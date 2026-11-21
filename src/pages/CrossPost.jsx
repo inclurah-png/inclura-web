@@ -539,6 +539,18 @@ function CrossPost() {
           <StatCard title="Awaiting secure processing" value={stats.pending} />
         </div>
 
+        {requestStats.length > 0 && (
+          <div style={{ marginTop: "18px" }}>
+            <h3 style={{ marginBottom: "8px" }}>External publication status</h3>
+            <p style={styles.helper}>
+              Watermark preparation does not publish a post. Publication is confirmed only when an authorized external service reports success.
+            </p>
+            {requestStats.map((item) => (
+              <PublicationStatusCard key={item.id} item={item} />
+            ))}
+          </div>
+        )}
+
         {requestStats.filter((item) =>
           item.watermark?.required === true &&
           item.watermark?.status !== "completed"
@@ -639,6 +651,41 @@ function RequestActivityCard({ item, onRetry, processing, prepared = false }) {
           {processing ? "Processing securely…" : "Retry secure watermark processing"}
         </button>
       )}
+    </div>
+  );
+}
+
+function PublicationStatusCard({ item }) {
+  const publishing = item.publishing || {};
+  const confirmed = publishing.status === "published" && publishing.completed === true;
+  const failed = publishing.status === "failed";
+  const statusText = confirmed
+    ? "Published — confirmed by external service"
+    : failed
+      ? "Publication failed — not published"
+      : "Not published — awaiting authorized publishing service";
+  const platforms = Array.isArray(item.platforms) ? item.platforms.join(", ") : "No destination recorded";
+
+  return (
+    <div
+      style={{
+        border: "1px solid #475569",
+        borderRadius: "12px",
+        padding: "12px",
+        marginTop: "10px",
+        background: "rgba(15, 23, 42, 0.55)",
+      }}
+    >
+      <p style={styles.helper}>Request <span style={styles.code}>{item.id}</span></p>
+      <p style={styles.helper}>Destination(s): {platforms}</p>
+      <p style={{ ...styles.helper, color: confirmed ? "#86efac" : failed ? "#fca5a5" : "#fcd34d" }}>
+        External publication: {statusText}
+      </p>
+      <p style={styles.helper}>
+        Media watermark: {item.watermark?.required === true
+          ? (item.watermark?.status === "completed" ? "prepared" : "not yet confirmed")
+          : "not required"}
+      </p>
     </div>
   );
 }
