@@ -378,6 +378,15 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Social connection records are private to their owner. OAuth credentials/tokens
+    // must never be stored in client-readable Firestore documents; authorized backend
+    // services own credential storage and publishing updates.
+    match /socialConnections/{connectionId} {
+      allow get, list: if request.auth != null
+                       && resource.data.userId == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
     // Public member directory supports discovery without exposing private users/{uid} records.
     // It intentionally excludes email, phone number and private accessibility settings.
     // Cross-post requests are private to the authenticated creator.
