@@ -11,6 +11,11 @@ service cloud.firestore {
       allow create: if request.auth != null
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.sourcePostId == postId
+                    && get(/databases/$(database)/documents/posts/$(postId)).data.userId == request.auth.uid
+                    && request.resource.data.userName == get(/databases/$(database)/documents/posts/$(postId)).data.userName
+                    && request.resource.data.text == get(/databases/$(database)/documents/posts/$(postId)).data.text
+                    && request.resource.data.imageUrl == get(/databases/$(database)/documents/posts/$(postId)).data.imageUrl
+                    && request.resource.data.videoUrl == get(/databases/$(database)/documents/posts/$(postId)).data.videoUrl
                     && request.resource.data.userName is string
                     && request.resource.data.userName.size() <= 100
                     && request.resource.data.text is string
