@@ -5,7 +5,11 @@ service cloud.firestore {
     // Public share snapshots contain only creator-approved display fields.
     // Anonymous visitors may fetch one active document by ID; collection listing is forbidden.
     match /publicSharedPosts/{postId} {
-      allow get: if resource.data.active == true;
+      // Owners may inspect their own snapshot, including an inactive one or a not-yet-created ID.
+      // Anonymous visitors may fetch only active snapshots; collection listing stays forbidden.
+      allow get: if resource == null
+                 || resource.data.active == true
+                 || (request.auth != null && resource.data.ownerId == request.auth.uid);
       allow list: if false;
 
       allow create: if request.auth != null
