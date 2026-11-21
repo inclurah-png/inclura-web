@@ -12,6 +12,8 @@ import {
 import {
   doc,
   onSnapshot,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
 import {
@@ -283,6 +285,48 @@ export function AuthProvider({
                     profileData
                   )
                 );
+
+                // Keep every signed-in member discoverable through a deliberately
+                // limited public directory. Never copy contact or private data.
+                const publicName = resolveDisplayName(currentUser, profileData);
+                const publicMember = {
+                  uid: currentUser.uid,
+                  fullName: publicName,
+                  photoURL:
+                    profileData.photoURL ||
+                    profileData.profilePhoto ||
+                    currentUser.photoURL ||
+                    "",
+                  location:
+                    typeof profileData.location === "string"
+                      ? profileData.location.slice(0, 250)
+                      : "",
+                  category:
+                    typeof profileData.category === "string"
+                      ? profileData.category.slice(0, 100)
+                      : typeof profileData.verificationCategory === "string"
+                        ? profileData.verificationCategory.slice(0, 100)
+                        : "",
+                  accountType:
+                    typeof profileData.accountType === "string"
+                      ? profileData.accountType.slice(0, 100)
+                      : "individual",
+                  bio:
+                    typeof profileData.bio === "string"
+                      ? profileData.bio.slice(0, 1000)
+                      : "",
+                  updatedAt: serverTimestamp(),
+                };
+                setDoc(
+                  doc(db, "memberDirectory", currentUser.uid),
+                  publicMember,
+                  { merge: true }
+                ).catch((directoryError) => {
+                  console.warn(
+                    "Member discovery profile sync failed:",
+                    directoryError
+                  );
+                });
 
                 setProfileLoading(false);
               },
