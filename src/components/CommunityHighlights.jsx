@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   collection,
+  doc,
+  getDoc,
   limit,
   onSnapshot,
   orderBy,
@@ -13,10 +15,29 @@ import { auth, db } from "../firebase";
 function CommunityHighlights() {
   const { t } = useTranslation();
   const [members, setMembers] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
+    const user = auth.currentUser;
+    if (!user) {
+      setLoading(false);
+      return undefined;
+    }
+
+    // Load the current member's following list only so Community Highlights
+    // can deliberately avoid showing people this member has already added.
+    let unsubscribeProfile = () => {};
+    getDoc(doc(db, "users", user.uid))
+      .then((profileSnapshot) => {
+        const data = profileSnapshot.exists() ? profileSnapshot.data() : {};
+        setFollowing(Array.isArray(data.following) ? data.following : []);
+      })
+      .catch((error) => {
+        console.warn("Community highlights following list failed:", error);
+      });
+
     // Read the wider member directory, not chats, follows, or interaction history.
     const directoryQuery = query(
       collection(db, "memberDirectory"),
@@ -59,7 +80,10 @@ function CommunityHighlights() {
       }
     );
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      unsubscribeProfile();
+    };
   }, []);
 
   // Rotate discovery order daily so the same recently updated profiles do not
@@ -75,10 +99,13 @@ function CommunityHighlights() {
       return value >>> 0;
     };
 
+    const excluded = new Set([auth.currentUser?.uid, ...following]);
+
     return [...members]
+      .filter((member) => !excluded.has(member.uid))
       .sort((a, b) => score(a.uid) - score(b.uid))
       .slice(0, 8);
-  }, [members]);
+  }, [members, following]);
 
   return (
     <section
