@@ -48,6 +48,8 @@ function IFSEEmergencyMonitoring() {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [lastUpdate, setLastUpdate] = useState(null);
+  const [readiness, setReadiness] = useState(null);
+  const [readinessError, setReadinessError] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -111,6 +113,22 @@ function IFSEEmergencyMonitoring() {
         if (cancelled) return;
 
         setAuthorized(true);
+
+        // Read-only backend diagnostics inspect the exact collections used by dispatch.
+        try {
+          const readinessToken = await currentUser.getIdToken();
+          const readinessResponse = await fetch(
+            SOS_BACKEND_URL + "/api/sos-responder-readiness",
+            { headers: { Authorization: "Bearer " + readinessToken } }
+          );
+          const readinessResult = await readinessResponse.json().catch(() => ({}));
+          if (!readinessResponse.ok || readinessResult.success !== true) {
+            throw new Error(readinessResult.detail || "Responder readiness could not be checked.");
+          }
+          if (!cancelled) setReadiness(readinessResult);
+        } catch (diagnosticError) {
+          if (!cancelled) setReadinessError(diagnosticError.message || "Responder readiness is unavailable.");
+        }
 
         // Read the audit collection once under Firestore rules, then filter
         // locally. This avoids a composite-index dependency that can make
@@ -233,6 +251,22 @@ function IFSEEmergencyMonitoring() {
           <p>
             <strong>Monitoring scope:</strong> SOS audit logs
           </p>
+
+          <h3>Responder readiness (read-only)</h3>
+          <p>This checks the same agency collections used by automatic dispatch. It cannot approve, stop, or control dispatch.</p>
+          {readinessError && <p role="status">{readinessError}</p>}
+          {readiness && readiness.agencies.map((agency) => (
+            <div key={agency.ruleId} style={{ background: "#0f172a", padding: "12px", borderRadius: "8px", marginTop: "10px" }}>
+              <strong>{agency.primaryAgency || "Agency not resolved"}</strong>
+              <p>Response rule: {agency.ruleId}</p>
+              <p>Responder collection: {agency.responderCollection || "Not configured"}</p>
+              <p>Responder records: {agency.responderRecords}</p>
+              <p>Eligible responders: {agency.eligibleResponders}</p>
+              <p>Status: {agency.status}</p>
+              {agency.reason && <p role="status">Reason: {agency.reason}</p>}
+            </div>
+          ))}
+          {readiness && readiness.agencies.length === 0 && <p>No active emergency response rules were found.</p>}
 
           <p>
             <strong>Last successful snapshot:</strong>{" "}
