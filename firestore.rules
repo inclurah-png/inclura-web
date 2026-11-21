@@ -2,12 +2,54 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Feed posts must remain readable by authenticated Inclura members.
+    // Public share snapshots contain only creator-approved display fields.
+    // Anonymous visitors may fetch one active document by ID; collection listing is forbidden.
+    match /publicSharedPosts/{postId} {
+      allow get: if resource.data.active == true;
+      allow list: if false;
+
+      allow create: if request.auth != null
+                    && request.resource.data.ownerId == request.auth.uid
+                    && request.resource.data.sourcePostId == postId
+                    && request.resource.data.userName is string
+                    && request.resource.data.userName.size() <= 100
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() <= 10000
+                    && request.resource.data.imageUrl is string
+                    && request.resource.data.videoUrl is string
+                    && request.resource.data.imageAlt is string
+                    && request.resource.data.imageAlt.size() <= 300
+                    && request.resource.data.active == true
+                    && request.resource.data.sharedAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'ownerId', 'sourcePostId', 'userName', 'text',
+                      'imageUrl', 'videoUrl', 'imageAlt', 'active', 'sharedAt'
+                    ])
+                    && (
+                      request.resource.data.imageUrl == ''
+                      || request.resource.data.imageUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && (
+                      request.resource.data.videoUrl == ''
+                      || request.resource.data.videoUrl.matches('https://res\\.cloudinary\\.com/.*')
+                    )
+                    && !(
+                      request.resource.data.imageUrl.size() > 0
+                      && request.resource.data.videoUrl.size() > 0
+                    );
+
+      // The owner may only activate or revoke the existing public snapshot.
+      allow update: if request.auth != null
+                    && resource.data.ownerId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active'])
+                    && request.resource.data.active is bool;
+      allow delete: if false;
+    }
+
+    // Full source posts are never exposed to anonymous visitors.
+    // Public links use the separate, minimal publicSharedPosts collection below.
     match /posts/{postId} {
-      // Public share links can read only posts whose creator explicitly enabled external sharing.
-      // Authenticated members retain feed access to posts.
-      allow get: if request.auth != null || resource.data.externalShareEnabled == true;
-      allow list: if request.auth != null;
+      allow get, list: if request.auth != null;
 
       // Only the post owner may enable or disable external sharing, and no other post field may change here.
       allow update: if request.auth != null
