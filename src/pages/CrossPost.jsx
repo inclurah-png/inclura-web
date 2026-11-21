@@ -6,6 +6,7 @@ import {
   getDoc,
   addDoc,
   updateDoc,
+  setDoc,
   collection,
   onSnapshot,
   query,
@@ -225,9 +226,27 @@ function CrossPost() {
     setCreatingRequest(true);
 
     try {
-      if (visibility === "public" && post.externalShareEnabled !== true) {
-        await updateDoc(doc(db, "posts", post.id), { externalShareEnabled: true });
-        setPost((current) => ({ ...current, externalShareEnabled: true }));
+      const publicShareRef = doc(db, "publicSharedPosts", post.id);
+      const existingPublicShare = await getDoc(publicShareRef);
+
+      if (visibility === "public") {
+        if (existingPublicShare.exists()) {
+          await updateDoc(publicShareRef, { active: true });
+        } else {
+          await setDoc(publicShareRef, {
+            ownerId: uid,
+            sourcePostId: post.id,
+            userName: String(post.userName || "Inclura member").slice(0, 100),
+            text: String(post.text || "").slice(0, 10000),
+            imageUrl: String(post.imageUrl || ""),
+            videoUrl: String(post.videoUrl || ""),
+            imageAlt: String(post.imageAlt || "").slice(0, 300),
+            active: true,
+            sharedAt: serverTimestamp(),
+          });
+        }
+      } else if (existingPublicShare.exists()) {
+        await updateDoc(publicShareRef, { active: false });
       }
 
       const requestRef = await addDoc(collection(db, "crossPostRequests"), {
