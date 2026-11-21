@@ -74,7 +74,7 @@ function IFSEEmergencyMonitoring() {
           true
         );
 
-        if (tokenResult.claims.admin !== true) {
+        if (tokenResult.claims.admin !== true && tokenResult.claims.sosNotificationOnly !== true) {
           throw new Error(
             "Administrator permission is required to access emergency audit logs."
           );
