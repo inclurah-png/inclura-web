@@ -117,6 +117,21 @@ function CrossPost() {
     );
   }
 
+  function shareToTelegram() {
+    const mediaLink = watermarkedMediaUrl
+      ? `Prepared media copy: ${watermarkedMediaUrl}`
+      : "";
+    const shareText = [
+      message.trim(),
+      post?.text || "",
+      mediaLink,
+    ].filter(Boolean).join("\n\n");
+    const shareUrl = "https://t.me/share/url?url=" +
+      encodeURIComponent("https://inclura-prod-90734.web.app/") +
+      "&text=" + encodeURIComponent(shareText);
+    window.location.assign(shareUrl);
+  }
+
   async function processWatermark(targetRequestId) {
     setWatermarkStatus("processing");
     setWatermarkError("");
@@ -527,6 +542,24 @@ function CrossPost() {
             <p style={styles.helper}>
               This prepares the media only; it does not publish automatically to external platforms.
             </p>
+            {selectedPlatforms.includes("telegram") && (
+              <div style={{ marginTop: "14px" }}>
+                <button
+                  type="button"
+                  onClick={shareToTelegram}
+                  disabled={Boolean((post.imageUrl || post.videoUrl) && watermarkStatus !== "completed")}
+                  style={{
+                    ...styles.primaryButton,
+                    opacity: Boolean((post.imageUrl || post.videoUrl) && watermarkStatus !== "completed") ? 0.55 : 1,
+                  }}
+                >
+                  ➤ Share to Telegram
+                </button>
+                <p style={styles.helper}>
+                  Telegram will open with your message and Inclura link ready. Choose your channel or contact and press Send. If this post contains media, its prepared watermarked copy is shared as a link, not uploaded as an attachment. Inclura cannot confirm the Telegram send, so this request will not be marked as published.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </section>
