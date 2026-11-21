@@ -130,24 +130,24 @@ function CrossPost() {
     }
 
     const publicPostUrl = `https://inclura-prod-90734.web.app/share/${post.id}`;
-    const shareText = [
-      message.trim(),
-      post?.text || "",
-      "Discover Inclura — a social world where everyone belongs. Connect across abilities, communicate across languages, and build meaningful relationships.",
-      "Join Inclura: " + publicPostUrl,
-    ].filter(Boolean).join("\n\n");
+    // Keep the creator's invitation and original post text, but add the public URL
+    // only where the destination does not provide a separate URL field.
+    const shareText = [message.trim(), post?.text || ""]
+      .filter(Boolean)
+      .join("\n\n");
     const encodedUrl = encodeURIComponent(publicPostUrl);
     const encodedText = encodeURIComponent(shareText);
+    const encodedTextWithUrl = encodeURIComponent(`${shareText}\n\n${publicPostUrl}`);
     const encodedTitle = encodeURIComponent("Discover Inclura — a social world where everyone belongs");
 
     const destinations = {
       telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
-      whatsapp: `https://wa.me/?text=${encodedText}`,
+      whatsapp: `https://wa.me/?text=${encodedTextWithUrl}`,
       facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
       x: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
-      threads: `https://www.threads.net/intent/post?text=${encodedText}`,
+      threads: `https://www.threads.net/intent/post?text=${encodedTextWithUrl}`,
     };
 
     if (platformId === "instagram" || platformId === "native") {
