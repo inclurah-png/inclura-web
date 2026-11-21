@@ -755,6 +755,14 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // IFSE SOS audit records are written only by the trusted backend.
+    // Only accounts carrying the Firebase admin custom claim may inspect them.
+    match /ifseAuditLogs/{logId} {
+      allow get, list: if request.auth != null
+                      && request.auth.token.admin == true;
+      allow create, update, delete: if false;
+    }
+
     // Emergency requests are private to their creator.
     // Client accounts may submit and view their own SOS records, but cannot
     // change dispatch decisions, responder assignments, or case outcomes.
