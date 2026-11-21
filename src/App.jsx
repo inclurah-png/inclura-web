@@ -40,6 +40,7 @@ const CareRequestPage = lazy(() => import("./pages/CareRequestPage"));
 const MentorHub = lazy(() => import("./pages/MentorHub"));
 const PostPage = lazy(() => import("./pages/PostPage"));
 const CrossPost = lazy(() => import("./pages/CrossPost"));
+const SocialConnections = lazy(() => import("./pages/SocialConnections"));
 const VerificationCenter = lazy(() => import("./pages/VerificationCenter"));
 const VerificationApplication = lazy(() => import("./pages/VerificationApplication"));
 const VerificationDocuments = lazy(() => import("./pages/VerificationDocuments"));
@@ -141,6 +142,15 @@ function App() {
         element={
           <ProtectedRoute>
             <CrossPost />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/social-connections"
+        element={
+          <ProtectedRoute>
+            <SocialConnections />
           </ProtectedRoute>
         }
       />
