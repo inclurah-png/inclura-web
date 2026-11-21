@@ -119,24 +119,64 @@ function CrossPost() {
     );
   }
 
-  function shareToTelegram() {
-    const mediaLink = watermarkedMediaUrl
-      ? `Prepared media copy: ${watermarkedMediaUrl}`
-      : "";
+  async function shareToPlatform(platformId) {
+    if (visibility !== "public") {
+      setError("Choose Public visibility before sharing a post link outside Inclura.");
+      return;
+    }
+    if ((post?.imageUrl || post?.videoUrl) && watermarkStatus !== "completed") {
+      setError("Wait until Inclura confirms the watermarked media copy is ready.");
+      return;
+    }
+
+    const publicPostUrl = `https://inclura-prod-90734.web.app/share/${post.id}`;
     const shareText = [
       message.trim(),
       post?.text || "",
-      mediaLink,
+      "Discover Inclura — a social world where everyone belongs. Connect across abilities, communicate across languages, and build meaningful relationships.",
+      "Join Inclura: " + publicPostUrl,
     ].filter(Boolean).join("\n\n");
-    if (visibility !== "public") {
-      setError("Choose Public visibility before sharing a direct post link. Followers-only posts are not available to external recipients.");
+    const encodedUrl = encodeURIComponent(publicPostUrl);
+    const encodedText = encodeURIComponent(shareText);
+    const encodedTitle = encodeURIComponent("Discover Inclura — a social world where everyone belongs");
+
+    const destinations = {
+      telegram: `https://t.me/share/url?url=${encodedUrl}&text=${encodedText}`,
+      whatsapp: `https://wa.me/?text=${encodedText}`,
+      facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`,
+      x: `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
+      reddit: `https://www.reddit.com/submit?url=${encodedUrl}&title=${encodedTitle}`,
+      threads: `https://www.threads.net/intent/post?text=${encodedText}`,
+    };
+
+    if (platformId === "instagram" || platformId === "native") {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        try {
+          await navigator.share({
+            title: "Discover Inclura",
+            text: shareText,
+            url: publicPostUrl,
+          });
+        } catch (shareError) {
+          if (shareError?.name !== "AbortError") {
+            setError("Your device could not open its sharing menu. Copy the public Inclura link and share it from your preferred app.");
+          }
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(`${shareText}\n\n${publicPostUrl}`);
+          setError("The Inclura link and invitation were copied. Open Instagram or another app and paste them into your post or message.");
+        } catch {
+          setError("Instagram sharing needs your phone's share menu. Copy this link and paste it into Instagram: " + publicPostUrl);
+        }
+      }
       return;
     }
-    const publicPostUrl = `https://inclura-prod-90734.web.app/share/${post.id}`;
-    const shareUrl = "https://t.me/share/url?url=" +
-      encodeURIComponent(publicPostUrl) +
-      "&text=" + encodeURIComponent(shareText);
-    window.location.assign(shareUrl);
+
+    const destinationUrl = destinations[platformId];
+    if (!destinationUrl) return;
+    window.open(destinationUrl, "_blank", "noopener,noreferrer");
   }
 
   async function processWatermark(targetRequestId) {
@@ -572,24 +612,42 @@ function CrossPost() {
             <p style={styles.helper}>
               This prepares the media only; it does not publish automatically to external platforms.
             </p>
-            {selectedPlatforms.includes("telegram") && visibility !== "public" && (
-              <p style={styles.helper}>Telegram direct links require Public visibility. Change Visibility to Public if you want recipients to open this post without signing in.</p>
+            {selectedPlatforms.length > 0 && visibility !== "public" && (
+              <p style={styles.helper}>External sharing requires Public visibility so recipients can open the approved post without signing in. Followers / connections visibility remains inside Inclura.</p>
             )}
-            {selectedPlatforms.includes("telegram") && visibility === "public" && (
+            {selectedPlatforms.length > 0 && visibility === "public" && (
               <div style={{ marginTop: "14px" }}>
+                <h3 style={{ marginBottom: "8px" }}>Share your Inclura invitation</h3>
+                <p style={styles.helper}>
+                  Choose a destination below. Each option opens that service or your phone's sharing menu; review the content and press Send or Post there. Instagram uses your phone's share menu. Media is displayed on the secure Inclura public post page; the watermarked copy is prepared separately.
+                </p>
+                <div style={styles.platformGrid}>
+                  {selectedPlatforms.map((platformId) => {
+                    const platform = platforms.find((item) => item.id === platformId);
+                    const isReady = !(post.imageUrl || post.videoUrl) || watermarkStatus === "completed";
+                    return (
+                      <button
+                        key={platformId}
+                        type="button"
+                        onClick={() => shareToPlatform(platformId)}
+                        disabled={!isReady}
+                        style={{ ...styles.platformButton, ...styles.platformSelected, opacity: isReady ? 1 : 0.55 }}
+                      >
+                        <span aria-hidden="true">{platform?.icon || "↗"}</span>
+                        <span>Share to {platform?.label || platformId}</span>
+                      </button>
+                    );
+                  })}
+                </div>
                 <button
                   type="button"
-                  onClick={shareToTelegram}
-                  disabled={Boolean((post.imageUrl || post.videoUrl) && watermarkStatus !== "completed")}
-                  style={{
-                    ...styles.primaryButton,
-                    opacity: Boolean((post.imageUrl || post.videoUrl) && watermarkStatus !== "completed") ? 0.55 : 1,
-                  }}
+                  onClick={() => shareToPlatform("native")}
+                  style={{ ...styles.primaryButton, marginTop: "12px" }}
                 >
-                  ➤ Share to Telegram
+                  ↗ Share using another app
                 </button>
                 <p style={styles.helper}>
-                  Telegram will open with your message and Inclura link ready. Choose your channel or contact and press Send. If this post contains media, its prepared watermarked copy is shared as a link, not uploaded as an attachment. Inclura cannot confirm the Telegram send, so this request will not be marked as published.
+                  Inclura prepares the public post and invitation, but cannot confirm that an external platform accepted your post. External publication is not marked as confirmed unless an authorised publishing service reports success.
                 </p>
               </div>
             )}
