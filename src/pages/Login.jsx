@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
 } from "firebase/auth";
 
 import {
@@ -136,6 +138,32 @@ function Login() {
     setPasskeyLoading,
   ] = useState(false);
 
+
+  // Complete Google sign-in after Firebase returns from its redirect.
+  useEffect(() => {
+    let active = true;
+
+    getRedirectResult(auth)
+      .then((result) => {
+        if (active && result?.user) {
+          navigate("/profile");
+        }
+      })
+      .catch((redirectError) => {
+        console.error(
+          "Google Redirect Login Error:",
+          redirectError
+        );
+        if (active) {
+          setError(getAuthErrorInfo(redirectError));
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [navigate]);
+
   // =====================================================
   // Email / Password Login
   // =====================================================
@@ -200,6 +228,21 @@ function Login() {
 
     try {
       setLoading(true);
+
+      // Android and other mobile browsers use redirect because
+      // popup windows may be blocked or fail to open in embedded browsers.
+      const isMobileBrowser =
+        /Android|iPhone|iPad|iPod/i.test(
+          navigator.userAgent
+        );
+
+      if (isMobileBrowser) {
+        await signInWithRedirect(
+          auth,
+          googleProvider
+        );
+        return;
+      }
 
       await signInWithPopup(
         auth,
@@ -530,7 +573,7 @@ function Login() {
             cursor: "pointer",
           }}
         >
-          Continue with Google
+          {loading ? "Connecting to Google..." : "Continue with Google"}
         </button>
 
         {/* Passkey */}
