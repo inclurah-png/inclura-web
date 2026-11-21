@@ -313,8 +313,14 @@ service cloud.firestore {
                       'resumeCompleted',
                       'followers',
                       'following',
-                      'savedPosts'
-                    ]);
+                      'savedPosts',
+                      'acceptedCommunityStandards',
+                      'acceptedCommunityStandardsAt'
+                    ])
+                    && (!('acceptedCommunityStandards' in request.resource.data)
+                        || request.resource.data.acceptedCommunityStandards == true)
+                    && (!('acceptedCommunityStandardsAt' in request.resource.data)
+                        || request.resource.data.acceptedCommunityStandardsAt is timestamp);
 
       allow update: if (
                       request.auth != null
