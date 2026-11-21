@@ -11,6 +11,8 @@ import {
 
 import { auth, db } from "../firebase";
 
+const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\\/+$/, "");
+
 function formatDate(value) {
   if (!value) return "Unavailable";
 
@@ -69,14 +71,44 @@ function IFSEEmergencyMonitoring() {
           );
         }
 
-        const tokenResult = await getIdTokenResult(
+        let tokenResult = await getIdTokenResult(
           currentUser,
           true
         );
 
-        if (tokenResult.claims.admin !== true && tokenResult.claims.sosNotificationOnly !== true) {
+        if (
+          tokenResult.claims.admin !== true &&
+          tokenResult.claims.sosNotificationOnly !== true
+        ) {
+          const idToken = await currentUser.getIdToken();
+          const activationResponse = await fetch(
+            SOS_BACKEND_URL + "/api/sos-notification-access/activate",
+            {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + idToken,
+                "Content-Type": "application/json",
+              },
+            }
+          );
+          const activationResult = await activationResponse.json().catch(() => ({}));
+          if (!activationResponse.ok || activationResult.success !== true) {
+            throw new Error(
+              activationResult.detail ||
+              "Read-only SOS notification access has not been configured for this account."
+            );
+          }
+
+          await currentUser.getIdToken(true);
+          tokenResult = await getIdTokenResult(currentUser, true);
+        }
+
+        if (
+          tokenResult.claims.admin !== true &&
+          tokenResult.claims.sosNotificationOnly !== true
+        ) {
           throw new Error(
-            "Administrator permission is required to access emergency audit logs."
+            "Read-only SOS notification permission could not be verified. Please sign in again."
           );
         }
 
