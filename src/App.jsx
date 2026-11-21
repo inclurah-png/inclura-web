@@ -15,6 +15,7 @@ import CreatorRoute from "./components/CreatorRoute";
 import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
 
 const Home = lazy(() => import("./pages/Home"));
 const Login = lazy(() => import("./pages/Login"));
@@ -88,6 +89,7 @@ function App() {
 
   return (
     <Suspense fallback={<main role="status" aria-live="polite" style={{ minHeight: "100vh", display: "grid", placeItems: "center", background: "#020617", color: "#fff", fontSize: "18px" }}>Loading Inclura…</main>}>
+    <RouteErrorBoundary>
     <Routes>
 
       {/* ========================= */}
@@ -680,6 +682,7 @@ function App() {
       />
 
     </Routes>
+    </RouteErrorBoundary>
     </Suspense>
   );
 }
