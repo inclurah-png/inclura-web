@@ -1,3 +1,4 @@
+import { useState } from "react";
 import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
 import LanguageSelector from "./LanguageSelector";
@@ -16,6 +17,7 @@ import {
 } from "../context/AuthContext";
 
 function DashboardLayout({ children }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const {
     user,
   } = useAuth();
@@ -50,8 +52,30 @@ function DashboardLayout({ children }) {
 
 
   return (
-    <div
-      style={{
+    <>
+      <style>{`@media (max-width: 760px) {
+        .inclura-mobile-menu-button { display: block !important; }
+        .inclura-mobile-sidebar { display: none !important; position: fixed !important; top: 0 !important; left: 0 !important; height: 100vh !important; max-height: none !important; z-index: 1000 !important; border-radius: 0 !important; }
+        .inclura-mobile-sidebar.open { display: block !important; }
+        .inclura-dashboard-shell { padding: 70px 12px 20px !important; }
+      }`}</style>
+      <button
+        type="button"
+        className="inclura-mobile-menu-button"
+        onClick={() => setSidebarOpen((open) => !open)}
+        aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+        style={{ display: "none", position: "fixed", top: "16px", left: "16px", zIndex: 1001, border: "none", borderRadius: "10px", background: "#0f766e", color: "#fff", padding: "10px 12px", fontSize: "22px", cursor: "pointer" }}
+      >
+        ☰
+      </button>
+      <div
+        className={sidebarOpen ? "inclura-mobile-sidebar open" : "inclura-mobile-sidebar"}
+      >
+        <DashboardSidebar />
+      </div>
+      <div
+        className="inclura-dashboard-shell"
+        style={{
         display: "flex",
         gap: "24px",
         padding: "24px",
@@ -60,8 +84,6 @@ function DashboardLayout({ children }) {
         position: "relative",
       }}
     >
-      <DashboardSidebar />
-
       <div
         style={{
           flex: 1,
@@ -99,7 +121,8 @@ function DashboardLayout({ children }) {
 
         <AccessibilityButton />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 
