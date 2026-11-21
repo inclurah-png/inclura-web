@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import {
 createUserWithEmailAndPassword,
 signInWithPopup,
+signInWithRedirect,
+getRedirectResult,
 GoogleAuthProvider,
 } from "firebase/auth";
 
