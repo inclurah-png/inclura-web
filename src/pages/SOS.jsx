@@ -189,6 +189,13 @@ function SOS() {
 
       try {
 
+        const currentUser = auth.currentUser;
+
+        if (!currentUser) {
+          console.warn("SOS statistics skipped because no authenticated user is available yet.");
+          return;
+        }
+
         const openSnap =
           await getCountFromServer(
             query(
@@ -204,7 +211,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -225,7 +232,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -246,7 +253,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -267,7 +274,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -288,7 +295,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -309,7 +316,7 @@ function SOS() {
               where(
                 "userId",
                 "==",
-                auth.currentUser.uid
+                currentUser.uid
               )
             )
           );
@@ -844,10 +851,16 @@ function SOS() {
 
 
       // ============================================================
-      // STEP 7 — REFRESH SOS DASHBOARD
+      // STEP 7 — REFRESH SOS DASHBOARD WITHOUT RELOADING THE PAGE
       // ============================================================
-
-      window.location.reload();
+      // A full browser reload here can destroy the active React/Firebase
+      // session state and produce a generic "This page needs attention"
+      // error on some Android WebView/browser sessions. Keep the SOS page
+      // alive and refresh only the local counters instead.
+      setSosStats(previous => ({
+        ...previous,
+        open: Number(previous.open || 0) + 1
+      }));
 
 
     } catch (err) {
