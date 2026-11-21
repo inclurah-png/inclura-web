@@ -33,6 +33,8 @@ import CommunityAssistance from "./CommunityAssistance";
 import IFSEEmergencyMonitoring from "./IFSEEmergencyMonitoring";
 import EmergencyAnalytics from "./EmergencyAnalytics";
 
+const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\\/+$/, "");
+
 
 function SOS() {
 
@@ -742,6 +744,33 @@ function SOS() {
 
 
       // ============================================================
+      // STEP 3B — SEND SMS TO ACTIVE TRUSTED CONTACTS
+      // ============================================================
+      let trustedSmsResult = null;
+      try {
+        const signedInUser = auth.currentUser;
+        if (signedInUser) {
+          const idToken = await signedInUser.getIdToken();
+          const smsResponse = await fetch(
+            SOS_BACKEND_URL + "/api/sos-notifications/" + encodeURIComponent(emergencyId) + "/send",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: "Bearer " + idToken
+              }
+            }
+          );
+          trustedSmsResult = await smsResponse.json().catch(() => ({}));
+          if (!smsResponse.ok) {
+            console.warn("Trusted-contact SMS was not processed:", trustedSmsResult.message || smsResponse.status);
+          }
+        }
+      } catch (smsError) {
+        console.error("Trusted-contact SMS request failed:", smsError);
+      }
+
+      // ============================================================
       // STEP 4 — ESCALATION INFORMATION
       // ============================================================
 
@@ -772,8 +801,9 @@ function SOS() {
         "Your SOS was recorded and an IFSE responder assignment was created. Responder acceptance and arrival are not yet confirmed.\n\n" +
         "Emergency ID: " + emergencyId + "\n" +
         "Agency: " + (dispatchResult.agency || "Not specified") + "\n" +
-        "Assigned responder: " + (dispatchResult.responderName || "Pending") + "\n\n" +
-        "If this is an immediate life-threatening emergency, contact local emergency services directly as well."
+        "Assigned responder: " + (dispatchResult.responderName || "Pending") + "\n" +
+        (trustedSmsResult ? "Trusted-contact SMS accepted: " + (trustedSmsResult.sent || 0) + "; failed: " + (trustedSmsResult.failed || 0) + ". Acceptance is not delivery confirmation.\n" : "Trusted-contact SMS status could not be confirmed.\n") +
+        "\nIf this is an immediate life-threatening emergency, contact local emergency services directly as well."
       );
 
 
