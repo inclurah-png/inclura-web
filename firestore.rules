@@ -136,7 +136,7 @@ service cloud.firestore {
     // Comments are stored under each post.
     match /posts/{postId}/comments/{commentId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null
+      allow create: if isVerifiedMember()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.text is string
                     && request.resource.data.text.size() > 0
