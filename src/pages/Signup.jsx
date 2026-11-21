@@ -48,6 +48,9 @@ const [accessibilityNeeds,
 setAccessibilityNeeds] =
 useState([]);
 
+const [acceptedStandards, setAcceptedStandards] = useState(false);
+const [submitting, setSubmitting] = useState(false);
+
 // Complete Google sign-up when a mobile browser returns from Firebase.
 useEffect(() => {
   let active = true;
@@ -94,7 +97,12 @@ useEffect(() => {
         console.error("Profile setup error:", profileError);
       }
 
-      navigate("/onboarding");
+      if (user.emailVerified) {
+        navigate("/onboarding");
+      } else {
+        await sendEmailVerification(user);
+        navigate("/verify-email");
+      }
     })
     .catch((redirectError) => {
       console.error("Google signup redirect error:", redirectError);
@@ -142,6 +150,29 @@ option,
 async function handleSignup() {
 
 setError(null);
+const cleanName = fullName.trim().replace(/\\s+/g, " ");
+const cleanEmail = email.trim().toLowerCase();
+if (cleanName.length < 2 || cleanName.length > 80) {
+  setError({ message: "Enter your real display name (2–80 characters)." });
+  return;
+}
+if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(cleanEmail)) {
+  setError({ message: "Enter a valid email address." });
+  return;
+}
+if (!category) {
+  setError({ message: "Please choose the category that best describes your participation." });
+  return;
+}
+if (password.length < 12 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password) || !/[^A-Za-z0-9]/.test(password)) {
+  setError({ message: "Use at least 12 characters with uppercase and lowercase letters, a number and a symbol." });
+  return;
+}
+if (!acceptedStandards) {
+  setError({ message: "Please agree to follow Inclura's Community Safety Standards before creating an account." });
+  return;
+}
+setSubmitting(true);
 
 try {
 
@@ -164,11 +195,14 @@ await setDoc(
   {
     uid: user.uid,
 
-    fullName,
+    fullName: cleanName,
 
-    email,
+    email: cleanEmail,
 
     category,
+
+    acceptedCommunityStandards: true,
+    acceptedCommunityStandardsAt: serverTimestamp(),
 
     createdAt:
       serverTimestamp(),
@@ -220,7 +254,8 @@ profileError
 
 }
 
-navigate("/onboarding");
+await sendEmailVerification(user);
+navigate("/verify-email");
 
 } catch (signupError) {
 
@@ -233,6 +268,8 @@ setError(
 getAuthErrorInfo(signupError)
 );
 
+} finally {
+  setSubmitting(false);
 }
 
 }
@@ -627,6 +664,8 @@ padding: "28px",
 <input
 type="text"
 placeholder="Full Name"
+maxLength={80}
+autoComplete="name"
 value={fullName}
 onChange={(e) =>
 setFullName(
@@ -639,6 +678,7 @@ style={inputStyle}
 <input
 type="email"
 placeholder="Email"
+autoComplete="email"
 value={email}
 onChange={(e) =>
 setEmail(
@@ -650,7 +690,8 @@ style={inputStyle}
 
 <input
 type="password"
-placeholder="Password"
+placeholder="Password (12+ characters)"
+autoComplete="new-password"
 value={password}
 onChange={(e) =>
 setPassword(
@@ -659,6 +700,11 @@ e.target.value
 }
 style={inputStyle}
 />
+
+<label style={{ display: "flex", gap: "10px", alignItems: "flex-start", color: "#cbd5e1", fontSize: "14px", lineHeight: "1.5", margin: "4px 0 18px" }}>
+  <input type="checkbox" checked={acceptedStandards} onChange={(event) => setAcceptedStandards(event.target.checked)} style={{ marginTop: "3px" }} />
+  <span>I agree to respect other members, use my account honestly, and never engage in scams, impersonation, threats, harassment, blackmail, exploitation or abusive conduct. I understand that serious violations may lead to account restrictions or removal.</span>
+</label>
 
 {error && (
 <div
@@ -680,11 +726,11 @@ lineHeight: "1.45",
 
 <button
 onClick={handleSignup}
-style={buttonStyle}
-
+disabled={submitting}
+style={{ ...buttonStyle, opacity: submitting ? 0.65 : 1 }}
 >
-
-Create Account </button>
+{submitting ? "Creating secure account…" : "Create Account"}
+</button>
 
 <div
 style={{
@@ -698,7 +744,8 @@ or continue with
 
 <button
 onClick={handleGoogleSignup}
-style={googleButton}
+disabled={!acceptedStandards || submitting}
+style={{ ...googleButton, opacity: !acceptedStandards ? 0.55 : 1 }}
 
 >
 
