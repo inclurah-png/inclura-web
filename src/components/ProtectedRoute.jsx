@@ -28,6 +28,15 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
+  // Email/password accounts must verify ownership of their email before
+  // entering member-only areas. Federated providers supply verified identity.
+  const usesPasswordProvider = user.providerData?.some(
+    (provider) => provider.providerId === "password"
+  );
+  if (usesPasswordProvider && !user.emailVerified) {
+    return <Navigate to="/verify-email" replace />;
+  }
+
   return children;
 }
 
