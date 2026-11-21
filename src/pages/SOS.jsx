@@ -754,20 +754,18 @@ function SOS() {
 
         if (!dispatchResponse.ok || dispatchResult.success !== true) {
           console.error("IFSE server dispatch failed:", dispatchResult);
-          alert(
-            "Your SOS request was recorded, but IFSE could not dispatch a responder. " +
-            (dispatchResult.message || "No responder assignment is confirmed.") +
-            " Please contact local emergency services directly now if anyone is in immediate danger."
-          );
-          return;
+          dispatchResult = {
+            ...(dispatchResult || {}),
+            success: false,
+            message: dispatchResult.message || "No eligible responder is currently available."
+          };
         }
       } catch (dispatchError) {
         console.error("IFSE server dispatch request failed:", dispatchError);
-        alert(
-          "Your SOS request was recorded, but the IFSE dispatch service could not be reached. " +
-          "No responder assignment is confirmed. Please contact local emergency services directly now if anyone is in immediate danger."
-        );
-        return;
+        dispatchResult = {
+          success: false,
+          message: "The dispatch service could not be reached. No responder assignment is confirmed."
+        };
       }
 
 
@@ -826,12 +824,13 @@ function SOS() {
       // ============================================================
 
       alert(
-        "Your SOS was recorded and an IFSE responder assignment was created. Responder acceptance and arrival are not yet confirmed.\n\n" +
+        "Your SOS request has been recorded.\n\n" +
         "Emergency ID: " + emergencyId + "\n" +
-        "Agency: " + (dispatchResult.agency || "Not specified") + "\n" +
-        "Assigned responder: " + (dispatchResult.responderName || "Pending") + "\n" +
+        (dispatchResult?.success === true
+          ? "IFSE assignment created for: " + (dispatchResult.responderName || "Responder pending") + " (" + (dispatchResult.agency || "Agency not specified") + "). Acceptance and arrival are not yet confirmed.\n"
+          : "Responder dispatch is NOT confirmed: " + (dispatchResult?.message || "No eligible responder is currently available.") + "\n") +
         (trustedSmsResult ? "Trusted-contact SMS accepted: " + (trustedSmsResult.sent || 0) + "; failed: " + (trustedSmsResult.failed || 0) + ". Acceptance is not delivery confirmation.\n" : "Trusted-contact SMS status could not be confirmed.\n") +
-        "\nIf this is an immediate life-threatening emergency, contact local emergency services directly as well."
+        "\nIf anyone is in immediate danger, contact local emergency services directly now."
       );
 
 
