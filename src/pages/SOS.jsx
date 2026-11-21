@@ -757,7 +757,7 @@ function SOS() {
           dispatchResult = {
             ...(dispatchResult || {}),
             success: false,
-            message: dispatchResult.message || "No eligible responder is currently available."
+            message: dispatchResult.detail || dispatchResult.message || "The dispatch service did not provide a failure reason. No responder assignment is confirmed."
           };
         }
       } catch (dispatchError) {
