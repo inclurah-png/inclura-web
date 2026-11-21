@@ -4,7 +4,17 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Feed posts must remain readable by authenticated Inclura members.
     match /posts/{postId} {
-      allow read: if request.auth != null;
+      // Public share links can read only posts whose creator explicitly enabled external sharing.
+      // Authenticated members retain feed access to posts.
+      allow get: if request.auth != null || resource.data.externalShareEnabled == true;
+      allow list: if request.auth != null;
+
+      // Only the post owner may enable or disable external sharing, and no other post field may change here.
+      allow update: if request.auth != null
+                    && resource.data.userId == request.auth.uid
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['externalShareEnabled'])
+                    && request.resource.data.externalShareEnabled is bool;
 
       // Members may publish only posts under their own authenticated identity.
       // Media URLs must come from Inclura's Cloudinary upload pipeline.
