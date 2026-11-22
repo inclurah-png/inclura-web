@@ -7,6 +7,8 @@
 import express from "express";
 import cors from "cors";
 import passkeyRoutes from "./src/routes/passkeyRoutes.js";
+import emergencyRoutes from "./src/routes/emergencyRoutes.js";
+import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
 
 const app = express();
 
@@ -61,6 +63,20 @@ app.get("/api/status", (req, res) => {
 app.use(
   "/api/identity",
   passkeyRoutes
+);
+
+// =======================================================
+// Emergency SOS Notification Routes
+// =======================================================
+
+app.use(
+  "/api/emergency",
+  emergencyRoutes
+);
+
+app.use(
+  "/api/sos-notifications",
+  sosNotificationRoutes
 );
 
 // =======================================================
