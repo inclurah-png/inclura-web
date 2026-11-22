@@ -177,6 +177,67 @@ function SOS() {
   const [submitting, setSubmitting] =
     useState(false);
 
+  const [isTestingNotifications, setIsTestingNotifications] = useState(false);
+  const [notificationTestResult, setNotificationTestResult] = useState("");
+
+  async function runSOSNotificationTest() {
+    if (isTestingNotifications) return;
+
+    const currentUser = auth.currentUser;
+    if (!currentUser) {
+      setNotificationTestResult("Please sign in to run the notification test.");
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Send clearly labelled TEST messages to the phone number and email address configured under EMERGENCY_TEST_*? No real SOS will be created."
+    );
+    if (!confirmed) return;
+
+    setIsTestingNotifications(true);
+    setNotificationTestResult("Sending test messages to the configured test recipients…");
+
+    try {
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(
+        SOS_NOTIFICATION_BACKEND_URL + "/api/emergency/notification-test",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + idToken
+          },
+          body: JSON.stringify({ dryRun: false, channel: "both" })
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        const detail = result.message || result.status || "The test request failed.";
+        const attempts = Array.isArray(result.attempts)
+          ? result.attempts.map((item) =>
+              `${item.channel || "channel"} to ${item.to || "recipient"}: ${item.error || item.outcome || "not accepted"}`
+            ).join("\n")
+          : "";
+        throw new Error(attempts ? detail + "\n" + attempts : detail);
+      }
+
+      const report = (result.attempts || []).map((item) =>
+        `${item.channel.toUpperCase()} to ${item.to}: ${item.providerAccepted ? "ACCEPTED BY PROVIDER" : "NOT ACCEPTED"}${item.error ? " — " + item.error : ""}`
+      ).join("\n");
+
+      setNotificationTestResult(
+        (report || "The endpoint returned success, but no attempt details were provided.") +
+        "\n\nProvider acceptance is not proof of delivery. Check the test phone and inbox."
+      );
+    } catch (error) {
+      console.error("SOS notification test failed:", error);
+      setNotificationTestResult(error?.message || "SOS notification test failed.");
+    } finally {
+      setIsTestingNotifications(false);
+    }
+  }
+
 
   // ============================================================
   // LOAD SOS DASHBOARD STATISTICS
@@ -994,6 +1055,53 @@ return (
 
   </div>
 
+
+  {/* ============================================================
+      SAFE SOS NOTIFICATION TEST
+  ============================================================ */}
+
+  <div style={card}>
+    <h3>🧪 Test SOS SMS & Email</h3>
+    <p style={helpText}>
+      Sends a clearly labelled test message only to the phone and email configured
+      in EMERGENCY_TEST_PHONES and EMERGENCY_TEST_EMAILS. This does not create a
+      real emergency, contact responders, or use the real emergency recipient lists.
+    </p>
+    <button
+      type="button"
+      onClick={runSOSNotificationTest}
+      disabled={isTestingNotifications || isSubmittingSOS}
+      style={{
+        ...locationButton,
+        background: isTestingNotifications ? "#475569" : "#0f766e",
+        opacity: isTestingNotifications ? 0.75 : 1
+      }}
+    >
+      {isTestingNotifications ? "Sending test messages…" : "Send Test SMS & Email"}
+    </button>
+    {notificationTestResult ? (
+      <pre
+        role="status"
+        aria-live="polite"
+        style={{
+          whiteSpace: "pre-wrap",
+          overflowWrap: "anywhere",
+          color: "#e2e8f0",
+          background: "#111827",
+          border: "1px solid #334155",
+          borderRadius: "10px",
+          padding: "12px",
+          marginTop: "14px",
+          fontSize: "13px"
+        }}
+      >
+        {notificationTestResult}
+      </pre>
+    ) : null}
+    <p style={securityNotice}>
+      A provider acceptance response does not confirm that the message reached the device or inbox.
+    </p>
+  </div>
 
   {/* ============================================================
       EMERGENCY ACTIONS
