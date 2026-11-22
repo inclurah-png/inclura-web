@@ -10,6 +10,12 @@ import dotenv from "dotenv";
 
 import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
+import emergencyRoutes from "./src/routes/emergencyRoutes.js";
+import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
+
+import {
+  startSOSNotificationSweeper,
+} from "./src/services/sosNotificationSweeper.js";
 
 
 import {
@@ -50,12 +56,27 @@ const PORT =
 // CORS
 // =======================================================
 
+// Comma separated list. Defaults preserve the existing production
+// origins and allow local Vite development.
+const ALLOWED_ORIGINS = (
+  process.env.CORS_ORIGINS ||
+  "https://inclura-web.pages.dev,https://inclura-prod-90734.web.app,http://localhost:5173,http://localhost:4173"
+)
+  .split(",")
+  .map((item) => item.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: [
-      "https://inclura-web.pages.dev",
-      "https://inclura-prod-90734.web.app",
-    ],
+    origin: (origin, callback) => {
+      // Requests without an Origin header (server-to-server,
+      // curl, health checks) are allowed.
+      if (!origin || ALLOWED_ORIGINS.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(null, false);
+    },
 
     methods: [
       "GET",
@@ -299,6 +320,25 @@ app.use(
 );
 
 // =======================================================
+// Emergency SOS Notification Routes
+// =======================================================
+//
+// Automatic, one-way notification. No administrator action is
+// required or possible.
+
+app.use(
+  "/api/emergency",
+  emergencyRoutes
+);
+
+// URL used by the SOS page for automatic trusted-contact SMS
+// and email dispatch.
+app.use(
+  "/api/sos-notifications",
+  sosNotificationRoutes
+);
+
+// =======================================================
 // 404 Handler
 // =======================================================
 
@@ -388,6 +428,10 @@ app.listen(
     console.log(
       "===================================="
     );
+
+    // Automatic SOS notification retry loop. Independent of
+    // any administrator being online.
+    startSOSNotificationSweeper();
 
   }
 );
