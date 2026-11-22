@@ -367,9 +367,13 @@ export async function dispatchSOSNotifications({
     };
   }
 
-  const claim = await claimNotificationJob({ emergencyId, source });
+  // A dry run must never claim (and therefore block or delay) the
+  // real notification job, so it reads the record without writing.
+  const claim = dryRun
+    ? null
+    : await claimNotificationJob({ emergencyId, source });
 
-  if (!claim.ok) {
+  if (claim && !claim.ok) {
     return {
       summary: {
         status: "not_recorded",
@@ -379,11 +383,11 @@ export async function dispatchSOSNotifications({
     };
   }
 
-  if (claim.replayed) {
+  if (claim?.replayed) {
     return { summary: claim.summary, replayed: true };
   }
 
-  if (claim.busy) {
+  if (claim?.busy) {
     return {
       summary: {
         status: "in_progress",
@@ -393,7 +397,26 @@ export async function dispatchSOSNotifications({
     };
   }
 
-  const sos = claim.emergency || {};
+  let sos = claim?.emergency || {};
+
+  if (!Object.keys(sos).length) {
+    const snapshot = await db
+      .collection("emergencySOS")
+      .doc(emergencyId)
+      .get();
+
+    if (!snapshot.exists) {
+      return {
+        summary: {
+          status: "not_recorded",
+          error: "Emergency SOS record was not found.",
+        },
+        replayed: false,
+      };
+    }
+
+    sos = snapshot.data() || {};
+  }
   const emergencyRef = db.collection("emergencySOS").doc(emergencyId);
   const startedAt = new Date().toISOString();
   const warnings = [];
@@ -687,10 +710,13 @@ export async function dispatchSOSNotifications({
   // Persist results
   // -----------------------------------------------------
 
+  // Only an accepted message counts as a completed dispatch. A job
+  // where nothing could be sent is recorded as completed WITH
+  // failures, so the audit trail never reads as a successful alert.
   const finalDispatchStatus =
-    summary.status === "failed" || summary.status === "no_recipients"
-      ? "completed_with_failures"
-      : "completed";
+    summary.status === "provider_accepted"
+      ? "completed"
+      : "completed_with_failures";
 
   try {
     await emergencyRef.set(
@@ -711,9 +737,13 @@ export async function dispatchSOSNotifications({
           deliveryConfirmed: false,
           deliveryNote: DELIVERY_NOTE,
           lastError:
-            summary.status === "failed"
-              ? "No provider accepted any SOS message."
-              : "",
+            summary.status === "provider_accepted"
+              ? ""
+              : summary.status === "not_configured"
+              ? "No SMS or email provider is configured on the backend, so nothing was sent."
+              : summary.status === "no_recipients"
+              ? "No SOS recipient was available, so nothing was sent."
+              : "No provider accepted any SOS message.",
         },
         notificationUpdatedAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
