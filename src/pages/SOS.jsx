@@ -32,6 +32,7 @@ import IFSEEmergencyMonitoring from "./IFSEEmergencyMonitoring";
 import EmergencyAnalytics from "./EmergencyAnalytics";
 
 const SOS_BACKEND_URL = (import.meta.env.VITE_AI_BACKEND_URL || "https://inclura-ai-backend.onrender.com").replace(/\/+$/, "");
+const SOS_NOTIFICATION_BACKEND_URL = (import.meta.env.VITE_SOS_NOTIFICATION_BACKEND_URL || "https://inclura-ifse-backend.onrender.com").replace(/\/+$/, "");
 
 
 function SOS() {
@@ -778,7 +779,7 @@ function SOS() {
         if (signedInUser) {
           const idToken = await signedInUser.getIdToken();
           const smsResponse = await fetch(
-            SOS_BACKEND_URL + "/api/sos-notifications/" + encodeURIComponent(emergencyId) + "/send",
+            SOS_NOTIFICATION_BACKEND_URL + "/api/sos-notifications/" + encodeURIComponent(emergencyId) + "/send",
             {
               method: "POST",
               headers: {
