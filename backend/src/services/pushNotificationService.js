@@ -122,3 +122,49 @@ export async function sendPushToUsers({
 
   return attempts;
 }
+
+export async function sendPushToContacts({ db, contacts = [], title, body, emergencyId }) {
+  const attempts = [];
+  for (const contact of contacts) {
+    let userId = contact.userId || "";
+    if (!userId) {
+      try {
+        let userRecord = null;
+        if (contact.email) userRecord = await admin.auth().getUserByEmail(contact.email);
+        else if (contact.phone && contact.phone.startsWith("+")) {
+          userRecord = await admin.auth().getUserByPhoneNumber(contact.phone);
+        }
+        userId = userRecord?.uid || "";
+      } catch (error) {
+        attempts.push({
+          channel: "push",
+          to: contact.email || contact.phone || "unlinked_contact",
+          name: contact.name || "Trusted contact",
+          audience: contact.audience || "trusted_contact",
+          provider: "firebase-cloud-messaging",
+          outcome: "no_linked_inclura_account",
+          accepted: false,
+          error: "No matching Inclura account was found for this trusted contact. A registered Inclura account and enabled device are required for push alerts.",
+          providerStatus: error?.code || "",
+          attemptedAt: new Date().toISOString(),
+        });
+        continue;
+      }
+    }
+    if (!userId) continue;
+    const sent = await sendPushToUsers({
+      db,
+      userIds: [userId],
+      title,
+      body,
+      emergencyId,
+      audience: contact.audience || "trusted_contact",
+    });
+    attempts.push(...sent.map((attempt) => ({
+      ...attempt,
+      to: contact.email || contact.phone || userId,
+      name: contact.name || attempt.name,
+    })));
+  }
+  return attempts;
+}
