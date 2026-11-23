@@ -333,12 +333,12 @@ function buildChannelSummary(attempts) {
   return summary;
 }
 
-function overallStatus({ recipients, attempts, emailConfigured, smsConfigured }) {
-  if (!recipients.length) {
+function overallStatus({ recipients, attempts, emailConfigured, smsConfigured, pushConfigured }) {
+  if (!recipients.length && !pushConfigured) {
     return "no_recipients";
   }
 
-  if (!emailConfigured && !smsConfigured) {
+  if (!emailConfigured && !smsConfigured && !pushConfigured) {
     return "not_configured";
   }
 
