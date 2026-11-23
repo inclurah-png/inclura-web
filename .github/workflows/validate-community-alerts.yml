@@ -49,9 +49,14 @@ jobs:
           node --check backend/src/routes/emergencyRoutes.js
           node --check backend/src/services/pushNotificationService.js
           node --check backend/src/services/sosNotificationService.js
-      - name: Test notification provider configuration security
+          node --check backend/src/services/textbeeWebhookSecurity.js
+          node --check backend/src/controllers/textbeeWebhookController.js
+          node --check backend/src/routes/textbeeWebhookRoutes.js
+          node --check backend/server.js
+          node --check backend/app.js
+      - name: Test notification provider and webhook security
         working-directory: backend
-        run: node --test test/notificationConfig.test.js test/notificationProviders.test.js
+        run: node --test test/notificationConfig.test.js test/notificationProviders.test.js test/textbeeWebhookSecurity.test.js
 
   firestore-rules:
     runs-on: ubuntu-latest
