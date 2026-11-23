@@ -891,7 +891,7 @@ export async function sendSOSTestNotification({ channel = "both", userId = "" } 
   const testEmails = config.recipients.testEmails;
   const attempts = [];
 
-  if (!testPhones.length && !testEmails.length && !(channel !== "sms" && userId)) {
+  if (!testPhones.length && !testEmails.length && !(["push", "both"].includes(channel) && userId)) {
     return {
       ok: false,
       status: "no_test_recipients",
@@ -922,7 +922,7 @@ export async function sendSOSTestNotification({ channel = "both", userId = "" } 
   const withTestBanner = (text) =>
     `[TEST - NOT AN EMERGENCY]\n\n${text}\n\nThis message was sent by the Inclura SOS verification endpoint.`;
 
-  if (channel !== "email") {
+  if (channel === "sms" || channel === "both") {
     for (const phone of testPhones) {
       const attempt = await sendSMS({
         to: phone,
@@ -936,7 +936,7 @@ export async function sendSOSTestNotification({ channel = "both", userId = "" } 
     }
   }
 
-  if (channel !== "sms" && userId) {
+  if ((channel === "push" || channel === "both") && userId) {
     const pushAttempts = await sendPushToUsers({
       db: firestore(),
       userIds: [userId],
@@ -948,7 +948,7 @@ export async function sendSOSTestNotification({ channel = "both", userId = "" } 
     attempts.push(...pushAttempts);
   }
 
-  if (channel !== "sms") {
+  if (channel === "email" || channel === "both") {
     for (const email of testEmails) {
       const attempt = await sendEmail({
         to: email,
