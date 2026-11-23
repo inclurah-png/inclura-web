@@ -773,7 +773,26 @@ service cloud.firestore {
       }
       allow get, list: if ownsRequest();
       allow create: if request.auth != null
+                    && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.systemPlaceholder == false
+                    && request.resource.data.handledBy == ''
+                    && request.resource.data.assignedResponder == ''
+                    && request.resource.data.assignedResponderId == ''
+                    && request.resource.data.assignedAgency == ''
+                    && request.resource.data.assignedAgencyCode == ''
+                    && request.resource.data.assignedAgencyType == ''
+                    && request.resource.data.incidentStatus == 'Active'
+                    && request.resource.data.assignedStation == ''
+                    && request.resource.data.assignedVehicle == ''
+                    && request.resource.data.estimatedArrival == ''
+                    && request.resource.data.responseStatus == 'Awaiting Response'
+                    && request.resource.data.assignmentStatus == 'Pending'
+                    && request.resource.data.ifseThreatScore == 0
+                    && request.resource.data.ifseClassification == 'Pending'
+                    && request.resource.data.resolvedBy == ''
+                    && request.resource.data.resolutionNotes == ''
+                    && request.resource.data.closedAt == null
                     && request.resource.data.emergencyType is string
                     && request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical']
                     && request.resource.data.description is string
