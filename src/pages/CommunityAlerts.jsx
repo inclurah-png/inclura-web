@@ -65,6 +65,7 @@ export default function CommunityAlerts() {
         enabled: true,
         area: cleanArea,
         areaNormalized: cleanArea.toLocaleLowerCase(),
+        localityNormalized: cleanArea.split(",")[0].trim().toLocaleLowerCase(),
         consent: true,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
