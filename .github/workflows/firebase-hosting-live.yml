@@ -30,7 +30,6 @@ jobs:
           VITE_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ secrets.VITE_RECAPTCHA_V3_SITE_KEY }}
           VITE_SOS_NOTIFICATION_BACKEND_URL: https://inclura-ifse-backend.onrender.com
           VITE_FIREBASE_VAPID_KEY: BGdwxwGox8KgcBBX6IT7YPbrhrkF4jJt5RzX_zlNVTLkGNaXw67X3j4MXDoQk2sQRKL06Udxsa6XJIvMm6xptdk
-          VITE_FIREBASE_VAPID_KEY: BGdwxwGox8KgcBBX6IT7YPbrhrkF4jJt5RzX_zlNVTLkGNaXw67X3j4MXDoQk2sQRKL06Udxsa6XJIvMm6xptdk
         run: npm run build
 
       - name: Prepare Firebase service account credentials
