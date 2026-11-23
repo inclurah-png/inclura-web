@@ -215,11 +215,14 @@ export async function sendPushToCommunityArea({
     const matching = snapshot.docs.filter((doc) => {
       const data = doc.data() || {};
       const locality = normalize(data.localityNormalized);
+      const locationWords = normalizedLocation.split(/[^a-z0-9]+/).filter(Boolean);
+      const localityWords = locality.split(/[^a-z0-9]+/).filter(Boolean);
       return data.consent === true
         && typeof data.token === "string"
         && data.token.length > 20
-        && locality.length >= 2
-        && normalizedLocation.includes(locality);
+        && locality.length >= 3
+        && localityWords.length > 0
+        && localityWords.every((word) => locationWords.includes(word));
     });
 
     if (!matching.length) {
