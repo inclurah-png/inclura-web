@@ -191,12 +191,12 @@ function SOS() {
     }
 
     const confirmed = window.confirm(
-      "Send clearly labelled TEST messages to the phone number and email address configured under EMERGENCY_TEST_*? No real SOS will be created."
+      "Send a clearly labelled TEST push notification to this signed-in device only? No SMS, email, or real SOS will be sent."
     );
     if (!confirmed) return;
 
     setIsTestingNotifications(true);
-    setNotificationTestResult("Sending test messages to the configured test recipients…");
+    setNotificationTestResult("Sending a test push notification to this device…");
 
     try {
       const idToken = await currentUser.getIdToken();
@@ -208,7 +208,7 @@ function SOS() {
             "Content-Type": "application/json",
             Authorization: "Bearer " + idToken
           },
-          body: JSON.stringify({ dryRun: false, channel: "both" })
+          body: JSON.stringify({ dryRun: false, channel: "push" })
         }
       );
 
@@ -1064,11 +1064,11 @@ return (
   ============================================================ */}
 
   <div style={card}>
-    <h3>🧪 Test SOS SMS & Email</h3>
+    <h3>🧪 Test SOS Push Notification</h3>
     <p style={helpText}>
-      Sends a clearly labelled test message only to the phone and email configured
-      in EMERGENCY_TEST_PHONES and EMERGENCY_TEST_EMAILS. This does not create a
-      real emergency, contact responders, or use the real emergency recipient lists.
+      Sends a clearly labelled test push notification only to this signed-in device
+      after push notifications have been enabled. No SMS, email, real emergency,
+      responder contact, or real emergency recipient list is used.
     </p>
     <button
       type="button"
@@ -1080,7 +1080,7 @@ return (
         opacity: isTestingNotifications ? 0.75 : 1
       }}
     >
-      {isTestingNotifications ? "Sending test messages…" : "Send Test SMS & Email"}
+      {isTestingNotifications ? "Sending test push…" : "Send Test Push Notification"}
     </button>
     {notificationTestResult ? (
       <pre
@@ -1102,7 +1102,7 @@ return (
       </pre>
     ) : null}
     <p style={securityNotice}>
-      A provider acceptance response does not confirm that the message reached the device or inbox.
+      Firebase acceptance does not guarantee that the notification appeared on the device.
     </p>
   </div>
 
