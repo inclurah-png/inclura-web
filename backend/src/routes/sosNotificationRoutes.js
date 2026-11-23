@@ -17,13 +17,14 @@
 import express from "express";
 
 import { sendSOSNotification } from "../controllers/emergencyController.js";
-import { requireFirebaseUser } from "../middleware/firebaseAuth.js";
+import { requireFirebaseUser, requireRegisteredFirebaseUser } from "../middleware/firebaseAuth.js";
 
 const router = express.Router();
 
 router.post(
   "/:emergencyId/send",
   requireFirebaseUser,
+  requireRegisteredFirebaseUser,
   sendSOSNotification
 );
 
