@@ -1,5 +1,19 @@
 import { useEffect, lazy, Suspense } from "react";
 import { synchronizeSatelliteQueue } from "./services/satelliteSyncEngine";
+import { onAuthStateChanged } from "firebase/auth";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  serverTimestamp,
+  updateDoc,
+  where,
+} from "firebase/firestore";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import app, { auth, db } from "./firebase";
+
+const PUSH_VAPID_KEY = import.meta.env.VITE_FIREBASE_VAPID_KEY || "";
 
 const ResponderIncidentReport = lazy(() => import("./pages/ResponderIncidentReport"));
 const FamilyEmergencyDashboard = lazy(() => import("./pages/FamilyEmergencyDashboard"));
@@ -87,6 +101,79 @@ function App() {
         "online",
         synchronizeSatelliteQueue
       );
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
+    async function restorePushRegistration(user) {
+      try {
+        // The first permission request must come from the user's button tap.
+        // Once granted, restore this browser's FCM registration automatically.
+        if (
+          !active ||
+          !user ||
+          !PUSH_VAPID_KEY ||
+          !("Notification" in window) ||
+          Notification.permission !== "granted" ||
+          !("serviceWorker" in navigator) ||
+          !(await isSupported())
+        ) {
+          return;
+        }
+
+        const registration = await navigator.serviceWorker.register(
+          "/firebase-messaging-sw.js"
+        );
+        const messaging = getMessaging(app);
+        const token = await getToken(messaging, {
+          vapidKey: PUSH_VAPID_KEY,
+          serviceWorkerRegistration: registration,
+        });
+
+        if (!active || !token) return;
+
+        // Reuse an existing record for this user/device instead of creating
+        // another token document every time Inclura is opened.
+        const matchingTokens = await getDocs(
+          query(
+            collection(db, "fcmTokens"),
+            where("userId", "==", user.uid),
+            where("token", "==", token)
+          )
+        );
+
+        if (!active) return;
+
+        if (!matchingTokens.empty) {
+          await updateDoc(matchingTokens.docs[0].ref, {
+            enabled: true,
+            updatedAt: serverTimestamp(),
+          });
+        } else {
+          await addDoc(collection(db, "fcmTokens"), {
+            userId: user.uid,
+            token,
+            platform: "web",
+            enabled: true,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+          });
+        }
+      } catch (error) {
+        // Push restoration must never prevent the rest of Inclura from loading.
+        console.warn("Inclura background push registration could not be restored:", error);
+      }
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) restorePushRegistration(user);
+    });
+
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, []);
 
   return (
