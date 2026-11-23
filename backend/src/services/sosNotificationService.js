@@ -23,6 +23,7 @@
 import admin from "firebase-admin";
 
 import { firestore } from "../config/firebaseAdmin.js";
+import { sendPushToUsers } from "./pushNotificationService.js";
 import {
   getNotificationConfig,
   normalizeEmail,
@@ -171,6 +172,7 @@ async function collectDirectoryRecipients(db, ownerId) {
       email: contactEmail(record.data),
       audience: "trusted_contact",
       sourceId: record.id,
+      linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
     });
   }
 
@@ -184,6 +186,7 @@ async function collectDirectoryRecipients(db, ownerId) {
       email: contactEmail(record.data),
       audience: "family_network",
       sourceId: record.id,
+      linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
     });
   }
 
@@ -426,12 +429,16 @@ export async function dispatchSOSNotifications({
   // -----------------------------------------------------
 
   let recipients = [];
+  let pushUserTargets = [];
 
   if (Array.isArray(testRecipients) && testRecipients.length) {
     recipients = testRecipients;
   } else {
     const directory = await collectDirectoryRecipients(db, sos.userId);
     recipients.push(...directory.recipients);
+    pushUserTargets = directory.recipients
+      .filter((recipient) => recipient.linkedUserId)
+      .map((recipient) => ({ userId: recipient.linkedUserId, name: recipient.name, audience: recipient.audience }));
     warnings.push(...directory.warnings);
 
     for (const phone of config.recipients.emergencyPhones) {
@@ -517,6 +524,7 @@ export async function dispatchSOSNotifications({
         })),
         smsConfigured: config.sms.configured,
         emailConfigured: config.email.configured,
+        pushTargetCount: pushUserTargets.length + String(process.env.ADMIN_FCM_USER_IDS || "").split(",").map((value) => value.trim()).filter(Boolean).length,
         smsProvider: config.sms.provider,
         emailProvider: config.email.provider,
         smsText: message.smsText,
@@ -560,7 +568,18 @@ export async function dispatchSOSNotifications({
     }
   }
 
-  const allAttempts = [...smsAttempts, ...emailAttempts];
+  const pushTitle = "Inclura SOS emergency alert";
+  const pushBody = safeString(sos.description, "A trusted contact has requested emergency assistance. Open Inclura to view the alert.");
+  const pushAttempts = await sendPushToUsers({
+    db,
+    userIds: pushUserTargets.map((target) => target.userId),
+    title: pushTitle,
+    body: pushBody,
+    emergencyId,
+    audience: "trusted_contact",
+  });
+
+  const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts];
 
   const summary = {
     status: overallStatus({
@@ -568,6 +587,7 @@ export async function dispatchSOSNotifications({
       attempts: allAttempts,
       emailConfigured: config.email.configured,
       smsConfigured: config.sms.configured,
+      pushConfigured: pushUserTargets.length > 0 || String(process.env.ADMIN_FCM_USER_IDS || "").trim().length > 0,
     }),
     emergencyId,
     startedAt,
@@ -581,6 +601,7 @@ export async function dispatchSOSNotifications({
     channels: {
       sms: buildChannelSummary(smsAttempts),
       email: buildChannelSummary(emailAttempts),
+      push: buildChannelSummary(pushAttempts),
     },
     recipients: allAttempts.map((attempt) => ({
       channel: attempt.channel,
@@ -604,6 +625,17 @@ export async function dispatchSOSNotifications({
 
   const adminAttempts = [];
   const adminMessage = buildAdminMessage({ sos, emergencyId, summary });
+  const adminPushUserIds = String(process.env.ADMIN_FCM_USER_IDS || "")
+    .split(",").map((value) => value.trim()).filter(Boolean);
+  const adminPushAttempts = await sendPushToUsers({
+    db,
+    userIds: adminPushUserIds,
+    title: "Inclura SOS — Administrator alert",
+    body: `SOS ${emergencyId}: ${safeString(sos.userName, "A member")} needs emergency assistance. Open Inclura IFSE monitoring.`,
+    emergencyId,
+    audience: "administrator",
+  });
+  adminAttempts.push(...adminPushAttempts);
 
   if (!config.recipients.adminEmails.length) {
     warnings.push(
@@ -615,6 +647,9 @@ export async function dispatchSOSNotifications({
     warnings.push(
       "No ADMIN_NOTIFICATION_PHONES configured: administrator received no SMS copy of this SOS."
     );
+  }
+  if (!adminPushUserIds.length) {
+    warnings.push("No ADMIN_FCM_USER_IDS configured: no administrator device received an FCM push copy.");
   }
 
   for (const phone of config.recipients.adminPhones) {
@@ -645,13 +680,14 @@ export async function dispatchSOSNotifications({
   summary.adminNotification = {
     recipientCount:
       config.recipients.adminEmails.length +
-      config.recipients.adminPhones.length,
+      config.recipients.adminPhones.length + adminPushUserIds.length,
     sms: buildChannelSummary(
       adminAttempts.filter((attempt) => attempt.channel === "sms")
     ),
     email: buildChannelSummary(
       adminAttempts.filter((attempt) => attempt.channel === "email")
     ),
+    push: buildChannelSummary(adminPushAttempts),
     attempts: adminAttempts.map((attempt) => ({
       channel: attempt.channel,
       to: attempt.to,
