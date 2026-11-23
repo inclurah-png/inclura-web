@@ -710,7 +710,6 @@ service cloud.firestore {
     match /stories/{storyId} {
       allow get, list: if request.auth != null;
       allow create: if request.auth != null
-                    && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.userName is string
                     && request.resource.data.userName.size() <= 100
@@ -777,21 +776,6 @@ service cloud.firestore {
                     && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.systemPlaceholder == false
-                    && request.resource.data.userName is string
-                    && request.resource.data.userPhoto is string
-                    && request.resource.data.locationSource is string
-                    && request.resource.data.emergencyType is string
-                    && request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical']
-                    && request.resource.data.description is string
-                    && request.resource.data.description.size() <= 5000
-                    && request.resource.data.location is string
-                    && request.resource.data.latitude is string
-                    && request.resource.data.longitude is string
-                    && request.resource.data.accuracy is string
-                    && request.resource.data.status == 'open'
-                    && request.resource.data.resolved == false
-                    // Client-created records may contain only empty/default dispatch placeholders.
-                    // IFSE Admin SDK is the only writer allowed to assign responders or close cases.
                     && request.resource.data.handledBy == ''
                     && request.resource.data.assignedResponder == ''
                     && request.resource.data.assignedResponderId == ''
@@ -799,7 +783,6 @@ service cloud.firestore {
                     && request.resource.data.assignedAgencyCode == ''
                     && request.resource.data.assignedAgencyType == ''
                     && request.resource.data.incidentStatus == 'Active'
-                    && request.resource.data.incidentNumber is string
                     && request.resource.data.assignedStation == ''
                     && request.resource.data.assignedVehicle == ''
                     && request.resource.data.estimatedArrival == ''
@@ -810,9 +793,16 @@ service cloud.firestore {
                     && request.resource.data.resolvedBy == ''
                     && request.resource.data.resolutionNotes == ''
                     && request.resource.data.closedAt == null
-                    && request.resource.data.gpsLatitude is number
-                    && request.resource.data.gpsLongitude is number
-                    && request.resource.data.responderNotes is string
+                    && request.resource.data.emergencyType is string
+                    && request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical']
+                    && request.resource.data.description is string
+                    && request.resource.data.description.size() <= 5000
+                    && request.resource.data.location is string
+                    && request.resource.data.latitude is string
+                    && request.resource.data.longitude is string
+                    && request.resource.data.accuracy is string
+                    && request.resource.data.status == 'open'
+                    && request.resource.data.resolved == false
                     && request.resource.data.createdAt is timestamp
                     && request.resource.data.updatedAt is timestamp
                     && request.resource.data.lastUpdated is timestamp
@@ -821,7 +811,7 @@ service cloud.firestore {
                       'emergencyType', 'priority', 'description', 'location',
                       'latitude', 'longitude', 'accuracy', 'locationSource',
                       'locationCapturedAt', 'gpsLatitude', 'gpsLongitude',
-                      'responderNotes', 'status', 'handledBy',
+                      'trustedContact', 'responderNotes', 'status', 'handledBy',
                       'resolved', 'assignedResponder', 'assignedResponderId',
                       'assignedAgency', 'assignedAgencyCode', 'assignedAgencyType',
                       'incidentStatus', 'incidentNumber', 'assignedStation',
@@ -1050,8 +1040,6 @@ service cloud.firestore {
     }
 
 
-    // Public community alerts use a dedicated anonymous-auth collection.
-    // These guest identities cannot read or write member records or member FCM tokens.
     match /communityAlertDevices/{guestUid} {
       function isOwnAnonymousGuest() {
         return request.auth != null
@@ -1087,13 +1075,16 @@ service cloud.firestore {
       allow update: if isOwnAnonymousGuest()
         && resource.data.uid == guestUid
         && validCommunityAlertDevice()
+        && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'token', 'enabled', 'area', 'areaNormalized', 'localityNormalized', 'consent',
-          'createdAt', 'updatedAt'
+          'token', 'enabled', 'area', 'areaNormalized', 'localityNormalized', 'consent', 'updatedAt'
         ]);
       allow delete: if isOwnAnonymousGuest()
         && resource.data.uid == guestUid;
     }
+
+    // A member can register and manage only their own FCM device tokens.
+    // The backend uses Firebase Admin to read tokens for automatic SOS alerts.
 
     // A member can register and manage only their own FCM device tokens.
     // The backend uses Firebase Admin to read tokens for automatic SOS alerts.
