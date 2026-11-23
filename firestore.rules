@@ -786,6 +786,29 @@ service cloud.firestore {
                     && request.resource.data.accuracy is string
                     && request.resource.data.status == 'open'
                     && request.resource.data.resolved == false
+                    // Client-created records may contain only empty/default dispatch placeholders.
+                    // IFSE Admin SDK is the only writer allowed to assign responders or close cases.
+                    && request.resource.data.handledBy == ''
+                    && request.resource.data.assignedResponder == ''
+                    && request.resource.data.assignedResponderId == ''
+                    && request.resource.data.assignedAgency == ''
+                    && request.resource.data.assignedAgencyCode == ''
+                    && request.resource.data.assignedAgencyType == ''
+                    && request.resource.data.incidentStatus == 'Active'
+                    && request.resource.data.incidentNumber is string
+                    && request.resource.data.assignedStation == ''
+                    && request.resource.data.assignedVehicle == ''
+                    && request.resource.data.estimatedArrival == ''
+                    && request.resource.data.responseStatus == 'Awaiting Response'
+                    && request.resource.data.assignmentStatus == 'Pending'
+                    && request.resource.data.ifseThreatScore == 0
+                    && request.resource.data.ifseClassification == 'Pending'
+                    && request.resource.data.resolvedBy == ''
+                    && request.resource.data.resolutionNotes == ''
+                    && request.resource.data.closedAt == null
+                    && request.resource.data.gpsLatitude is number
+                    && request.resource.data.gpsLongitude is number
+                    && request.resource.data.responderNotes is string
                     && request.resource.data.createdAt is timestamp
                     && request.resource.data.updatedAt is timestamp
                     && request.resource.data.lastUpdated is timestamp
@@ -794,7 +817,7 @@ service cloud.firestore {
                       'emergencyType', 'priority', 'description', 'location',
                       'latitude', 'longitude', 'accuracy', 'locationSource',
                       'locationCapturedAt', 'gpsLatitude', 'gpsLongitude',
-                      'trustedContact', 'responderNotes', 'status', 'handledBy',
+                      'responderNotes', 'status', 'handledBy',
                       'resolved', 'assignedResponder', 'assignedResponderId',
                       'assignedAgency', 'assignedAgencyCode', 'assignedAgencyType',
                       'incidentStatus', 'incidentNumber', 'assignedStation',
