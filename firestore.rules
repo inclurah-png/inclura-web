@@ -773,6 +773,7 @@ service cloud.firestore {
       }
       allow get, list: if ownsRequest();
       allow create: if request.auth != null
+                    && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.emergencyType is string
                     && request.resource.data.priority in ['Low', 'Medium', 'High', 'Critical']
