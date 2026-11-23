@@ -31,7 +31,7 @@ export default function CommunityAlerts() {
     setBusy(true);
     setStatus("Preparing your browser for community alerts…");
     try {
-      const cleanArea = area.trim().replace(/\\s+/g, " ");
+      const cleanArea = area.trim().replace(/\s+/g, " ");
       if (cleanArea.length < 2 || cleanArea.length > 100) {
         throw new Error("Enter your town or city and state (2–100 characters).");
       }
