@@ -61,9 +61,14 @@ export function splitRecipient(value) {
 }
 
 export function getNotificationConfig() {
-  const smsProvider = String(process.env.SMS_PROVIDER || "")
+  const requestedSmsProvider = String(process.env.SMS_PROVIDER || "")
     .trim()
     .toLowerCase();
+  // Only providers currently retained by Inclura are accepted.
+  // Unknown/retired providers are treated as disabled.
+  const smsProvider = ["twilio", "webhook"].includes(requestedSmsProvider)
+    ? requestedSmsProvider
+    : "";
 
   const emailProvider = String(process.env.EMAIL_PROVIDER || "")
     .trim()
@@ -73,13 +78,6 @@ export function getNotificationConfig() {
     accountSid: process.env.TWILIO_ACCOUNT_SID || "",
     authToken: process.env.TWILIO_AUTH_TOKEN || "",
     fromNumber: normalizePhone(process.env.TWILIO_FROM_NUMBER),
-  };
-
-  const termii = {
-    apiKey: process.env.TERMII_API_KEY || "",
-    senderId: process.env.TERMII_SENDER_ID || "",
-    baseUrl:
-      process.env.TERMII_BASE_URL || "https://api.ng.termii.com",
   };
 
   const smsWebhook = {
@@ -112,7 +110,6 @@ export function getNotificationConfig() {
       twilio.accountSid &&
       twilio.authToken &&
       twilio.fromNumber) ||
-    (smsProvider === "termii" && termii.apiKey) ||
     (smsProvider === "webhook" && smsWebhook.url) ||
     false);
 
@@ -143,7 +140,6 @@ export function getNotificationConfig() {
       provider: smsProvider || "none",
       configured: Boolean(smsConfigured),
       twilio,
-      termii,
       webhook: smsWebhook,
     },
     email: {
