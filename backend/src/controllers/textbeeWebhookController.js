@@ -157,6 +157,9 @@ export async function receiveTextbeeWebhook(req, res) {
       const currentStatus = String(currentLog.deliveryStatus || currentLog.providerStatus || "queued").toLowerCase();
       const advance = shouldAdvanceTextbeeStatus(currentStatus, nextStatus);
       const resultingStatus = advance ? nextStatus : currentStatus;
+      // Firestore transactions require every read to happen before the first write.
+      const emergencySnapshot =
+        advance && emergencyRef ? await transaction.get(emergencyRef) : null;
 
       transaction.create(eventRef, {
         provider: "textbee",
@@ -179,26 +182,22 @@ export async function receiveTextbeeWebhook(req, res) {
           providerDeliveryUpdatedAt: new Date(),
         });
 
-        if (emergencyRef) {
-          const emergencySnapshot = await transaction.get(emergencyRef);
-          if (emergencySnapshot.exists) {
-            const emergency = emergencySnapshot.data() || {};
-            const summary = updateSummaryRecipient(
-              emergency.notificationSummary,
-              { batchId, recipient, status: resultingStatus }
-            );
-            const dispatchSummary = updateSummaryRecipient(
-              emergency.notificationDispatch?.summary,
-              { batchId, recipient, status: resultingStatus }
-            );
-            transaction.update(emergencyRef, {
-              notificationSummary: summary || null,
-              ...(emergency.notificationDispatch
-                ? { "notificationDispatch.summary": dispatchSummary || null }
-                : {}),
-              notificationUpdatedAt: new Date(),
-            });
+        if (emergencyRef && emergencySnapshot?.exists) {
+          const emergency = emergencySnapshot.data() || {};
+          const summary = updateSummaryRecipient(
+            emergency.notificationSummary,
+            { batchId, recipient, status: resultingStatus }
+          );
+          const dispatchSummary = updateSummaryRecipient(
+            emergency.notificationDispatch?.summary,
+            { batchId, recipient, status: resultingStatus }
+          );
+          const updates = { notificationUpdatedAt: new Date() };
+          if (summary) updates.notificationSummary = summary;
+          if (emergency.notificationDispatch && dispatchSummary) {
+            updates["notificationDispatch.summary"] = dispatchSummary;
           }
+          transaction.update(emergencyRef, updates);
         }
       }
 
