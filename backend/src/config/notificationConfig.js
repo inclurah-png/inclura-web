@@ -103,14 +103,18 @@ export function getNotificationConfig() {
     token: process.env.EMAIL_WEBHOOK_TOKEN || "",
   };
 
+  // Paid SMS is disabled by default. It can only be enabled after explicit approval
+  // by setting SOS_SMS_ENABLED=true on the backend and configuring a provider.
+  const smsEnabled = String(process.env.SOS_SMS_ENABLED || "false").toLowerCase() === "true";
+
   const smsConfigured =
-    (smsProvider === "twilio" &&
+    smsEnabled && ((smsProvider === "twilio" &&
       twilio.accountSid &&
       twilio.authToken &&
       twilio.fromNumber) ||
     (smsProvider === "termii" && termii.apiKey) ||
     (smsProvider === "webhook" && smsWebhook.url) ||
-    false;
+    false);
 
   const emailConfigured =
     (emailProvider === "resend" && resend.apiKey) ||

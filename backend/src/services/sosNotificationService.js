@@ -10,8 +10,8 @@
 //
 // Flow:
 //   1. Claim the SOS notification job (idempotent).
-//   2. Collect trusted contacts, family network, configured
-//      emergency recipients and the SOS form contact.
+//   2. Collect the member's active Trusted Contacts and any
+//      separately configured emergency-service recipients.
 //   3. Send SMS and email through the configured provider.
 //   4. Record every attempt, provider response and failure
 //      in the audit trail.
@@ -23,12 +23,11 @@
 import admin from "firebase-admin";
 
 import { firestore } from "../config/firebaseAdmin.js";
-import { sendPushToContacts, sendPushToUsers } from "./pushNotificationService.js";
+import { sendPushToCommunityArea, sendPushToContacts, sendPushToUsers } from "./pushNotificationService.js";
 import {
   getNotificationConfig,
   normalizeEmail,
   normalizePhone,
-  splitRecipient,
 } from "../config/notificationConfig.js";
 
 import {
@@ -149,13 +148,6 @@ async function collectDirectoryRecipients(db, ownerId) {
     ["userId", "ownerId"]
   );
 
-  const familyNetwork = await loadOwnerDocuments(
-    db,
-    "familyEmergencyNetwork",
-    ownerId,
-    ["ownerId", "userId"]
-  );
-
   if (!trustedContacts.length) {
     warnings.push(
       "No trusted contact documents were found for this user (checked userId and ownerId)."
@@ -163,6 +155,8 @@ async function collectDirectoryRecipients(db, ownerId) {
   }
 
   for (const record of trustedContacts) {
+    // Only contacts the member currently marks Active may receive an SOS alert.
+    if (record.data.status !== "Active") continue;
     recipients.push({
       name:
         safeString(record.data.fullName) ||
@@ -171,20 +165,6 @@ async function collectDirectoryRecipients(db, ownerId) {
       phone: contactPhone(record.data),
       email: contactEmail(record.data),
       audience: "trusted_contact",
-      sourceId: record.id,
-      linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
-    });
-  }
-
-  for (const record of familyNetwork) {
-    recipients.push({
-      name:
-        safeString(record.data.fullName) ||
-        safeString(record.data.name) ||
-        "Family network member",
-      phone: contactPhone(record.data),
-      email: contactEmail(record.data),
-      audience: "family_network",
       sourceId: record.id,
       linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
     });
@@ -463,16 +443,6 @@ export async function dispatchSOSNotifications({
       });
     }
 
-    const formContact = splitRecipient(sos.trustedContact);
-
-    if (formContact.phone || formContact.email) {
-      recipients.push({
-        name: "Trusted contact from SOS form",
-        phone: formContact.phone,
-        email: formContact.email,
-        audience: "sos_form_contact",
-      });
-    }
   }
 
   // Deduplicate by channel + normalized address.
@@ -504,7 +474,7 @@ export async function dispatchSOSNotifications({
 
   if (!deduped.length) {
     warnings.push(
-      "No SOS recipients were available: no trusted contacts, no configured emergency numbers/emails and no SOS form contact."
+      "No SOS recipients were available: no active trusted contacts or configured emergency recipients."
     );
   }
 
@@ -582,7 +552,22 @@ export async function dispatchSOSNotifications({
     emergencyId,
   });
 
-  const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts];
+  // Separate public/community audience: generic alert only, selected-area match,
+  // and no emergency description, caller identity, coordinates, or private URL.
+  let communityPushAttempts = [];
+  try {
+    communityPushAttempts = await sendPushToCommunityArea({
+      db,
+      location: sos.location || "",
+      title: "Inclura community emergency alert",
+      body: "An emergency has been reported in your subscribed area. Stay alert and follow guidance from local emergency services.",
+      emergencyId,
+    });
+  } catch (error) {
+    console.warn("Community emergency push did not complete; member SOS dispatch continues:", error?.message || error);
+  }
+
+  const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts, ...communityPushAttempts];
 
   const summary = {
     status: overallStatus({
@@ -590,7 +575,7 @@ export async function dispatchSOSNotifications({
       attempts: allAttempts,
       emailConfigured: config.email.configured,
       smsConfigured: config.sms.configured,
-      pushConfigured: pushUserTargets.length > 0 || config.recipients.adminEmails.length > 0 || String(process.env.ADMIN_FCM_USER_IDS || "").trim().length > 0,
+      pushConfigured: pushUserTargets.length > 0 || communityPushAttempts.length > 0 || config.recipients.adminEmails.length > 0 || String(process.env.ADMIN_FCM_USER_IDS || "").trim().length > 0,
     }),
     emergencyId,
     startedAt,
@@ -604,7 +589,7 @@ export async function dispatchSOSNotifications({
     channels: {
       sms: buildChannelSummary(smsAttempts),
       email: buildChannelSummary(emailAttempts),
-      push: buildChannelSummary(pushAttempts),
+      push: buildChannelSummary([...pushAttempts, ...communityPushAttempts]),
     },
     recipients: allAttempts.map((attempt) => ({
       channel: attempt.channel,
@@ -740,6 +725,16 @@ export async function dispatchSOSNotifications({
         audience: "administrator",
         channel: attempt.channel,
         kind: "admin_alert",
+      })
+    ),
+    ...communityPushAttempts.map((attempt) =>
+      attemptAuditRecord({
+        emergencyId,
+        sos,
+        attempt,
+        audience: "community",
+        channel: "push",
+        kind: "community_emergency_alert",
       })
     ),
   ];

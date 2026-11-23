@@ -32,6 +32,7 @@ import AdminRoute from "./components/AdminRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 
 const Home = lazy(() => import("./pages/Home"));
+const CommunityAlerts = lazy(() => import("./pages/CommunityAlerts"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -188,6 +189,11 @@ function App() {
       <Route
         path="/"
         element={<Home />}
+      />
+
+      <Route
+        path="/community-alerts"
+        element={<CommunityAlerts />}
       />
 
       <Route

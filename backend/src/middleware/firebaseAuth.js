@@ -63,3 +63,18 @@ export function requireFirebaseUser(req, res, next) {
       });
     });
 }
+
+
+// SOS actions are for registered Inclura accounts only.
+// Anonymous Firebase identities are permitted solely for the
+// separate community-alert subscription and cannot create or dispatch SOS.
+export function requireRegisteredFirebaseUser(req, res, next) {
+  const provider = req.user?.token?.firebase?.sign_in_provider || "";
+  if (!req.user?.uid || !provider || provider === "anonymous") {
+    return res.status(403).json({
+      success: false,
+      message: "A registered Inclura account is required for SOS actions.",
+    });
+  }
+  return next();
+}
