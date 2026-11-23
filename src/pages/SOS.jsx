@@ -60,10 +60,6 @@ function SOS() {
 
   accuracy:
     "",
-
-  trustedContact:
-    "",
-
   responderNotes:
     "",
 
@@ -634,11 +630,6 @@ function SOS() {
             locationCapturedAt: emergencyLocation.locationCapturedAt,
             gpsLatitude: Number(emergencyLocation.latitude) || 0,
             gpsLongitude: Number(emergencyLocation.longitude) || 0,
-
-            trustedContact:
-              sosForm.trustedContact ||
-              "",
-
             responderNotes:
               sosForm.responderNotes ||
               "",
@@ -764,11 +755,6 @@ function SOS() {
         locationCapturedAt: emergencyLocation.locationCapturedAt,
         gpsLatitude: Number(emergencyLocation.latitude) || 0,
         gpsLongitude: Number(emergencyLocation.longitude) || 0,
-
-        trustedContact:
-          sosForm.trustedContact ||
-          "",
-
         responderNotes:
           sosForm.responderNotes ||
           "",
@@ -923,10 +909,6 @@ function SOS() {
 
         accuracy:
           "",
-
-        trustedContact:
-          "",
-
         responderNotes:
           "",
 
@@ -1329,29 +1311,9 @@ return (
     </div>
 
 
-    {/* ==========================================================
-        TRUSTED CONTACT
-    ========================================================== */}
-
-    <label style={label}>
-      Trusted Contact
-    </label>
-
-
-    <input
-      type="text"
-      placeholder="Phone number or email"
-      value={sosForm.trustedContact}
-      onChange={(e) =>
-        setSosForm({
-          ...sosForm,
-          trustedContact:
-            e.target.value,
-        })
-      }
-      style={input}
-      disabled={isSubmittingSOS}
-    />
+    <p style={helpText}>
+      SOS alerts are sent to your saved active Trusted Contacts below. Manage that list in the Trusted Contacts section; do not enter a separate recipient here.
+    </p>
 
 
     {/* ==========================================================
