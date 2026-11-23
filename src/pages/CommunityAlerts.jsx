@@ -2,7 +2,7 @@ import { useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, signInAnonymously, signOut } from "firebase/auth";
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { getMessaging, getToken, deleteToken, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
 import app from "../firebase";
 
 const firebaseConfig = {
@@ -89,11 +89,6 @@ export default function CommunityAlerts() {
         // Remove the server-side subscription first, then revoke this
         // browser's Firebase messaging token where possible.
         await deleteDoc(doc(communityDb, "communityAlertDevices", guest.uid));
-        try {
-          await deleteToken(getMessaging(app));
-        } catch (tokenError) {
-          console.warn("Community alert token cleanup could not complete:", tokenError);
-        }
         await signOut(communityAuth);
       }
       setStatus("This browser has been removed from community alert registration.");
