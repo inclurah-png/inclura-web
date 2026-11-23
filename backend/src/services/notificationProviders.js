@@ -152,53 +152,6 @@ export async function sendSMS({
       return result;
     }
 
-    if (smsConfig.provider === "termii") {
-      const { apiKey, senderId, baseUrl } = smsConfig.termii;
-
-      const response = await fetch(
-        `${String(baseUrl).replace(/\/$/, "")}/api/sms/send`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            to,
-            from: senderId,
-            sms: body,
-            type: "plain",
-            channel: "generic",
-            api_key: apiKey,
-          }),
-          signal: requestSignal(),
-        }
-      );
-
-      const payload = await readResponseBody(response);
-      result.httpStatus = response.status;
-
-      const json = payload.json || {};
-      const messageText = String(json.message || "");
-      const successByBody =
-        json.code === "ok" || /success/i.test(messageText);
-
-      result.accepted =
-        response.ok && (successByBody || Boolean(json.message_id));
-      result.providerMessageId = json.message_id || json.messageId || "";
-      result.providerStatus = messageText || String(json.code || "");
-
-      if (!result.accepted) {
-        result.outcome = "provider_rejected";
-        result.error = (
-          messageText ||
-          providerErrorText(payload) ||
-          `Termii rejected the message (HTTP ${response.status}).`
-        ).slice(0, 500);
-        return result;
-      }
-
-      result.outcome = "provider_accepted";
-      return result;
-    }
-
     if (smsConfig.provider === "webhook") {
       const { url, token } = smsConfig.webhook;
 
