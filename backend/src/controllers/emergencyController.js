@@ -174,7 +174,7 @@ export async function testSOSNotification(req, res) {
       });
     }
 
-    const result = await sendSOSTestNotification({ channel });
+    const result = await sendSOSTestNotification({ channel, userId: req.user.uid });
 
     return res.status(result.ok ? 200 : 502).json({
       success: result.ok,
