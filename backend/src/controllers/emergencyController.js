@@ -159,7 +159,7 @@ export async function sendSOSNotification(req, res) {
 // never creates or alters an SOS record.
 export async function testSOSNotification(req, res) {
   const dryRun = req.body?.dryRun !== false;
-  const channel = ["sms", "email", "both"].includes(req.body?.channel)
+  const channel = ["sms", "email", "push", "both"].includes(req.body?.channel)
     ? req.body.channel
     : "both";
 
