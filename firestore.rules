@@ -1020,5 +1020,34 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+
+    // A member can register and manage only their own FCM device tokens.
+    // The backend uses Firebase Admin to read tokens for automatic SOS alerts.
+    match /fcmTokens/{tokenId} {
+      function ownsToken() {
+        return request.auth != null && resource.data.userId == request.auth.uid;
+      }
+      allow get, list: if ownsToken();
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.token is string
+        && request.resource.data.token.size() > 20
+        && request.resource.data.platform == 'web'
+        && request.resource.data.enabled == true
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'userId', 'token', 'platform', 'enabled', 'createdAt', 'updatedAt'
+        ]);
+      allow update: if ownsToken()
+        && request.resource.data.userId == resource.data.userId
+        && request.resource.data.token == resource.data.token
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['enabled', 'updatedAt'])
+        && request.resource.data.enabled is bool
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if ownsToken();
+    }
+
   }
 }
