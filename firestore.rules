@@ -1036,13 +1036,13 @@ service cloud.firestore {
           && request.resource.data.platform == 'web'
           && request.resource.data.enabled == true
           && request.resource.data.area is string
-          && request.resource.data.area.size() >= 2
+          && request.resource.data.area.size() >= 3
           && request.resource.data.area.size() <= 100
           && request.resource.data.areaNormalized is string
           && request.resource.data.areaNormalized.size() >= 2
           && request.resource.data.areaNormalized.size() <= 100
           && request.resource.data.localityNormalized is string
-          && request.resource.data.localityNormalized.size() >= 2
+          && request.resource.data.localityNormalized.size() >= 3
           && request.resource.data.localityNormalized.size() <= 100
           && request.resource.data.consent == true
           && request.resource.data.createdAt is timestamp
