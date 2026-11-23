@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, signInAnonymously, signOut } from "firebase/auth";
-import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { getMessaging, getToken, isSupported } from "firebase/messaging";
-import app from "../firebase";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
+import { getMessaging, getToken, deleteToken, isSupported } from "firebase/messaging";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
@@ -52,14 +51,16 @@ export default function CommunityAlerts() {
       }
 
       const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      const messaging = getMessaging(app);
+      const messaging = getMessaging(communityApp);
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: registration,
       });
       if (!token) throw new Error("Firebase did not issue a notification token.");
 
-      await setDoc(doc(communityDb, "communityAlertDevices", guest.uid), {
+      const deviceRef = doc(communityDb, "communityAlertDevices", guest.uid);
+      const existingDevice = await getDoc(deviceRef);
+      await setDoc(deviceRef, {
         uid: guest.uid,
         token,
         platform: "web",
@@ -68,7 +69,7 @@ export default function CommunityAlerts() {
         areaNormalized: cleanArea.toLocaleLowerCase(),
         localityNormalized: cleanArea.split(",")[0].trim().toLocaleLowerCase(),
         consent: true,
-        createdAt: serverTimestamp(),
+        createdAt: existingDevice.exists() ? existingDevice.data().createdAt : serverTimestamp(),
         updatedAt: serverTimestamp(),
       }, { merge: true });
 
@@ -86,9 +87,13 @@ export default function CommunityAlerts() {
     try {
       const guest = communityAuth.currentUser;
       if (guest) {
-        // Remove the server-side subscription first, then revoke this
-        // browser's Firebase messaging token where possible.
+        // Remove the server-side subscription before revoking the local token.
         await deleteDoc(doc(communityDb, "communityAlertDevices", guest.uid));
+        try {
+          if (await isSupported()) await deleteToken(getMessaging(communityApp));
+        } catch (tokenError) {
+          console.warn("Community push token revocation was not completed:", tokenError?.message || tokenError);
+        }
         await signOut(communityAuth);
       }
       setStatus("This browser has been removed from community alert registration.");
