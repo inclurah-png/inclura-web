@@ -112,7 +112,7 @@ export function getNotificationConfig() {
       twilio.accountSid &&
       twilio.authToken &&
       twilio.fromNumber) ||
-    (smsProvider === "termii" && termii.apiKey) ||
+    (smsProvider === "termii" && termii.apiKey && termii.senderId) ||
     (smsProvider === "webhook" && smsWebhook.url) ||
     false);
 
