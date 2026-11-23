@@ -1,0 +1,49 @@
+name: Validate Inclura community alerts
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install frontend dependencies
+        run: npm ci
+      - name: Build frontend
+        env:
+          VITE_SOS_NOTIFICATION_BACKEND_URL: https://inclura-ifse-backend.onrender.com
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+        run: npm run build
+
+  backend-syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+      - name: Check changed backend JavaScript syntax
+        run: |
+          node --check backend/src/middleware/firebaseAuth.js
+          node --check backend/src/routes/sosNotificationRoutes.js
+          node --check backend/src/routes/emergencyRoutes.js
+          node --check backend/src/services/pushNotificationService.js
+          node --check backend/src/services/sosNotificationService.js
