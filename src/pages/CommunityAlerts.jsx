@@ -2,7 +2,8 @@ import { useState } from "react";
 import { initializeApp, getApps } from "firebase/app";
 import { getAuth, signInAnonymously, signOut } from "firebase/auth";
 import { getFirestore, doc, setDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { getMessaging, getToken, deleteToken, isSupported } from "firebase/messaging";
+import { getMessaging, getToken, isSupported } from "firebase/messaging";
+import app from "../firebase";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCb7YlZynAbMKjPWAwuOH61D4uUeAVtUlU",
@@ -51,7 +52,7 @@ export default function CommunityAlerts() {
       }
 
       const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
-      const messaging = getMessaging(communityApp);
+      const messaging = getMessaging(app);
       const token = await getToken(messaging, {
         vapidKey: VAPID_KEY,
         serviceWorkerRegistration: registration,
@@ -86,9 +87,6 @@ export default function CommunityAlerts() {
       const guest = communityAuth.currentUser;
       if (guest) {
         await deleteDoc(doc(communityDb, "communityAlertDevices", guest.uid));
-        if (await isSupported()) {
-          try { await deleteToken(getMessaging(communityApp)); } catch {}
-        }
         await signOut(communityAuth);
       }
       setStatus("This browser has been removed from community alert registration.");
