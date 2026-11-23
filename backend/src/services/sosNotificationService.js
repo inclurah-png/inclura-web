@@ -630,13 +630,16 @@ export async function dispatchSOSNotifications({
   const adminMessage = buildAdminMessage({ sos, emergencyId, summary });
   const adminPushUserIds = String(process.env.ADMIN_FCM_USER_IDS || "")
     .split(",").map((value) => value.trim()).filter(Boolean);
-  const adminPushAttempts = await sendPushToUsers({
+  const adminPushTargets = [
+    ...adminPushUserIds.map((userId) => ({ userId, name: "Administrator", audience: "administrator" })),
+    ...config.recipients.adminEmails.map((email) => ({ email, name: "Administrator", audience: "administrator" })),
+  ];
+  const adminPushAttempts = await sendPushToContacts({
     db,
-    userIds: adminPushUserIds,
+    contacts: adminPushTargets,
     title: "Inclura SOS — Administrator alert",
     body: `SOS ${emergencyId}: ${safeString(sos.userName, "A member")} needs emergency assistance. Open Inclura IFSE monitoring.`,
     emergencyId,
-    audience: "administrator",
   });
   adminAttempts.push(...adminPushAttempts);
 
@@ -651,7 +654,7 @@ export async function dispatchSOSNotifications({
       "No ADMIN_NOTIFICATION_PHONES configured: administrator received no SMS copy of this SOS."
     );
   }
-  if (!adminPushUserIds.length) {
+  if (!adminPushTargets.length) {
     warnings.push("No ADMIN_FCM_USER_IDS configured: no administrator device received an FCM push copy.");
   }
 
@@ -683,7 +686,7 @@ export async function dispatchSOSNotifications({
   summary.adminNotification = {
     recipientCount:
       config.recipients.adminEmails.length +
-      config.recipients.adminPhones.length + adminPushUserIds.length,
+      config.recipients.adminPhones.length + adminPushTargets.length,
     sms: buildChannelSummary(
       adminAttempts.filter((attempt) => attempt.channel === "sms")
     ),
