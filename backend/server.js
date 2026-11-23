@@ -12,6 +12,7 @@ import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 import mediaRoutes from "./src/routes/mediaRoutes.js";
 import emergencyRoutes from "./src/routes/emergencyRoutes.js";
 import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
+import textbeeWebhookRoutes from "./src/routes/textbeeWebhookRoutes.js";
 
 import {
   startSOSNotificationSweeper,
@@ -95,6 +96,12 @@ app.use(
     credentials: false,
   })
 );
+
+// =======================================================
+// TextBee signed webhook — raw body must be parsed before JSON.
+// =======================================================
+
+app.use("/api/integrations/textbee", textbeeWebhookRoutes);
 
 // =======================================================
 // JSON Body Parser

@@ -9,6 +9,7 @@ import cors from "cors";
 import passkeyRoutes from "./src/routes/passkeyRoutes.js";
 import emergencyRoutes from "./src/routes/emergencyRoutes.js";
 import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
+import textbeeWebhookRoutes from "./src/routes/textbeeWebhookRoutes.js";
 
 const app = express();
 
@@ -17,6 +18,9 @@ const app = express();
 // =======================================================
 
 app.use(cors());
+
+// Signature verification requires the untouched request bytes.
+app.use("/api/integrations/textbee", textbeeWebhookRoutes);
 
 app.use(express.json());
 

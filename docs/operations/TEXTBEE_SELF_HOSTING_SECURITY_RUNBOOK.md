@@ -128,7 +128,7 @@ Required gates:
 - **Device:** only the approved Android gateway is enrolled; permissions and battery/background operation are checked; loss of internet, power, SIM, and SMS balance is detected as an operational risk.
 - **Adapter:** wrong host, HTTP URL, missing key, missing device ID, rejected request, malformed response, timeout, and duplicate request all fail safely.
 - **Privacy:** SMS contains only the approved minimal template; logs contain no secrets or message bodies.
-- **Webhook:** all signature, replay, idempotency, ownership, and status-transition tests pass.
+- **Webhook:** all signature, replay, idempotency, existing-send matching, and status-transition tests pass; the receiver is deployed and the expected subscription/device IDs are verified.
 - **Operations:** alerting, backups, patching, incident response, and gateway outage procedures are documented.
 - **Cost:** test the actual SIM network's SMS rates and any destination-country charges. Never assume that a TextBee free/self-hosted software tier covers carrier SMS.
 
