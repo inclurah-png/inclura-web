@@ -93,7 +93,6 @@ export async function sendPushToUsers({
               tag: `inclura-sos-${emergencyId || "alert"}`,
               requireInteraction: true,
             },
-            fcmOptions: { link: "/sos" },
           },
         });
         attempt.outcome = "provider_accepted";
@@ -151,7 +150,20 @@ export async function sendPushToContacts({ db, contacts = [], title, body, emerg
         continue;
       }
     }
-    if (!userId) continue;
+    if (!userId) {
+      attempts.push({
+        channel: "push",
+        to: contact.email || contact.phone || "unlinked_contact",
+        name: contact.name || "Trusted contact",
+        audience: contact.audience || "trusted_contact",
+        provider: "firebase-cloud-messaging",
+        outcome: "no_linked_inclura_account",
+        accepted: false,
+        error: "This trusted contact could not be matched to an Inclura account. The contact must use the email or international phone number linked to their Inclura account and register a device.",
+        attemptedAt: new Date().toISOString(),
+      });
+      continue;
+    }
     const sent = await sendPushToUsers({
       db,
       userIds: [userId],
