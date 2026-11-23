@@ -23,7 +23,7 @@
 import admin from "firebase-admin";
 
 import { firestore } from "../config/firebaseAdmin.js";
-import { sendPushToContacts, sendPushToUsers } from "./pushNotificationService.js";
+import { sendPushToCommunityArea, sendPushToContacts, sendPushToUsers } from "./pushNotificationService.js";
 import {
   getNotificationConfig,
   normalizeEmail,
@@ -582,7 +582,22 @@ export async function dispatchSOSNotifications({
     emergencyId,
   });
 
-  const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts];
+  // Separate public/community audience: generic alert only, selected-area match,
+  // and no emergency description, caller identity, coordinates, or private URL.
+  let communityPushAttempts = [];
+  try {
+    communityPushAttempts = await sendPushToCommunityArea({
+      db,
+      location: sos.location || "",
+      title: "Inclura community emergency alert",
+      body: "An emergency has been reported in your subscribed area. Stay alert and follow guidance from local emergency services.",
+      emergencyId,
+    });
+  } catch (error) {
+    console.warn("Community emergency push did not complete; member SOS dispatch continues:", error?.message || error);
+  }
+
+  const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts, ...communityPushAttempts];
 
   const summary = {
     status: overallStatus({
@@ -740,6 +755,16 @@ export async function dispatchSOSNotifications({
         audience: "administrator",
         channel: attempt.channel,
         kind: "admin_alert",
+      })
+    ),
+    ...communityPushAttempts.map((attempt) =>
+      attemptAuditRecord({
+        emergencyId,
+        sos,
+        attempt,
+        audience: "community",
+        channel: "push",
+        kind: "community_emergency_alert",
       })
     ),
   ];
