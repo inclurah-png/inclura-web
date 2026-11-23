@@ -605,7 +605,7 @@ export async function dispatchSOSNotifications({
       attempts: allAttempts,
       emailConfigured: config.email.configured,
       smsConfigured: config.sms.configured,
-      pushConfigured: pushUserTargets.length > 0 || config.recipients.adminEmails.length > 0 || String(process.env.ADMIN_FCM_USER_IDS || "").trim().length > 0,
+      pushConfigured: pushUserTargets.length > 0 || communityPushAttempts.length > 0 || config.recipients.adminEmails.length > 0 || String(process.env.ADMIN_FCM_USER_IDS || "").trim().length > 0,
     }),
     emergencyId,
     startedAt,
@@ -619,7 +619,7 @@ export async function dispatchSOSNotifications({
     channels: {
       sms: buildChannelSummary(smsAttempts),
       email: buildChannelSummary(emailAttempts),
-      push: buildChannelSummary(pushAttempts),
+      push: buildChannelSummary([...pushAttempts, ...communityPushAttempts]),
     },
     recipients: allAttempts.map((attempt) => ({
       channel: attempt.channel,
