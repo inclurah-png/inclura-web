@@ -10,8 +10,8 @@
 //
 // Flow:
 //   1. Claim the SOS notification job (idempotent).
-//   2. Collect trusted contacts, family network, configured
-//      emergency recipients and the SOS form contact.
+//   2. Collect the member's active Trusted Contacts and any
+//      separately configured emergency-service recipients.
 //   3. Send SMS and email through the configured provider.
 //   4. Record every attempt, provider response and failure
 //      in the audit trail.
