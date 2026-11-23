@@ -47,3 +47,16 @@ jobs:
           node --check backend/src/routes/emergencyRoutes.js
           node --check backend/src/services/pushNotificationService.js
           node --check backend/src/services/sosNotificationService.js
+
+  firestore-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Java for Firestore emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: Validate Firestore rules with emulator
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-inclura-rules "echo Firestore rules loaded successfully"
