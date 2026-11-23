@@ -11,7 +11,7 @@ import {
   testSOSNotification,
 } from "../controllers/emergencyController.js";
 
-import { requireFirebaseUser } from "../middleware/firebaseAuth.js";
+import { requireFirebaseUser, requireRegisteredFirebaseUser } from "../middleware/firebaseAuth.js";
 
 const router = express.Router();
 
@@ -19,9 +19,9 @@ const router = express.Router();
 router.get("/notification-status", notificationStatus);
 
 // Automatic SOS notification. No administrator approval step.
-router.post("/sos/:emergencyId/notify", requireFirebaseUser, notifySOS);
+router.post("/sos/:emergencyId/notify", requireFirebaseUser, requireRegisteredFirebaseUser, notifySOS);
 
 // Verification endpoint: test recipients only, dry run by default.
-router.post("/notification-test", requireFirebaseUser, testSOSNotification);
+router.post("/notification-test", requireFirebaseUser, requireRegisteredFirebaseUser, testSOSNotification);
 
 export default router;
