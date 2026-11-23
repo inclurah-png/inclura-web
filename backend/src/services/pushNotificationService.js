@@ -180,3 +180,135 @@ export async function sendPushToContacts({ db, contacts = [], title, body, emerg
   }
   return attempts;
 }
+
+
+// Send a minimal, non-identifying alert to opted-in anonymous browsers
+// whose selected locality is present in the SOS location text.
+// This collection is separate from member fcmTokens and grants no SOS access.
+export async function sendPushToCommunityArea({
+  db,
+  location = "",
+  title = "Inclura community emergency alert",
+  body = "An emergency has been reported in your subscribed area. Stay alert and follow guidance from local emergency services.",
+  emergencyId = "",
+}) {
+  const normalize = (value) => String(value || "").normalize("NFKC").trim().toLocaleLowerCase();
+  const normalizedLocation = normalize(location);
+  if (!normalizedLocation) {
+    return [{
+      channel: "push",
+      to: "community",
+      name: "Community alert subscribers",
+      audience: "community",
+      provider: "firebase-cloud-messaging",
+      outcome: "no_emergency_area",
+      accepted: false,
+      error: "The SOS record did not contain a usable location, so no area-wide push was sent.",
+      attemptedAt: new Date().toISOString(),
+    }];
+  }
+
+  try {
+    const snapshot = await db.collection("communityAlertDevices")
+      .where("enabled", "==", true)
+      .get();
+    const matching = snapshot.docs.filter((doc) => {
+      const data = doc.data() || {};
+      const locality = normalize(data.localityNormalized);
+      return data.consent === true
+        && typeof data.token === "string"
+        && data.token.length > 20
+        && locality.length >= 2
+        && normalizedLocation.includes(locality);
+    });
+
+    if (!matching.length) {
+      return [{
+        channel: "push",
+        to: "community",
+        name: "Community alert subscribers",
+        audience: "community",
+        provider: "firebase-cloud-messaging",
+        outcome: "no_matching_area_subscribers",
+        accepted: false,
+        error: "No opted-in community alert devices matched the SOS location.",
+        attemptedAt: new Date().toISOString(),
+      }];
+    }
+
+    const attempts = [];
+    const seenTokens = new Set();
+    for (const device of matching) {
+      const data = device.data() || {};
+      const token = data.token;
+      if (seenTokens.has(token)) continue;
+      seenTokens.add(token);
+      const attempt = {
+        channel: "push",
+        to: data.area || "subscribed area",
+        name: "Community alert subscriber",
+        audience: "community",
+        provider: "firebase-cloud-messaging",
+        outcome: "failed",
+        accepted: false,
+        providerMessageId: "",
+        providerStatus: "",
+        error: "",
+        attemptedAt: new Date().toISOString(),
+      };
+      try {
+        const messageId = await admin.messaging().send({
+          token,
+          notification: { title, body },
+          data: {
+            type: "inclura_community_emergency_alert",
+            url: "/community-alerts",
+          },
+          webpush: {
+            notification: {
+              title,
+              body,
+              icon: "/favicon.ico",
+              tag: "inclura-community-emergency-" + String(emergencyId || "alert"),
+              requireInteraction: true,
+            },
+            fcmOptions: { link: "/community-alerts" },
+          },
+        });
+        attempt.outcome = "provider_accepted";
+        attempt.accepted = true;
+        attempt.providerMessageId = messageId;
+        attempt.providerStatus = "accepted_by_firebase";
+      } catch (error) {
+        const code = error?.code || "";
+        attempt.error = String(error?.message || error);
+        attempt.providerStatus = code;
+        if (INVALID_TOKEN_CODES.has(code)) {
+          attempt.outcome = "invalid_device_token";
+          try {
+            await device.ref.set({
+              enabled: false,
+              updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+          } catch (disableError) {
+            attempt.error += "; token disable failed: " + (disableError?.message || disableError);
+          }
+        }
+      }
+      attempts.push(attempt);
+    }
+    return attempts;
+  } catch (error) {
+    return [{
+      channel: "push",
+      to: "community",
+      name: "Community alert subscribers",
+      audience: "community",
+      provider: "firebase-cloud-messaging",
+      outcome: "failed",
+      accepted: false,
+      error: "Community subscriber lookup failed: " + String(error?.message || error),
+      attemptedAt: new Date().toISOString(),
+    }];
+  }
+}
