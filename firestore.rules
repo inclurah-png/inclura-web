@@ -1041,12 +1041,15 @@ service cloud.firestore {
           && request.resource.data.areaNormalized is string
           && request.resource.data.areaNormalized.size() >= 2
           && request.resource.data.areaNormalized.size() <= 100
+          && request.resource.data.localityNormalized is string
+          && request.resource.data.localityNormalized.size() >= 2
+          && request.resource.data.localityNormalized.size() <= 100
           && request.resource.data.consent == true
           && request.resource.data.createdAt is timestamp
           && request.resource.data.updatedAt is timestamp
           && request.resource.data.keys().hasOnly([
             'uid', 'token', 'platform', 'enabled', 'area',
-            'areaNormalized', 'consent', 'createdAt', 'updatedAt'
+            'areaNormalized', 'localityNormalized', 'consent', 'createdAt', 'updatedAt'
           ]);
       }
       allow get: if isOwnAnonymousGuest();
@@ -1056,7 +1059,7 @@ service cloud.firestore {
         && resource.data.uid == guestUid
         && validCommunityAlertDevice()
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          'token', 'enabled', 'area', 'areaNormalized', 'consent',
+          'token', 'enabled', 'area', 'areaNormalized', 'localityNormalized', 'consent',
           'createdAt', 'updatedAt'
         ]);
       allow delete: if isOwnAnonymousGuest()
