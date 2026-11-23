@@ -23,6 +23,7 @@ import {
 } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
+import SOSPushRegistration from "../components/SOSPushRegistration";
 import SOSHistory from "../pages/SOSHistory";
 import TrustedContacts from "./TrustedContacts";
 import ShareLiveLocation from "./ShareLiveLocation";
@@ -978,6 +979,8 @@ return (
     Use this emergency service to request authorized assistance
     through the Inclura Fortress Security Engine (IFSE).
   </p>
+
+  <SOSPushRegistration />
 
   <div style={card}>
     <h3>🛡 SOS Emergency Readiness — Prepare Before Danger</h3>
