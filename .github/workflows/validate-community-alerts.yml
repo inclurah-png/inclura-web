@@ -42,11 +42,16 @@ jobs:
         run: npm install
       - name: Check changed backend JavaScript syntax
         run: |
+          node --check backend/src/config/notificationConfig.js
+          node --check backend/src/services/notificationProviders.js
           node --check backend/src/middleware/firebaseAuth.js
           node --check backend/src/routes/sosNotificationRoutes.js
           node --check backend/src/routes/emergencyRoutes.js
           node --check backend/src/services/pushNotificationService.js
           node --check backend/src/services/sosNotificationService.js
+      - name: Test notification provider configuration security
+        working-directory: backend
+        run: node --test test/notificationConfig.test.js test/notificationProviders.test.js
 
   firestore-rules:
     runs-on: ubuntu-latest

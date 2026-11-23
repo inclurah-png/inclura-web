@@ -152,6 +152,51 @@ export async function sendSMS({
       return result;
     }
 
+    if (smsConfig.provider === "textbee") {
+      const { baseUrl, apiKey, deviceId } = smsConfig.textbee || {};
+
+      // Configuration validation happens before this point. Keep the
+      // credential on the server and pin sends to one approved gateway.
+      const response = await fetch(`${baseUrl}/gateway/send-sms`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+        },
+        body: JSON.stringify({
+          recipients: [to],
+          message: body,
+          deviceId,
+        }),
+        signal: requestSignal(),
+      });
+
+      const payload = await readResponseBody(response);
+      result.httpStatus = response.status;
+
+      const accepted =
+        response.ok &&
+        payload.json?.data?.success === true &&
+        typeof payload.json?.data?.smsBatchId === "string" &&
+        payload.json.data.smsBatchId.length > 0;
+
+      if (!accepted) {
+        result.outcome = "provider_rejected";
+        // Do not copy provider response bodies into audit logs; they may
+        // contain recipient or message details. Record only the status.
+        result.error = `Self-hosted TextBee did not accept the SMS (HTTP ${response.status || "unknown"}).`;
+        return result;
+      }
+
+      result.accepted = true;
+      result.outcome = "provider_accepted";
+      result.providerMessageId = payload.json.data.smsBatchId;
+      result.providerStatus = "queued";
+      // TextBee HTTP 200 means queued, not sent or delivered.
+      result.deliveryConfirmed = false;
+      return result;
+    }
+
     if (smsConfig.provider === "webhook") {
       const { url, token } = smsConfig.webhook;
 
