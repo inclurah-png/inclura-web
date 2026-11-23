@@ -878,19 +878,19 @@ export async function dispatchSOSNotifications({
 // Used by the safe verification endpoint only. Sends a clearly
 // labelled test message to EMERGENCY_TEST_* recipients and never
 // touches a real SOS record.
-export async function sendSOSTestNotification({ channel = "both" } = {}) {
+export async function sendSOSTestNotification({ channel = "both", userId = "" } = {}) {
   const config = getNotificationConfig();
 
   const testPhones = config.recipients.testPhones;
   const testEmails = config.recipients.testEmails;
   const attempts = [];
 
-  if (!testPhones.length && !testEmails.length) {
+  if (!testPhones.length && !testEmails.length && !(channel !== "sms" && userId)) {
     return {
       ok: false,
       status: "no_test_recipients",
       message:
-        "No test recipients configured. Set EMERGENCY_TEST_PHONES and/or EMERGENCY_TEST_EMAILS on the backend. Real SOS recipients are never used by this endpoint.",
+        "No test recipients configured. Set EMERGENCY_TEST_PHONES and/or EMERGENCY_TEST_EMAILS, or register this signed-in device for push. Real SOS recipients are never used by this endpoint.",
       attempts: [],
     };
   }
@@ -928,6 +928,18 @@ export async function sendSOSTestNotification({ channel = "both" } = {}) {
 
       attempts.push(attempt);
     }
+  }
+
+  if (channel !== "sms" && userId) {
+    const pushAttempts = await sendPushToUsers({
+      db: firestore(),
+      userIds: [userId],
+      title: "Inclura SOS test — not an emergency",
+      body: "This is a safe test of push notifications on your own registered device. No emergency was created.",
+      emergencyId: "SOS-TEST",
+      audience: "test",
+    });
+    attempts.push(...pushAttempts);
   }
 
   if (channel !== "sms") {
