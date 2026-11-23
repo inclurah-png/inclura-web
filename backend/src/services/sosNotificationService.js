@@ -28,7 +28,6 @@ import {
   getNotificationConfig,
   normalizeEmail,
   normalizePhone,
-  splitRecipient,
 } from "../config/notificationConfig.js";
 
 import {
@@ -149,13 +148,6 @@ async function collectDirectoryRecipients(db, ownerId) {
     ["userId", "ownerId"]
   );
 
-  const familyNetwork = await loadOwnerDocuments(
-    db,
-    "familyEmergencyNetwork",
-    ownerId,
-    ["ownerId", "userId"]
-  );
-
   if (!trustedContacts.length) {
     warnings.push(
       "No trusted contact documents were found for this user (checked userId and ownerId)."
@@ -163,6 +155,8 @@ async function collectDirectoryRecipients(db, ownerId) {
   }
 
   for (const record of trustedContacts) {
+    // Only contacts the member currently marks Active may receive an SOS alert.
+    if (record.data.status !== "Active") continue;
     recipients.push({
       name:
         safeString(record.data.fullName) ||
@@ -171,20 +165,6 @@ async function collectDirectoryRecipients(db, ownerId) {
       phone: contactPhone(record.data),
       email: contactEmail(record.data),
       audience: "trusted_contact",
-      sourceId: record.id,
-      linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
-    });
-  }
-
-  for (const record of familyNetwork) {
-    recipients.push({
-      name:
-        safeString(record.data.fullName) ||
-        safeString(record.data.name) ||
-        "Family network member",
-      phone: contactPhone(record.data),
-      email: contactEmail(record.data),
-      audience: "family_network",
       sourceId: record.id,
       linkedUserId: safeString(record.data.contactUserId) || safeString(record.data.linkedUserId) || safeString(record.data.memberUserId) || safeString(record.data.firebaseUid) || safeString(record.data.uid),
     });
@@ -463,16 +443,6 @@ export async function dispatchSOSNotifications({
       });
     }
 
-    const formContact = splitRecipient(sos.trustedContact);
-
-    if (formContact.phone || formContact.email) {
-      recipients.push({
-        name: "Trusted contact from SOS form",
-        phone: formContact.phone,
-        email: formContact.email,
-        audience: "sos_form_contact",
-      });
-    }
   }
 
   // Deduplicate by channel + normalized address.
@@ -504,7 +474,7 @@ export async function dispatchSOSNotifications({
 
   if (!deduped.length) {
     warnings.push(
-      "No SOS recipients were available: no trusted contacts, no configured emergency numbers/emails and no SOS form contact."
+      "No SOS recipients were available: no active trusted contacts or configured emergency recipients."
     );
   }
 
