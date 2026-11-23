@@ -17,6 +17,7 @@ export default function SOSPushRegistration() {
   const [busy, setBusy] = useState(false);
   const [diagnostic, setDiagnostic] = useState("");
   const [checking, setChecking] = useState(false);
+  const [tokenCopied, setTokenCopied] = useState(false);
 
   async function checkPushSetup() {
     setChecking(true);
@@ -34,6 +35,7 @@ export default function SOSPushRegistration() {
       }
 
       const workerState = registration.active?.state || "No active worker";
+      const workerScript = registration.active?.scriptURL || "Unknown worker script";
       if (!registration.active || workerState !== "activated") {
         setDiagnostic("Service worker: REGISTERED, but not active yet (" + workerState + ").\nPlease keep this page open and check again.");
         return;
@@ -97,6 +99,26 @@ export default function SOSPushRegistration() {
     }
   }
 
+
+  async function copyFirebaseToken() {
+    try {
+      if (!auth.currentUser) throw new Error("Please sign in first.");
+      const registration = await navigator.serviceWorker.getRegistration("/");
+      if (!registration?.active) throw new Error("The Inclura service worker is not active.");
+      const messaging = getMessaging(app);
+      const token = await getToken(messaging, {
+        vapidKey: VAPID_KEY,
+        serviceWorkerRegistration: registration,
+      });
+      if (!token) throw new Error("Firebase did not return a device token.");
+      await navigator.clipboard.writeText(token);
+      setTokenCopied(true);
+      setStatus("Firebase test token copied. Keep it private and paste it only into your Firebase project console.");
+    } catch (error) {
+      setStatus("Could not copy the Firebase test token: " + (error?.message || "Unknown error"));
+    }
+  }
+
   async function enablePush() {
     setBusy(true);
     setStatus("Preparing this device for SOS push alerts…");
@@ -148,7 +170,7 @@ export default function SOSPushRegistration() {
       <button type="button" onClick={enablePush} disabled={busy} style={{ background: "#0f766e", color: "#fff", border: 0, borderRadius: 10, padding: "12px 16px", fontWeight: 700, opacity: busy ? 0.7 : 1 }}>
         {busy ? "Registering device…" : "Enable Push Notifications on This Device"}
       </button>
-      <button type="button" onClick={checkPushSetup} disabled={checking || busy} style={{ display: "block", marginTop: 12, background: "#334155", color: "#fff", border: 0, borderRadius: 10, padding: "12px 16px", fontWeight: 700, opacity: checking ? 0.7 : 1 }}>
+      <button type="button" onClick={copyFirebaseToken} disabled={busy || checking} style={{ display: "block", marginTop: 12, background: "#475569", color: "#fff", border: 0, borderRadius: 10, padding: "12px 16px", fontWeight: 700 }}>\n        {tokenCopied ? "Copy Firebase Test Token Again" : "Copy Firebase Test Token"}\n      </button>\n      <button type="button" onClick={checkPushSetup} disabled={checking || busy} style={{ display: "block", marginTop: 12, background: "#334155", color: "#fff", border: 0, borderRadius: 10, padding: "12px 16px", fontWeight: 700, opacity: checking ? 0.7 : 1 }}>
         {checking ? "Checking…" : "Check Push Setup"}
       </button>
       {diagnostic ? (
