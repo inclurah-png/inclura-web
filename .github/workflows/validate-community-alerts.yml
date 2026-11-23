@@ -39,7 +39,7 @@ jobs:
           node-version: 20
       - name: Install backend dependencies
         working-directory: backend
-        run: npm ci
+        run: npm install
       - name: Check changed backend JavaScript syntax
         run: |
           node --check backend/src/middleware/firebaseAuth.js
