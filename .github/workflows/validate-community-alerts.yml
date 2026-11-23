@@ -51,7 +51,7 @@ jobs:
           node --check backend/src/services/sosNotificationService.js
       - name: Test notification provider configuration security
         working-directory: backend
-        run: node --test test/notificationConfig.test.js
+        run: node --test test/notificationConfig.test.js test/notificationProviders.test.js
 
   firestore-rules:
     runs-on: ubuntu-latest
