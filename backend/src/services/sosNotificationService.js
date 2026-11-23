@@ -23,7 +23,7 @@
 import admin from "firebase-admin";
 
 import { firestore } from "../config/firebaseAdmin.js";
-import { sendPushToUsers } from "./pushNotificationService.js";
+import { sendPushToContacts, sendPushToUsers } from "./pushNotificationService.js";
 import {
   getNotificationConfig,
   normalizeEmail,
@@ -436,9 +436,13 @@ export async function dispatchSOSNotifications({
   } else {
     const directory = await collectDirectoryRecipients(db, sos.userId);
     recipients.push(...directory.recipients);
-    pushUserTargets = directory.recipients
-      .filter((recipient) => recipient.linkedUserId)
-      .map((recipient) => ({ userId: recipient.linkedUserId, name: recipient.name, audience: recipient.audience }));
+    pushUserTargets = directory.recipients.map((recipient) => ({
+      userId: recipient.linkedUserId || "",
+      name: recipient.name,
+      email: recipient.email || "",
+      phone: recipient.phone || "",
+      audience: recipient.audience,
+    })).filter((recipient) => recipient.userId || recipient.email || recipient.phone);
     warnings.push(...directory.warnings);
 
     for (const phone of config.recipients.emergencyPhones) {
@@ -570,13 +574,12 @@ export async function dispatchSOSNotifications({
 
   const pushTitle = "Inclura SOS emergency alert";
   const pushBody = safeString(sos.description, "A trusted contact has requested emergency assistance. Open Inclura to view the alert.");
-  const pushAttempts = await sendPushToUsers({
+  const pushAttempts = await sendPushToContacts({
     db,
-    userIds: pushUserTargets.map((target) => target.userId),
+    contacts: pushUserTargets,
     title: pushTitle,
     body: pushBody,
     emergencyId,
-    audience: "trusted_contact",
   });
 
   const allAttempts = [...smsAttempts, ...emailAttempts, ...pushAttempts];
