@@ -42,3 +42,19 @@
 ## Scope boundary
 
 No application source, Firebase configuration, secrets, live hosting settings, or production services were changed as part of this audit. This document records observations from the current `main` source and must be updated as the remaining page-by-page audit proceeds.
+
+
+## Additional route-family inspection
+
+- The current `src/App.jsx` contains 66 lazy-loaded page modules, 70 route declarations, and 69 unique route paths; `/responder-assignments` is declared twice.
+- Identity routes include password login/signup, Google sign-in/up, passkey login, email verification, password reset, and onboarding. Profile editing includes photo upload and accessibility preferences.
+- Post detail includes reactions and translation; saved posts and social connections have separate routes. Cross-posting is a substantial workflow with platform selection, request creation, processing, retry/status components, and persistent records. Keep each platform's existing connection state and permissions unchanged during the Android foundation work.
+- Creator monetization/activity/earnings and advertiser/enterprise dashboards are not uniformly complete: some routes are navigation shells or static display cards, while other modules contain Firestore reads/actions. The Android feature matrix must distinguish implemented, partial, and placeholder behavior rather than counting every route as a complete feature.
+- Verification includes application, document submission, payment, status/history, and admin review routes. Premium payment uses the existing Flutterwave integration. These payment paths need provider and app-distribution policy review before any store release; do not silently replace them with a different payment system.
+- Responder assignment includes state-changing actions to start response, mark arrival, request backup, and complete a mission. These must only be exercised with synthetic test data and a test-only backend authorization path.
+
+## Existing validation status
+
+- The repository's pull-request CI workflow ran successfully on the source snapshot at commit `010bd61d816e83ff4f2aed9993a8ac73627f2494`: frontend Vite build, backend syntax/notification-provider/webhook tests, and Firestore rules emulator validation all passed.
+- The subsequent audit commits changed documentation only; application source was unchanged from that validated source snapshot.
+- `package.json` exposes `dev`, `build`, and `preview` scripts; it does not define a dedicated frontend unit-test or lint script. The existing CI's build and rule/backend checks are useful baseline gates but do not constitute full UI or Android device testing.
