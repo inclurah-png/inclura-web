@@ -157,3 +157,35 @@ Until then, keep `SOS_SMS_ENABLED=false`, do not create production secrets, and 
 - TextBee API reference: https://textbee.dev/docs/api-reference
 - TextBee source repository: https://github.com/textbee/textbee
 - GNU AGPL-3.0: https://www.gnu.org/licenses/agpl-3.0.html
+
+
+## 12. Current upstream pin and deployment baseline
+
+As of 24 November 2026, the latest stable TextBee release verified for this preparation is **v2.10.0**, released 13 November 2026, commit **4ecd70d**. The release is GitHub-verified. Do not deploy the moving `main` branch; use this release or a later release only after a fresh security/compatibility review. The upstream release notes state that self-hosted deployments should update the API before or together with the Android app.
+
+For this deployment, record the following before building anything:
+
+- TextBee version: `v2.10.0`
+- Upstream commit: `4ecd70d`
+- Android build: same pinned revision as the API/dashboard
+- Inclura SMS state: `SOS_SMS_ENABLED=false`
+- Gateway: one dedicated, approved Android device initially
+- Public exposure: HTTPS reverse proxy only
+- MongoDB/Redis: private network only
+- TextBee Firebase project: separate from Inclura Firebase
+- Inclura TextBee API key: server-side only
+- TextBee webhook secret: separate from API key
+
+The v2.10.0 release includes SIM-slot selection and reports the SIM/carrier used for messages. It also contains security/reliability changes affecting device reassignment and status reporting. These changes are relevant to IFSE, so the API and Android gateway must remain on the same pinned release during acceptance testing.
+
+### 12.1 Current Inclura webhook status
+
+The previously planned TextBee delivery-receipt security work has now been implemented in Inclura and merged. The endpoint is:
+
+`POST /api/integrations/textbee/webhook`
+
+The receiver uses raw-body HMAC verification, timestamp tolerance, subscription/device pinning, idempotency protection, known notification matching, and monotonic status transitions. This does **not** mean live TextBee delivery is active: the TextBee service, webhook subscription, gateway device, and production credentials still have to be configured and tested.
+
+Therefore the production gate remains unchanged:
+
+**TextBee SMS stays OFF until the self-hosted service, dedicated gateway, webhook verification, outage handling, privacy tests, and real-world carrier-cost checks have all passed.**
