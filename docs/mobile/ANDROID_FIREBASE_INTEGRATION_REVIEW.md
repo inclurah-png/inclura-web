@@ -56,3 +56,11 @@
 - It writes to `communityAlertDevices/{guestUid}` only after the visitor enters an area, explicitly consents, and grants browser notification permission. It supports unsubscribe by deleting the server-side registration, revoking the local token where possible, and signing out the anonymous session.
 - The corresponding Firestore rule requires an anonymous user to own the document and currently requires `platform == 'web'`.
 - Therefore native Android community-alert registration also needs a separately reviewed native token path. Preserve the distinct anonymous guest identity and consent model; do not merge guest registrations into members' primary accounts or silently opt people into alerts.
+
+
+## SOS push registration component review
+
+- `src/components/SOSPushRegistration.jsx` requests permission after the member taps Enable, obtains a browser FCM token, and writes a `fcmTokens` document with `platform: 'web'`.
+- Unlike the background restoration path in `src/App.jsx`, this component currently uses `addDoc` directly without first checking for an existing matching user/token pair. Repeated enable actions may create duplicate records.
+- The Android implementation should use a shared, idempotent token-registration service and maintain a unique user/device/platform registration. Do not copy the web token flow unchanged into the native app.
+- The component also exposes an explicitly user-triggered “Copy Firebase Test Token” action and warns users to keep the token private. Keep diagnostics opt-in and never log or expose registration tokens in routine UI, telemetry, or source control.
