@@ -72,3 +72,10 @@ No application source, Firebase configuration, secrets, live hosting settings, o
 - Repository-wide code search found `MobileNav.jsx`, `Topbar.jsx`, and `ReelsSection.jsx` only at their own component definitions; no current import/use site was found.
 - The active authenticated layout is `DashboardLayout.jsx`: it renders `DashboardSidebar`, a mobile hamburger menu, `LanguageSelector`, page content, and `AccessibilityButton`.
 - Therefore, do not treat the orphaned MobileNav/Topbar/ReelsSection controls as currently visible website functionality. Preserve the active DashboardSidebar destinations and the real page routes; any redesigned Android bottom navigation should be a new, functional navigation layer rather than a blind copy of unused placeholders.
+
+
+## Confirmed home-page route mismatch
+
+- `src/pages/Home.jsx` links to `/biometrics-demo`.
+- `src/App.jsx` does not declare a `/biometrics-demo` route; it declares the protected `/identity/biometric-verification` route instead.
+- Do not silently redirect this in the Android layer. Confirm whether the public Home link is intended to open a public demo or the authenticated identity-verification flow, then correct the web route and Android deep link together.
