@@ -58,3 +58,10 @@ No application source, Firebase configuration, secrets, live hosting settings, o
 - The repository's pull-request CI workflow ran successfully on the source snapshot at commit `010bd61d816e83ff4f2aed9993a8ac73627f2494`: frontend Vite build, backend syntax/notification-provider/webhook tests, and Firestore rules emulator validation all passed.
 - The subsequent audit commits changed documentation only; application source was unchanged from that validated source snapshot.
 - `package.json` exposes `dev`, `build`, and `preview` scripts; it does not define a dedicated frontend unit-test or lint script. The existing CI's build and rule/backend checks are useful baseline gates but do not constitute full UI or Android device testing.
+
+
+## Social publishing capability boundary
+
+- `src/pages/SocialConnections.jsx` lists Facebook, Instagram, LinkedIn, X, Reddit, Threads, Telegram, and WhatsApp, but every Connect button is currently disabled. The page explicitly says official OAuth/publishing services must be configured first.
+- `src/pages/CrossPost.jsx` lets the owner select destinations and create a cross-post request, prepares watermarked media, records request activity, and opens external share-intent URLs (or the native share sheet) for supported destinations. The share action is not evidence of automatic API publishing.
+- Preserve these current connection states and authorization boundaries. Do not activate platform Connect buttons, request new third-party permissions, or claim automated publishing until each official OAuth/backend workflow is implemented, approved, and verified.
