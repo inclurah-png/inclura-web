@@ -31,3 +31,11 @@ Client-side route wrappers are navigation/presentation guards; they do not repla
 Preserve the existing role checks and fail-closed behaviour until a deliberate access-policy review is completed. Confirm each privileged route's backend/Firestore authorization. Any change to creator, advertiser, enterprise, admin, responder, or family access must be based on the current service contract and an explicit security review.
 
 No access-control code has been changed in this audit.
+
+
+## Additional guard implementation observations
+
+- `ProtectedRoute` uses `useAuth()` and waits for Firebase session restoration before redirecting.
+- `AdminRoute`, `CreatorRoute`, `AdvertiserRoute`, and `EnterpriseRoute` instead read `auth.currentUser` once in a mount effect. They do not subscribe to or wait for the AuthContext loading state. A valid returning session may therefore be evaluated before Firebase has restored it and be redirected prematurely.
+- Those four role guards read `users/{uid}.role` in the client. Treat that only as UI routing; every privileged read/write/dispatch must still be protected by Firestore rules or trusted backend authorization.
+- Review should standardize role guards around the existing AuthContext restoration state without changing the actual role requirements or adding privilege escalation paths.
