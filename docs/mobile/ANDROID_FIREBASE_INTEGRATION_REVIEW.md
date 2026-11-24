@@ -48,3 +48,11 @@
 - Review Android app signing, release configuration, notification permission UX, and data-safety disclosures before distribution.
 
 **Scope:** This document records a static review of repository files. No rules, secrets, Firebase project settings, tokens, or live services were changed.
+
+
+## Additional community-alert registration path
+
+- `src/pages/CommunityAlerts.jsx` intentionally creates/uses a separately named Firebase app (`IncluraCommunityAlerts`) and a separate anonymous-auth instance. Its comment explicitly says guest alert registration must never sign a visitor into the primary Inclura authentication session.
+- It writes to `communityAlertDevices/{guestUid}` only after the visitor enters an area, explicitly consents, and grants browser notification permission. It supports unsubscribe by deleting the server-side registration, revoking the local token where possible, and signing out the anonymous session.
+- The corresponding Firestore rule requires an anonymous user to own the document and currently requires `platform == 'web'`.
+- Therefore native Android community-alert registration also needs a separately reviewed native token path. Preserve the distinct anonymous guest identity and consent model; do not merge guest registrations into members' primary accounts or silently opt people into alerts.
