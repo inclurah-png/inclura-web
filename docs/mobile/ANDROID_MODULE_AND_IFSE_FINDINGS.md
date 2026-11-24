@@ -34,3 +34,16 @@
 ## Implementation rule
 
 Do not “repair” IFSE by making client-side queries broader, adding a generic admin bypass, or calling dispatch endpoints from the Android client without the existing trusted authorization model. Correct the source defects, role mapping, and backend contract in isolated reviewed changes, then test only with synthetic records and non-delivery test channels.
+
+
+### Dispatch authorization mismatch — critical to resolve
+
+A static cross-check of `src/services/ifseDispatchEngine.js` against the repository's `firestore.rules` found:
+
+- The dispatch engine first attempts to create a `dispatchDebug` record. There is no `match /dispatchDebug/{...}` rule in the current repository rules, so the default Firestore behavior is deny.
+- The engine also creates records in `emergencyAssignments`, `emergencyTimeline`, `emergencyNotifications`, and `emergencyMultiAgencyDispatch`; no explicit match blocks for these collections were found in the current repository rules.
+- It later attempts to update `emergencySOS/{emergencyId}`, but that collection's current rule explicitly says `allow update, delete: if false`.
+
+If the deployed rules match the repository version, this client-side dispatch sequence is not authorized and should fail before it can complete. This was inferred from source and rules; no dispatch action was executed and deployed rules were not independently queried.
+
+**Do not weaken Firestore rules to make the browser/Android client dispatch directly.** Dispatch, responder assignment, escalation, and notification queue creation should be performed by a trusted backend after verifying authenticated identity, role/claims, emergency ownership/status, idempotency, and recipient policy. The client should submit an authenticated request and display the backend's authoritative result. The IFSE backend source/contract must be located and reviewed before any implementation.
