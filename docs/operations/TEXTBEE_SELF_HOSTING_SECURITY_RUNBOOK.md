@@ -189,3 +189,16 @@ The receiver uses raw-body HMAC verification, timestamp tolerance, subscription/
 Therefore the production gate remains unchanged:
 
 **TextBee SMS stays OFF until the self-hosted service, dedicated gateway, webhook verification, outage handling, privacy tests, and real-world carrier-cost checks have all passed.**
+
+
+## 13. Corrections and current implementation record (24 November 2026)
+
+This section supersedes any earlier contradictory statements in Sections 1 and 8 above.
+
+- Inclura's signed TextBee delivery webhook receiver **has been implemented and merged** at `POST /api/integrations/textbee/webhook`.
+- The receiver validates the raw request body with HMAC-SHA256, checks timestamp tolerance, pins the expected subscription and device, deduplicates retries, matches receipts to existing notification audit records, and enforces monotonic status transitions.
+- Use the exact header, signing format, event names, and subscription configuration required by the pinned TextBee v2.10.0 webhook contract and the Inclura receiver. Do not copy older header examples without checking both implementations together.
+- The receiver being implemented does not mean a live TextBee webhook is configured or that SMS is operational. No self-hosted TextBee server, live webhook subscription, gateway device, or production API credential is currently connected.
+- Consequently, the production gate in Section 10 remains mandatory and `SOS_SMS_ENABLED=false` must remain unchanged.
+
+For deployment sequencing and migration, use the companion document `docs/operations/TEXTBEE_DEPLOYMENT_AND_MIGRATION_CHECKLIST.md`. If it conflicts with an older preparation note in this runbook, this dated correction and the companion checklist take precedence.
