@@ -65,3 +65,10 @@ No application source, Firebase configuration, secrets, live hosting settings, o
 - `src/pages/SocialConnections.jsx` lists Facebook, Instagram, LinkedIn, X, Reddit, Threads, Telegram, and WhatsApp, but every Connect button is currently disabled. The page explicitly says official OAuth/publishing services must be configured first.
 - `src/pages/CrossPost.jsx` lets the owner select destinations and create a cross-post request, prepares watermarked media, records request activity, and opens external share-intent URLs (or the native share sheet) for supported destinations. The share action is not evidence of automatic API publishing.
 - Preserve these current connection states and authorization boundaries. Do not activate platform Connect buttons, request new third-party permissions, or claim automated publishing until each official OAuth/backend workflow is implemented, approved, and verified.
+
+
+## Mounted versus orphaned navigation components
+
+- Repository-wide code search found `MobileNav.jsx`, `Topbar.jsx`, and `ReelsSection.jsx` only at their own component definitions; no current import/use site was found.
+- The active authenticated layout is `DashboardLayout.jsx`: it renders `DashboardSidebar`, a mobile hamburger menu, `LanguageSelector`, page content, and `AccessibilityButton`.
+- Therefore, do not treat the orphaned MobileNav/Topbar/ReelsSection controls as currently visible website functionality. Preserve the active DashboardSidebar destinations and the real page routes; any redesigned Android bottom navigation should be a new, functional navigation layer rather than a blind copy of unused placeholders.
