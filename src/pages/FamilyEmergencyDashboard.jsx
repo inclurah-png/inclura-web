@@ -16,51 +16,32 @@ function FamilyEmergencyDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const unsubscribe = loadEmergencies();
+    return () => unsubscribe();
+  }, []);
 
-  const unsubscribe = loadDashboard();
+  function loadEmergencies() {
+    const q = query(
+      collection(db, "emergencySOS"),
+      where("visibleToFamily", "==", true)
+    );
 
-  return () => unsubscribe && unsubscribe();
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const data = snapshot.docs.map((emergencyDoc) => ({
+          id: emergencyDoc.id,
+          ...emergencyDoc.data(),
+        }));
 
-}, []);
-
-  async function loadEmergencies() {
-
-    try {
-
-      const q = query(
-
-        collection(db, "emergencySOS"),
-
-        where("visibleToFamily", "==", true)
-
-      );
-
-      const unsubscribe = onSnapshot(q, (snapshot) => {
-
-  const data = snapshot.docs.map(doc => ({
-
-    id: doc.id,
-
-    ...doc.data(),
-
-  }));
-
-  setDashboard(data);
-
-});
-
-return unsubscribe;
-
-    } catch (err) {
-
-      console.error(err);
-
-    } finally {
-
-      setLoading(false);
-
-    }
-
+        setEmergencies(data);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Family emergency dashboard subscription failed:", error);
+        setLoading(false);
+      }
+    );
   }
 
   return (
