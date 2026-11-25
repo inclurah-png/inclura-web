@@ -8,40 +8,28 @@ on:
       - '.github/workflows/dependency-remediation-preview.yml'
       - 'package.json'
       - 'package-lock.json'
-  push:
-    branches:
-      - security/dependency-remediation
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: dependency-remediation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   remediation-preview:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: security/dependency-remediation
-          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
-      - name: Update selected compatible tooling and Firebase
-        run: |
-          npm install --package-lock-only --save-exact firebase@12.19.0 vite@6.4.6 @vitejs/plugin-react@4.4.1
-          npm audit fix --package-lock-only || true
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update Firebase and patched Vite toolchain"
-            git push origin HEAD:security/dependency-remediation
-          fi
-          npm ci
+      - name: Install exact candidate dependencies
+        run: npm ci
       - name: Build application
         run: npm run build
-      - name: Produce updated audit report
+      - name: Produce dependency audit report
         run: |
           npm audit --json > npm-audit-after.json || true
           node -e "const a=require('./npm-audit-after.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
