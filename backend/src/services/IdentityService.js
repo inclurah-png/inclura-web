@@ -534,10 +534,15 @@ export async function verifyAuthenticationService(data) {
     // Authentication successful
     // ---------------------------------------------------
 
+    // Exchange the cryptographically verified passkey assertion for a
+    // Firebase custom token so the browser receives a real Firebase session.
+    const customToken = await admin.auth().createCustomToken(userId);
+
     return {
       success: true,
       authenticated: true,
       userId,
+      customToken,
 
       credentialId:
         credential.credentialId,
