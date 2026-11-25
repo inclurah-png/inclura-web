@@ -13,17 +13,8 @@ import { useEffect, useMemo, useState } from "react";
 
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-
-addDoc,
-
-collection,
-
-serverTimestamp,
-
-} from "firebase/firestore";
-
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
+import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
