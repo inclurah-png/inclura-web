@@ -27,6 +27,7 @@ import {
 
 import { db } from "../firebase";
 import i18n from "../i18n";
+import { getLanguageDirection } from "../config/languages";
 
 const AccessibilityContext = createContext();
 
@@ -597,16 +598,33 @@ export function AccessibilityProvider({ children }) {
     }
 
     const root = document.documentElement;
+    const previousLanguage = root.getAttribute("lang");
+    const previousDirection = root.getAttribute("dir");
+
+    root.lang = language || "en";
+    root.dir = getLanguageDirection(language);
     root.style.fontSize = `${Math.round(fontScale * 100)}%`;
     root.dataset.incluraHighContrast = String(highContrast);
     root.dataset.incluraReducedMotion = String(reducedMotion);
 
     return () => {
+      if (previousLanguage === null) {
+        root.removeAttribute("lang");
+      } else {
+        root.setAttribute("lang", previousLanguage);
+      }
+
+      if (previousDirection === null) {
+        root.removeAttribute("dir");
+      } else {
+        root.setAttribute("dir", previousDirection);
+      }
+
       root.style.fontSize = "";
       delete root.dataset.incluraHighContrast;
       delete root.dataset.incluraReducedMotion;
     };
-  }, [fontScale, highContrast, reducedMotion]);
+  }, [language, fontScale, highContrast, reducedMotion]);
 
   /*
    * SEND ACCESSIBILITY STATE TO IFSE
