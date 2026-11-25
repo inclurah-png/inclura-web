@@ -8,6 +8,9 @@ on:
       - '.github/workflows/dependency-remediation-preview.yml'
       - 'package.json'
       - 'package-lock.json'
+  push:
+    branches:
+      - security/dependency-remediation
 
 permissions:
   contents: read
