@@ -6,13 +6,17 @@ import {
   doc,
   getDoc,
   updateDoc,
-  increment,
   arrayUnion,
   arrayRemove,
 } from "firebase/firestore";
 
 import { auth, db } from "../firebase";
 import { useAccessibility } from "../context/AccessibilityProvider";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_AI_BACKEND_URL ||
+  "https://inclura-ai-backend.onrender.com"
+).replace(/\/+$/, "");
 
 import CommentBox from "../components/CommentBox";
 import FollowButton from "../components/FollowButton";
@@ -480,17 +484,6 @@ function PostPage() {
     "👎",
   ];
 
-  const scoreMap = {
-    "❤️": 4,
-    "👏": 3,
-    "😊": 3,
-    "👍": 2,
-    "😂": 2,
-    "😮": 2,
-    "😢": 2,
-    "👎": -3,
-  };
-
   function getBadge(post) {
     if (!post?.verified) {
       return null;
@@ -580,46 +573,78 @@ function PostPage() {
   }
 
   async function react(emoji) {
-    if (reacting) {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert(t("login", { defaultValue: "Please sign in to react to a post." }));
       return;
     }
+
+    if (reacting) return;
 
     setReacting(true);
 
     try {
-      const ref = doc(
-        db,
-        "posts",
-        id
-      );
-
-      await updateDoc(
-        ref,
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(
+        `${API_BASE_URL}/api/posts/${encodeURIComponent(id)}/react`,
         {
-          [`reactions.${emoji}`]:
-            increment(1),
-
-          creatorScore:
-            increment(
-              scoreMap[emoji]
-            ),
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ emoji }),
         }
       );
 
-      const snap =
-        await getDoc(ref);
-
-      if (snap.exists()) {
-        setPost({
-          id: snap.id,
-          ...snap.data(),
-        });
+      let result = {};
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error("The reaction service returned an invalid response.");
       }
-    } catch (error) {
-      console.error(
-        "Inclura Reaction Error:",
-        error
+
+      if (!response.ok) {
+        throw new Error(
+          result?.detail ||
+            result?.message ||
+            `Reaction failed (${response.status}).`
+        );
+      }
+
+      if (
+        result?.success !== true ||
+        !result.reactions ||
+        !result.userReactions
+      ) {
+        throw new Error("The reaction service did not confirm the update.");
+      }
+
+      const confirmedCreatorScore =
+        typeof result.postCreatorScore === "number"
+          ? result.postCreatorScore
+          : typeof result.creatorScore === "number"
+            ? result.creatorScore
+            : null;
+
+      setPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              reactions: result.reactions,
+              userReactions: result.userReactions,
+              ...(confirmedCreatorScore !== null
+                ? { creatorScore: confirmedCreatorScore }
+                : {}),
+            }
+          : previousPost
       );
+    } catch (error) {
+      console.error("Inclura Reaction Error:", error);
+      alert(error?.message || t("error", {
+        defaultValue: "Unable to react to this post right now.",
+      }));
     } finally {
       setReacting(false);
     }
