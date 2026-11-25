@@ -1,13 +1,22 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "../components/LanguageSelector";
+import { translateText } from "../translation/textTranslator";
 import { db } from "../firebase";
 
 function SharedPostPage() {
   const { id } = useParams();
+  const { t, i18n } = useTranslation();
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [translatedText, setTranslatedText] = useState("");
+  const [translatedLanguage, setTranslatedLanguage] = useState("");
+  const [isTranslated, setIsTranslated] = useState(false);
+  const [translating, setTranslating] = useState(false);
+  const [translationError, setTranslationError] = useState("");
 
   useEffect(() => {
     document.title = "Discover Inclura — A social world where everyone belongs";
@@ -39,6 +48,9 @@ function SharedPostPage() {
           imageUrl: safeData.imageUrl || "",
           videoUrl: safeData.videoUrl || "",
           imageAlt: safeData.imageAlt || "",
+          sourcePostId: safeData.sourcePostId || snapshot.id,
+          originalLanguage: safeData.originalLanguage || "en",
+          translatedText: safeData.translatedText || {},
         });
       } catch (error) {
         console.error("Public Inclura post could not be loaded:", error);
@@ -54,6 +66,71 @@ function SharedPostPage() {
     }
     return () => { active = false; };
   }, [id]);
+
+  useEffect(() => {
+    setIsTranslated(false);
+    setTranslatedText("");
+    setTranslatedLanguage("");
+    setTranslationError("");
+
+    if (!post?.translatedText) return;
+
+    const targetLanguage = String(i18n.language || "en")
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, "-");
+    const cached = post.translatedText[targetLanguage];
+
+    if (typeof cached === "string" && cached.trim()) {
+      setTranslatedText(cached.trim());
+      setTranslatedLanguage(targetLanguage);
+      setIsTranslated(true);
+    }
+  }, [i18n.language, post]);
+
+  async function handleTranslatePost() {
+    if (!post?.text || translating) return;
+
+    const targetLanguage = String(i18n.language || "en")
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, "-");
+
+    if (isTranslated && translatedLanguage === targetLanguage) {
+      setIsTranslated(false);
+      return;
+    }
+
+    setTranslating(true);
+    setTranslationError("");
+
+    try {
+      const result = await translateText({
+        sourceId: post.sourcePostId || post.id,
+        sourceType: "post",
+        text: post.text,
+        targetLanguage,
+      });
+
+      const nextText = result?.translatedText?.trim();
+      if (!nextText) {
+        throw new Error(t("translationUnavailable", {
+          defaultValue: "Translation is unavailable right now.",
+        }));
+      }
+
+      setTranslatedText(nextText);
+      setTranslatedLanguage(targetLanguage);
+      setIsTranslated(true);
+    } catch (error) {
+      console.error("Public Inclura post translation failed:", error);
+      setTranslationError(error?.message || t("translationUnavailable", {
+        defaultValue: "Translation is unavailable right now.",
+      }));
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   const pageStyle = {
     minHeight: "100vh", boxSizing: "border-box", padding: "20px 14px 36px",
@@ -88,7 +165,10 @@ function SharedPostPage() {
           <Link to="/" aria-label="Inclura home" style={{ color: "#f5d76e", textDecoration: "none", fontWeight: 900, fontSize: "1.25rem", letterSpacing: ".08em" }}>
             INCLURA
           </Link>
-          <span style={{ color: "#cbd5e1", fontSize: ".9rem" }}>INCLUSION COMES FIRST</span>
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            <span style={{ color: "#cbd5e1", fontSize: ".9rem" }}>INCLUSION COMES FIRST</span>
+            <LanguageSelector />
+          </div>
         </header>
 
         <section style={cardStyle} aria-live="polite">
@@ -122,7 +202,42 @@ function SharedPostPage() {
               <article style={{ maxWidth: "760px", margin: "0 auto", padding: "18px", borderRadius: "16px", background: "#071522", border: "1px solid #334155" }}>
                 <p style={{ color: "#86efac", fontWeight: 700, marginTop: 0 }}>Shared from Inclura</p>
                 <h2 style={{ fontSize: "1.2rem", margin: "4px 0 10px" }}>{post.userName}</h2>
-                {post.text && <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>{post.text}</p>}
+                {post.text && (
+                  <>
+                    <p style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                      {isTranslated && translatedText ? translatedText : post.text}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleTranslatePost}
+                      disabled={translating}
+                      aria-label={isTranslated ? t("showOriginal") : t("translatePost")}
+                      style={{
+                        minHeight: "44px",
+                        padding: "10px 14px",
+                        borderRadius: "10px",
+                        border: "1px solid #d4af37",
+                        background: "#064e3b",
+                        color: "#fff",
+                        cursor: translating ? "wait" : "pointer",
+                      }}
+                    >
+                      {translating
+                        ? t("translating", { defaultValue: "Translating…" })
+                        : isTranslated
+                          ? t("showOriginal", { defaultValue: "Show original" })
+                          : t("translatePost", { defaultValue: "Translate post" })}
+                    </button>
+                    {translationError && (
+                      <p role="alert" style={{ color: "#fca5a5" }}>{translationError}</p>
+                    )}
+                    {isTranslated && (
+                      <p role="status" style={{ color: "#94a3b8", fontSize: ".85rem" }}>
+                        {t("translated", { defaultValue: "Translated" })} · {translatedLanguage}
+                      </p>
+                    )}
+                  </>
+                )}
                 {post.imageUrl && (
                   <img src={post.imageUrl} alt={post.imageAlt || "Image shared from Inclura"}
                     loading="lazy" style={{ display: "block", width: "100%", maxHeight: "680px",
