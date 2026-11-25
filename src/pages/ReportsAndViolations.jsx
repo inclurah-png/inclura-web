@@ -2,8 +2,6 @@ import { useEffect, useState } from "react";
 
 import {
   collection,
-  addDoc,
-  serverTimestamp,
   getCountFromServer,
   query,
   where,
@@ -127,21 +125,6 @@ marginBottom: "24px",
 >
 🚨 Reports & Violations
 </h1>
-
-<button
-  onClick={createTestReport}
-  style={{
-    padding: "12px 20px",
-    borderRadius: "10px",
-    background: "#2563eb",
-    color: "white",
-    border: "none",
-    cursor: "pointer",
-    marginBottom: "20px",
-  }}
->
-  Initialize Reports Collection
-</button>
 
 <div style={card}>
   <h3>🚨 Reported Users</h3>
