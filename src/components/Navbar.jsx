@@ -11,8 +11,11 @@ import {
 import { db, auth } from "../firebase";
 
 import Logo from "./Logo";
+import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
 
 function Navbar() {
+  const { t } = useTranslation();
   const [unreadCount, setUnreadCount] =
     useState(0);
 
@@ -63,9 +66,13 @@ function Navbar() {
           alignItems: "center",
         }}
       >
+        <LanguageSelector />
         {auth.currentUser && (
           <>
             <button
+              type="button"
+              aria-label={t("notifications", { defaultValue: "Notifications" })}
+              title={t("notifications", { defaultValue: "Notifications" })}
               onClick={() =>
                 navigate("/notifications")
               }
@@ -80,7 +87,7 @@ function Navbar() {
                 fontWeight: "600",
               }}
             >
-              🔔
+              <span aria-hidden="true">🔔</span>
 
               {unreadCount > 0 && (
                 <span
@@ -107,6 +114,8 @@ function Navbar() {
             </button>
 
             <button
+              type="button"
+              aria-label={t("messages", { defaultValue: "Messages" })}
               onClick={() =>
                 navigate("/messages")
               }
@@ -120,10 +129,12 @@ function Navbar() {
                 fontWeight: "600",
               }}
             >
-              💬 Messages
+              <span aria-hidden="true">💬</span> {t("messages", { defaultValue: "Messages" })}
             </button>
 
             <button
+              type="button"
+              aria-label={t("dashboard", { defaultValue: "Dashboard" })}
               onClick={() =>
                 navigate("/profile")
               }
@@ -137,7 +148,7 @@ function Navbar() {
                 fontWeight: "600",
               }}
             >
-              👤 Dashboard
+              <span aria-hidden="true">👤</span> {t("dashboard", { defaultValue: "Dashboard" })}
             </button>
           </>
         )}
@@ -151,6 +162,7 @@ function Navbar() {
               }}
             >
               <button
+                type="button"
                 style={{
                   padding: "12px 24px",
                   borderRadius: "10px",
@@ -162,7 +174,7 @@ function Navbar() {
                   fontWeight: "600",
                 }}
               >
-                Login
+                {t("login", { defaultValue: "Login" })}
               </button>
             </Link>
 
@@ -173,6 +185,7 @@ function Navbar() {
               }}
             >
               <button
+                type="button"
                 style={{
                   padding: "12px 24px",
                   borderRadius: "10px",
@@ -184,7 +197,7 @@ function Navbar() {
                   fontWeight: "600",
                 }}
               >
-                Sign Up
+                {t("signup", { defaultValue: "Sign Up" })}
               </button>
             </Link>
           </>
