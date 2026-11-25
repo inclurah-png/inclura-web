@@ -31,7 +31,8 @@ import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 
-const Home = lazy(() => import("./pages/Home"));\nconst AboutInclura = lazy(() => import("./pages/AboutInclura"));
+const Home = lazy(() => import("./pages/Home"));
+const AboutInclura = lazy(() => import("./pages/AboutInclura"));
 const CommunityAlerts = lazy(() => import("./pages/CommunityAlerts"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
