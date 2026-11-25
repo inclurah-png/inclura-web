@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
-        run: npm ci --prefix backend
+        run: npm install --prefix backend --ignore-scripts --no-audit --no-fund
 
       - name: Import payment route and trusted pricing modules
         run: |
