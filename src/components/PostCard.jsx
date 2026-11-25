@@ -135,9 +135,9 @@ function PostCard({
           style={btn}
           onClick={sharePost}
           disabled={!postId}
-          aria-label={t("share", { defaultValue: "Share" })}
+          aria-label={t("sharePost", { defaultValue: "Share" })}
         >
-          🔁 {t("share", { defaultValue: "Share" })}
+          🔁 {t("sharePost", { defaultValue: "Share" })}
         </button>
       </div>
     </article>
