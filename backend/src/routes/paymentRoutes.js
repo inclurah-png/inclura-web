@@ -1,5 +1,22 @@
 import express from "express";
 import { auth, firestore } from "../config/firebaseAdmin.js";
+import creator from "../../../src/config/pricing/creator.js";
+import group from "../../../src/config/pricing/group.js";
+import organization from "../../../src/config/pricing/organization.js";
+import ngo from "../../../src/config/pricing/ngo.js";
+import institution from "../../../src/config/pricing/institution.js";
+import religious from "../../../src/config/pricing/religious.js";
+import healthcare from "../../../src/config/pricing/healthcare.js";
+import museum from "../../../src/config/pricing/museum.js";
+import tourism from "../../../src/config/pricing/tourism.js";
+import entertainment from "../../../src/config/pricing/entertainment.js";
+import media from "../../../src/config/pricing/media.js";
+import accessibility from "../../../src/config/pricing/accessibility.js";
+
+const VERIFICATION_PLANS = {
+  creator, group, organization, ngo, institution, religious,
+  healthcare, museum, tourism, entertainment, media, accessibility,
+};
 
 const router = express.Router();
 
@@ -82,10 +99,27 @@ router.post("/verify", async (req, res) => {
       if (application.userId !== decoded.uid && application.submittedBy !== decoded.uid) {
         return unauthorized(res, 403, "This verification application does not belong to your account.");
       }
-      expectedAmount = Number(application.paymentAmount);
-      expectedCurrency = String(application.currency || "USD").toUpperCase();
-      if (!Number.isFinite(expectedAmount) || expectedAmount <= 0 || expectedCurrency !== "USD") {
-        return unauthorized(res, 409, "This application does not have a valid payable amount.");
+      const categoryPricing = VERIFICATION_PLANS[String(application.category || "").toLowerCase()];
+      const selectedPlan = categoryPricing?.verificationTypes?.find(
+        (item) => item.id === application.verificationType
+      );
+      const trustedAmount = Number(
+        selectedPlan?.monthlyUSD ??
+        selectedPlan?.yearlyUSD ??
+        selectedPlan?.monthlyFee ??
+        selectedPlan?.fee ??
+        0
+      );
+      const applicationAmount = Number(application.paymentAmount);
+      expectedAmount = trustedAmount;
+      expectedCurrency = "USD";
+      if (
+        !Number.isFinite(trustedAmount) ||
+        trustedAmount <= 0 ||
+        !Number.isFinite(applicationAmount) ||
+        Math.abs(applicationAmount - trustedAmount) > 0.01
+      ) {
+        return unauthorized(res, 409, "The application price does not match Inclura's approved pricing. Please contact support.");
       }
     }
 
