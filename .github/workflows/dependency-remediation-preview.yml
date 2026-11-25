@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: dependency-remediation-${{ github.event.pull_request.number }}
+  group: dependency-remediation-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -46,10 +46,21 @@ jobs:
           npm ci
       - name: Build application
         run: npm run build
-      - name: Produce dependency audit report
+      - name: Smoke-test built application preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/inclura-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /tmp/inclura-preview.html; then
+              break
+            fi
+            sleep 2
+          done
+          test -s /tmp/inclura-preview.html
+          grep -qi '<html' /tmp/inclura-preview.html
+      - name: Produce and enforce dependency audit report
         run: |
           npm audit --json > npm-audit-after.json || true
-          node -e "const a=require('./npm-audit-after.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
+          node --input-type=module -e "import fs from 'node:fs'; const a=JSON.parse(fs.readFileSync('npm-audit-after.json','utf8')); const v=a.metadata?.vulnerabilities || {}; console.log(JSON.stringify(v,null,2)); if ((v.total ?? 0) !== 0) process.exit(1)"
       - name: Package remediation evidence
         run: |
           zip dependency-remediation-preview.zip package.json package-lock.json npm-audit-after.json
