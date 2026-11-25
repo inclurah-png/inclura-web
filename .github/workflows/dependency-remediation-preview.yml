@@ -27,14 +27,15 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - name: Apply compatible lockfile-only security updates
+      - name: Update selected compatible tooling and Firebase
         run: |
+          npm install --package-lock-only --save-exact firebase@12.19.0 vite@6.4.6 @vitejs/plugin-react@4.4.1
           npm audit fix --package-lock-only || true
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
+          git add package.json package-lock.json
           if ! git diff --cached --quiet; then
-            git commit -m "Apply compatible dependency security updates"
+            git commit -m "Update Firebase and patched Vite toolchain"
             git push origin HEAD:security/dependency-remediation
           fi
           npm ci
@@ -46,7 +47,7 @@ jobs:
           node -e "const a=require('./npm-audit-after.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
       - name: Package remediation evidence
         run: |
-          zip dependency-remediation-preview.zip package-lock.json npm-audit-after.json
+          zip dependency-remediation-preview.zip package.json package-lock.json npm-audit-after.json
       - uses: actions/upload-artifact@v4
         with:
           name: dependency-remediation-preview
