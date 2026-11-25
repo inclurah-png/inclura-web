@@ -297,18 +297,6 @@ paymentRiskScore >= 75
 
 : "Approved for Processing";
 
-const PAYMENT_COLLECTION =
-
-"verificationPayments";
-
-const AUDIT_COLLECTION =
-
-"paymentAuditLogs";
-
-const SECURITY_COLLECTION =
-
-"ifsePaymentEvents";
-
 const handlePayment = async (e) => {
 
   e.preventDefault();
@@ -366,127 +354,17 @@ const handlePayment = async (e) => {
 
         }
 
-        const paymentRef = await addDoc(
+        if (!verificationId) {
+          throw new Error("The verification application reference is missing. Please reopen payment from your submitted application.");
+        }
 
-          collection(db, PAYMENT_COLLECTION),
-
-          {
-
-            verificationId,
-
-            transactionId,
-
-            flutterwaveTransactionId:
-              response.transaction_id,
-
-            flutterwaveReference:
-              response.tx_ref,
-
-            verificationType,
-
-            selectedTier,
-
-            paymentMethod,
-
-            couponCode,
-
-            invoiceRequested,
-
-            paymentRiskScore,
-
-            threatLevel,
-
-            paymentSecurityStatus,
-
-            requiresExecutiveApproval,
-
-            amount: paymentAmount,
-
-            currency: "USD",
-
-            paymentStatus: "paid",
-
-            flutterwaveStatus: response.status,
-            
-flutterwaveCurrency: response.currency,
-            
-flutterwaveAmount: response.amount,
-            
-flutterwaveProcessorResponse: response.processor_response,
-            
-flutterwavePaymentType: response.payment_type,
-            
-            userId: currentUser.uid,
-
-            status: "completed",
-
-            createdAt: serverTimestamp(),
-
-            updatedAt: serverTimestamp(),
-
-          }
-
-        );
-
-        const paymentId = paymentRef.id;
-        await addDoc(
-  collection(db, SECURITY_COLLECTION),
-  {
-    paymentId,
-    transactionId,
-    eventType: "verification_payment_success",
-    riskScore: paymentRiskScore,
-    threatLevel,
-    requiresExecutiveApproval,
-    reviewed: false,
-    createdAt: serverTimestamp(),
-  }
-);
-        await addDoc(
-
-          collection(db, AUDIT_COLLECTION),
-
-          {
-
-            paymentId,
-
-            transactionId,
-
-            action:
-              "Verification Payment Completed",
-
-            actor:
-              currentUser.uid,
-
-            createdAt:
-              serverTimestamp(),
-
-          }
-
-        );
-
-        await addDoc(
-
-          collection(db, "paymentTimeline"),
-
-          {
-
-            paymentId,
-
-            transactionId,
-
-            title:
-              "Payment Completed",
-
-            status:
-              "Completed",
-
-            createdAt:
-              serverTimestamp(),
-
-          }
-
-        );
+        await verifyFlutterwavePayment({
+          purpose: "verification",
+          verificationId,
+          transactionId: String(response.transaction_id),
+          txRef: response.tx_ref || transactionId,
+          paymentMethod,
+        });
 
         setSuccess(
 
