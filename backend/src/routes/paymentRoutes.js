@@ -85,8 +85,13 @@ router.post("/verify", async (req, res) => {
       expectedCurrency = "NGN";
       grant = { type: "recruiter", plan: String(plan).toLowerCase(), jobs: selected.jobs };
     } else if (purpose === "creator_verification") {
-      expectedAmount = 35;
+      expectedAmount = Number(
+        creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
+      );
       expectedCurrency = "USD";
+      if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+        return unauthorized(res, 409, "Creator verification is not currently priced.");
+      }
       grant = { type: "creator_verification" };
     } else {
       const id = String(verificationId || "");
