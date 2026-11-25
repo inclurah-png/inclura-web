@@ -1,11 +1,14 @@
 import AccessibilitySettings from "./AccessibilitySettings";
+import { useTranslation } from "react-i18next";
 
 function AccessibilityToolbar({ close }) {
+  const { t } = useTranslation();
+
   return (
     <div
       id="inclura-accessibility-toolbar"
       role="region"
-      aria-label="Accessibility settings"
+      aria-label={t("accessibilityHub", { defaultValue: "Accessibility settings" })}
       style={{
         position: "fixed",
         right: "20px",
@@ -41,13 +44,13 @@ function AccessibilityToolbar({ close }) {
             fontSize: "20px",
           }}
         >
-          ♿ Accessibility
+          ♿ {t("accessibilityHub", { defaultValue: "Accessibility" })}
         </h2>
 
         <button
           type="button"
           onClick={close}
-          aria-label="Close accessibility panel"
+          aria-label={t("close", { defaultValue: "Close accessibility panel" })}
           style={{
             border: "none",
             background: "transparent",
