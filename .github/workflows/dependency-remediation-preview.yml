@@ -1,0 +1,34 @@
+name: Dependency remediation preview
+
+on:
+  workflow_dispatch:
+
+jobs:
+  remediation-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: security/dependency-remediation
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Apply compatible lockfile-only security updates
+        run: |
+          npm audit fix --package-lock-only || true
+          npm ci
+      - name: Build application
+        run: npm run build
+      - name: Produce updated audit report
+        run: |
+          npm audit --json > npm-audit-after.json || true
+          node -e "const a=require('./npm-audit-after.json'); console.log(JSON.stringify(a.metadata?.vulnerabilities || {}, null, 2))"
+      - name: Package remediation evidence
+        run: |
+          zip dependency-remediation-preview.zip package-lock.json npm-audit-after.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-remediation-preview
+          path: dependency-remediation-preview.zip
+          retention-days: 2
