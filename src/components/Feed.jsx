@@ -867,12 +867,16 @@ function Feed() {
     return getPremiumBadge(post.premiumTier);
   }
 
+  // Match the exact profile fields exposed by AccessibilityProvider.
+  // This keeps the feed's support notices in sync with saved user needs.
   const visualImpairmentEnabled = Boolean(
-    accessibilityProfile?.blindLowVision
+    accessibilityProfile?.blind ||
+      accessibilityProfile?.lowVision
   );
 
   const hearingNeedEnabled = Boolean(
-    accessibilityProfile?.deaf
+    accessibilityProfile?.deaf ||
+      accessibilityProfile?.hardOfHearing
   );
 
   const mobilityNeedEnabled = Boolean(
@@ -881,7 +885,13 @@ function Feed() {
   );
 
   const neurodivergentEnabled = Boolean(
-    accessibilityProfile?.neurodivergent
+    accessibilityProfile?.autism ||
+      accessibilityProfile?.adhd ||
+      accessibilityProfile?.dyslexia
+  );
+
+  const speechImpairmentEnabled = Boolean(
+    accessibilityProfile?.speechImpairment
   );
 
   return (
@@ -1246,6 +1256,13 @@ function Feed() {
                       {mobilityNeedEnabled && (
                         <div style={supportNoticeStyle}>
                           ♿ Mobility accessibility support is
+                          active for your profile.
+                        </div>
+                      )}
+
+                      {speechImpairmentEnabled && (
+                        <div style={supportNoticeStyle}>
+                          💬 Alternative communication support is
                           active for your profile.
                         </div>
                       )}
