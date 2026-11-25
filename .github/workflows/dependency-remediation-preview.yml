@@ -31,6 +31,9 @@ jobs:
       - name: Test React Router v7 candidate without changing the branch manifest
         run: |
           npm install --package-lock-only --save-exact react-router-dom@7.18.7
+      - name: Test Firebase 13.4.0 candidate without changing the branch manifest
+        run: |
+          npm install --package-lock-only --save-exact firebase@13.4.0
           npm ci
       - name: Build application
         run: npm run build
