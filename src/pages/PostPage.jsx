@@ -7,9 +7,12 @@ import {
   getDoc,
   updateDoc,
   increment,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
+import { useAccessibility } from "../context/AccessibilityProvider";
 
 import CommentBox from "../components/CommentBox";
 import FollowButton from "../components/FollowButton";
@@ -95,6 +98,7 @@ function PostPage() {
 
   const { t, i18n } =
     useTranslation();
+  const { reducedMotion } = useAccessibility();
 
   const [
     translatedText,
@@ -120,6 +124,8 @@ function PostPage() {
     reacting,
     setReacting,
   ] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function loadPost() {
@@ -134,10 +140,29 @@ function PostPage() {
           await getDoc(ref);
 
         if (snap.exists()) {
-          setPost({
+          const loadedPost = {
             id: snap.id,
             ...snap.data(),
-          });
+          };
+          setPost(loadedPost);
+
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            try {
+              const userSnapshot = await getDoc(
+                doc(db, "users", currentUser.uid)
+              );
+              const savedPosts = userSnapshot.exists()
+                ? userSnapshot.data().savedPosts || []
+                : [];
+              setIsSaved(savedPosts.includes(loadedPost.id));
+            } catch (saveStateError) {
+              console.warn(
+                "Unable to load saved-post state:",
+                saveStateError
+              );
+            }
+          }
         }
       } catch (error) {
         console.error(
@@ -515,6 +540,45 @@ function PostPage() {
     }
   }
 
+  function focusCommentInput() {
+    if (typeof document === "undefined" || !post?.id) return;
+    const input = document.getElementById(`comment-${post.id}`);
+    if (!input) return;
+    input.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "center",
+    });
+    input.focus();
+  }
+
+  async function toggleSavedPost() {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !post?.id || saving) return;
+
+    setSaving(true);
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnapshot = await getDoc(userRef);
+      const savedPosts = userSnapshot.exists()
+        ? userSnapshot.data().savedPosts || []
+        : [];
+      const alreadySaved = savedPosts.includes(post.id);
+
+      await updateDoc(userRef, {
+        savedPosts: alreadySaved
+          ? arrayRemove(post.id)
+          : arrayUnion(post.id),
+      });
+
+      setIsSaved(!alreadySaved);
+    } catch (error) {
+      console.error("Inclura Save Post Error:", error);
+      alert(t("error", { defaultValue: "Unable to update saved posts." }));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function react(emoji) {
     if (reacting) {
       return;
@@ -791,18 +855,12 @@ function PostPage() {
               {reactions.map(
                 (emoji) => (
                   <button
-                    key={
-                      emoji
-                    }
+                    key={emoji}
                     type="button"
-                    onClick={() =>
-                      react(
-                        emoji
-                      )
-                    }
-                    disabled={
-                      reacting
-                    }
+                    onClick={() => react(emoji)}
+                    disabled={reacting}
+                    aria-label={`React with ${emoji}`}
+                    title={`React with ${emoji}`}
                   >
                     {
                       emoji
@@ -833,36 +891,37 @@ function PostPage() {
             >
               <button
                 type="button"
+                onClick={focusCommentInput}
+                aria-label={t("comment", { defaultValue: "Comment" })}
               >
-                💬 Comment
+                💬 {t("comment", { defaultValue: "Comment" })}
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  navigate(
-                    `/crosspost/${post.id}`
-                  )
-                }
+                onClick={() => navigate(`/crosspost/${post.id}`)}
+                aria-label={t("crossPost", { defaultValue: "Cross-post" })}
               >
-                🔀 Cross-post
+                🔀 {t("crossPost", { defaultValue: "Cross-post" })}
               </button>
 
               <button
                 type="button"
+                onClick={toggleSavedPost}
+                disabled={saving}
+                aria-label={isSaved ? t("savedPosts", { defaultValue: "Saved posts" }) : t("save", { defaultValue: "Save" })}
+                aria-pressed={isSaved}
               >
-                📌 Save
+                📌 {saving ? t("loading") : isSaved ? t("savedPosts", { defaultValue: "Saved" }) : t("save", { defaultValue: "Save" })}
               </button>
             </div>
           </div>
 
           {/* COMMENTS */}
 
-          <CommentBox
-            postId={
-              post.id
-            }
-          />
+          <div id="post-comments">
+            <CommentBox postId={post.id} />
+          </div>
         </>
       )}
     </div>
