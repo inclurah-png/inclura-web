@@ -886,8 +886,8 @@ function PostPage() {
                     type="button"
                     onClick={() => react(emoji)}
                     disabled={reacting}
-                    aria-label={`React with ${emoji}`}
-                    title={`React with ${emoji}`}
+                    aria-label={`${t("reactToPost", { defaultValue: "React to post" })} ${emoji}`}
+                    title={`${t("reactToPost", { defaultValue: "React to post" })} ${emoji}`}
                   >
                     {
                       emoji
