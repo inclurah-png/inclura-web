@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
 createUserWithEmailAndPassword,
+sendEmailVerification,
 signInWithPopup,
 signInWithRedirect,
 getRedirectResult,
