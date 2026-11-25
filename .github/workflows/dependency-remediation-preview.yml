@@ -39,6 +39,11 @@ jobs:
           npm pkg set 'overrides.axios=1.21.1'
           npm install --package-lock-only
           npm ci
+      - name: Test Firebase Firestore gRPC security fix candidate
+        run: |
+          npm pkg set 'overrides.@grpc/grpc-js=1.14.7'
+          npm install --package-lock-only
+          npm ci
       - name: Build application
         run: npm run build
       - name: Produce dependency audit report
