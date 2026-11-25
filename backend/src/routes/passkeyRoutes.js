@@ -24,7 +24,7 @@ const router = express.Router();
 async function requireVerifiedFirebaseUser(req, res, next) {
   try {
     const authorization = req.headers.authorization || "";
-    const match = authorization.match(/^Bearer\\s+(.+)$/i);
+    const match = authorization.match(/^Bearer\s+(.+)$/i);
     if (!match) {
       return res.status(401).json({ success: false, message: "Sign in to Inclura before registering a passkey." });
     }
