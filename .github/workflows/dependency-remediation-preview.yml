@@ -34,6 +34,10 @@ jobs:
       - name: Test Firebase 13.4.0 candidate without changing the branch manifest
         run: |
           npm install --package-lock-only --save-exact firebase@13.4.0
+      - name: Test safe Axios override for the Flutterwave SDK
+        run: |
+          npm pkg set 'overrides.axios=1.21.1'
+          npm install --package-lock-only
           npm ci
       - name: Build application
         run: npm run build
