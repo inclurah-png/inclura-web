@@ -113,23 +113,6 @@ const [reportStats, setReportStats] = useState({
 
 }, []);
   
-async function createTestReport() {
-  try {
-    await addDoc(collection(db, "reports"), {
-      type: "SYSTEM_PLACEHOLDER",
-status: "placeholder",
-createdAt: serverTimestamp(),
-message: "Initial Reports collection",
-systemPlaceholder: true,
-    });
-
-    alert("Reports collection initialized successfully.");
-
-  } catch (error) {
-    console.error(error);
-    alert("Error creating reports collection.");
-  }
-}
 return (
 <DashboardLayout>
 <div
@@ -237,10 +220,12 @@ marginBottom: "24px",
   <h2>{reportStats.appeals}</h2>
   <p>Pending Appeals</p>
 </div>
-
-    <div style={card}>
-      📊 Moderation Analytics
-    </div>
+<div style={card}>
+  📊 Moderation Analytics
+  <p style={{fontWeight:"400",color:"#cbd5e1",marginBottom:0}}>
+    Statistics above are loaded directly from Firestore moderation records.
+  </p>
+</div>
   </div>
 </DashboardLayout>
 
