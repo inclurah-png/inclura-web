@@ -94,9 +94,10 @@ export async function verifyRegistration(req, res) {
   try {
 
     const result =
-      await verifyPasskeyRegistrationService(
-        req.body
-      );
+      await verifyPasskeyRegistrationService({
+        ...req.body,
+        authenticatedUserId: req.firebaseUser?.uid,
+      });
 
     return res
       .status(200)
