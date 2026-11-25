@@ -514,20 +514,33 @@ export async function verifyAuthenticationService(data) {
       updateData.counter = newCounter;
     }
 
-    await credentialDoc.ref.update(
-      updateData
-    );
+    // Update the credential counter and consume the challenge atomically.
+    // Concurrent replays will see the challenge as used and cannot authenticate.
+    await firestore().runTransaction(async (transaction) => {
+      const freshChallengeSnapshot = await transaction.get(challengeDoc.ref);
+      const freshCredentialSnapshot = await transaction.get(credentialDoc.ref);
 
-    // ---------------------------------------------------
-    // Mark challenge as used
-    // ---------------------------------------------------
+      if (!freshChallengeSnapshot.exists || !freshCredentialSnapshot.exists) {
+        throw new Error("Passkey challenge or credential no longer exists.");
+      }
 
-    await challengeDoc.ref.update({
-      verified: true,
-      used: true,
+      const freshChallenge = freshChallengeSnapshot.data();
+      if (
+        freshChallenge.used === true ||
+        freshChallenge.type !== "authentication" ||
+        String(freshChallenge.userId) !== String(userId) ||
+        !freshChallenge.expiresAt ||
+        Date.now() > Number(freshChallenge.expiresAt)
+      ) {
+        throw new Error("Passkey challenge is expired, invalid, or already used.");
+      }
 
-      verifiedAt:
-        admin.firestore.FieldValue.serverTimestamp(),
+      transaction.update(credentialDoc.ref, updateData);
+      transaction.update(challengeDoc.ref, {
+        verified: true,
+        used: true,
+        verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
 
     // ---------------------------------------------------
