@@ -6,10 +6,17 @@ import {
   doc,
   getDoc,
   updateDoc,
-  increment,
+  arrayUnion,
+  arrayRemove,
 } from "firebase/firestore";
 
-import { db } from "../firebase";
+import { auth, db } from "../firebase";
+import { useAccessibility } from "../context/AccessibilityProvider";
+
+const API_BASE_URL = (
+  import.meta.env.VITE_AI_BACKEND_URL ||
+  "https://inclura-ai-backend.onrender.com"
+).replace(/\/+$/, "");
 
 import CommentBox from "../components/CommentBox";
 import FollowButton from "../components/FollowButton";
@@ -95,6 +102,7 @@ function PostPage() {
 
   const { t, i18n } =
     useTranslation();
+  const { reducedMotion } = useAccessibility();
 
   const [
     translatedText,
@@ -120,6 +128,8 @@ function PostPage() {
     reacting,
     setReacting,
   ] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     async function loadPost() {
@@ -134,10 +144,29 @@ function PostPage() {
           await getDoc(ref);
 
         if (snap.exists()) {
-          setPost({
+          const loadedPost = {
             id: snap.id,
             ...snap.data(),
-          });
+          };
+          setPost(loadedPost);
+
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            try {
+              const userSnapshot = await getDoc(
+                doc(db, "users", currentUser.uid)
+              );
+              const savedPosts = userSnapshot.exists()
+                ? userSnapshot.data().savedPosts || []
+                : [];
+              setIsSaved(savedPosts.includes(loadedPost.id));
+            } catch (saveStateError) {
+              console.warn(
+                "Unable to load saved-post state:",
+                saveStateError
+              );
+            }
+          }
         }
       } catch (error) {
         console.error(
@@ -455,17 +484,6 @@ function PostPage() {
     "👎",
   ];
 
-  const scoreMap = {
-    "❤️": 4,
-    "👏": 3,
-    "😊": 3,
-    "👍": 2,
-    "😂": 2,
-    "😮": 2,
-    "😢": 2,
-    "👎": -3,
-  };
-
   function getBadge(post) {
     if (!post?.verified) {
       return null;
@@ -515,47 +533,118 @@ function PostPage() {
     }
   }
 
+  function focusCommentInput() {
+    if (typeof document === "undefined" || !post?.id) return;
+    const input = document.getElementById(`comment-${post.id}`);
+    if (!input) return;
+    input.scrollIntoView({
+      behavior: reducedMotion ? "auto" : "smooth",
+      block: "center",
+    });
+    input.focus();
+  }
+
+  async function toggleSavedPost() {
+    const currentUser = auth.currentUser;
+    if (!currentUser || !post?.id || saving) return;
+
+    setSaving(true);
+    try {
+      const userRef = doc(db, "users", currentUser.uid);
+      const userSnapshot = await getDoc(userRef);
+      const savedPosts = userSnapshot.exists()
+        ? userSnapshot.data().savedPosts || []
+        : [];
+      const alreadySaved = savedPosts.includes(post.id);
+
+      await updateDoc(userRef, {
+        savedPosts: alreadySaved
+          ? arrayRemove(post.id)
+          : arrayUnion(post.id),
+      });
+
+      setIsSaved(!alreadySaved);
+    } catch (error) {
+      console.error("Inclura Save Post Error:", error);
+      alert(t("error", { defaultValue: "Unable to update saved posts." }));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function react(emoji) {
-    if (reacting) {
+    const currentUser = auth.currentUser;
+
+    if (!currentUser) {
+      alert(t("login", { defaultValue: "Please sign in to react to a post." }));
       return;
     }
+
+    if (reacting) return;
 
     setReacting(true);
 
     try {
-      const ref = doc(
-        db,
-        "posts",
-        id
-      );
-
-      await updateDoc(
-        ref,
+      const idToken = await currentUser.getIdToken();
+      const response = await fetch(
+        `${API_BASE_URL}/api/posts/${encodeURIComponent(id)}/react`,
         {
-          [`reactions.${emoji}`]:
-            increment(1),
-
-          creatorScore:
-            increment(
-              scoreMap[emoji]
-            ),
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ emoji }),
         }
       );
 
-      const snap =
-        await getDoc(ref);
-
-      if (snap.exists()) {
-        setPost({
-          id: snap.id,
-          ...snap.data(),
-        });
+      let result = {};
+      try {
+        result = await response.json();
+      } catch {
+        throw new Error("The reaction service returned an invalid response.");
       }
-    } catch (error) {
-      console.error(
-        "Inclura Reaction Error:",
-        error
+
+      if (!response.ok) {
+        throw new Error(
+          result?.detail ||
+            result?.message ||
+            `Reaction failed (${response.status}).`
+        );
+      }
+
+      if (
+        result?.success !== true ||
+        !result.reactions ||
+        !result.userReactions
+      ) {
+        throw new Error("The reaction service did not confirm the update.");
+      }
+
+      const confirmedCreatorScore =
+        typeof result.postCreatorScore === "number"
+          ? result.postCreatorScore
+          : typeof result.creatorScore === "number"
+            ? result.creatorScore
+            : null;
+
+      setPost((previousPost) =>
+        previousPost
+          ? {
+              ...previousPost,
+              reactions: result.reactions,
+              userReactions: result.userReactions,
+              ...(confirmedCreatorScore !== null
+                ? { creatorScore: confirmedCreatorScore }
+                : {}),
+            }
+          : previousPost
       );
+    } catch (error) {
+      console.error("Inclura Reaction Error:", error);
+      alert(error?.message || t("error", {
+        defaultValue: "Unable to react to this post right now.",
+      }));
     } finally {
       setReacting(false);
     }
@@ -791,18 +880,12 @@ function PostPage() {
               {reactions.map(
                 (emoji) => (
                   <button
-                    key={
-                      emoji
-                    }
+                    key={emoji}
                     type="button"
-                    onClick={() =>
-                      react(
-                        emoji
-                      )
-                    }
-                    disabled={
-                      reacting
-                    }
+                    onClick={() => react(emoji)}
+                    disabled={reacting}
+                    aria-label={`React with ${emoji}`}
+                    title={`React with ${emoji}`}
                   >
                     {
                       emoji
@@ -833,36 +916,37 @@ function PostPage() {
             >
               <button
                 type="button"
+                onClick={focusCommentInput}
+                aria-label={t("comment", { defaultValue: "Comment" })}
               >
-                💬 Comment
+                💬 {t("comment", { defaultValue: "Comment" })}
               </button>
 
               <button
                 type="button"
-                onClick={() =>
-                  navigate(
-                    `/crosspost/${post.id}`
-                  )
-                }
+                onClick={() => navigate(`/crosspost/${post.id}`)}
+                aria-label={t("crossPost", { defaultValue: "Cross-post" })}
               >
-                🔀 Cross-post
+                🔀 {t("crossPost", { defaultValue: "Cross-post" })}
               </button>
 
               <button
                 type="button"
+                onClick={toggleSavedPost}
+                disabled={saving}
+                aria-label={isSaved ? t("savedPosts", { defaultValue: "Saved posts" }) : t("save", { defaultValue: "Save" })}
+                aria-pressed={isSaved}
               >
-                📌 Save
+                📌 {saving ? t("loading") : isSaved ? t("savedPosts", { defaultValue: "Saved" }) : t("save", { defaultValue: "Save" })}
               </button>
             </div>
           </div>
 
           {/* COMMENTS */}
 
-          <CommentBox
-            postId={
-              post.id
-            }
-          />
+          <div id="post-comments">
+            <CommentBox postId={post.id} />
+          </div>
         </>
       )}
     </div>

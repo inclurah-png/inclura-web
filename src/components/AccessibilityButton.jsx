@@ -1,15 +1,19 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import AccessibilityToolbar from "./AccessibilityToolbar";
 
 function AccessibilityButton() {
+  const { t } = useTranslation();
   const [open, setOpen] =
     useState(false);
 
   return (
     <>
       <button
-        aria-label="Accessibility"
+        aria-label={t("accessibilityHub", { defaultValue: "Accessibility" })}
+        aria-expanded={open}
+        aria-controls="inclura-accessibility-toolbar"
         onClick={() =>
           setOpen(!open)
         }
@@ -30,7 +34,7 @@ function AccessibilityButton() {
           zIndex: 9999,
         }}
       >
-        ♿
+        <span aria-hidden="true">♿</span>
       </button>
 
       {open && (

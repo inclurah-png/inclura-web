@@ -87,3 +87,14 @@ html[data-inclura-high-contrast="true"] :focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Apply the user's Inclura reduced-motion setting app-wide too. */
+html[data-inclura-reduced-motion="true"],
+html[data-inclura-reduced-motion="true"] *,
+html[data-inclura-reduced-motion="true"] *::before,
+html[data-inclura-reduced-motion="true"] *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

@@ -401,6 +401,7 @@ function UserProfile() {
               posts.map((post) => (
                 <PostCard
                   key={post.id}
+                  postId={post.id}
                   name={post.userName || profileName}
                   text={post.text || ""}
                   verified={post.verified === true}

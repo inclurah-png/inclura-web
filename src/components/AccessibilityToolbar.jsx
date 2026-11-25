@@ -3,6 +3,9 @@ import AccessibilitySettings from "./AccessibilitySettings";
 function AccessibilityToolbar({ close }) {
   return (
     <div
+      id="inclura-accessibility-toolbar"
+      role="region"
+      aria-label="Accessibility settings"
       style={{
         position: "fixed",
         right: "20px",
@@ -32,6 +35,7 @@ function AccessibilityToolbar({ close }) {
         }}
       >
         <h2
+          id="inclura-accessibility-heading"
           style={{
             margin: 0,
             fontSize: "20px",
@@ -41,6 +45,7 @@ function AccessibilityToolbar({ close }) {
         </h2>
 
         <button
+          type="button"
           onClick={close}
           aria-label="Close accessibility panel"
           style={{
