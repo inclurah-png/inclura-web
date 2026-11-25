@@ -153,6 +153,10 @@ router.post("/verify", async (req, res) => {
 
     const paymentRef = database.collection("flutterwavePayments").doc(numericTransactionId);
     const userRef = database.collection("users").doc(decoded.uid);
+    const verificationPaymentRef = database.collection("verificationPayments").doc(numericTransactionId);
+    const securityEventRef = database.collection("ifsePaymentEvents").doc();
+    const auditLogRef = database.collection("paymentAuditLogs").doc();
+    const timelineRef = database.collection("paymentTimeline").doc();
     const now = new Date();
 
     await database.runTransaction(async (transaction) => {
@@ -221,7 +225,7 @@ router.post("/verify", async (req, res) => {
           paymentId: numericTransactionId,
           updatedAt: now,
         }, { merge: true });
-        transaction.set(database.collection("verificationPayments").doc(numericTransactionId), {
+        transaction.create(verificationPaymentRef, {
           userId: decoded.uid,
           verificationId,
           transactionId: numericTransactionId,
@@ -234,7 +238,31 @@ router.post("/verify", async (req, res) => {
           paymentMethod: typeof paymentMethod === "string" ? paymentMethod.slice(0, 50) : "Flutterwave",
           createdAt: now,
           updatedAt: now,
-        }, { merge: true });
+        });
+        transaction.create(securityEventRef, {
+          paymentId: numericTransactionId,
+          transactionId: numericTransactionId,
+          eventType: "verification_payment_server_verified",
+          riskScore: 0,
+          threatLevel: "Low",
+          requiresExecutiveApproval: true,
+          reviewed: false,
+          createdAt: now,
+        });
+        transaction.create(auditLogRef, {
+          paymentId: numericTransactionId,
+          transactionId: numericTransactionId,
+          action: "Flutterwave payment verified by IFSE",
+          actor: decoded.uid,
+          createdAt: now,
+        });
+        transaction.create(timelineRef, {
+          paymentId: numericTransactionId,
+          transactionId: numericTransactionId,
+          title: "Payment confirmed by Flutterwave",
+          status: "Completed",
+          createdAt: now,
+        });
       }
     });
 
