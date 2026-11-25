@@ -1,7 +1,9 @@
 name: Dependency remediation preview
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - security/dependency-remediation
 
 jobs:
   remediation-preview:
