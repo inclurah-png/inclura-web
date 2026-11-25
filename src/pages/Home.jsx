@@ -121,7 +121,7 @@ function Home() {
             </button>
           </Link>
 
-          <Link to="/biometrics-demo">
+          <Link to="/identity/biometric-verification">
             <button
               style={{
                 padding: "14px 28px",
@@ -137,20 +137,23 @@ function Home() {
             </button>
           </Link>
 
-          <button
-            style={{
-              padding: "14px 28px",
-              borderRadius: "14px",
-              border:
-                "1px solid rgba(255,255,255,0.2)",
-              background: "transparent",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: "700",
-            }}
-          >
-            {t("learnMore")}
-          </button>
+          <Link to="/about">
+            <button
+              type="button"
+              style={{
+                padding: "14px 28px",
+                borderRadius: "14px",
+                border:
+                  "1px solid rgba(255,255,255,0.2)",
+                background: "transparent",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: "700",
+              }}
+            >
+              {t("learnMore")}
+            </button>
+          </Link>
         </div>
       </section>
 
@@ -172,39 +175,45 @@ function Home() {
           }}
         >
           <FeatureCard
+            to="/accessibility"
             icon="♿"
             title={t("accessibilityHub")}
-description={t("featureAccessibility")}
+            description={t("featureAccessibility")}
           />
 
           <FeatureCard
+            to="/opportunities"
             icon="💼"
             title={t("jobs")}
-description={t("featureJobs")}
+            description={t("featureJobs")}
           />
 
           <FeatureCard
+            to="/mentor-hub"
             icon="🎓"
             title={t("mentorHub")}
-description={t("featureMentorship")}
+            description={t("featureMentorship")}
           />
 
           <FeatureCard
+            to="/marketplace"
             icon="🛒"
             title={t("marketplace")}
-description={t("featureMarketplace")}
+            description={t("featureMarketplace")}
           />
 
           <FeatureCard
+            to="/sos"
             icon="🚨"
             title={t("sos")}
-description={t("featureSOS")}
+            description={t("featureSOS")}
           />
 
           <FeatureCard
+            to="/community-alerts"
             icon="🌍"
             title={t("community")}
-description={t("featureCommunity")}
+            description={t("featureCommunity")}
           />
         </div>
       </section>
@@ -227,13 +236,22 @@ description={t("featureCommunity")}
 }
 
 function FeatureCard({
+  to,
   icon,
   title,
   description,
 }) {
   return (
-    <div
+    <Link
+      to={to}
       style={{
+        textDecoration: "none",
+        color: "inherit",
+        display: "block",
+      }}
+    >
+      <div
+        style={{
         background: "#0f172a",
         borderRadius: "24px",
         padding: "24px",
@@ -260,7 +278,8 @@ function FeatureCard({
       >
         {description}
       </p>
-    </div>
+        </div>
+    </Link>
   );
 }
 
