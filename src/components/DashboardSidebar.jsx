@@ -8,6 +8,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
+import Logo from "./Logo";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
@@ -76,14 +77,9 @@ const isAdmin = role === "admin";
         flexShrink: 0,
       }}
     >
-<h2
-  style={{
-    marginBottom: "24px",
-    color: "white",
-  }}
->
-  {t("appName")}
-</h2>
+<div style={{ marginBottom: "24px", display: "flex", alignItems: "center", minWidth: 0 }}>
+  <Logo />
+</div>
 
       <button
         type="button"
