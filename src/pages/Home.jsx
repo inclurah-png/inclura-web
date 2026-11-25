@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import Logo from "../components/Logo";
+import LanguageSelector from "../components/LanguageSelector";
 
 function Home() {
   const { t } = useTranslation();
@@ -31,8 +32,11 @@ function Home() {
           style={{
             display: "flex",
             gap: "14px",
+            alignItems: "center",
+            flexWrap: "wrap",
           }}
         >
+          <LanguageSelector />
           <Link to="/login">
             <button
               style={{
