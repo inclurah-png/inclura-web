@@ -10,13 +10,19 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { translateText } from "../translation/textTranslator";
+import { getLanguageDirection } from "../config/languages";
 
 function CommentBox({ postId }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [commentTranslations, setCommentTranslations] = useState({});
+  const [visibleTranslations, setVisibleTranslations] = useState({});
+  const [translatingComments, setTranslatingComments] = useState({});
+  const [translationErrors, setTranslationErrors] = useState({});
 
   useEffect(() => {
     if (!postId) {
@@ -84,6 +90,76 @@ function CommentBox({ postId }) {
 
     return unsubscribe;
   }, [postId, t]);
+
+  const activeLanguage = String(
+    i18n.resolvedLanguage || i18n.language || "en"
+  )
+    .trim()
+    .toLowerCase()
+    .replace(/_/g, "-");
+
+  async function handleTranslateComment(comment) {
+    if (!comment?.id || !comment?.text) return;
+
+    const translationKey = `${comment.id}:${activeLanguage}`;
+
+    if (commentTranslations[translationKey]) {
+      setVisibleTranslations((current) => ({
+        ...current,
+        [translationKey]: !current[translationKey],
+      }));
+      return;
+    }
+
+    if (translatingComments[translationKey]) return;
+
+    setTranslatingComments((current) => ({
+      ...current,
+      [translationKey]: true,
+    }));
+    setTranslationErrors((current) => ({
+      ...current,
+      [translationKey]: "",
+    }));
+
+    try {
+      const result = await translateText({
+        sourceId: comment.id,
+        sourceType: "comment",
+        text: comment.text,
+        targetLanguage: activeLanguage,
+      });
+
+      const translatedText = result?.translatedText?.trim();
+      if (!translatedText) {
+        throw new Error(t("translationUnavailable", {
+          defaultValue: "Translation is unavailable right now.",
+        }));
+      }
+
+      setCommentTranslations((current) => ({
+        ...current,
+        [translationKey]: translatedText,
+      }));
+      setVisibleTranslations((current) => ({
+        ...current,
+        [translationKey]: true,
+      }));
+    } catch (translationError) {
+      console.error("Inclura comment translation failed:", translationError);
+      setTranslationErrors((current) => ({
+        ...current,
+        [translationKey]: translationError?.message || t("translationUnavailable", {
+          defaultValue: "Translation is unavailable right now.",
+        }),
+      }));
+    } finally {
+      setTranslatingComments((current) => ({
+        ...current,
+        [translationKey]: false,
+      }));
+    }
+  }
 
   async function handleComment(event) {
     event.preventDefault();
@@ -270,9 +346,61 @@ function CommentBox({ postId }) {
                 })}
             </strong>
 
-            <p style={{ whiteSpace: "pre-wrap" }}>
-              {comment.text}
-            </p>
+            {(() => {
+              const translationKey = `${comment.id}:${activeLanguage}`;
+              const translatedText = commentTranslations[translationKey];
+              const isTranslated = Boolean(
+                visibleTranslations[translationKey] && translatedText
+              );
+              const isTranslating = Boolean(
+                translatingComments[translationKey]
+              );
+
+              return (
+                <>
+                  <p
+                    lang={isTranslated ? activeLanguage : undefined}
+                    dir={isTranslated ? getLanguageDirection(activeLanguage) : undefined}
+                    style={{ whiteSpace: "pre-wrap" }}
+                  >
+                    {isTranslated ? translatedText : comment.text}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => handleTranslateComment(comment)}
+                    disabled={isTranslating}
+                    aria-label={
+                      isTranslated
+                        ? t("showOriginal", { defaultValue: "Show original comment" })
+                        : t("translatePost", { defaultValue: "Translate comment" })
+                    }
+                    style={{
+                      minHeight: "44px",
+                      padding: "8px 12px",
+                      marginTop: "4px",
+                      borderRadius: "8px",
+                      border: "1px solid #64748b",
+                      background: "#1e293b",
+                      color: "#ffffff",
+                      cursor: isTranslating ? "wait" : "pointer",
+                    }}
+                  >
+                    {isTranslating
+                      ? t("translating", { defaultValue: "Translating…" })
+                      : isTranslated
+                        ? t("showOriginal", { defaultValue: "Show original" })
+                        : t("translatePost", { defaultValue: "Translate comment" })}
+                  </button>
+
+                  {translationErrors[translationKey] && (
+                    <p role="alert" style={{ color: "#f87171" }}>
+                      {translationErrors[translationKey]}
+                    </p>
+                  )}
+                </>
+              );
+            })()}
           </article>
         ))}
       </div>
