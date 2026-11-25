@@ -738,7 +738,7 @@ service cloud.firestore {
         && (resource.data.advertiserId == request.auth.uid || request.auth.token.admin == true);
       allow list: if request.auth != null
         && (request.auth.token.admin == true
-            || request.query.where("advertiserId", "==", request.auth.uid));
+            || resource.data.advertiserId == request.auth.uid);
       allow create: if isVerifiedMember()
         && request.resource.data.advertiserId == request.auth.uid
         && request.resource.data.status == 'pending'
