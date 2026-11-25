@@ -12,6 +12,7 @@ import {
 
 import { auth, db } from "../firebase";
 import { useAccessibility } from "../context/AccessibilityProvider";
+import LanguageSelector from "../components/LanguageSelector";
 
 const API_BASE_URL = (
   import.meta.env.VITE_AI_BACKEND_URL ||
@@ -667,7 +668,7 @@ function PostPage() {
           top: 0,
           zIndex: 100,
           display: "flex",
-          justifyContent: "flex-start",
+          justifyContent: "space-between",
           alignItems: "center",
           padding: "10px 0 14px",
           marginBottom: "14px",
@@ -696,6 +697,7 @@ function PostPage() {
         >
           ← Back to Dashboard
         </button>
+        <LanguageSelector />
       </div>
       {loading ? (
         <p>
