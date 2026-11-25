@@ -31,7 +31,7 @@ import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 
-const Home = lazy(() => import("./pages/Home"));
+const Home = lazy(() => import("./pages/Home"));\nconst AboutInclura = lazy(() => import("./pages/AboutInclura"));
 const CommunityAlerts = lazy(() => import("./pages/CommunityAlerts"));
 const Login = lazy(() => import("./pages/Login"));
 const Signup = lazy(() => import("./pages/Signup"));
@@ -194,6 +194,11 @@ function App() {
       <Route
         path="/community-alerts"
         element={<CommunityAlerts />}
+      />
+
+      <Route
+        path="/about"
+        element={<AboutInclura />}
       />
 
       <Route
@@ -719,15 +724,6 @@ function App() {
         element={
           <AdminRoute>
             <SOSResponderDashboard />
-          </AdminRoute>
-        }
-      />
-
-      <Route
-        path="/responder-assignments"
-        element={
-          <AdminRoute>
-            <ResponderAssignments />
           </AdminRoute>
         }
       />
