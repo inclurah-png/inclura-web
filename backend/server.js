@@ -13,6 +13,7 @@ import mediaRoutes from "./src/routes/mediaRoutes.js";
 import emergencyRoutes from "./src/routes/emergencyRoutes.js";
 import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
 import textbeeWebhookRoutes from "./src/routes/textbeeWebhookRoutes.js";
+import paymentRoutes from "./src/routes/paymentRoutes.js";
 
 import {
   startSOSNotificationSweeper,
@@ -325,6 +326,9 @@ app.use(
   "/api/identity",
   passkeyRoutes
 );
+
+// Server-side Flutterwave verification and entitlement activation.
+app.use("/api/payments", paymentRoutes);
 
 // =======================================================
 // Emergency SOS Notification Routes
