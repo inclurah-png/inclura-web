@@ -150,13 +150,13 @@ function Feed() {
   const {
     accessibilityNeeds,
     accessibilityProfile,
-    voiceEnabled,
+    effectiveVoiceEnabled,
     fontScale,
     highContrast,
   } = useAccessibility();
 
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const POSTS_PER_PAGE = 15;
 
@@ -1284,23 +1284,23 @@ function Feed() {
                         <button
                           type="button"
                           onClick={() => readPostAloud(post)}
-                          aria-label="Read this post aloud"
+                          aria-label={t("readAloud", { defaultValue: "Read this post aloud" })}
                           style={accessibilityButtonStyle(
                             "#2563eb"
                           )}
                         >
-                          🔊 Read Aloud
+                          🔊 {t("readAloud", { defaultValue: "Read Aloud" })}
                         </button>
 
                         <button
                           type="button"
                           onClick={stopReading}
-                          aria-label="Stop reading"
+                          aria-label={t("stopReading", { defaultValue: "Stop reading" })}
                           style={accessibilityButtonStyle(
                             "#7f1d1d"
                           )}
                         >
-                          ⏹️ Stop
+                          ⏹️ {t("stopReading", { defaultValue: "Stop" })}
                         </button>
 
                         <button
@@ -1321,8 +1321,8 @@ function Feed() {
                         >
                           🔤{" "}
                           {currentAccessibility.largeText
-                            ? "Normal Text"
-                            : "Large Text"}
+                            ? t("normalText", { defaultValue: "Normal Text" })
+                            : t("largeText", { defaultValue: "Large Text" })}
                         </button>
 
                         <button
@@ -1343,8 +1343,8 @@ function Feed() {
                         >
                           ◐{" "}
                           {currentAccessibility.highContrast
-                            ? "Normal Contrast"
-                            : "High Contrast"}
+                            ? t("normalContrast", { defaultValue: "Normal Contrast" })
+                            : t("highContrast", { defaultValue: "High Contrast" })}
                         </button>
 
                         <button
@@ -1365,23 +1365,23 @@ function Feed() {
                         >
                           📝{" "}
                           {currentAccessibility.textOnly
-                            ? "Show Media"
-                            : "Text Only"}
+                            ? t("showMedia", { defaultValue: "Show Media" })
+                            : t("textOnly", { defaultValue: "Text Only" })}
                         </button>
 
                         <button
                           type="button"
                           onClick={openAccessibilitySettings}
-                          aria-label="Open Accessibility Settings"
+                          aria-label={t("accessibilitySettings", { defaultValue: "Open Accessibility Settings" })}
                           style={accessibilityButtonStyle(
                             "#0f766e"
                           )}
                         >
-                          ⚙️ Accessibility Settings
+                          ⚙️ {t("accessibilitySettings", { defaultValue: "Accessibility Settings" })}
                         </button>
                       </div>
 
-                      {voiceEnabled && (
+                      {effectiveVoiceEnabled && (
                         <div
                           style={{
                             marginTop: "12px",
@@ -1389,10 +1389,9 @@ function Feed() {
                             color: "#7dd3fc",
                           }}
                         >
-                          🔊 Voice Guidance is currently
-                          enabled in Accessibility Settings.
-                          Use "Read Aloud" above to read this
-                          existing post.
+                          🔊 {t("voiceGuidanceActive", {
+                            defaultValue: "Voice guidance is active. Use Read Aloud to hear this post.",
+                          })}
                         </div>
                       )}
                     </div>
