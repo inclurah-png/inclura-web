@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -20,6 +20,12 @@ auth,
 import {
   getVerificationMetadata,
 } from "../config/verificationTypes";
+
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
 
 import {
   migrateVerificationId,
@@ -48,6 +54,9 @@ useState(false);
 
 const [largeText, setLargeText] =
 useState(false);
+
+const imageInputRef = useRef(null);
+const videoInputRef = useRef(null);
 
 async function submitTextStory() {
 try {
@@ -218,16 +227,116 @@ verificationMetadata:
 
 }
 
-function imageStoryComingSoon() {
-alert(
-t("storyImageComingSoon")
-);
+async function submitMediaStory(file, mediaType) {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      alert(t("storyLoginRequired"));
+      return;
+    }
+    if (!file) return;
+
+    const maxBytes = mediaType === "image"
+      ? 10 * 1024 * 1024
+      : 100 * 1024 * 1024;
+
+    if (file.size > maxBytes) {
+      alert(mediaType === "image"
+        ? "Image must be 10 MB or smaller."
+        : "Video must be 100 MB or smaller.");
+      return;
+    }
+
+    if (mediaType === "image" && !file.type.startsWith("image/")) {
+      alert("Please select an image file.");
+      return;
+    }
+
+    if (mediaType === "video" && !file.type.startsWith("video/")) {
+      alert("Please select a video file.");
+      return;
+    }
+
+    setUploading(true);
+
+    const storagePath = `stories/${user.uid}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`;
+    const storageRef = ref(storage, storagePath);
+    await uploadBytes(storageRef, file, { contentType: file.type });
+    const mediaUrl = await getDownloadURL(storageRef);
+
+    const userSnap = await getDoc(doc(db, "users", user.uid));
+    const profile = userSnap.data();
+
+    const storiesSnapshot = await getDocs(query(
+      collection(db, "stories"),
+      where("userId", "==", user.uid)
+    ));
+
+    const activeStories = storiesSnapshot.docs.filter((storyDoc) => {
+      const expiresAt = storyDoc.data().expiresAt;
+      return expiresAt?.toMillis
+        ? expiresAt.toMillis() > Date.now()
+        : Number(expiresAt || 0) > Date.now();
+    });
+
+    if (activeStories.length >= 12) {
+      alert(t("storyMaxActive"));
+      return;
+    }
+
+    await addDoc(collection(db, "stories"), {
+      userId: user.uid,
+      userName: profile?.fullName || user.displayName || "Inclura User",
+      profilePhoto: profile?.profilePhoto || profile?.photoURL || user.photoURL || "",
+      verified: profile?.verified || false,
+      badgeType: migrateVerificationId(profile?.badgeType),
+      verificationMetadata: profile?.verified
+        ? getVerificationMetadata(migrateVerificationId(profile?.badgeType))
+        : null,
+      role: profile?.role || "individual",
+      category: profile?.category || "Member",
+      accessibilityNeeds: profile?.accessibilityNeeds || [],
+      premium: profile?.premium || false,
+      premiumTier: profile?.premiumTier || "",
+      storyType: mediaType,
+      storyText: storyText.trim(),
+      storyUrl: mediaUrl,
+      mediaUrl,
+      mediaType: file.type,
+      accessibility: {
+        screenReader,
+        textOnly,
+        voiceStory,
+        highContrast,
+        largeText,
+      },
+      createdAt: serverTimestamp(),
+      expiresAt: Date.now() + 24 * 60 * 60 * 1000,
+      views: [],
+    });
+
+    setStoryText("");
+    alert(mediaType === "image"
+      ? "Image story posted successfully."
+      : "Video story posted successfully.");
+  } catch (error) {
+    console.error("Media story upload failed:", error);
+    alert(t("storyPostFailed"));
+  } finally {
+    setUploading(false);
+  }
 }
 
-function videoStoryComingSoon() {
-alert(
-t("storyVideoComingSoon")
-);
+function handleImageSelection(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (file) submitMediaStory(file, "image");
+}
+
+function handleVideoSelection(event) {
+  const file = event.target.files?.[0];
+  event.target.value = "";
+  if (file) submitMediaStory(file, "video");
 }
 
 return (
@@ -397,9 +506,8 @@ marginBottom:
     </button>
 
     <button
-      onClick={
-        imageStoryComingSoon
-      }
+      type="button"
+      onClick={() => imageInputRef.current?.click()}
       style={
         buttonStyle
       }
@@ -408,9 +516,8 @@ marginBottom:
     </button>
 
     <button
-      onClick={
-        videoStoryComingSoon
-      }
+      type="button"
+      onClick={() => videoInputRef.current?.click()}
       style={
         buttonStyle
       }
@@ -418,6 +525,22 @@ marginBottom:
       🎥 {t("videoStory")}
     </button>
   </div>
+
+  <input
+    ref={imageInputRef}
+    type="file"
+    accept="image/*"
+    onChange={handleImageSelection}
+    style={{ display: "none" }}
+  />
+
+  <input
+    ref={videoInputRef}
+    type="file"
+    accept="video/*"
+    onChange={handleVideoSelection}
+    style={{ display: "none" }}
+  />
 
   {uploading && (
     <p
