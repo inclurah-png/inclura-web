@@ -1,118 +1,157 @@
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+
 function PostCard({
-name,
-text,
-verified,
-badgeType,
+  postId,
+  name,
+  text,
+  verified,
+  badgeType,
 }) {
-const getBadge = () => {
-if (!verified) return null;
+  const navigate = useNavigate();
+  const { t } = useTranslation();
 
-switch (badgeType) {
-  case "creator":
-    return "🎥";
+  const getBadge = () => {
+    if (!verified) return null;
 
-  case "organization":
-    return "🏢";
+    switch (badgeType) {
+      case "creator": return "🎥";
+      case "organization": return "🏢";
+      case "ngo": return "🤝";
+      case "hospital": return "🏥";
+      case "university": return "🎓";
+      case "government": return "🏛";
+      default: return "✅";
+    }
+  };
 
-  case "ngo":
-    return "🤝";
+  async function sharePost() {
+    if (!postId || typeof window === "undefined") return;
+    const url = `${window.location.origin}/share/${encodeURIComponent(postId)}`;
 
-  case "hospital":
-    return "🏥";
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `${name || "Inclura"} — Inclura post`,
+          url,
+        });
+        return;
+      }
 
-  case "university":
-    return "🎓";
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        window.alert(t("shareLinkCopied", {
+          defaultValue: "Post link copied.",
+        }));
+        return;
+      }
 
-  case "government":
-    return "🏛";
+      window.prompt(t("copyPostLink", {
+        defaultValue: "Copy this post link:",
+      }), url);
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        console.error("Inclura post sharing failed:", error);
+        window.alert(t("shareFailed", {
+          defaultValue: "Unable to share this post right now.",
+        }));
+      }
+    }
+  }
 
-  default:
-    return "✅";
-}
+  const openPost = () => {
+    if (postId) navigate(`/post/${encodeURIComponent(postId)}`);
+  };
 
-};
-
-return (
-<div
-style={{
-background: "#0f172a",
-padding: "22px",
-borderRadius: "20px",
-marginBottom: "22px",
-}}
->
-<div
-style={{
-display: "flex",
-alignItems: "center",
-gap: "10px",
-marginBottom: "12px",
-}}
->
-<h3
-style={{
-margin: 0,
-}}
->
-{name}
-</h3>
-
-    {verified && (
-      <span
+  return (
+    <article
+      style={{
+        background: "#0f172a",
+        padding: "22px",
+        borderRadius: "20px",
+        marginBottom: "22px",
+      }}
+    >
+      <div
         style={{
-          background: "#16a34a",
-          color: "white",
-          padding: "4px 10px",
-          borderRadius: "999px",
-          fontSize: "12px",
-          fontWeight: "700",
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          marginBottom: "12px",
         }}
       >
-        {getBadge()} Verified
-      </span>
-    )}
-  </div>
+        <h3 style={{ margin: 0 }}>{name}</h3>
+        {verified && (
+          <span
+            aria-label={t("verified", { defaultValue: "Verified" })}
+            style={{
+              background: "#16a34a",
+              color: "white",
+              padding: "4px 10px",
+              borderRadius: "999px",
+              fontSize: "12px",
+              fontWeight: "700",
+            }}
+          >
+            <span aria-hidden="true">{getBadge()}</span>{" "}
+            {t("verified", { defaultValue: "Verified" })}
+          </span>
+        )}
+      </div>
 
-  <p
-    style={{
-      color: "#cbd5e1",
-      lineHeight: "1.7",
-      marginBottom: "18px",
-    }}
-  >
-    {text}
-  </p>
+      <p
+        style={{
+          color: "#cbd5e1",
+          lineHeight: "1.7",
+          marginBottom: "18px",
+        }}
+      >
+        {text}
+      </p>
 
-  <div
-    style={{
-      display: "flex",
-      gap: "14px",
-    }}
-  >
-    <button style={btn}>
-      ❤️ Like
-    </button>
+      <div style={{ display: "flex", gap: "14px", flexWrap: "wrap" }}>
+        <button
+          type="button"
+          style={btn}
+          onClick={openPost}
+          disabled={!postId}
+          aria-label={t("reactToPost", { defaultValue: "Open post to react" })}
+        >
+          ❤️ {t("reactToPost", { defaultValue: "React" })}
+        </button>
 
-    <button style={btn}>
-      💬 Comment
-    </button>
+        <button
+          type="button"
+          style={btn}
+          onClick={openPost}
+          disabled={!postId}
+          aria-label={t("comment", { defaultValue: "Comment" })}
+        >
+          💬 {t("comment", { defaultValue: "Comment" })}
+        </button>
 
-    <button style={btn}>
-      🔁 Share
-    </button>
-  </div>
-</div>
-
-);
+        <button
+          type="button"
+          style={btn}
+          onClick={sharePost}
+          disabled={!postId}
+          aria-label={t("share", { defaultValue: "Share" })}
+        >
+          🔁 {t("share", { defaultValue: "Share" })}
+        </button>
+      </div>
+    </article>
+  );
 }
 
 const btn = {
-background: "#1e293b",
-border: "none",
-color: "white",
-padding: "10px 16px",
-borderRadius: "12px",
-cursor: "pointer",
+  background: "#1e293b",
+  border: "none",
+  color: "white",
+  padding: "10px 16px",
+  borderRadius: "12px",
+  cursor: "pointer",
+  minHeight: "44px",
 };
 
 export default PostCard;
