@@ -1,0 +1,33 @@
+name: Payment route import smoke test
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "src/config/pricing/**"
+      - ".github/workflows/payment-route-import.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  payment-route-import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci --prefix backend
+
+      - name: Import payment route and trusted pricing modules
+        run: |
+          node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); console.log('Payment route imports successfully.');"
