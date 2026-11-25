@@ -1,207 +1,82 @@
 import { useTranslation } from "react-i18next";
-import { useState } from "react";
 import { useAccessibility } from "../context/AccessibilityProvider";
+import { SUPPORTED_LANGUAGES } from "../config/languages";
 
-import {
-  SUPPORTED_LANGUAGES,
-} from "../config/languages";
-
-function LanguageSelector({
-  onLanguageChange,
-}) {
-
-  const { i18n } =
-    useTranslation();
-
-  const { setLanguage } =
-    useAccessibility();
-
-  const [open, setOpen] =
-    useState(false);
+function LanguageSelector({ onLanguageChange }) {
+  const { i18n } = useTranslation();
+  const { setLanguage } = useAccessibility();
 
   const currentLanguage =
     SUPPORTED_LANGUAGES.find(
-      (lang) =>
-        lang.code ===
-        i18n.language
-    ) ||
-    SUPPORTED_LANGUAGES[0];
-  async function changeLanguage(
-  code
-) {
+      (language) =>
+        language.code === i18n.resolvedLanguage ||
+        language.code === i18n.language
+    ) || SUPPORTED_LANGUAGES[0];
 
-  /*
-   * Keep i18next, the accessibility provider,
-   * Firestore preferences, and localStorage in
-   * sync.  Previously this component changed only
-   * i18next/localStorage, while AccessibilityProvider
-   * could restore the older saved language on the
-   * next render (for example after post translation).
-   */
-  setLanguage(code);
+  async function changeLanguage(code) {
+    setLanguage(code);
+    localStorage.setItem("inclura-language", code);
 
-  localStorage.setItem(
-    "inclura-language",
-    code
-  );
-
-  if (
-    typeof onLanguageChange ===
-    "function"
-  ) {
-
-    await onLanguageChange(
-      code
-    );
-
+    if (typeof onLanguageChange === "function") {
+      await onLanguageChange(code);
+    }
   }
 
-  setOpen(false);
-
-}
-
-return (
-
-  <div
-    style={{
-      position: "relative",
-      display: "inline-block",
-    }}
-  >
-
-    <button
-      type="button"
-      aria-label={i18n.t("language")}
-      aria-haspopup="listbox"
-      aria-expanded={open}
-      onClick={() => setOpen(!open)}
+  return (
+    <label
       style={{
-        background: "#0f172a",
-        color: "white",
-        border:
-          "1px solid #334155",
-        borderRadius: "12px",
-        padding: "12px 16px",
-        cursor: "pointer",
-        display: "flex",
+        display: "inline-flex",
         alignItems: "center",
-        gap: "10px",
-        fontWeight: "600",
+        gap: "8px",
+        maxWidth: "100%",
       }}
     >
-
-      <span>
-        {currentLanguage.flag}
-      </span>
-
-      <span>
-        {currentLanguage.nativeName}
-      </span>
-
-      <span>
-        🌐
-      </span>
-
-    </button>
-
-    {open && (
-
-      <div
-        role="listbox"
-        aria-label={i18n.t("language")}
+      <span
         style={{
           position: "absolute",
-          top: "55px",
-          right: 0,
-          width: "260px",
-          maxHeight: "320px",
-          overflowY: "auto",
-          background: "#0f172a",
-          border:
-            "1px solid #334155",
-          borderRadius: "14px",
-          boxShadow:
-            "0 8px 24px rgba(0,0,0,.35)",
-          zIndex: 1000,
+          width: "1px",
+          height: "1px",
+          padding: 0,
+          margin: "-1px",
+          overflow: "hidden",
+          clip: "rect(0, 0, 0, 0)",
+          whiteSpace: "nowrap",
+          border: 0,
         }}
       >
-        {SUPPORTED_LANGUAGES.map(
-          (language) => (
+        {i18n.t("language")}
+      </span>
 
-            <button
-              type="button"
-              role="option"
-              aria-selected={i18n.language === language.code}
-              aria-label={`${language.nativeName} (${language.name})`}
-              key={language.code}
-
-              onClick={() =>
-                changeLanguage(
-                  language.code
-                )
-              }
-
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: "12px",
-                padding: "14px 18px",
-                background:
-                  i18n.language ===
-                  language.code
-                    ? "#1e3a8a"
-                    : "transparent",
-                color: "white",
-                border: "none",
-                cursor: "pointer",
-                textAlign: "left",
-                fontSize: "15px",
-              }}
-            >
-
-              <span
-                style={{
-                  fontSize: "20px",
-                }}
-              >
-                {language.flag}
-              </span>
-
-              <div>
-
-                <div
-                  style={{
-                    fontWeight: "700",
-                  }}
-                >
-                  {language.nativeName}
-                </div>
-
-                <div
-                  style={{
-                    fontSize: "12px",
-                    color: "#94a3b8",
-                  }}
-                >
-                  {language.name}
-                </div>
-
-              </div>
-
-            </button>
-
-          )
-        )}
-
-      </div>
-
-    )}
-
-  </div>
-
-);
-
+      <select
+        aria-label={i18n.t("language")}
+        value={currentLanguage.code}
+        onChange={(event) => changeLanguage(event.target.value)}
+        style={{
+          minHeight: "44px",
+          maxWidth: "100%",
+          boxSizing: "border-box",
+          background: "#0f172a",
+          color: "white",
+          border: "1px solid #64748b",
+          borderRadius: "12px",
+          padding: "10px 14px",
+          cursor: "pointer",
+          font: "inherit",
+        }}
+      >
+        {SUPPORTED_LANGUAGES.map((language) => (
+          <option
+            key={language.code}
+            value={language.code}
+            lang={language.code}
+            dir={language.direction}
+          >
+            {language.flag} {language.nativeName}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 }
 
 export default LanguageSelector;
