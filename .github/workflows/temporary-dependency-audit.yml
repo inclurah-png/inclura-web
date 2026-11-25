@@ -1,0 +1,29 @@
+name: Temporary dependency audit diagnostic
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Generate dependency audit report
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          node -e "const r=require('./npm-audit-report.json'); console.log(JSON.stringify(r.metadata?.vulnerabilities || {}, null, 2))"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inclura-npm-audit-report
+          path: npm-audit-report.json
+          retention-days: 2
