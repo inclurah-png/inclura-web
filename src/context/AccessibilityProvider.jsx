@@ -544,10 +544,14 @@ export function AccessibilityProvider({ children }) {
         ? userProfile.preferredLanguage
         : "en");
 
-    setLanguageState(savedLanguage);
+    const normalizedSavedLanguage = isSupportedLanguage(savedLanguage)
+      ? savedLanguage
+      : "en";
 
-    if (i18n.language !== savedLanguage) {
-      void i18n.changeLanguage(savedLanguage).catch((error) => {
+    setLanguageState(normalizedSavedLanguage);
+
+    if (i18n.language !== normalizedSavedLanguage) {
+      void i18n.changeLanguage(normalizedSavedLanguage).catch((error) => {
         console.error(
           "Unable to restore application language:",
           error
