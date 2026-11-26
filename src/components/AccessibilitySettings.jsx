@@ -15,6 +15,13 @@ const PROFILE_OPTIONS = [
   { key: "dyslexia", labelKey: "dyslexia" },
   { key: "adhd", labelKey: "adhd" },
   { key: "autism", labelKey: "autism" },
+  { key: "colorBlind", labelKey: "colorBlindSupport" },
+  { key: "screenReader", labelKey: "screenReader" },
+  { key: "braille", labelKey: "braille" },
+  { key: "voiceNavigation", labelKey: "voiceNavigation" },
+  { key: "keyboardNavigation", labelKey: "keyboardNavigation" },
+  { key: "captions", labelKey: "captions" },
+  { key: "signLanguage", labelKey: "signLanguage" },
 ];
 
 function SettingRow({ label, description, children }) {
