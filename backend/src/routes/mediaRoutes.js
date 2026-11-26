@@ -189,12 +189,7 @@ router.post("/sign-upload", requireMediaUser, async (req, res) => {
       return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
     }
 
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     const category = req.body?.category;
     const mimeType = String(req.body?.mimeType || "").toLowerCase();
     const rule = CATEGORY_RULES[category];
