@@ -92,8 +92,8 @@ export function startPremiumExpirySweeper() {
   const run = async () => {
     try {
       const result = await runPremiumExpirySweep();
-      if (result.expired > 0) {
-        console.log(`Premium expiry sweep deactivated ${result.expired} expired subscription(s).`);
+      if (result.expired > 0 || result.recruiterExpired > 0) {
+        console.log(`Expiry sweep deactivated ${result.expired} premium and ${result.recruiterExpired} recruiter subscription(s).`);
       }
     } catch (error) {
       console.error("Premium expiry sweep failed:", error.message);
