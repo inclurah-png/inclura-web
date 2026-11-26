@@ -37,6 +37,15 @@ jobs:
           npm ci
           npm audit
           npm run build
+      - name: Preserve validated dependency manifests
+        uses: actions/upload-artifact@v4
+        with:
+          name: inclura-validated-dependency-manifests
+          path: |
+            package.json
+            package-lock.json
+          if-no-files-found: error
+          retention-days: 1
 
   backend-syntax:
     runs-on: ubuntu-latest
