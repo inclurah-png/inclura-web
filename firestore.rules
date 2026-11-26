@@ -1200,7 +1200,30 @@ service cloud.firestore {
         && request.resource.data.paymentAmount > 0
         && request.resource.data.paymentStatus == 'pending'
         && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        // Client submissions cannot claim server screening, document approval or risk clearance.
+        && request.resource.data.ifseScore == null
+        && request.resource.data.ifseScoreSource == 'not_server_verified'
+        && request.resource.data.ifseStatus == 'PENDING_SERVER_REVIEW'
+        && request.resource.data.ifseBadge == false
+        && request.resource.data.executiveReview == true
+        && request.resource.data.riskScore == null
+        && request.resource.data.riskScoreSource == 'not_server_verified'
+        && request.resource.data.threatLevel == 'UNASSESSED'
+        && request.resource.data.executiveReviewRequired == true
+        && request.resource.data.documentUrl == ''
+        && request.resource.data.documentVerified == false
+        && request.resource.data.accountType == request.resource.data.category
+        && request.resource.data.keys().hasOnly([
+          'userId', 'submittedBy', 'category', 'verificationType',
+          'accountType', 'fullName', 'email', 'phone', 'organizationName',
+          'website', 'socialLink1', 'socialLink2', 'officialEmail',
+          'paymentAmount', 'paymentStatus', 'status', 'ifseScore',
+          'ifseScoreSource', 'ifseStatus', 'ifseMessage', 'ifseBadge',
+          'executiveReview', 'riskScore', 'riskScoreSource', 'threatLevel',
+          'executiveReviewRequired', 'enterprise', 'documentUrl',
+          'documentVerified', 'note', 'createdAt', 'updatedAt'
+        ]);
 
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
