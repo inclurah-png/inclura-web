@@ -455,6 +455,8 @@ enterpriseRiskScore >= 40
               userId:
                 currentUser.uid,
 
+              source: "member_submission",
+
               severity:
                 "medium",
 
@@ -522,6 +524,8 @@ enterpriseRiskScore >= 40
 
               userId:
                 currentUser.uid,
+
+              source: "member_submission",
 
               severity:
                 "medium",
