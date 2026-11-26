@@ -13,7 +13,7 @@ import {
   auth,
 } from "../firebase";
 
-import { getVerificationDocumentAccess } from "../services/cloudinaryUpload";
+import { getVerificationDocumentAccess, getPartnershipContractAccess } from "../services/cloudinaryUpload";
 
 const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
 
@@ -57,6 +57,7 @@ const [governmentPending, setGovernmentPending] =
 
 const [partnershipApplications, setPartnershipApplications] = useState([]);
 const [partnershipActionBusy, setPartnershipActionBusy] = useState("");
+const [partnershipContractLinks, setPartnershipContractLinks] = useState({});
 
 const [recentRequests, setRecentRequests] =
   useState([]);
@@ -465,6 +466,104 @@ const handleReject = async (requestId) => {
   await submitAdminDecision(requestId, "reject", reason.trim());
 };
 
+
+const openPartnershipContract = async (application) => {
+  try {
+    const access = await getPartnershipContractAccess(application.type, application.id);
+    setPartnershipContractLinks((items) => ({
+      ...items,
+      [application.type + ":" + application.id]: access.downloadUrl,
+    }));
+  } catch (accessError) {
+    setError(accessError.message || "Unable to authorize contract access.");
+  }
+};
+
+const submitPartnershipContractReview = async (application, decision) => {
+  const notes = window.prompt(
+    decision === "approved" ? "Record your contract verification notes:" : "Explain why this signed contract is rejected:"
+  );
+  if (!notes || notes.trim().length < 5) return;
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const actionKey = application.type + ":" + application.id + ":contract";
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/contract-review`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, notes: notes.trim() }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Contract review failed.");
+    setPartnershipApplications((items) => items.map((item) =>
+      item.id === application.id && item.type === application.type
+        ? { ...item, contractVerificationStatus: result.contractVerificationStatus, contractStatus: decision === "approved" ? "Verified" : "Rejected - resubmission required" }
+        : item
+    ));
+    window.alert(result.message || "Contract review saved.");
+  } catch (reviewError) {
+    setError(reviewError.message || "Contract review failed.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
+};
+
+const finalizePartnershipActivation = async (application) => {
+  const approvalsByType = {
+    enterprise: ["executive", "board", "legal"],
+    corporate: ["executive", "board"],
+    government: ["executive", "government"],
+  };
+  const required = approvalsByType[application.type] || [];
+  const approvals = {};
+  for (const key of required) {
+    const label = key === "government" ? "Government approval" : key.charAt(0).toUpperCase() + key.slice(1) + " approval";
+    if (!window.confirm("Confirm that " + label + " has actually been obtained for this application?")) return;
+    approvals[key] = true;
+  }
+  const paymentRequired = window.confirm(
+    "Does the negotiated partnership agreement require payment before activation? Choose OK for YES or Cancel for NO."
+  );
+  const notes = window.prompt("Enter the final authorization and activation notes:");
+  if (!notes || notes.trim().length < 5) return;
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const actionKey = application.type + ":" + application.id + ":activate";
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/activate`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ approvals, paymentRequired, notes: notes.trim() }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Final activation was blocked.");
+    setPartnershipApplications((items) => items.filter((item) => item.id !== application.id || item.type !== application.type));
+    window.alert(result.message || "Partnership activated.");
+  } catch (activationError) {
+    setError(activationError.message || "Final activation was blocked.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
+};
+
 const submitPartnershipReview = async (application, stage, decision) => {
   const user = auth.currentUser;
   if (!user) {
@@ -778,7 +877,34 @@ marginBottom: "35px",
         <h3>{application.organizationName || application.companyName || application.agencyName || "Partnership applicant"}</h3>
         <p><strong>Type:</strong> {application.type} | <strong>Contact:</strong> {application.contactEmail || application.officialEmail || "Not supplied"}</p>
         <p><strong>Submission status:</strong> {application.requestStatus || application.status || "submitted"}</p>
-        <p><strong>Contract:</strong> {application.contractStatus || "Not activated"}</p>
+        <p><strong>Contract:</strong> {application.contractStatus || "Not activated"} | <strong>Verification:</strong> {application.contractVerificationStatus || "Not submitted"}</p>
+        {application.contractDocument?.cloudinaryPublicId && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
+            <button type="button" disabled={Boolean(partnershipActionBusy)} onClick={() => openPartnershipContract(application)}>
+              Open private signed contract
+            </button>
+            {partnershipContractLinks[application.type + ":" + application.id] && (
+              <a href={partnershipContractLinks[application.type + ":" + application.id]} target="_blank" rel="noopener noreferrer">
+                View contract (expires shortly)
+              </a>
+            )}
+            <button type="button" disabled={Boolean(partnershipActionBusy) || application.contractVerificationStatus === "approved"} onClick={() => submitPartnershipContractReview(application, "approved")}>
+              Verify contract
+            </button>
+            <button type="button" disabled={Boolean(partnershipActionBusy)} onClick={() => submitPartnershipContractReview(application, "rejected")}>
+              Reject contract
+            </button>
+          </div>
+        )}
+        {application.contractVerificationStatus === "approved" && (
+          <button
+            type="button"
+            disabled={Boolean(partnershipActionBusy)}
+            onClick={() => finalizePartnershipActivation(application)}
+          >
+            Final approvals and activate partnership
+          </button>
+        )}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {stageConfig.map(([stage, label], stageIndex) => {
             const prerequisitesComplete = stageConfig
