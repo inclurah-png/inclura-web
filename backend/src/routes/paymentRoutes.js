@@ -49,30 +49,59 @@ function resolveVerificationPrice(application) {
 router.post("/initialize", limitPaymentVerification, async (req, res) => {
   try {
     const { decoded, userRecord } = await authenticatePaymentUser(req);
-    const { purpose, verificationId, txRef } = req.body || {};
-    if (purpose !== "verification") return unauthorized(res, 400, "This checkout type is not available.");
+    const { purpose, plan, verificationId, txRef } = req.body || {};
+    if (!["verification", "premium", "recruiter", "creator_verification"].includes(purpose)) {
+      return unauthorized(res, 400, "Unsupported payment purpose.");
+    }
     const reference = String(txRef || "");
     const id = String(verificationId || "");
-    if (!/^[A-Za-z0-9_-]{8,120}$/.test(reference) || !/^[A-Za-z0-9_-]{10,150}$/.test(id)) {
-      return unauthorized(res, 400, "A valid checkout reference and verification application are required.");
+    if (!/^[A-Za-z0-9_-]{8,120}$/.test(reference)) return unauthorized(res, 400, "A valid checkout reference is required.");
+    if (purpose === "verification" && !/^[A-Za-z0-9_-]{10,150}$/.test(id)) {
+      return unauthorized(res, 400, "A valid verification application is required.");
     }
     if (!process.env.FLW_SECRET_KEY) return unauthorized(res, 503, "Flutterwave is not configured on the server.");
     const database = firestore();
-    const applicationRef = database.collection("verificationRequests").doc(id);
-    const applicationSnapshot = await applicationRef.get();
-    if (!applicationSnapshot.exists) return unauthorized(res, 404, "Verification application not found.");
-    const application = applicationSnapshot.data();
-    if (application.userId !== decoded.uid && application.submittedBy !== decoded.uid) return unauthorized(res, 403, "This application does not belong to your account.");
-    if (application.paymentStatus === "paid" || application.status === "approved" || application.status === "rejected") return unauthorized(res, 409, "This application is not eligible for payment.");
-    const amount = resolveVerificationPrice(application);
+    let amount = 0;
+    let currency = "NGN";
+    let application = null;
+    let normalizedPlan = String(plan || "").toLowerCase();
+
+    if (purpose === "verification") {
+      const applicationRef = database.collection("verificationRequests").doc(id);
+      const applicationSnapshot = await applicationRef.get();
+      if (!applicationSnapshot.exists) return unauthorized(res, 404, "Verification application not found.");
+      application = applicationSnapshot.data();
+      if (application.userId !== decoded.uid && application.submittedBy !== decoded.uid) return unauthorized(res, 403, "This application does not belong to your account.");
+      if (application.paymentStatus === "paid" || application.status === "approved" || application.status === "rejected") return unauthorized(res, 409, "This application is not eligible for payment.");
+      amount = resolveVerificationPrice(application);
+      currency = "USD";
+    } else if (purpose === "premium") {
+      const tierMap = { silver: "SilverBadge", gold: "GoldBadge", platinum: "PlatinumBadge", enterprise: "EnterpriseBadge" };
+      const pricingDocId = tierMap[normalizedPlan];
+      if (!pricingDocId) return unauthorized(res, 400, "Invalid premium plan.");
+      const pricingSnapshot = await database.collection("pricing").doc(pricingDocId).get();
+      amount = Number(pricingSnapshot.data()?.price);
+      if (!pricingSnapshot.exists || !Number.isFinite(amount) || amount <= 0) return unauthorized(res, 409, "This premium plan is not currently priced.");
+    } else if (purpose === "recruiter") {
+      const selected = RECRUITER_PLANS[normalizedPlan];
+      if (!selected) return unauthorized(res, 400, "Invalid recruiter plan.");
+      amount = selected.amount;
+    } else {
+      amount = Number(creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0);
+      currency = "USD";
+      normalizedPlan = "verified_creator";
+      if (!Number.isFinite(amount) || amount <= 0) return unauthorized(res, 409, "Creator verification is not currently priced.");
+    }
+
     const pendingRef = database.collection("flutterwavePendingPayments").doc(reference);
     const pendingRecord = {
       txRef: reference, userId: decoded.uid,
       customerEmail: String(userRecord.email || "").trim().toLowerCase(),
-      purpose: "verification", verificationId: id,
-      category: String(application.category || ""),
-      verificationType: String(application.verificationType || ""),
-      amount, currency: "USD", gateway: "flutterwave",
+      purpose, plan: normalizedPlan || null,
+      verificationId: purpose === "verification" ? id : null,
+      category: application?.category || null,
+      verificationType: application?.verificationType || null,
+      amount, currency, gateway: "flutterwave",
       paymentStatus: "pending", createdAt: new Date(),
     };
     await database.runTransaction(async (transaction) => {
@@ -84,7 +113,7 @@ router.post("/initialize", limitPaymentVerification, async (req, res) => {
       }
       transaction.create(pendingRef, pendingRecord);
     });
-    return res.status(200).json({ success: true, txRef: reference, amount, currency: "USD", email: pendingRecord.customerEmail });
+    return res.status(200).json({ success: true, txRef: reference, amount, currency, email: pendingRecord.customerEmail });
   } catch (error) {
     const status = Number.isInteger(error.status) ? error.status : 500;
     if (status === 500) console.error("IFSE payment initialization failed:", error);
