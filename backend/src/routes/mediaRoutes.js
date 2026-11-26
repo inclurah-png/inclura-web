@@ -503,11 +503,15 @@ router.post("/verification-document-access", async (req, res) => {
     }
 
     const verification = requestSnapshot.data() || {};
-    const isOwner = verification.userId === decoded.uid || verification.submittedBy === decoded.uid;
+    const requestOwnerId = String(verification.userId || verification.submittedBy || "");
+    const isOwner = requestOwnerId === decoded.uid;
     const isAdmin = decoded.admin === true;
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: "You are not authorized to access this verification document." });
+    }
+    if (!requestOwnerId || !requestedPublicId.startsWith(`inclura/verificationDocuments/${requestOwnerId}/`)) {
+      return res.status(403).json({ success: false, message: "Document does not belong to this verification applicant." });
     }
 
     const uploadedDocuments = verification.uploadedDocuments || {};
