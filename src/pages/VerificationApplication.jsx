@@ -58,9 +58,6 @@ function VerificationApplication() {
   const [officialEmail, setOfficialEmail] =
     useState("");
 
-  const [documentFile, setDocumentFile] =
-    useState(null);
-
   const selectedCategory =
     VERIFICATION_PLANS[category];
 
@@ -254,11 +251,6 @@ async function handleContinue() {
         // ========================================
         // DOCUMENT
         // ========================================
-
-        documentName:
-          documentFile
-            ? documentFile.name
-            : "",
 
         // Actual storage URL will be added
         // by the document workflow.
@@ -625,23 +617,23 @@ async function handleContinue() {
           </>
         )}
 
-        <label>
-          {t("vaUploadSupporting")}
-        </label>
-
-        <input
-          type="file"
-          onChange={(e) =>
-            setDocumentFile(
-              e.target.files[0]
-            )
-          }
+        <div
+          role="note"
           style={{
             marginTop: "10px",
             marginBottom: "24px",
-            color: "white",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#1e293b",
+            color: "#e2e8f0",
+            lineHeight: 1.5,
           }}
-        />
+        >
+          {t("vaUploadSupporting")}{" "}
+          After submitting your application and completing payment, upload
+          supporting files through the secure Documents page in Verification Status.
+          Files are not uploaded from this application form.
+        </div>
 
 <div
   style={{
