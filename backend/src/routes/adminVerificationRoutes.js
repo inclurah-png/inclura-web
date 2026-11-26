@@ -4,6 +4,78 @@ import creator from "../../../src/config/pricing/creator.js";
 
 const router = express.Router();
 
+const VERIFICATION_DOCUMENT_TYPES = new Set([
+  "application/pdf",
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+]);
+
+async function verifyPrivateCloudinaryDocuments(userId, documents) {
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloudName || !apiKey || !apiSecret) {
+    const error = new Error("Private document verification is not configured on the backend.");
+    error.statusCode = 503;
+    throw error;
+  }
+
+  for (const document of documents) {
+    const publicId = String(document?.cloudinaryPublicId || "");
+    const resourceType = String(document?.cloudinaryResourceType || "");
+    const fileType = String(document?.fileType || "").toLowerCase();
+    const fileSize = Number(document?.fileSize);
+    const assetId = String(document?.cloudinaryAssetId || "");
+    const ownerPrefix = `inclura/verificationDocuments/${userId}/`;
+
+    if (
+      !publicId.startsWith(ownerPrefix) ||
+      !["image", "raw"].includes(resourceType) ||
+      !VERIFICATION_DOCUMENT_TYPES.has(fileType) ||
+      !Number.isFinite(fileSize) ||
+      fileSize <= 0 ||
+      fileSize > 10 * 1024 * 1024 ||
+      !assetId ||
+      (fileType === "application/pdf" && resourceType !== "raw") ||
+      (fileType.startsWith("image/") && resourceType !== "image")
+    ) {
+      throw new Error("A submitted verification document has invalid metadata.");
+    }
+
+    const encodedPublicId = publicId.split("/").map(encodeURIComponent).join("/");
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/${resourceType}/upload/${encodedPublicId}?type=authenticated`;
+    const response = await fetch(endpoint, {
+      headers: {
+        Authorization: "Basic " + Buffer.from(`${apiKey}:${apiSecret}`).toString("base64"),
+      },
+    });
+    if (!response.ok) {
+      throw new Error("A submitted document could not be verified in private storage.");
+    }
+
+    const asset = await response.json();
+    const format = String(asset.format || "").toLowerCase();
+    const formatMatches =
+      fileType === "application/pdf" ? format === "pdf" :
+      fileType === "image/png" ? format === "png" :
+      fileType === "image/jpeg" || fileType === "image/jpg" ? ["jpg", "jpeg"].includes(format) :
+      false;
+
+    if (
+      asset.public_id !== publicId ||
+      asset.asset_id !== assetId ||
+      asset.type !== "authenticated" ||
+      asset.resource_type !== resourceType ||
+      !formatMatches ||
+      Number(asset.bytes) !== fileSize ||
+      Number(asset.bytes) > 10 * 1024 * 1024
+    ) {
+      throw new Error("A submitted document failed private storage validation.");
+    }
+  }
+}
+
 async function requireAdmin(req, res, next) {
   try {
     const authorization = req.headers.authorization || "";
@@ -243,31 +315,49 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
     const auditRef = db.collection("verificationAuditLogs").doc();
     const securityRef = db.collection("ifseSecurityEvents").doc();
 
+    const preflightSnapshot = await requestRef.get();
+    if (!preflightSnapshot.exists) {
+      return res.status(404).json({ success: false, message: "Verification application not found." });
+    }
+    const preflightApplication = preflightSnapshot.data() || {};
+    const preflightUserId = String(preflightApplication.userId || preflightApplication.submittedBy || "");
+    if (!preflightUserId) {
+      return res.status(409).json({ success: false, message: "The application has no valid member account." });
+    }
+    if (preflightUserId === req.adminUid) {
+      return res.status(403).json({ success: false, message: "Administrators cannot approve their own verification applications." });
+    }
+    if (preflightApplication.paymentStatus !== "paid") {
+      return res.status(409).json({ success: false, message: "Payment must be confirmed before verification can be approved." });
+    }
+    if (preflightApplication.status === "approved" || preflightApplication.status === "rejected") {
+      return res.status(409).json({ success: false, message: "This application has already been closed." });
+    }
+    const preflightDocuments = preflightApplication.uploadedDocuments && typeof preflightApplication.uploadedDocuments === "object"
+      ? Object.values(preflightApplication.uploadedDocuments)
+      : [];
+    if (
+      preflightApplication.documentsSubmitted !== true ||
+      preflightApplication.documentSubmissionStatus !== "submitted" ||
+      preflightDocuments.length === 0
+    ) {
+      return res.status(409).json({ success: false, message: "Required verification documents must be securely submitted before approval." });
+    }
+    await verifyPrivateCloudinaryDocuments(preflightUserId, preflightDocuments);
+    const applicantAccount = await auth().getUser(preflightUserId);
+    if (applicantAccount.disabled || applicantAccount.emailVerified !== true) {
+      return res.status(403).json({ success: false, message: "The applicant account must be active and email verified." });
+    }
+
     await db.runTransaction(async (tx) => {
       const requestSnap = await tx.get(requestRef);
       if (!requestSnap.exists) throw new Error("Verification application not found.");
       const application = requestSnap.data();
+      if (!requestSnap.updateTime.isEqual(preflightSnapshot.updateTime)) {
+        throw new Error("The application changed during review. Refresh the request and try again.");
+      }
       if (application.paymentStatus !== "paid") {
         throw new Error("Payment must be confirmed before verification can be approved.");
-      }
-      const uploadedDocuments = application.uploadedDocuments && typeof application.uploadedDocuments === "object"
-        ? Object.values(application.uploadedDocuments)
-        : [];
-      const validDocumentTypes = new Set(["application/pdf", "image/jpeg", "image/jpg", "image/png"]);
-      const hasValidDocuments =
-        application.documentsSubmitted === true &&
-        application.documentSubmissionStatus === "submitted" &&
-        uploadedDocuments.length > 0 &&
-        uploadedDocuments.every((document) =>
-          typeof document?.cloudinaryPublicId === "string" &&
-          document.cloudinaryPublicId.startsWith("inclura/verificationDocuments/") &&
-          validDocumentTypes.has(String(document.fileType || "").toLowerCase()) &&
-          Number.isFinite(Number(document.fileSize)) &&
-          Number(document.fileSize) > 0 &&
-          Number(document.fileSize) <= 10 * 1024 * 1024
-        );
-      if (!hasValidDocuments) {
-        throw new Error("Required verification documents must be securely submitted before approval.");
       }
       if (application.status === "approved" || application.status === "rejected") {
         throw new Error("This application has already been closed.");
