@@ -248,7 +248,7 @@ function UsersManagement() {
       setPageError("You cannot approve your own creator verification.");
       return;
     }
-    if (!window.confirm("Approve this creator after checking the submitted identity evidence?")) return;
+    if (!window.confirm("Approve this creator after completing the required manual review?")) return;
 
     setBusyUserId(userId);
     setPageError("");
