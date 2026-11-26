@@ -41,7 +41,7 @@ jobs:
           npm audit fix --prefix backend
           npm install --package-lock-only --prefix backend --ignore-scripts --no-audit --no-fund
           npm ci --prefix backend --ignore-scripts --no-audit --no-fund
-          npm audit --prefix backend --audit-level=high
+          npm audit --prefix backend
 
       - name: Check backend JavaScript syntax
         run: |
