@@ -109,9 +109,11 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         return unauthorized(res, 403, "This verification application does not belong to your account.");
       }
       const categoryPricing = VERIFICATION_PLANS[String(application.category || "").toLowerCase()];
-      const selectedPlan = categoryPricing?.verificationTypes?.find(
-        (item) => item.id === application.verificationType
-      );
+      const selectedPlan = (
+        categoryPricing?.verificationTypes ||
+        categoryPricing?.certification ||
+        []
+      ).find((item) => item.id === application.verificationType);
       const trustedAmount = Number(
         selectedPlan?.monthlyUSD ??
         selectedPlan?.yearlyUSD ??
