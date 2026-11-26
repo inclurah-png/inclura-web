@@ -424,7 +424,7 @@ function VerificationDocuments() {
 
       /*
        * ============================================
-       * UPLOAD DOCUMENTS TO FIREBASE STORAGE
+       * UPLOAD DOCUMENTS TO PRIVATE CLOUDINARY STORAGE
        * ============================================
        */
 
