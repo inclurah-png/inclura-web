@@ -27,10 +27,6 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
 function CreateStory() {
 const { t } = useTranslation();
 
@@ -142,23 +138,16 @@ auth.currentUser;
   profile?.verified ||
   false,
 
-badgeType:
-  migrateVerificationId(
-    profile?.badgeType
-  ),
+badgeType: profile?.badgeType || "",
 
 verificationMetadata:
   profile?.verified
-    ? getVerificationMetadata(
-        migrateVerificationId(
-          profile?.badgeType
-        )
-      )
+    ? getVerificationMetadata(profile?.badgeType || "")
     : null,
 
     role:
       profile?.role ||
-      "individual",
+      "user",
 
     category:
       profile?.category ||
