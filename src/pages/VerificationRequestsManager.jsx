@@ -89,10 +89,7 @@ color: "white",
 
 <p><strong>IFSE Assessment:</strong> Awaiting trusted server-side checks and administrator review. Client-submitted scores or badges are not used for approval.</p>
 
-<p>
-  <strong>Executive Review:</strong>{" "}
-  {request.executiveReview ? "Required" : "Not Required"}
-</p>
+<p><strong>Manual Administrator Review:</strong> Required for every application.</p>
 
 <p>
   <strong>Submitted:</strong>{" "}
