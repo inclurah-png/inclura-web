@@ -665,7 +665,7 @@ marginBottom: "35px",
   </h2>
 
   {filteredRequests
-    .filter((item) => item.status === "submitted")
+    .filter((item) => ["pending", "submitted"].includes(item.status))
     .length === 0 ? (
 
     <p>No pending verification requests.</p>
@@ -707,6 +707,10 @@ marginBottom: "35px",
             Status: {request.status}
           </p>
 
+          <p>
+            Payment: {request.paymentStatus || "Unknown"}
+          </p>
+
           <div
             style={{
               marginTop: "10px",
@@ -716,6 +720,8 @@ marginBottom: "35px",
           >
 
             <button
+              disabled={request.paymentStatus !== "paid"}
+              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : "Approve after administrator review."}
               onClick={(e) => {
                 e.stopPropagation();
                 handleApprove(request.id);
