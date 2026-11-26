@@ -1162,7 +1162,6 @@ service cloud.firestore {
 
     match /ifseSecurityEvents/{eventId} {
       allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid
         && (
           (
             request.resource.data.verificationId is string
@@ -1170,7 +1169,8 @@ service cloud.firestore {
             && ownsVerification(request.resource.data.verificationId)
           )
           || (
-            request.resource.data.partnershipId is string
+            request.resource.data.userId == request.auth.uid
+            && request.resource.data.partnershipId is string
             && request.resource.data.source == 'member_submission'
             && request.resource.data.eventType in [
               'government_partnership_created', 'corporate_partnership_created'
@@ -1178,7 +1178,8 @@ service cloud.firestore {
             && ownsPartnership(request.resource.data.partnershipId)
           )
           || (
-            request.resource.data.source == 'member_submission'
+            request.resource.data.userId == request.auth.uid
+            && request.resource.data.source == 'member_submission'
             && request.resource.data.eventType in [
               'duplicate_organization', 'duplicate_contact_email', 'duplicate_company'
             ]
