@@ -35,6 +35,9 @@ router.post("/creators/:userId/approve", async (req, res) => {
     if (!/^[A-Za-z0-9_-]{5,128}$/.test(userId)) {
       return res.status(400).json({ success: false, message: "Invalid creator account." });
     }
+    if (req.adminUid === userId) {
+      return res.status(403).json({ success: false, message: "Administrators cannot approve their own creator verification." });
+    }
 
     const expectedAmount = Number(
       creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
@@ -118,7 +121,8 @@ router.post("/creators/:userId/approve", async (req, res) => {
 
     return res.json({ success: true, message: "Creator verification approved after payment and administrator review." });
   } catch (error) {
-    const status = /not found/i.test(error.message) ? 404 :
+    const status = /administrators cannot/i.test(error.message) ? 403 :
+      /not found/i.test(error.message) ? 404 :
       /already verified|payment|required|reference|record|approved fee/i.test(error.message) ? 409 : 500;
     return res.status(status).json({ success: false, message: error.message || "Creator approval failed." });
   }
@@ -150,6 +154,7 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       }
       const userId = String(application.userId || application.submittedBy || "");
       if (!userId) throw new Error("The application has no valid member account.");
+      if (userId === req.adminUid) throw new Error("Administrators cannot approve their own verification applications.");
       const paymentId = String(application.paymentId || "");
       if (!/^\d{1,30}$/.test(paymentId)) {
         throw new Error("A server-verified payment record is required before approval.");
@@ -263,7 +268,8 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
 
     return res.json({ success: true, message: "Verification approved and records issued." });
   } catch (error) {
-    const status = /verification application not found|applicant account not found/i.test(error.message) ? 404 :
+    const status = /administrators cannot/i.test(error.message) ? 403 :
+      /verification application not found|applicant account not found/i.test(error.message) ? 404 :
       /payment|already been closed|conflicting verification/i.test(error.message) ? 409 : 500;
     return res.status(status).json({ success: false, message: error.message || "Approval failed." });
   }
@@ -288,6 +294,8 @@ router.post("/verification/:verificationId/reject", async (req, res) => {
       const snap = await tx.get(requestRef);
       if (!snap.exists) throw new Error("Verification application not found.");
       const data = snap.data();
+      const applicantId = String(data.userId || data.submittedBy || "");
+      if (applicantId === req.adminUid) throw new Error("Administrators cannot reject their own verification applications.");
       if (data.status === "approved" || data.status === "rejected") {
         throw new Error("This application has already been closed.");
       }
