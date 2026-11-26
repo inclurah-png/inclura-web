@@ -167,7 +167,7 @@ service cloud.firestore {
                       'text', 'language', 'originalLanguage', 'translatedText',
                       'category', 'userId', 'userName', 'profilePhoto', 'role',
                       'accessibilityNeeds', 'accessibilityTags', 'verified',
-                      'badgeType', 'verificationMetadata', 'premium', 'premiumTier',
+                      'badgeType', 'premium', 'premiumTier',
                       'imageUrl', 'videoUrl', 'imagePublicId', 'videoPublicId',
                       'mediaProvider', 'likes', 'comments', 'reactions',
                       'userReactions', 'creatorScore', 'commentCount', 'crossPosts',
@@ -791,7 +791,7 @@ service cloud.firestore {
                     && request.resource.data.views is list
                     && request.resource.data.keys().hasOnly([
                       'userId', 'userName', 'profilePhoto', 'verified',
-                      'badgeType', 'verificationMetadata', 'role', 'category',
+                      'badgeType', 'role', 'category',
                       'accessibilityNeeds', 'premium', 'premiumTier',
                       'storyType', 'storyText', 'storyUrl', 'mediaUrl',
                       'mediaType', 'accessibility', 'createdAt', 'expiresAt',
