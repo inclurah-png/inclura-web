@@ -223,14 +223,6 @@ if (!validGovernmentEmail) {
   return Math.min(score, 100);
 
 };
-  const riskScore = calculateRiskScore();
-
-const threatLevel =
-  riskScore >= 75
-    ? "High"
-    : riskScore >= 40
-    ? "Medium"
-    : "Low";
   const handleSubmit = async (e) => {
 
   e.preventDefault();
@@ -361,12 +353,6 @@ try {
       timeline,
 
       userId: currentUser.uid,
-
-      riskScore,
-      riskScoreSource: "member_self_assessment",
-      threatLevel,
-      threatLevelSource: "member_self_assessment",
-      executiveReviewRequired: riskScore >= 70,
       executiveReviewSource: "member_self_assessment",
 
       createdAt: serverTimestamp(),
@@ -774,34 +760,13 @@ try {
 
   <h2>Review Progress</h2>
 
-  <p>
-
-    Completion: {getReviewPercentage()}%
-
-  </p>
+  
 
             <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
 
 </section>
 
-<section className="government-risk">
 
-  <h2>Preliminary Applicant Self-Assessment</h2>
-  <p>This estimate is calculated from the application form only. It is not a server-verified IFSE finding and does not determine approval.</p>
-
-  <p>
-
-    Risk Score: {riskScore}%
-
-  </p>
-
-  <p>
-
-    Threat Level: {threatLevel}
-
-  </p>
-
-</section>
 
 <section className="government-agreements">
 
