@@ -73,6 +73,8 @@ useState(false);
 
 "Bank Transfer",
 
+"USSD",
+
 ];
 
 const IFSE_PAYMENT_SECURITY = [
@@ -183,7 +185,13 @@ const flutterwaveConfig = {
   currency: "USD",
 
   payment_options:
-    "card,banktransfer,ussd",
+    paymentMethod === "Credit Card" || paymentMethod === "Debit Card"
+      ? "card"
+      : paymentMethod === "Bank Transfer"
+        ? "banktransfer"
+        : paymentMethod === "USSD"
+          ? "ussd"
+          : "card,banktransfer,ussd",
 
   customer: {
 
