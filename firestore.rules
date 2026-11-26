@@ -1403,7 +1403,15 @@ service cloud.firestore {
 
     match /verificationAuditLogs/{logId} {
       allow create: if isActiveAccount()
-        && (request.resource.data.performedBy == request.auth.uid
+        && (
+          ('performedBy' in request.resource.data
+            && request.resource.data.performedBy == request.auth.uid)
+          || ('actor' in request.resource.data
+            && request.resource.data.actor == request.auth.uid)
+        )
+        && (!('performedBy' in request.resource.data)
+            || request.resource.data.performedBy == request.auth.uid)
+        && (!('actor' in request.resource.data)
             || request.resource.data.actor == request.auth.uid)
         && request.resource.data.verificationId is string
         && (
