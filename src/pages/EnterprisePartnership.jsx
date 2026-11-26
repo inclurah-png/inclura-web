@@ -549,7 +549,7 @@ serverTimestamp(),
           "Enterprise partnership request submitted successfully."
         );
 
-        navigate(`/enterprise-status/${partnershipId}`);
+        navigate(`/partnership-status/enterprise/${partnershipId}`);
               }
 
       catch (err) {
