@@ -1138,28 +1138,90 @@ service cloud.firestore {
 
     match /verificationAuditLogs/{logId} {
       allow create: if request.auth != null
-        && request.resource.data.verificationId is string
         && (request.resource.data.performedBy == request.auth.uid
             || request.resource.data.actor == request.auth.uid)
-        && request.resource.data.action in [
-          'Verification application submitted', 'Verification Documents Submitted'
-        ]
-        && ownsVerification(request.resource.data.verificationId);
+        && request.resource.data.verificationId is string
+        && (
+          (
+            request.resource.data.action in [
+              'Verification application submitted', 'Verification Documents Submitted'
+            ]
+            && ownsVerification(request.resource.data.verificationId)
+          )
+          || (
+            request.resource.data.action == 'Government Partnership Submitted'
+            && ownsPartnership(request.resource.data.verificationId)
+          )
+        );
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
-            || ownsVerification(resource.data.verificationId));
+            || ownsVerification(resource.data.verificationId)
+            || ownsPartnership(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /ifseSecurityEvents/{eventId} {
       allow create: if request.auth != null
-        && request.resource.data.verificationId is string
-        && request.resource.data.eventType in ['Application Received', 'documents_submitted']
-        && ownsVerification(request.resource.data.verificationId);
+        && request.resource.data.userId == request.auth.uid
+        && (
+          (
+            request.resource.data.verificationId is string
+            && request.resource.data.eventType in ['Application Received', 'documents_submitted']
+            && ownsVerification(request.resource.data.verificationId)
+          )
+          || (
+            request.resource.data.partnershipId is string
+            && request.resource.data.source == 'member_submission'
+            && request.resource.data.eventType in [
+              'government_partnership_created', 'corporate_partnership_created'
+            ]
+            && ownsPartnership(request.resource.data.partnershipId)
+          )
+          || (
+            request.resource.data.source == 'member_submission'
+            && request.resource.data.eventType in [
+              'duplicate_organization', 'duplicate_contact_email', 'duplicate_company'
+            ]
+          )
+        );
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
-            || ownsVerification(resource.data.verificationId));
-      allow update, delete: if false;
+        && (
+          request.auth.token.admin == true
+          || resource.data.get('userId', null) == request.auth.uid
+          || (
+            resource.data.get('verificationId', null) is string
+            && ownsVerification(resource.data.verificationId)
+          )
+          || (
+            resource.data.get('partnershipId', null) is string
+            && ownsPartnership(resource.data.partnershipId)
+          )
+          || (
+            resource.data.get('paymentId', null) is string
+            && ownsPayment(resource.data.paymentId)
+          )
+        );
+      allow update: if request.auth != null
+        && request.auth.token.admin == true
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'reviewed', 'reviewedAt', 'reviewedBy'
+            ])
+            && request.resource.data.reviewed == true
+            && request.resource.data.reviewedBy == request.auth.uid
+            && request.resource.data.reviewedAt is timestamp
+          )
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'resolved', 'resolvedAt', 'resolvedBy'
+            ])
+            && request.resource.data.resolved == true
+            && request.resource.data.resolvedBy == request.auth.uid
+            && request.resource.data.resolvedAt is timestamp
+          )
+        );
+      allow delete: if false;
     }
 
     // Payment records are visible only to the member who paid.
