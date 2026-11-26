@@ -37,7 +37,7 @@ jobs:
       - name: Apply compatible backend dependency security updates
         run: |
           npm pkg delete --prefix backend dependencies.uuid
-          npm pkg set --prefix backend 'overrides.@grpc/grpc-js=1.14.7' 'overrides.@fastify/busboy=3.2.4' 'overrides.uuid=11.1.1'
+          npm pkg set --prefix backend 'overrides.@grpc/grpc-js=1.14.7' 'overrides.@fastify/busboy=3.2.4' 'overrides.uuid=11.1.1' 'overrides.minimatch=11.0.9' 'overrides.qs=6.17.1'
           npm audit fix --prefix backend
           npm install --package-lock-only --prefix backend --ignore-scripts --no-audit --no-fund
           npm ci --prefix backend --ignore-scripts --no-audit --no-fund
