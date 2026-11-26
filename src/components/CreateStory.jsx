@@ -91,12 +91,12 @@ auth.currentUser;
     );
 
   const activeStories =
-    storiesSnapshot.docs.filter(
-      (doc) =>
-        doc.data()
-          .expiresAt >
-        Date.now()
-    );
+    storiesSnapshot.docs.filter((storyDoc) => {
+      const expiresAt = storyDoc.data().expiresAt;
+      return expiresAt?.toMillis
+        ? expiresAt.toMillis() > Date.now()
+        : Number(expiresAt || 0) > Date.now();
+    });
 
   if (
     activeStories.length >=
