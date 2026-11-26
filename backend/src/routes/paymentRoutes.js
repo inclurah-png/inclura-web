@@ -158,13 +158,19 @@ router.post("/flutterwave/webhook", async (req, res) => {
       String(payment.customer?.email || "").trim().toLowerCase() === pending.customerEmail;
     if (!matches) return res.status(409).json({ received: false, message: "Transaction did not match the pending checkout." });
 
-    if (pending.purpose !== "verification" || !pending.verificationId || !pending.userId) {
+    if (!["verification", "premium", "recruiter", "creator_verification"].includes(pending.purpose) || !pending.userId) {
+      return res.status(409).json({ received: false });
+    }
+    if (pending.purpose === "verification" && !pending.verificationId) {
       return res.status(409).json({ received: false });
     }
 
     const paymentRef = database.collection("flutterwavePayments").doc(transactionId);
-    const applicationRef = database.collection("verificationRequests").doc(pending.verificationId);
+    const applicationRef = pending.purpose === "verification"
+      ? database.collection("verificationRequests").doc(pending.verificationId)
+      : null;
     const verificationPaymentRef = database.collection("verificationPayments").doc(transactionId);
+    const userRef = database.collection("users").doc(pending.userId);
     const securityEventRef = database.collection("ifsePaymentEvents").doc();
     const auditLogRef = database.collection("paymentAuditLogs").doc();
     const timelineRef = database.collection("paymentTimeline").doc();
@@ -174,63 +180,122 @@ router.post("/flutterwave/webhook", async (req, res) => {
       const [currentPending, existingPayment, applicationSnapshot] = await Promise.all([
         transaction.get(pendingRef),
         transaction.get(paymentRef),
-        transaction.get(applicationRef),
+        applicationRef ? transaction.get(applicationRef) : Promise.resolve(null),
       ]);
-      if (!currentPending.exists || !applicationSnapshot.exists) throw new Error("Pending checkout or verification application no longer exists.");
+      if (!currentPending.exists || (applicationRef && !applicationSnapshot?.exists)) {
+        throw new Error("Pending checkout or verification application no longer exists.");
+      }
       const current = currentPending.data();
-      const application = applicationSnapshot.data();
+      const application = applicationSnapshot?.data();
       if (
-        current.userId !== pending.userId || current.txRef !== reference ||
-        current.verificationId !== pending.verificationId ||
-        (current.paymentStatus === "paid" && current.transactionId !== transactionId) ||
+        current.userId !== pending.userId ||
+        current.txRef !== reference ||
+        current.purpose !== pending.purpose ||
+        String(current.plan || "") !== String(pending.plan || "") ||
+        (current.paymentStatus === "paid" && current.transactionId !== transactionId)
+      ) throw new Error("Pending checkout details changed before confirmation.");
+
+      if (applicationRef && (
         (application.userId !== pending.userId && application.submittedBy !== pending.userId) ||
-        application.category !== pending.category || application.verificationType !== pending.verificationType ||
+        application.category !== pending.category ||
+        application.verificationType !== pending.verificationType ||
         Math.abs(Number(application.paymentAmount) - Number(pending.amount)) > 0.01 ||
-        (application.paymentStatus === "paid" && application.paymentId !== transactionId)
-      ) throw new Error("Pending checkout no longer matches its verification application.");
+        (application.paymentStatus === "paid" && application.paymentId !== transactionId) ||
+        application.status === "approved" || application.status === "rejected"
+      )) throw new Error("Pending checkout no longer matches its verification application.");
 
       if (existingPayment.exists) {
         const prior = existingPayment.data();
-        const priorMatches = prior.userId === pending.userId && prior.transactionId === transactionId &&
-          prior.txRef === reference && prior.purpose === "verification" &&
-          prior.verificationId === pending.verificationId && prior.category === pending.category &&
-          prior.verificationType === pending.verificationType && Number(prior.amount) === Number(payment.amount) &&
+        const priorMatches = prior.userId === pending.userId &&
+          prior.transactionId === transactionId && prior.txRef === reference &&
+          prior.purpose === pending.purpose &&
+          String(prior.plan || "") === String(pending.plan || "") &&
+          String(prior.verificationId || "") === String(pending.verificationId || "") &&
+          String(prior.category || "") === String(pending.category || "") &&
+          String(prior.verificationType || "") === String(pending.verificationType || "") &&
+          Number(prior.amount) === Number(payment.amount) &&
           String(prior.currency).toUpperCase() === String(payment.currency).toUpperCase() &&
           prior.paymentStatus === "paid" && prior.verifiedByServer === true;
         if (!priorMatches) throw new Error("Transaction already recorded with different payment details.");
       } else {
         transaction.create(paymentRef, {
-          userId: pending.userId, transactionId, txRef: reference, purpose: "verification",
-          plan: null, verificationId: pending.verificationId, category: pending.category,
-          verificationType: pending.verificationType, amount: Number(payment.amount),
-          currency: String(payment.currency).toUpperCase(), paymentStatus: "paid",
-          gateway: "flutterwave", verifiedByServer: true, createdAt: now,
-        });
-        transaction.create(verificationPaymentRef, {
-          userId: pending.userId, verificationId: pending.verificationId, category: pending.category,
-          verificationType: pending.verificationType, transactionId, flutterwaveReference: reference,
+          userId: pending.userId, transactionId, txRef: reference,
+          purpose: pending.purpose, plan: pending.plan || null,
+          verificationId: pending.verificationId || null,
+          category: pending.category || null,
+          verificationType: pending.verificationType || null,
           amount: Number(payment.amount), currency: String(payment.currency).toUpperCase(),
-          paymentStatus: "paid", status: "completed", verifiedByServer: true,
-          paymentMethod: "Flutterwave", createdAt: now, updatedAt: now,
+          paymentStatus: "paid", gateway: "flutterwave",
+          verifiedByServer: true, createdAt: now,
         });
-        transaction.create(securityEventRef, {
-          paymentId: transactionId, transactionId, eventType: "verification_payment_server_verified",
-          riskScore: 0, threatLevel: "Low", requiresExecutiveApproval: true, reviewed: false, createdAt: now,
-        });
-        transaction.create(auditLogRef, {
-          paymentId: transactionId, transactionId,
-          action: "Flutterwave webhook payment verified by IFSE", actor: "flutterwave_webhook", createdAt: now,
-        });
-        transaction.create(timelineRef, {
-          paymentId: transactionId, transactionId, title: "Payment confirmed by Flutterwave",
-          status: "Completed", createdAt: now,
-        });
+
+        if (pending.purpose === "premium") {
+          const expiry = new Date(now);
+          expiry.setMonth(expiry.getMonth() + 1);
+          transaction.set(userRef, {
+            premium: true, premiumActive: true, premiumTier: pending.plan,
+            premiumStartedAt: now, premiumExpiryDate: expiry,
+            premiumReference: reference, premiumTransactionId: transactionId,
+          }, { merge: true });
+        } else if (pending.purpose === "recruiter") {
+          const expiry = new Date(now);
+          expiry.setDate(expiry.getDate() + 30);
+          const selected = RECRUITER_PLANS[pending.plan];
+          if (!selected) throw new Error("Pending recruiter plan is not recognized.");
+          transaction.set(userRef, {
+            recruiter: {
+              plan: pending.plan, status: "active", activatedAt: now,
+              expiresAt: expiry, paymentReference: reference,
+              transactionId, activeJobs: 0,
+            },
+          }, { merge: true });
+        } else if (pending.purpose === "creator_verification") {
+          transaction.set(userRef, {
+            creatorVerificationPaymentStatus: "paid",
+            creatorVerificationPaymentReference: reference,
+            creatorVerificationPaymentTransactionId: transactionId,
+            creatorVerificationPaymentAt: now,
+          }, { merge: true });
+        } else {
+          transaction.update(applicationRef, {
+            paymentStatus: "paid", paymentId: transactionId, updatedAt: now,
+          });
+          transaction.create(verificationPaymentRef, {
+            userId: pending.userId, verificationId: pending.verificationId,
+            category: pending.category, verificationType: pending.verificationType,
+            transactionId, flutterwaveReference: reference,
+            amount: Number(payment.amount), currency: String(payment.currency).toUpperCase(),
+            paymentStatus: "paid", status: "completed", verifiedByServer: true,
+            paymentMethod: "Flutterwave", createdAt: now, updatedAt: now,
+          });
+          transaction.create(securityEventRef, {
+            paymentId: transactionId, transactionId,
+            eventType: "verification_payment_server_verified",
+            riskScore: 0, threatLevel: "Low", requiresExecutiveApproval: true,
+            reviewed: false, createdAt: now,
+          });
+          transaction.create(auditLogRef, {
+            paymentId: transactionId, transactionId,
+            action: "Flutterwave webhook payment verified by IFSE",
+            actor: "flutterwave_webhook", createdAt: now,
+          });
+          transaction.create(timelineRef, {
+            paymentId: transactionId, transactionId,
+            title: "Payment confirmed by Flutterwave",
+            status: "Completed", createdAt: now,
+          });
+        }
       }
 
-      transaction.update(applicationRef, { paymentStatus: "paid", paymentId: transactionId, updatedAt: now });
+      if (pending.purpose === "verification") {
+        transaction.update(applicationRef, {
+          paymentStatus: "paid", paymentId: transactionId, updatedAt: now,
+        });
+      }
       transaction.update(pendingRef, {
-        paymentStatus: "paid", gatewayConfirmation: "verified", gatewayTransactionId: transactionId,
-        transactionId, verifiedByServer: true, paidAt: now,
+        paymentStatus: "paid", gatewayConfirmation: "verified",
+        gatewayTransactionId: transactionId, transactionId,
+        verifiedByServer: true, paidAt: now,
       });
     });
     return res.status(200).json({ received: true, verified: true });
