@@ -27,7 +27,7 @@ import {
 
 import { db } from "../firebase";
 import i18n from "../i18n";
-import { getLanguageDirection, isSupportedLanguage, SUPPORTED_LANGUAGES } from "../config/languages";
+import { getLanguageDirection, SUPPORTED_LANGUAGES } from "../config/languages";
 
 function normalizePreferredLanguage(value) {
   const requested = String(value || "en").trim().toLowerCase();
