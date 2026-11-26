@@ -16,7 +16,7 @@ const makeVerificationTxRef = (uid) => "INCLURA-VERIFICATION-" + (uid || "USER")
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { auth } from "../firebase";
-import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -163,6 +163,25 @@ const handlePayment = async (e) => {
   }
 
   setLoading(true);
+
+  try {
+    const initialized = await initializeFlutterwavePayment({
+      purpose: "verification",
+      verificationId,
+      txRef: flutterwaveTxRef,
+    });
+    if (
+      Number(initialized.amount) !== paymentAmount ||
+      initialized.currency !== "USD" ||
+      initialized.txRef !== flutterwaveTxRef
+    ) {
+      throw new Error("The server checkout details do not match this verification application.");
+    }
+  } catch (initializationError) {
+    setError(initializationError.message || "Unable to initialize secure checkout.");
+    setLoading(false);
+    return;
+  }
 
   handleFlutterPayment({
 
