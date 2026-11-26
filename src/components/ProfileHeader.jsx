@@ -52,7 +52,8 @@ function isPlaceholderName(
 }
 
 function resolveProfileName(
-  profile
+  profile,
+  fallbackName = "Inclura User"
 ) {
   const currentUser =
     auth.currentUser;
@@ -150,7 +151,7 @@ function resolveProfileName(
     return email.split("@")[0];
   }
 
-  return "Inclura User";
+  return fallbackName;
 }
 
 function ProfileHeader({
@@ -173,7 +174,8 @@ function ProfileHeader({
 
   const profileName =
     resolveProfileName(
-      profile
+      profile,
+      t("statsUser")
     );
 
   async function uploadPhoto(e) {
