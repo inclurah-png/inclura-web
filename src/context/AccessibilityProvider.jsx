@@ -546,10 +546,16 @@ export function AccessibilityProvider({ children }) {
      * Do not let an older Firestore userProfile snapshot overwrite
      * a language the user has just selected.
      */
-    const storedBrowserLanguage =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("inclura-language")
-        : "";
+    let storedBrowserLanguage = "";
+
+    try {
+      if (typeof window !== "undefined") {
+        storedBrowserLanguage =
+          window.localStorage.getItem("inclura-language") || "";
+      }
+    } catch {
+      storedBrowserLanguage = "";
+    }
 
     const savedLanguage =
       overrides.language ??
