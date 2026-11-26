@@ -962,6 +962,23 @@ service cloud.firestore {
         );
     }
 
+    function ownsPartnership(partnershipId) {
+      return request.auth != null && (
+        (
+          exists(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+        || (
+          exists(/databases/$(database)/documents/corporatePartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/corporatePartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+        || (
+          exists(/databases/$(database)/documents/governmentPartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/governmentPartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+      );
+    }
+
     function ownsPayment(paymentId) {
       return request.auth != null
         && exists(/databases/$(database)/documents/verificationPayments/$(paymentId))
@@ -969,12 +986,88 @@ service cloud.firestore {
     }
 
 
-    // Published plan prices are readable by signed-in members. Only trusted
-    // server-side administration may change pricing; browser writes are denied.
+    // Published plan prices are readable by signed-in members. Only accounts
+    // carrying the server-issued administrator claim may manage pricing.
     match /pricing/{pricingId} {
       allow get, list: if request.auth != null;
       allow create, update, delete: if request.auth != null
         && request.auth.token.admin == true;
+    }
+
+    match /enterprisePartnerships/{partnershipId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.organizationName is string
+        && request.resource.data.contactEmail is string
+        && request.resource.data.requestStatus == 'submitted'
+        && request.resource.data.enterpriseStatus == 'Pending'
+        && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if request.auth != null
+        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /corporatePartnerships/{partnershipId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.companyName is string
+        && request.resource.data.contactEmail is string
+        && request.resource.data.requestStatus == 'submitted'
+        && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if request.auth != null
+        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /governmentPartnerships/{partnershipId} {
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.agencyName is string
+        && request.resource.data.officialEmail is string
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if request.auth != null
+        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /enterpriseTimeline/{entryId} {
+      allow create: if request.auth != null
+        && request.resource.data.partnershipId is string
+        && ownsPartnership(request.resource.data.partnershipId)
+        && request.resource.data.title in [
+          'Application Submitted', 'Security Review', 'Accessibility Review',
+          'Compliance Review', 'Executive Approval', 'Activation'
+        ]
+        && request.resource.data.status in ['Completed', 'Pending']
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if request.auth != null
+        && (request.auth.token.admin == true
+            || ownsPartnership(resource.data.partnershipId));
+      allow update, delete: if false;
+    }
+
+    match /corporateTimeline/{entryId} {
+      allow create: if request.auth != null
+        && request.resource.data.partnershipId is string
+        && ownsPartnership(request.resource.data.partnershipId)
+        && request.resource.data.partnershipType == 'corporate'
+        && request.resource.data.title in [
+          'Application Submitted', 'Security Review', 'Accessibility Review',
+          'Compliance Review', 'Executive Approval', 'Activation'
+        ]
+        && request.resource.data.status in ['Completed', 'Pending']
+        && request.resource.data.createdAt is timestamp;
+      allow get, list: if request.auth != null
+        && (request.auth.token.admin == true
+            || ownsPartnership(resource.data.partnershipId));
+      allow update, delete: if false;
     }
 
     match /verificationRequests/{verificationId} {
