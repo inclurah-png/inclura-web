@@ -186,7 +186,7 @@ function ProfileHeader({
     try {
       const user = auth.currentUser;
       if (!user) {
-        alert(t("postLoginAgain"));
+        alert(t("error"));
         return;
       }
 
