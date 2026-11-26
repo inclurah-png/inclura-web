@@ -1,252 +1,61 @@
-import { useState, useEffect } from "react";
-import {
-  collection,
-  getDocs,
-  addDoc,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-
+import { useState, useEffect, useCallback } from "react";
+import { collection, getDocs } from "firebase/firestore";
 import { db, auth } from "../firebase";
-
 import DashboardLayout from "../components/DashboardLayout";
 
-import { evaluateVerification } from "../ifse/IFSEEngine";
+const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
 
 function VerificationRequestsManager() {
-  
-const [requests, setRequests] =
-useState([]);
+  const [requests, setRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState("");
+  const [error, setError] = useState("");
 
-const [loading, setLoading] =
-useState(true);
-
-useEffect(() => {
-loadRequests();
-}, []);
-
-const loadRequests =
-async () => {
-try {
-const snapshot =
-await getDocs(
-collection(
-db,
-"verificationRequests"
-)
-);
-    const data =
-      snapshot.docs.map(
-        (item) => ({
-          id: item.id,
-          ...item.data(),
-        })
-      );
-
-    setRequests(data);
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-const approveRequest =
-async (request) => {
-
-const ifseDecision =
-  evaluateVerification(request);
-try {
-await updateDoc(
-doc(
-db,
-"verificationRequests",
-request.id
-),
-{
-  status:
-  ifseDecision.decision === "Auto Approve"
-    ? "approved"
-    : "manual_review",
-
-ifseDecision:
-  ifseDecision.decision,
-
-ifseFinalScore:
-  ifseDecision.score,
-  
-  verificationActive: true,
-  approvedAt: serverTimestamp(),
-  approvedBy: auth.currentUser?.uid || "admin",
-}
-);
-await addDoc(
-  collection(db, "verificationTimeline"),
-  {
-    verificationId: request.id,
-    title: "Executive Approval",
-    status: "Completed",
-    description:
-      "Verification approved by administrator.",
-    createdBy: auth.currentUser?.uid || "admin",
-    createdAt: serverTimestamp(),
-  }
-);
-
-await addDoc(
-  collection(db, "verificationAuditLogs"),
-  {
-    verificationId: request.id,
-    action: "Verification Approved",
-    performedBy: auth.currentUser?.uid || "admin",
-    createdAt: serverTimestamp(),
-  }
-);
-
-const approvalTrustScore = Math.max(
-  0,
-  Math.min(
-    100,
-    Number(request.ifseScore ?? request.ifseTrustScore ?? 0) || 0
-  )
-);
-
-const approvalRiskScore = Math.max(
-  0,
-  Math.min(
-    100,
-    Number(request.riskScore ?? (100 - approvalTrustScore)) || 0
-  )
-);
-
-const approvalThreatLevel =
-  approvalRiskScore >= 80 ? "CRITICAL" :
-  approvalRiskScore >= 60 ? "HIGH" :
-  approvalRiskScore >= 35 ? "MEDIUM" : "LOW";
-
-await addDoc(
-  collection(db, "ifseSecurityEvents"),
-  {
-    verificationId: request.id,
-    eventType: "Verification Approved",
-    threatLevel: approvalThreatLevel,
-    riskScore: approvalRiskScore,
-    resolved: true,
-    createdAt: serverTimestamp(),
-  }
-);
-    const badgeRef = await addDoc(
-  collection(db, "verificationBadges"),
-  {
-    verificationId: request.id,
-    userId: request.userId,
-    badgeType: request.accountType,
-    verificationType: request.verificationType,
-    category: request.category,
-    issuedAt: serverTimestamp(),
-    active: true,
-  }
-);
-
-const certificateRef = await addDoc(
-  collection(db, "verificationCertificates"),
-  {
-    verificationId: request.id,
-    userId: request.userId,
-    certificateNumber:
-      "INC-" + Date.now(),
-    issuedAt: serverTimestamp(),
-    status: "active",
-  }
-);
-    if (request.userId) {
-      await updateDoc(
-        doc(
-          db,
-          "users",
-          request.userId
-        ),
-        {
-  verified: true,
-
-  verificationStatus: "approved",
-
-  verificationActive: true,
-
-  verificationCategory:
-    request.category,
-
-  verificationType:
-    request.verificationType,
-
-  badgeType:
-    request.accountType,
-            
-verificationBadgeId:
-  badgeRef.id,
-
-verificationCertificateId:
-  certificateRef.id,
-
-  ifseStatus:
-    request.ifseStatus,
-
-  ifseScore:
-    request.ifseScore,
-
-  ifseBadge:
-    request.ifseBadge,
-
-  executiveReview:
-    request.executiveReview,
-
-  verifiedAt:
-    serverTimestamp(),
-
-  lastVerificationUpdate:
-    serverTimestamp(),
-}
-      );
+  const loadRequests = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const snapshot = await getDocs(collection(db, "verificationRequests"));
+      setRequests(snapshot.docs.map((item) => ({ id: item.id, ...item.data() })));
+    } catch (loadError) {
+      console.error("Verification requests could not be loaded:", loadError);
+      setError("Unable to load verification requests. Confirm that your administrator access is active.");
+    } finally {
+      setLoading(false);
     }
+  }, []);
 
-    alert(
-      "Verification approved successfully"
-    );
+  useEffect(() => { loadRequests(); }, [loadRequests]);
 
-    loadRequests();
-  } catch (error) {
-    console.error(error);
-
-    alert(
-      "Approval failed"
-    );
-  }
-};
-
-const rejectRequest =
-async (request) => {
-try {
-await updateDoc(
-doc(
-db,
-"verificationRequests",
-request.id
-),
-{
-status: "rejected",
-}
-);
-
-    alert(
-      "Verification rejected"
-    );
-
-    loadRequests();
-  } catch (error) {
-    console.error(error);
-  }
-};
+  const submitAdminAction = async (request, action) => {
+    const user = auth.currentUser;
+    if (!user) {
+      setError("Your administrator session has expired. Please sign in again.");
+      return;
+    }
+    if (action === "approve" && request.paymentStatus !== "paid") {
+      setError("Payment must be confirmed before this application can be approved.");
+      return;
+    }
+    setActionLoading(request.id + action);
+    setError("");
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(
+        `${IFSE_API_URL}/api/admin/verification/${encodeURIComponent(request.id)}/${action}`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) throw new Error(result.message || "The administrator action could not be completed.");
+      await loadRequests();
+      window.alert(result.message || "Action completed successfully.");
+    } catch (actionError) {
+      console.error("Verification administrator action failed:", actionError);
+      setError(actionError.message || "The action could not be completed.");
+    } finally {
+      setActionLoading("");
+    }
+  };
 
 return (
 <DashboardLayout>
@@ -255,9 +64,8 @@ style={{
 color: "white",
 }}
 >
-<h1>
-📋 Verification Requests
-</h1>
+<h1>📋 Verification Requests</h1>
+{error && <p role="alert" aria-live="assertive">{error}</p>}
 
     {loading ? (
       <div style={card}>
@@ -332,11 +140,8 @@ color: "white",
               }}
             >
               <button
-                onClick={() =>
-                  approveRequest(
-                    request
-                  )
-                }
+                onClick={() => submitAdminAction(request, "approve")}
+                disabled={request.paymentStatus !== "paid" || actionLoading === request.id + "approve"}
                 style={{
                   background:
                     "green",
@@ -356,11 +161,8 @@ color: "white",
               </button>
 
               <button
-                onClick={() =>
-                  rejectRequest(
-                    request
-                  )
-                }
+                onClick={() => submitAdminAction(request, "reject")}
+                disabled={actionLoading === request.id + "reject"}
                 style={{
                   background:
                     "red",
