@@ -25,6 +25,8 @@ const DEFAULT_ENGINES = {
   liveTranscription: false,
   simplifiedReading: false,
   easyLanguage: false,
+  largeText: false,
+  highContrast: false,
 };
 
 function normalizeAccessibilityNeeds(
@@ -250,6 +252,12 @@ function evaluateAccessibilityEngines(
       "plain language",
     ]);
 
+  engines.largeText =
+    hasNeed(needs, ["large text", "large print"]);
+
+  engines.highContrast =
+    hasNeed(needs, ["high contrast"]);
+
   return engines;
 }
 
@@ -295,6 +303,9 @@ function findUnsupportedNeeds(
     "easy language",
     "easy read",
     "plain language",
+    "large text",
+    "large print",
+    "high contrast",
   ];
 
   return accessibilityNeeds.filter(
