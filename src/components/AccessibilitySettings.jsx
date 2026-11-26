@@ -24,7 +24,7 @@ const PROFILE_OPTIONS = [
   { key: "signLanguage", labelKey: "signLanguage" },
 ];
 
-function SettingRow({ label, description, children }) {
+function SettingRow({ label, description, children, controlId }) {
   return (
     <div
       style={{
@@ -41,30 +41,49 @@ function SettingRow({ label, description, children }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "inherit",
-            }}
-          >
-            {label}
-          </div>
-
-          {description && (
-            <div
+          {controlId ? (
+            <label
+              htmlFor={controlId}
               style={{
-                fontSize: "12px",
-                color: "#cbd5e1",
-                marginTop: "4px",
-                lineHeight: 1.5,
+                display: "block",
+                minHeight: "44px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "inherit",
               }}
             >
-              {description}
-            </div>
+              {label}
+              {description && (
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "#cbd5e1",
+                    marginTop: "4px",
+                    lineHeight: 1.5,
+                    fontWeight: 400,
+                  }}
+                >
+                  {description}
+                </span>
+              )}
+            </label>
+          ) : (
+            <>
+              <div style={{ fontSize: "14px", fontWeight: 600, color: "inherit" }}>
+                {label}
+              </div>
+              {description && (
+                <div style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px", lineHeight: 1.5 }}>
+                  {description}
+                </div>
+              )}
+            </>
           )}
         </div>
-
         {children}
       </div>
     </div>
@@ -108,8 +127,8 @@ function AccessibilitySettings() {
   };
 
   const checkboxStyle = {
-    width: "20px",
-    height: "20px",
+    width: "24px",
+    height: "24px",
     flexShrink: 0,
     cursor: "pointer",
     accentColor: "#38bdf8",
@@ -174,10 +193,12 @@ function AccessibilitySettings() {
         />
 
         <SettingRow
+          controlId="inclura-high-contrast"
           label={t("highContrast")}
           description={t("highContrastDesc")}
         >
           <input
+            id="inclura-high-contrast"
             type="checkbox"
             aria-label={t("highContrast")}
             checked={highContrast}
@@ -187,10 +208,12 @@ function AccessibilitySettings() {
         </SettingRow>
 
         <SettingRow
+          controlId="inclura-reduced-motion"
           label={t("reduceMotion")}
           description={t("reduceMotionDesc")}
         >
           <input
+            id="inclura-reduced-motion"
             type="checkbox"
             aria-label={t("reduceMotion")}
             checked={reducedMotion}
@@ -212,10 +235,12 @@ function AccessibilitySettings() {
         </h3>
 
         <SettingRow
+          controlId="inclura-voice-guidance"
           label={t("enableVoiceGuidance")}
           description={t("voiceGuidanceDesc")}
         >
           <input
+            id="inclura-voice-guidance"
             type="checkbox"
             aria-label={t("enableVoiceGuidance")}
             checked={voiceEnabled}
@@ -283,8 +308,9 @@ function AccessibilitySettings() {
         </p>
 
         {PROFILE_OPTIONS.map((option) => (
-          <SettingRow key={option.key} label={t(option.labelKey)}>
+          <SettingRow key={option.key} controlId={`inclura-accessibility-${option.key}`} label={t(option.labelKey)}>
             <input
+              id={`inclura-accessibility-${option.key}`}
               type="checkbox"
               aria-label={t(option.labelKey)}
               checked={Boolean(accessibilityProfile[option.key])}
