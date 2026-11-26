@@ -207,6 +207,13 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         ) {
           throw new Error("This verification application is no longer eligible for payment.");
         }
+        if (
+          currentData.category !== application.category ||
+          currentData.verificationType !== application.verificationType ||
+          Number(currentData.paymentAmount) !== Number(application.paymentAmount)
+        ) {
+          throw new Error("The verification application changed during payment verification. Please restart checkout.");
+        }
       }
 
       const paymentRecord = {
