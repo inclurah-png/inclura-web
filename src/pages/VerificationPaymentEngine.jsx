@@ -169,10 +169,12 @@ const selectedCategory =
 
 const selectedVerification = useMemo(() => {
   if (!selectedCategory) return null;
-  const matchingTier = selectedCategory.verificationTypes?.find(
+  const verificationTypes =
+    selectedCategory.verificationTypes || selectedCategory.certification || [];
+  const matchingTier = verificationTypes.find(
     (item) => item.id === selectedTier
   );
-  return matchingTier || selectedCategory.verificationTypes?.[0] || selectedCategory;
+  return matchingTier || verificationTypes[0] || selectedCategory;
 }, [selectedCategory, selectedTier]);
 
 const paymentAmount = useMemo(() => {
@@ -182,6 +184,7 @@ const paymentAmount = useMemo(() => {
     selectedVerification.yearlyUSD ??
     selectedVerification.monthlyFee ??
     selectedVerification.fee ??
+    selectedVerification.contractUSD ??
     0
   );
 }, [selectedVerification]);
@@ -495,11 +498,14 @@ Complete your verification payment securely through the
       >
 
         <div>
-          <strong>Monthly Fee</strong>
+          <strong>Verification Fee</strong>
           <p>
             $
             {selectedVerification.monthlyUSD ??
+              selectedVerification.yearlyUSD ??
               selectedVerification.monthlyFee ??
+              selectedVerification.fee ??
+              selectedVerification.contractUSD ??
               0}
           </p>
         </div>
