@@ -142,11 +142,20 @@ function StoriesSection() {
                   key={
                     story.id
                   }
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${story.userName || t("statsUser")} — ${t("stories")}`}
                   onClick={() =>
                     openStory(
                       story
                     )
                   }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openStory(story);
+                    }
+                  }}
                   style={{
                     minWidth:
                       "90px",
