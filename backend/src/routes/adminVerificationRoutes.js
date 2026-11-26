@@ -981,6 +981,17 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
   try {
     const db = firestore();
     const requestRef = db.collection(config.collection).doc(partnershipId);
+    const preflightSnapshot = await requestRef.get();
+    if (!preflightSnapshot.exists) {
+      return res.status(404).json({ success: false, message: "Partnership application not found." });
+    }
+    const preflightApplication = preflightSnapshot.data() || {};
+    const preflightApplicantId = String(preflightApplication.userId || "");
+    if (!preflightApplicantId || preflightApplicantId === req.adminUid) {
+      return res.status(403).json({ success: false, message: "This administrator cannot activate this application." });
+    }
+    await verifyPartnershipContractAsset(preflightApplication, preflightApplicantId);
+    const preflightContractPublicId = preflightApplication.contractDocument?.cloudinaryPublicId;
     const now = new Date();
     const result = await db.runTransaction(async (tx) => {
       const snap = await tx.get(requestRef);
@@ -991,6 +1002,11 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
       }
       const application = snap.data() || {};
       const applicantId = String(application.userId || "");
+      if (application.contractDocument?.cloudinaryPublicId !== preflightContractPublicId) {
+        const error = new Error("The signed contract changed during final authorization. Refresh and retry.");
+        error.statusCode = 409;
+        throw error;
+      }
       if (!applicantId || applicantId === req.adminUid) {
         const error = new Error("This administrator cannot activate this application.");
         error.statusCode = 403;
