@@ -23,7 +23,6 @@ import { uploadVerificationDocumentToCloudinary } from "../services/cloudinaryUp
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import { VERIFICATION_PLANS } from "../config";
 
 
 function VerificationDocuments() {
@@ -300,13 +299,6 @@ function VerificationDocuments() {
   };
 
 
-  const selectedPlan =
-    VERIFICATION_PLANS?.[verificationType] || {
-      monthlyUSD: 0,
-      renewal: "Monthly",
-      trustLevel: "Standard",
-      benefits: [],
-    };
     const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -418,6 +410,30 @@ function VerificationDocuments() {
         return;
       }
 
+      const categoryLabels = {
+        creator: "Creator",
+        group: "Group",
+        organization: "Organization",
+        ngo: "NGO",
+        institution: "Institution",
+        religious: "Religious",
+        healthcare: "Healthcare",
+        museum: "Museum",
+        tourism: "Tourism",
+        entertainment: "Entertainment",
+        media: "Media",
+        accessibility: "Accessibility",
+        corporate: "Corporate",
+        government: "Government",
+        enterprise: "Enterprise",
+      };
+      const expectedDocumentCategory =
+        categoryLabels[String(activeRequest.category || "").toLowerCase()];
+      if (expectedDocumentCategory && verificationType !== expectedDocumentCategory) {
+        setError("The document category must match the category on your active verification application.");
+        return;
+      }
+
       const verificationId =
         activeRequest.id;
 
@@ -487,8 +503,6 @@ function VerificationDocuments() {
           verificationId
         ),
         {
-          verificationType,
-
           organizationName,
 
           contactName,
@@ -537,7 +551,8 @@ function VerificationDocuments() {
         {
           verificationId,
 
-          verificationType,
+          verificationType: activeRequest.verificationType,
+          documentCategory: verificationType,
 
           uploadedDocuments:
             uploadedFiles,
@@ -1369,111 +1384,10 @@ function VerificationDocuments() {
            * ============================================
            */
 
-          <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdSelectedPlan")}</h2>
-
-            <div
-              style={{
-                marginTop: "18px",
-                background: "#1e293b",
-                padding: "18px",
-                borderRadius: "10px",
-              }}
-            >
-
-              <p>
-                <strong>
-                  Verification Type:
-                </strong>{" "}
-                {verificationType}
-              </p>
-
-              <p>
-                <strong>IFSE Review Status:</strong>{" "}
-                {t("vdReviewStatusPending")}
-              </p>
-
-              <hr
-                style={{
-                  margin: "18px 0",
-                  borderColor: "#334155",
-                }}
-              />
-
-              <h3
-                style={{
-                  marginTop: "20px",
-                  marginBottom: "15px",
-                }}
-              >
-                Verification Plan Details
-              </h3>
-
-              <p>
-                <strong>
-                  Verification Fee:
-                </strong>{" "}
-                $
-                {selectedPlan.monthlyUSD || 0}
-              </p>
-
-              <p>
-                <strong>
-                  Renewal:
-                </strong>{" "}
-                {selectedPlan.renewal || "Monthly"}
-              </p>
-
-              <p>
-                <strong>
-                  Trust Level:
-                </strong>{" "}
-                {selectedPlan.trustLevel || "Standard"}
-              </p>
-
-              {selectedPlan.benefits &&
-                selectedPlan.benefits.length > 0 && (
-
-                  <div
-                    style={{
-                      marginTop: "15px",
-                    }}
-                  >
-
-                    <strong>
-                      Benefits
-                    </strong>
-
-                    <ul>
-
-                      {selectedPlan.benefits.map(
-                        (benefit) => (
-
-                          <li key={benefit}>
-                            {benefit}
-                          </li>
-
-                        )
-                      )}
-
-                    </ul>
-
-                  </div>
-
-                )}
-
-            </div>
-
-          </section>
+          <section style={{ marginBottom: "24px", padding: "20px", background: "#0f172a", border: "1px solid #334155", borderRadius: "12px" }}>
+  <h2>{t("vdSelectedPlan")}</h2>
+  <p>Document submission is linked to your existing verification application. It does not change your selected plan, payment amount or payment status.</p>
+</section>
                     /*
            * ============================================
            * IFSE NOTICE
