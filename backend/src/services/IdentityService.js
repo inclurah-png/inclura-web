@@ -535,6 +535,20 @@ export async function verifyAuthenticationService(data) {
         throw new Error("Passkey challenge is expired, invalid, or already used.");
       }
 
+      // A second, distinct challenge can be verified concurrently against
+      // the same previously-read credential counter. Re-check the counter
+      // inside the transaction so an older assertion cannot overwrite a
+      // newer authenticator counter after a concurrent sign-in.
+      const freshCredential = freshCredentialSnapshot.data();
+      const currentCounter = Number(freshCredential.counter || 0);
+      if (
+        typeof newCounter === "number" &&
+        currentCounter > 0 &&
+        newCounter <= currentCounter
+      ) {
+        throw new Error("Passkey authenticator counter did not advance. Please try signing in again.");
+      }
+
       transaction.update(credentialDoc.ref, updateData);
       transaction.update(challengeDoc.ref, {
         verified: true,
