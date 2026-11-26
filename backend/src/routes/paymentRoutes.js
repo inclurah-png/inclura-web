@@ -24,7 +24,7 @@ const router = express.Router();
 
 async function authenticatePaymentUser(req) {
   const authorization = req.headers.authorization || "";
-  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  const match = authorization.match(/^Bearer\s+(.+)$/i);
   if (!match) { const error = new Error("A valid Inclura session is required."); error.status = 401; throw error; }
   const decoded = await auth().verifyIdToken(match[1], true);
   if (decoded.email_verified !== true) { const error = new Error("Verify your email address before making a payment."); error.status = 403; throw error; }
