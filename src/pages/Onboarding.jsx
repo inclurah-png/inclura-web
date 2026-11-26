@@ -15,6 +15,17 @@ import {
 } from "firebase/firestore";
 
 import { VERIFICATION_PLANS } from "../config";
+import { SUPPORTED_LANGUAGES } from "../config/languages";
+
+function normalizeOnboardingLanguage(value) {
+  const requested = String(value || "en").trim().toLowerCase();
+  const match = SUPPORTED_LANGUAGES.find((language) =>
+    [language.code, language.name, language.nativeName].some(
+      (candidate) => candidate.toLowerCase() === requested
+    )
+  );
+  return match?.code || "en";
+}
 
 function Onboarding() {
   const navigate = useNavigate();
@@ -50,7 +61,7 @@ function Onboarding() {
     useState("");
 
   const [language, setLanguage] =
-    useState("English");
+    useState("en");
 
   const [interests, setInterests] =
     useState([]);
@@ -110,24 +121,10 @@ function Onboarding() {
         data.location || ""
       );
 
-      const savedLanguage = data.language || "English";
-      setLanguage(savedLanguage);
+      const savedLanguageCode = normalizeOnboardingLanguage(data.language);
+      setLanguage(savedLanguageCode);
 
-      const languageCodeMap = {
-        English: "en",
-        French: "fr",
-        Spanish: "es",
-        Arabic: "ar",
-        Portuguese: "pt",
-        Swahili: "sw",
-        "Yorùbá": "yo",
-        Yoruba: "yo",
-        Igbo: "ig",
-        Hausa: "ha",
-      };
-
-      const savedLanguageCode = languageCodeMap[savedLanguage];
-      if (savedLanguageCode && i18n.language !== savedLanguageCode) {
+      if (i18n.language !== savedLanguageCode) {
         await i18n.changeLanguage(savedLanguageCode);
       }
 
@@ -373,37 +370,21 @@ function Onboarding() {
         <select
           value={language}
           onChange={(e) => {
-            const selectedLanguage = e.target.value;
+            const selectedLanguage = normalizeOnboardingLanguage(e.target.value);
             setLanguage(selectedLanguage);
-
-            const languageCodeMap = {
-              English: "en",
-              French: "fr",
-              Spanish: "es",
-              Arabic: "ar",
-              Portuguese: "pt",
-              Swahili: "sw",
-              "Yorùbá": "yo",
-              Igbo: "ig",
-              Hausa: "ha",
-            };
-
-            const selectedCode = languageCodeMap[selectedLanguage];
-            if (selectedCode) {
-              i18n.changeLanguage(selectedCode);
-            }
+            void i18n.changeLanguage(selectedLanguage);
           }}
           style={inputStyle}
         >
-          <option value="English">English</option>
-          <option value="French">Français</option>
-          <option value="Spanish">Español</option>
-          <option value="Arabic">العربية</option>
-          <option value="Portuguese">Português</option>
-          <option value="Swahili">Kiswahili</option>
-          <option value="Yorùbá">Yorùbá</option>
-          <option value="Igbo">Igbo</option>
-          <option value="Hausa">Hausa</option>
+          {SUPPORTED_LANGUAGES.map((supportedLanguage) => (
+            <option
+              key={supportedLanguage.code}
+              value={supportedLanguage.code}
+              lang={supportedLanguage.code}
+            >
+              {supportedLanguage.nativeName}
+            </option>
+          ))}
         </select>
                 {verificationCategory ===
           "creator" && (
