@@ -131,9 +131,9 @@ async function handleContinue() {
     return;
   }
 
-  // Negotiated enterprise/corporate contracts use their dedicated
-  // partnership workflow. Do not create a zero-value payment request.
-  if (requiresContract) {
+  // Enterprise and negotiated corporate contracts use their dedicated
+  // partnership workflow. Do not create an unpriced payment request.
+  if (requiresContract || isEnterprise) {
     navigate(contractRoute, {
       state: {
         source: "verification-application",
@@ -147,6 +147,11 @@ async function handleContinue() {
         officialEmail,
       },
     });
+    return;
+  }
+
+  if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+    alert("This verification option has no published fee. Please select a priced verification type or use the relevant partnership application for a negotiated quote.");
     return;
   }
 
@@ -413,21 +418,6 @@ async function handleContinue() {
       return;
     }
 
-    // Enterprise partnership
-    if (isEnterprise) {
-      navigate(
-        "/enterprise-partnership",
-        {
-          state: {
-            verificationId:
-              verificationRef.id,
-          },
-        }
-      );
-
-      return;
-    }
-
     // Paid verification
     if (paymentAmount > 0) {
       navigate(
@@ -445,17 +435,7 @@ async function handleContinue() {
       return;
     }
 
-    // ==========================================
-    // FREE / NO-PAYMENT VERIFICATION
-    // ==========================================
-
-    alert(
-      t("vaSubmitSuccess")
-    );
-
-    navigate(
-      "/verification-status"
-    );
+    throw new Error("This verification option requires a published payment fee or an approved partnership contract.");
 
   } catch (error) {
     console.error(
