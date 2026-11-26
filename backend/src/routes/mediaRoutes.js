@@ -68,7 +68,15 @@ async function requireMediaUser(req, res, next) {
   }
 
   try {
-    req.firebaseUser = await auth().verifyIdToken(token, true);
+    const decoded = await auth().verifyIdToken(token, true);
+    const account = await auth().getUser(decoded.uid);
+    if (account.disabled) {
+      return res.status(403).json({
+        success: false,
+        message: "This Inclura account is disabled.",
+      });
+    }
+    req.firebaseUser = decoded;
     return next();
   } catch {
     return res.status(401).json({ success: false, message: "Your Inclura session is invalid or expired. Please sign in again." });
