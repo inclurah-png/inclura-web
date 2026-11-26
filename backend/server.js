@@ -249,7 +249,19 @@ app.post("/api/analytics/platform", async (req, res) => {
 
     usersSnap.forEach((userDoc) => {
       const user = userDoc.data();
-      if (user.premiumPlan?.active === true) premiumUsers += 1;
+      const premiumExpiry = user.premiumExpiryDate?.toDate
+        ? user.premiumExpiryDate.toDate()
+        : (user.premiumExpiryDate ? new Date(user.premiumExpiryDate) : null);
+      const premiumFlag = user.premium === true
+        || user.premiumActive === true
+        || user.premiumPlan?.active === true;
+      if (
+        premiumFlag &&
+        (!premiumExpiry || (
+          Number.isFinite(premiumExpiry.getTime()) &&
+          premiumExpiry.getTime() > now
+        ))
+      ) premiumUsers += 1;
       if (user.creatorVerified === true) verifiedCreators += 1;
       if (user.creatorEconomy?.premiumQualified === true) qualifiedCreators += 1;
       const lastLogin = user.lastLogin?.toMillis
