@@ -14,7 +14,7 @@ function clientKey(req) {
   return String(req.ip || req.socket?.remoteAddress || "unknown");
 }
 
-function createPasskeyRateLimiter({ limit, windowMs = WINDOW_MS, scope }) {
+function createRateLimiter({ limit, windowMs = WINDOW_MS, scope, message }) {
   return function passkeyRateLimit(req, res, next) {
     const now = Date.now();
     const key = `${scope}:${clientKey(req)}`;
@@ -47,7 +47,7 @@ function createPasskeyRateLimiter({ limit, windowMs = WINDOW_MS, scope }) {
       return res.status(429).json({
         success: false,
         authenticated: false,
-        message: "Too many passkey attempts. Please wait before trying again.",
+        message: message || "Too many requests. Please wait before trying again.",
       });
     }
 
@@ -58,12 +58,18 @@ function createPasskeyRateLimiter({ limit, windowMs = WINDOW_MS, scope }) {
   };
 }
 
-export const limitPasskeyOptions = createPasskeyRateLimiter({
+export const limitPasskeyOptions = createRateLimiter({
   scope: "passkey-options",
   limit: 10,
 });
 
-export const limitPasskeyVerification = createPasskeyRateLimiter({
+export const limitPasskeyVerification = createRateLimiter({
   scope: "passkey-verification",
   limit: 10,
+});
+
+export const limitPaymentVerification = createRateLimiter({
+  scope: "payment-verification",
+  limit: 20,
+  message: "Too many payment verification attempts. Please wait before trying again.",
 });
