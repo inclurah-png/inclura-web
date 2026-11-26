@@ -262,26 +262,6 @@ const [reviewProgress,
       );
 
     };
-    const corporateRiskScore =
-    calculateCorporateRisk();
-
-  const threatLevel =
-    corporateRiskScore >= 75
-      ? "High"
-      : corporateRiskScore >= 40
-      ? "Medium"
-      : "Low";
-
-  const ifseSecurityScore =
-100 - corporateRiskScore;
-
-const trustScore =
-corporateRiskScore >= 70
-? "Low"
-: corporateRiskScore >= 40
-? "Medium"
-: "High";
-  
     const handleSubmit =
     async (e) => {
 
@@ -1206,11 +1186,7 @@ serverTimestamp(),
 
             </h2>
 
-            <p>
-
-              Completion: {getReviewPercentage()}%
-
-            </p>
+            
 
             <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
 
@@ -1255,40 +1231,7 @@ serverTimestamp(),
 
           </section>
 
-          <section className="corporate-risk">
-
-            <h2>
-
-              Preliminary Applicant Self-Assessment
-
-            </h2>
-            <p>These figures are calculated from the application form only. They are not server-verified IFSE findings and do not complete security, accessibility, compliance or approval checks.</p>
-
-            <p>
-
-              <strong>
-
-                Corporate Risk Score:
-
-              </strong>{" "}
-
-              {corporateRiskScore}%
-
-            </p>
-
-            <p>
-
-              <strong>
-
-                Threat Level:
-
-              </strong>{" "}
-
-              {threatLevel}
-
-            </p>
-
-          </section>
+          
 
           <section className="corporate-agreements">
 
