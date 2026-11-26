@@ -440,7 +440,7 @@ const calculateApplicationCompleteness = (request) => {
   };
 }
 
-const ifse = selectedRequest ? calculateApplicationCompleteness(selectedRequest) : null;
+const applicationReview = selectedRequest ? calculateApplicationCompleteness(selectedRequest) : null;
 
 return (
 <DashboardLayout>
@@ -906,7 +906,7 @@ Application Review Summary
 
   <div style={miniCard}>
     <h4>Form Completeness Estimate</h4>
-    <h2>{ifse?.score}</h2>
+    <h2>{applicationReview?.score}</h2>
   </div>
 
   <div style={miniCard}>
@@ -916,7 +916,7 @@ Application Review Summary
 
   <div style={miniCard}>
     <h4>Next Step</h4>
-    <h2>{ifse?.recommendation}</h2>
+    <h2>{applicationReview?.recommendation}</h2>
   </div>
 
   <div style={miniCard}>
