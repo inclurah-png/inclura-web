@@ -847,6 +847,18 @@ router.post("/partnerships/:type/:partnershipId/review", async (req, res) => {
         performedBy: req.adminUid,
         createdAt: now,
       });
+      const notificationRef = db.collection("notifications").doc();
+      tx.create(notificationRef, {
+        receiverId: applicantId,
+        text: decision === "approved"
+          ? "Your " + type + " partnership application review stage has been completed: " + title + "."
+          : "Your " + type + " partnership application was rejected. Review the administrator's decision in your application status.",
+        type: "partnership_update",
+        partnershipType: type,
+        partnershipId,
+        read: false,
+        createdAt: now,
+      });
       return { reviewProgress, requestStatus: update.requestStatus || application.requestStatus || application.status || "submitted" };
     });
 
@@ -929,6 +941,18 @@ router.post("/partnerships/:type/:partnershipId/contract-review", async (req, re
         partnershipType: type, partnershipId, applicantId,
         stage: "contract_verification", decision, notes,
         performedBy: req.adminUid, createdAt: now,
+      });
+      const notificationRef = db.collection("notifications").doc();
+      tx.create(notificationRef, {
+        receiverId: applicantId,
+        text: decision === "approved"
+          ? "Your " + type + " partnership signed contract has passed administrator verification."
+          : "Your " + type + " partnership signed contract was not accepted. You may upload a corrected document.",
+        type: "partnership_update",
+        partnershipType: type,
+        partnershipId,
+        read: false,
+        createdAt: now,
       });
     });
     return res.status(200).json({
@@ -1022,6 +1046,16 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
         stage: "final_activation", decision: "activated", notes,
         approvals: requiredApprovals, paymentRequired,
         performedBy: req.adminUid, createdAt: now,
+      });
+      const notificationRef = db.collection("notifications").doc();
+      tx.create(notificationRef, {
+        receiverId: applicantId,
+        text: "Your " + type + " partnership has received final authorization and is now active.",
+        type: "partnership_update",
+        partnershipType: type,
+        partnershipId,
+        read: false,
+        createdAt: now,
       });
       return { applicantId };
     });
