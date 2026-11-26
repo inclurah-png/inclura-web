@@ -28,6 +28,9 @@ jobs:
       - name: Install backend dependencies
         run: npm ci --prefix backend --ignore-scripts --no-audit --no-fund
 
+      - name: Audit backend dependencies
+        run: npm audit --prefix backend --audit-level=high
+
       - name: Check backend JavaScript syntax
         run: |
           node --check backend/server.js
