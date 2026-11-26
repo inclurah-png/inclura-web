@@ -300,77 +300,6 @@ function VerificationDocuments() {
   };
 
 
-  const calculateRiskScore = () => {
-    let score = 0;
-
-    if (!contactName.trim()) {
-      score += 10;
-    }
-
-    if (!contactEmail.trim()) {
-      score += 10;
-    }
-
-    if (!country.trim()) {
-      score += 5;
-    }
-
-    if (!state.trim()) {
-      score += 5;
-    }
-
-    if (!city.trim()) {
-      score += 5;
-    }
-
-    if (
-      [
-        "Enterprise",
-        "Corporate",
-        "Government",
-      ].includes(verificationType) &&
-      !organizationName.trim()
-    ) {
-      score += 20;
-    }
-
-    if (
-      [
-        "Religious",
-        "Museum",
-        "Tourism",
-        "Entertainment",
-        "Accessibility",
-      ].includes(verificationType) &&
-      !organizationName.trim()
-    ) {
-      score += 10;
-    }
-
-    return Math.min(score, 100);
-  };
-
-
-  const riskScore = calculateRiskScore();
-
-
-  const threatLevel =
-    riskScore >= 75
-      ? "High"
-      : riskScore >= 40
-      ? "Medium"
-      : "Low";
-
-
-  const executiveReviewRequired =
-    [
-      "Enterprise",
-      "Corporate",
-      "Government",
-    ].includes(verificationType) ||
-    riskScore >= 60;
-
-
   const selectedPlan =
     VERIFICATION_PLANS?.[verificationType] || {
       monthlyUSD: 0,
@@ -671,11 +600,7 @@ function VerificationDocuments() {
 
           verificationType,
 
-          riskScore,
-
-          threatLevel,
-
-          executiveReviewRequired,
+          assessmentStatus: "pending_server_review",
 
           reviewed:
             false,
@@ -1129,7 +1054,7 @@ function VerificationDocuments() {
                     >
 
                       <strong>
-                        ✅{" "}
+                        ○{" "}
                         {
                           uploadedDocuments[
                             documentName
@@ -1260,101 +1185,21 @@ function VerificationDocuments() {
            */
 
           <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdSecurityAssessment")}</h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit,minmax(220px,1fr))",
-                gap: "16px",
-                marginTop: "20px",
-              }}
-            >
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Risk Score
-                </h3>
-
-                <h1
-                  style={{
-                    marginTop: "10px",
-                  }}
-                >
-                  {riskScore}%
-                </h1>
-
-              </div>
-
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Threat Level
-                </h3>
-
-                <h2
-                  style={{
-                    color:
-                      threatLevel === "High"
-                        ? "#ef4444"
-                        : threatLevel === "Medium"
-                        ? "#f59e0b"
-                        : "#22c55e",
-                  }}
-                >
-                  {threatLevel}
-                </h2>
-
-              </div>
-
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Executive Review
-                </h3>
-
-                <h2>
-                  {executiveReviewRequired
-                    ? "Required"
-                    : "Not Required"}
-                </h2>
-
-              </div>
-
-            </div>
-
-          </section>
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
+  <h2>{t("vdSecurityAssessment")}</h2>
+  <p role="status" aria-live="polite">
+    IFSE assessment is pending. The uploaded documents are awaiting secure
+    access, server-side checks and authorized administrator review. This page
+    does not calculate a verified risk score or approve an application.
+  </p>
+</section>
                     /*
            * ============================================
            * IFSE PROTECTION LAYERS
@@ -1379,9 +1224,8 @@ function VerificationDocuments() {
                 color: "#cbd5e1",
               }}
             >
-              Every verification request is processed
-              through multiple independent security
-              engines before approval.
+              The following are review areas, not completed security checks.
+              Each remains pending until an authorized reviewer records its result.
             </p>
 
             <div
@@ -1411,7 +1255,7 @@ function VerificationDocuments() {
 
                     <span
                       style={{
-                        color: "#22c55e",
+                        color: "#94a3b8",
                         fontSize: "20px",
                         flexShrink: 0,
                       }}
@@ -1559,26 +1403,8 @@ function VerificationDocuments() {
               </p>
 
               <p>
-                <strong>
-                  Risk Score:
-                </strong>{" "}
-                {riskScore}%
-              </p>
-
-              <p>
-                <strong>
-                  Threat Level:
-                </strong>{" "}
-                {threatLevel}
-              </p>
-
-              <p>
-                <strong>
-                  Executive Review:
-                </strong>{" "}
-                {executiveReviewRequired
-                  ? "Required"
-                  : "Not Required"}
+                <strong>IFSE Review Status:</strong>{" "}
+                Pending server-side assessment and administrator review.
               </p>
 
               <hr
