@@ -108,7 +108,20 @@ router.post("/initialize", limitPaymentVerification, async (req, res) => {
       const existing = await transaction.get(pendingRef);
       if (existing.exists) {
         const prior = existing.data();
-        if (prior.userId !== decoded.uid || prior.verificationId !== id || prior.paymentStatus !== "pending") throw new Error("This checkout reference has already been used.");
+        const expectedVerificationId = purpose === "verification" ? id : null;
+        const sameCheckout =
+          prior.userId === decoded.uid &&
+          prior.customerEmail === pendingRecord.customerEmail &&
+          prior.purpose === purpose &&
+          String(prior.plan || "") === String(pendingRecord.plan || "") &&
+          (prior.verificationId || null) === expectedVerificationId &&
+          Number(prior.amount) === amount &&
+          String(prior.currency || "").toUpperCase() === currency &&
+          prior.gateway === "flutterwave" &&
+          prior.paymentStatus === "pending";
+        if (!sameCheckout) {
+          throw new Error("This checkout reference has already been used for a different or completed purchase.");
+        }
         return;
       }
       transaction.create(pendingRef, pendingRecord);
