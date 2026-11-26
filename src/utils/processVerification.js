@@ -1,20 +1,14 @@
-// =======================================================
-// IFSE Verification Processor
-// =======================================================
+// Deprecated client-side verification scoring is intentionally non-authoritative.
+// All approval decisions must come from the protected IFSE administrator workflow.
 
-import { calculateIFSERiskScore } from "./ifseRiskCalculator";
-import { getIFSEDecision } from "./ifseDecisionEngine";
-
-export function processVerification(data) {
-
-  const score = calculateIFSERiskScore(data);
-
-  const decision = getIFSEDecision(score);
-
+export function processVerification() {
   return {
-    score,
-    ...decision,
+    score: null,
+    scoreSource: "not_server_verified",
+    status: "PENDING_SERVER_REVIEW",
+    badge: false,
+    executiveReview: true,
+    message: "Awaiting trusted server-side checks and authorized administrator review.",
     processedAt: new Date().toISOString(),
   };
-
 }
