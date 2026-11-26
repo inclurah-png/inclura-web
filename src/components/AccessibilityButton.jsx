@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import AccessibilityToolbar from "./AccessibilityToolbar";
@@ -8,12 +8,25 @@ function AccessibilityButton() {
   const [open, setOpen] =
     useState(false);
 
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
+
   return (
     <>
       <button
-        aria-label={t("accessibilityHub", { defaultValue: "Accessibility" })}
+        aria-label={open ? t("close", { defaultValue: "Close accessibility settings" }) : t("accessibilityHub", { defaultValue: "Open accessibility settings" })}
         aria-expanded={open}
-        aria-controls="inclura-accessibility-toolbar"
+        aria-controls={open ? "inclura-accessibility-toolbar" : undefined}
         onClick={() =>
           setOpen(!open)
         }
