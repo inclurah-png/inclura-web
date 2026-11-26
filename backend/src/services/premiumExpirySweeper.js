@@ -48,7 +48,40 @@ export async function runPremiumExpirySweep() {
       if (snapshot.size < 400) break;
     }
 
-    return { skipped: false, expired, pages };
+    let recruiterExpired = 0;
+    let recruiterCursor = null;
+    let recruiterPages = 0;
+    while (recruiterPages < 20) {
+      let recruiterQuery = db.collection("users")
+        .where("recruiter.expiresAt", "<=", now)
+        .orderBy("recruiter.expiresAt")
+        .limit(400);
+      if (recruiterCursor) recruiterQuery = recruiterQuery.startAfter(recruiterCursor);
+
+      const recruiterSnapshot = await recruiterQuery.get();
+      if (recruiterSnapshot.empty) break;
+
+      const recruiterBatch = db.batch();
+      recruiterSnapshot.docs.forEach((userDoc) => {
+        const recruiter = userDoc.data().recruiter || {};
+        const updates = {
+          "recruiter.lastExpiresAt": recruiter.expiresAt,
+          "recruiter.expiresAt": FieldValue.delete(),
+        };
+        if (recruiter.status === "active") {
+          updates["recruiter.status"] = "expired";
+          updates["recruiter.expiredAt"] = now;
+          recruiterExpired += 1;
+        }
+        recruiterBatch.update(userDoc.ref, updates);
+      });
+      await recruiterBatch.commit();
+      recruiterCursor = recruiterSnapshot.docs[recruiterSnapshot.docs.length - 1];
+      recruiterPages += 1;
+      if (recruiterSnapshot.size < 400) break;
+    }
+
+    return { skipped: false, expired, recruiterExpired, pages: pages + recruiterPages };
   } finally {
     expirySweepRunning = false;
   }
