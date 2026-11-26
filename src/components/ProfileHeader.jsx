@@ -7,10 +7,6 @@ import {
 } from "../config/verificationTypes";
 
 import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
-import {
   doc,
   updateDoc,
 } from "firebase/firestore";
@@ -247,14 +243,7 @@ function ProfileHeader({
       return null;
     }
 
-    const migratedType =
-      migrateVerificationId(
-        profile.badgeType
-      );
-
-    return getVerificationBadge(
-      migratedType
-    );
+    return getVerificationBadge(profile.badgeType);
   };
 
   const getPremium = () => {
@@ -269,11 +258,7 @@ function ProfileHeader({
 
   const verificationMeta =
     profile?.verified
-      ? getVerificationMetadata(
-          migrateVerificationId(
-            profile.badgeType
-          )
-        )
+      ? getVerificationMetadata(profile.badgeType)
       : null;
 
   return (
