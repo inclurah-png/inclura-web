@@ -10,7 +10,6 @@ import { db } from "../firebase";
 const COLLECTIONS = {
   verificationRequests: "verificationRequests",
   verificationPayments: "verificationPayments",
-  ifseSecurityEvents: "ifseSecurityEvents",
   verificationAuditLogs: "verificationAuditLogs",
 };
 
