@@ -261,6 +261,8 @@ router.post("/verify", async (req, res) => {
         transaction.create(verificationPaymentRef, {
           userId: decoded.uid,
           verificationId,
+          category: verificationSnapshot.data()?.category || null,
+          verificationType: verificationSnapshot.data()?.verificationType || null,
           transactionId: numericTransactionId,
           flutterwaveReference: reference,
           amount: paidAmount,
