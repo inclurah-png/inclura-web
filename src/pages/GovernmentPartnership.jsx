@@ -316,7 +316,8 @@ try {
   const existing = query(
     collection(db, "governmentPartnerships"),
     where("agencyName", "==", agencyName),
-    where("country", "==", country)
+    where("country", "==", country),
+    where("userId", "==", currentUser.uid)
   );
 
   const snapshot = await getDocs(existing);
