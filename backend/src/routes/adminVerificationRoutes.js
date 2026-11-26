@@ -78,6 +78,59 @@ async function verifyPrivateCloudinaryDocuments(userId, documents) {
   }
 }
 
+
+async function verifyPartnershipContractAsset(application, applicantId) {
+  const document = application?.contractDocument || {};
+  const cloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  const apiKey = process.env.CLOUDINARY_API_KEY;
+  const apiSecret = process.env.CLOUDINARY_API_SECRET;
+  if (!cloudName || !apiKey || !apiSecret) {
+    const error = new Error("Private contract verification is not configured.");
+    error.statusCode = 503;
+    throw error;
+  }
+  const publicId = String(document.cloudinaryPublicId || "");
+  const assetId = String(document.cloudinaryAssetId || "");
+  const resourceType = String(document.cloudinaryResourceType || "");
+  const fileType = String(document.fileType || "").toLowerCase();
+  const fileSize = Number(document.fileSize);
+  const prefix = "inclura/partnershipContracts/" + applicantId + "/";
+  if (!publicId.startsWith(prefix) || !assetId ||
+      !["image", "raw"].includes(resourceType) ||
+      !["application/pdf", "image/jpeg", "image/jpg", "image/png"].includes(fileType) ||
+      !Number.isFinite(fileSize) || fileSize <= 0 || fileSize > 10 * 1024 * 1024 ||
+      (fileType === "application/pdf" && resourceType !== "raw") ||
+      (fileType.startsWith("image/") && resourceType !== "image")) {
+    const error = new Error("A valid privately stored signed contract is required.");
+    error.statusCode = 409;
+    throw error;
+  }
+  const encodedPublicId = publicId.split("/").map(encodeURIComponent).join("/");
+  const endpoint = "https://api.cloudinary.com/v1_1/" + encodeURIComponent(cloudName) +
+    "/resources/" + resourceType + "/authenticated/" + encodedPublicId;
+  const response = await fetch(endpoint, {
+    headers: { Authorization: "Basic " + Buffer.from(apiKey + ":" + apiSecret).toString("base64") },
+  });
+  if (!response.ok) {
+    const error = new Error("The signed contract could not be verified in private storage.");
+    error.statusCode = [401, 403, 429].includes(response.status) || response.status >= 500 ? 503 : 409;
+    throw error;
+  }
+  const asset = await response.json();
+  const format = String(asset.format || "").toLowerCase();
+  const formatMatches = fileType === "application/pdf" ? format === "pdf" :
+    fileType === "image/png" ? format === "png" :
+    ["image/jpeg", "image/jpg"].includes(fileType) ? ["jpg", "jpeg"].includes(format) : false;
+  if (asset.public_id !== publicId || asset.asset_id !== assetId ||
+      asset.type !== "authenticated" || asset.resource_type !== resourceType ||
+      !formatMatches || Number(asset.bytes) !== fileSize) {
+    const error = new Error("The signed contract failed private-storage validation.");
+    error.statusCode = 409;
+    throw error;
+  }
+  return document;
+}
+
 async function requireAdmin(req, res, next) {
   try {
     const authorization = req.headers.authorization || "";
@@ -811,6 +864,174 @@ router.post("/partnerships/:type/:partnershipId/review", async (req, res) => {
       success: false,
       message: error.message || "Partnership review could not be saved.",
     });
+  }
+});
+
+
+const PARTNERSHIP_FINAL_APPROVALS = {
+  enterprise: ["executive", "board", "legal"],
+  corporate: ["executive", "board"],
+  government: ["executive", "government"],
+};
+
+router.post("/partnerships/:type/:partnershipId/contract-review", async (req, res) => {
+  const type = String(req.params.type || "").toLowerCase();
+  const partnershipId = String(req.params.partnershipId || "");
+  const decision = String(req.body?.decision || "");
+  const notes = String(req.body?.notes || "").trim();
+  const config = PARTNERSHIP_REVIEW_CONFIG[type];
+  if (!config || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId) ||
+      !["approved", "rejected"].includes(decision) || notes.length < 5 || notes.length > 2000) {
+    return res.status(400).json({ success: false, message: "Provide a valid partnership, contract decision and review notes." });
+  }
+  try {
+    const db = firestore();
+    const requestRef = db.collection(config.collection).doc(partnershipId);
+    const snapshot = await requestRef.get();
+    if (!snapshot.exists) return res.status(404).json({ success: false, message: "Partnership application not found." });
+    const application = snapshot.data() || {};
+    const applicantId = String(application.userId || "");
+    if (!applicantId || applicantId === req.adminUid) {
+      return res.status(403).json({ success: false, message: "This administrator cannot review this application." });
+    }
+    if (Object.keys(config.stages).some((stage) => application.reviewProgress?.[stage] !== true)) {
+      return res.status(409).json({ success: false, message: "All required review stages must be completed before contract verification." });
+    }
+    if (["rejected", "active", "suspended"].includes(String(application.requestStatus || application.status || "").toLowerCase())) {
+      return res.status(409).json({ success: false, message: "This partnership application is closed." });
+    }
+    if (decision === "approved") await verifyPartnershipContractAsset(application, applicantId);
+    const now = new Date();
+    await db.runTransaction(async (tx) => {
+      const fresh = await tx.get(requestRef);
+      if (!fresh.exists || fresh.data()?.userId !== applicantId) {
+        const error = new Error("Partnership application changed during contract review.");
+        error.statusCode = 409;
+        throw error;
+      }
+      const latest = fresh.data() || {};
+      if (latest.contractDocument?.cloudinaryPublicId !== application.contractDocument?.cloudinaryPublicId ||
+          Object.keys(config.stages).some((stage) => latest.reviewProgress?.[stage] !== true)) {
+        const error = new Error("The application or contract changed during review. Refresh and retry.");
+        error.statusCode = 409;
+        throw error;
+      }
+      tx.update(requestRef, {
+        contractVerificationStatus: decision,
+        contractStatus: decision === "approved" ? "Verified" : "Rejected - resubmission required",
+        contractReviewedBy: req.adminUid,
+        contractReviewedAt: now,
+        contractReviewNotes: notes,
+        updatedAt: now,
+      });
+      const auditRef = db.collection("partnershipReviewAuditLogs").doc();
+      tx.create(auditRef, {
+        partnershipType: type, partnershipId, applicantId,
+        stage: "contract_verification", decision, notes,
+        performedBy: req.adminUid, createdAt: now,
+      });
+    });
+    return res.status(200).json({
+      success: true,
+      contractVerificationStatus: decision,
+      message: decision === "approved" ? "Private signed contract verified. Final authorization is still required." : "Contract rejected. The applicant may submit a corrected signed contract.",
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Contract review failed." });
+  }
+});
+
+router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
+  const type = String(req.params.type || "").toLowerCase();
+  const partnershipId = String(req.params.partnershipId || "");
+  const config = PARTNERSHIP_REVIEW_CONFIG[type];
+  const requiredApprovals = PARTNERSHIP_FINAL_APPROVALS[type];
+  const notes = String(req.body?.notes || "").trim();
+  const approvals = req.body?.approvals || {};
+  const paymentRequired = req.body?.paymentRequired;
+  if (!config || !requiredApprovals || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId) ||
+      notes.length < 5 || notes.length > 2000 || typeof paymentRequired !== "boolean" ||
+      requiredApprovals.some((key) => approvals[key] !== true)) {
+    return res.status(400).json({ success: false, message: "All required final approvals, a payment requirement decision and authorization notes are required." });
+  }
+  try {
+    const db = firestore();
+    const requestRef = db.collection(config.collection).doc(partnershipId);
+    const now = new Date();
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(requestRef);
+      if (!snap.exists) {
+        const error = new Error("Partnership application not found.");
+        error.statusCode = 404;
+        throw error;
+      }
+      const application = snap.data() || {};
+      const applicantId = String(application.userId || "");
+      if (!applicantId || applicantId === req.adminUid) {
+        const error = new Error("This administrator cannot activate this application.");
+        error.statusCode = 403;
+        throw error;
+      }
+      if (["rejected", "active", "suspended"].includes(String(application.requestStatus || application.status || "").toLowerCase())) {
+        const error = new Error("This partnership application is closed or already active.");
+        error.statusCode = 409;
+        throw error;
+      }
+      if (Object.keys(config.stages).some((stage) => application.reviewProgress?.[stage] !== true)) {
+        const error = new Error("All required review stages must be completed before activation.");
+        error.statusCode = 409;
+        throw error;
+      }
+      if (application.contractVerificationStatus !== "approved" ||
+          !application.contractDocument?.cloudinaryPublicId ||
+          !application.contractReviewedBy || !application.contractReviewedAt) {
+        const error = new Error("A privately stored signed contract must be verified by an administrator before activation.");
+        error.statusCode = 409;
+        throw error;
+      }
+      if (paymentRequired && (
+        application.paymentStatus !== "paid" ||
+        !application.paymentVerifiedAt ||
+        !application.paymentVerifiedBy
+      )) {
+        const error = new Error("Payment is required but no trusted server-confirmed payment record is attached. Activation is blocked.");
+        error.statusCode = 409;
+        throw error;
+      }
+      const statusField = type === "government" ? "status" : "requestStatus";
+      tx.update(requestRef, {
+        [statusField]: "active",
+        approvalStatus: "Approved",
+        contractStatus: "Active",
+        paymentRequired,
+        paymentRequirementReviewedBy: req.adminUid,
+        paymentRequirementReviewedAt: now,
+        finalApprovals: Object.fromEntries(requiredApprovals.map((key) => [key, {
+          approved: true, approvedBy: req.adminUid, approvedAt: now,
+        }])),
+        finalApprovalNotes: notes,
+        finalApprovedBy: req.adminUid,
+        finalApprovedAt: now,
+        activatedBy: req.adminUid,
+        activatedAt: now,
+        updatedAt: now,
+      });
+      const auditRef = db.collection("partnershipReviewAuditLogs").doc();
+      tx.create(auditRef, {
+        partnershipType: type, partnershipId, applicantId,
+        stage: "final_activation", decision: "activated", notes,
+        approvals: requiredApprovals, paymentRequired,
+        performedBy: req.adminUid, createdAt: now,
+      });
+      return { applicantId };
+    });
+    return res.status(200).json({
+      success: true, partnershipId, applicantId: result.applicantId,
+      status: "active", contractStatus: "Active",
+      message: "Partnership final approvals recorded and activation completed.",
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({ success: false, message: error.message || "Partnership activation failed." });
   }
 });
 
