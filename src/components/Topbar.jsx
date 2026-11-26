@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
+import LanguageSelector from "./LanguageSelector";
 
 function Topbar() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
 
   return (
     <div
@@ -40,14 +41,7 @@ function Topbar() {
           alignItems: "center",
         }}
       >
-        <select
-          value={i18n.language}
-          onChange={(event) => i18n.changeLanguage(event.target.value)}
-          style={selectStyle}
-        >
-          <option value="en">EN</option>
-          <option value="es">ES</option>
-        </select>
+        <LanguageSelector />
 
         <button style={iconBtn} title={t("notifications")}>🔔</button>
 
