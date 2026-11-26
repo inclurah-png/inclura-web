@@ -50,6 +50,8 @@ const [organizationPending, setOrganizationPending] =
 const [enterprisePending, setEnterprisePending] =
   useState(0);
 
+const [corporatePending, setCorporatePending] = useState(0);
+
 const [governmentPending, setGovernmentPending] =
   useState(0);
 
@@ -257,6 +259,11 @@ const enterpriseSnapshot =
 setEnterprisePending(
   enterpriseSnapshot.size
 );
+
+const corporateSnapshot = await getDocs(
+  query(collection(db, "corporatePartnerships"), where("requestStatus", "==", "submitted"))
+);
+setCorporatePending(corporateSnapshot.size);
 
 const governmentSnapshot =
   await getDocs(
@@ -723,6 +730,11 @@ marginBottom: "35px",
     Pending:
     <strong> {enterprisePending}</strong>
   </p>
+</div>
+
+<div style={card}>
+  <h3>🏢 Corporate Partnership</h3>
+  <p>Pending: <strong>{corporatePending}</strong></p>
 </div>
 
 <div style={card}>
