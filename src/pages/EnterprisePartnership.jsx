@@ -77,7 +77,7 @@ useEffect(() => {
 
   const [organizationType,
     setOrganizationType] =
-    useState(prefill.category || "");
+    useState("");
 
   const [registrationNumber,
     setRegistrationNumber] =
