@@ -1,0 +1,42 @@
+name: Inclura frontend production build
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - ".github/workflows/inclura-frontend-build.yml"
+  push:
+    branches:
+      - fix/auth-payment-security
+    paths:
+      - "src/**"
+      - "public/**"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.*"
+      - ".github/workflows/inclura-frontend-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  production-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install locked frontend dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build production frontend
+        run: npm run build
