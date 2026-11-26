@@ -1114,7 +1114,17 @@ service cloud.firestore {
         && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
         && request.resource.data.approvalStatus == 'Not Approved'
         && request.resource.data.contractStatus == 'Inactive'
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'organizationName', 'organizationType', 'registrationNumber',
+          'taxNumber', 'website', 'industry', 'contactName', 'contactEmail',
+          'contactPhone', 'position', 'country', 'state', 'city', 'address',
+          'partnershipType', 'contractType', 'estimatedUsers', 'customRequirements',
+          'enterpriseModules', 'enterpriseBenefits', 'securityLayers',
+          'requestStatus', 'reviewProgress', 'timeline', 'userId', 'enterpriseId',
+          'enterpriseStatus', 'verificationStatus', 'approvalStatus', 'contractStatus',
+          'createdAt', 'updatedAt'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
@@ -1147,7 +1157,16 @@ service cloud.firestore {
         && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
         && request.resource.data.approvalStatus == 'Not Approved'
         && request.resource.data.contractStatus == 'Inactive'
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'companyName', 'registrationNumber', 'website', 'industry',
+          'companyClassification', 'contactName', 'contactEmail', 'contactPhone',
+          'position', 'country', 'province', 'city', 'address', 'contractType',
+          'estimatedEmployees', 'businessNeeds', 'requestStatus', 'verificationStatus',
+          'approvalStatus', 'contractStatus', 'reviewProgress', 'timeline',
+          'userId', 'corporateId', 'createdAt', 'updatedAt', 'securityLayers',
+          'corporateBenefits'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
@@ -1182,7 +1201,15 @@ service cloud.firestore {
         && request.resource.data.timeline[4].status == 'Pending'
         && request.resource.data.timeline[5].title == 'Executive Approval'
         && request.resource.data.timeline[5].status == 'Pending'
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'agencyName', 'governmentLevel', 'ministry', 'department',
+          'contactName', 'position', 'officialEmail', 'officialPhone',
+          'country', 'state', 'city', 'address', 'contractType',
+          'estimatedCitizens', 'projectDescription', 'accessibilityGoals',
+          'status', 'approvalStatus', 'contractStatus', 'reviewProgress',
+          'timeline', 'userId', 'createdAt', 'updatedAt'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
