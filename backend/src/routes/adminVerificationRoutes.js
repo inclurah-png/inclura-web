@@ -71,6 +71,9 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         payment.paymentStatus !== "paid" ||
         payment.verifiedByServer !== true ||
         String(payment.currency || "").toUpperCase() !== "USD" ||
+        !Number.isFinite(Number(payment.amount)) ||
+        !Number.isFinite(Number(application.paymentAmount)) ||
+        Number(application.paymentAmount) <= 0 ||
         Math.abs(Number(payment.amount) - Number(application.paymentAmount)) > 0.01 ||
         payment.category !== application.category ||
         payment.verificationType !== application.verificationType
