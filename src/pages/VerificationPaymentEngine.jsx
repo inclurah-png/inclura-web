@@ -46,12 +46,6 @@ useState(routeState.verificationType || "");
 const [paymentMethod, setPaymentMethod] =
 useState("");
 
-const [couponCode, setCouponCode] =
-useState("");
-
-const [invoiceRequested, setInvoiceRequested] =
-useState(false);
-
 const [acceptedTerms, setAcceptedTerms] =
 useState(false);
 
@@ -78,10 +72,6 @@ useState(false);
 "Debit Card",
 
 "Bank Transfer",
-
-"Enterprise Invoice",
-
-"Private Negotiation",
 
 ];
 
@@ -133,14 +123,6 @@ score += 20;
 if (!acceptedSecurity)
 
 score += 25;
-
-if (paymentMethod === "Private Negotiation")
-
-score += 15;
-
-if (paymentMethod === "Enterprise Invoice")
-
-score += 10;
 
 return Math.min(score, 100);
 
@@ -613,54 +595,12 @@ value={method}
 
 </section>
 
-<section>
-
-<h2>Payment Options</h2>
-
-<input
-
-type="text"
-
-placeholder="Coupon Code"
-
-value={couponCode}
-
-onChange={(e)=>
-
-setCouponCode(
-
-e.target.value
-
-)
-
-}
-
-/>
-
-<label>
-
-<input
-
-type="checkbox"
-
-checked={invoiceRequested}
-
-onChange={(e)=>
-
-setInvoiceRequested(
-
-e.target.checked
-
-)
-
-}
-
-/>
-
-Request Enterprise Invoice
-
-</label>
-
+<section aria-label="Additional payment guidance">
+  <p>
+    Enterprise invoices and negotiated contract fees are handled through
+    Inclura's Corporate and Enterprise Partnership applications, not this
+    online checkout.
+  </p>
 </section>
 
 <section>
