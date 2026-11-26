@@ -1,6 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 
 import {
   addDoc,
@@ -46,8 +45,9 @@ const PARTNERSHIP_TYPES = [
 
 function EnterprisePartnership() {
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const prefill = location.state || {};
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -73,11 +73,11 @@ useEffect(() => {
 
   const [organizationName,
     setOrganizationName] =
-    useState("");
+    useState(prefill.organizationName || "");
 
   const [organizationType,
     setOrganizationType] =
-    useState("");
+    useState(prefill.category || "");
 
   const [registrationNumber,
     setRegistrationNumber] =
@@ -89,23 +89,23 @@ useEffect(() => {
 
   const [website,
     setWebsite] =
-    useState("");
+    useState(prefill.website || "");
 
   const [industry,
     setIndustry] =
-    useState("");
+    useState(prefill.category || "");
 
   const [contactName,
     setContactName] =
-    useState("");
+    useState(prefill.fullName || "");
 
   const [contactEmail,
     setContactEmail] =
-    useState("");
+    useState(prefill.email || "");
 
   const [contactPhone,
     setContactPhone] =
-    useState("");
+    useState(prefill.phone || "");
 
   const [position,
     setPosition] =
@@ -141,7 +141,7 @@ useEffect(() => {
 
   const [customRequirements,
     setCustomRequirements] =
-    useState("");
+    useState(prefill.verificationType ? `Inclura verification type: ${prefill.verificationType}` : "");
 
   const partnershipFee =
   useMemo(() => {
