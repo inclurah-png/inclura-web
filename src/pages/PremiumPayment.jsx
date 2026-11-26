@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
 const makeTxRef = (tier) =>
   `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -87,6 +87,16 @@ function PremiumPayment() {
     if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) { alert("This plan is not currently available for payment."); return; }
 
     setLoading(true);
+    try {
+      const initialized = await initializeFlutterwavePayment({ purpose: "premium", plan: tier, txRef });
+      if (Number(initialized.amount) !== Number(amount) || initialized.currency !== "NGN" || initialized.txRef !== txRef) {
+        throw new Error("The server checkout details do not match this membership plan.");
+      }
+    } catch (error) {
+      setLoading(false);
+      alert(error.message || "Secure checkout could not be initialized.");
+      return;
+    }
     paymentHandler({
       callback: async (response) => {
         try {
