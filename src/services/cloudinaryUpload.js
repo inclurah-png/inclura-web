@@ -175,6 +175,60 @@ export async function uploadVerificationDocumentToCloudinary(file) {
   };
 }
 
+
+export async function uploadPartnershipContract(type, partnershipId, file) {
+  if (!["enterprise", "corporate", "government"].includes(type)) {
+    throw new Error("Invalid partnership type.");
+  }
+  if (!file || !["application/pdf", "image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+    throw new Error("Upload a signed contract as PDF, JPG or PNG.");
+  }
+  if (!file.size || file.size > 10 * 1024 * 1024) {
+    throw new Error("The signed contract must not exceed 10 MB.");
+  }
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in again before uploading the contract.");
+  const token = await user.getIdToken();
+  const signingResponse = await fetch(IFSE_API_BASE + "/api/media/sign-upload", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ category: "partnershipContract", mimeType: file.type }),
+  });
+  const signingData = await signingResponse.json().catch(() => ({}));
+  if (!signingResponse.ok || !signingData.success) {
+    throw new Error(signingData.message || "The server could not authorize the private contract upload.");
+  }
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("api_key", signingData.apiKey);
+  Object.entries(signingData.params || {}).forEach(([key, value]) => formData.append(key, String(value)));
+  formData.append("signature", signingData.signature);
+  const uploadResponse = await fetch(signingData.uploadUrl, { method: "POST", body: formData });
+  const uploaded = await uploadResponse.json().catch(() => ({}));
+  if (!uploadResponse.ok || !uploaded.public_id || !uploaded.asset_id) {
+    throw new Error(uploaded.error?.message || "Cloud storage could not complete the private contract upload.");
+  }
+  const submitResponse = await fetch(IFSE_API_BASE + "/api/media/partnership-contract", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      partnershipType: type,
+      partnershipId,
+      publicId: uploaded.public_id,
+      assetId: uploaded.asset_id,
+      resourceType: uploaded.resource_type || signingData.resourceType,
+      fileType: file.type,
+      fileName: file.name,
+      fileSize: file.size,
+    }),
+  });
+  const result = await submitResponse.json().catch(() => ({}));
+  if (!submitResponse.ok || !result.success) {
+    throw new Error(result.message || "The contract could not be attached to this partnership application.");
+  }
+  return result;
+}
+
 export async function getVerificationDocumentAccess(verificationId, publicId) {
   const user = auth.currentUser;
   if (!user) {
