@@ -162,7 +162,7 @@ export async function authenticationOptionsService(data = {}) {
       );
 
       throw new Error(
-        "No Inclura account was found for this email."
+        "Passkey sign-in is unavailable for these account details. Use your password or contact support."
       );
     }
   }
@@ -201,7 +201,7 @@ export async function authenticationOptionsService(data = {}) {
 
   if (allowCredentials.length === 0) {
     throw new Error(
-      "No registered passkeys were found for this user."
+      "Passkey sign-in is unavailable for these account details. Use your password or contact support."
     );
   }
 
