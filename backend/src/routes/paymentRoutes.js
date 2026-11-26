@@ -43,6 +43,9 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     if (!match) return unauthorized(res, 401, "A valid Inclura session is required.");
 
     const decoded = await auth().verifyIdToken(match[1], true);
+    if (decoded.email_verified !== true) {
+      return unauthorized(res, 403, "Verify your email address before confirming a payment.");
+    }
     const userRecord = await auth().getUser(decoded.uid);
     if (userRecord.disabled) return unauthorized(res, 403, "This account is disabled.");
 
