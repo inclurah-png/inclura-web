@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { doc, onSnapshot } from "firebase/firestore";
 import DashboardLayout from "../components/DashboardLayout";
 import { db } from "../firebase";
+import { uploadPartnershipContract } from "../services/cloudinaryUpload";
 
 const COLLECTIONS = {
   enterprise: "enterprisePartnerships",
@@ -48,6 +49,9 @@ export default function PartnershipStatus() {
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [contractFile, setContractFile] = useState(null);
+  const [contractBusy, setContractBusy] = useState(false);
+  const [contractMessage, setContractMessage] = useState("");
 
   useEffect(() => {
     if (!collectionName || !id) {
@@ -119,8 +123,44 @@ export default function PartnershipStatus() {
                 );
               })}
             </ol>
-            <h3>Contract and activation</h3>
-            <p>A partnership is not approved or activated solely because its review stages are complete. Contract verification and final authorization must be recorded by Inclura administrators.</p>
+            <h3>Signed contract submission</h3>
+            <p>Upload the signed contract as a PDF, JPG or PNG (maximum 10 MB). It is stored privately and is only available through authorized access.</p>
+            <p><strong>Contract document:</strong> {application.contractDocument?.fileName || "Not submitted"}</p>
+            <p><strong>Verification:</strong> {application.contractVerificationStatus || "Not submitted"}</p>
+            {application.contractVerificationStatus !== "approved" && !rejected && status !== "active" && (
+              <div>
+                <label htmlFor="partnership-contract-file">Choose signed contract</label>
+                <input
+                  id="partnership-contract-file"
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                  onChange={(event) => setContractFile(event.target.files?.[0] || null)}
+                  disabled={contractBusy}
+                />
+                <button
+                  type="button"
+                  disabled={!contractFile || contractBusy}
+                  onClick={async () => {
+                    setContractBusy(true);
+                    setContractMessage("");
+                    try {
+                      const result = await uploadPartnershipContract(type, id, contractFile);
+                      setContractMessage(result.message || "Contract submitted for verification.");
+                      setContractFile(null);
+                    } catch (uploadError) {
+                      setContractMessage(uploadError.message || "Contract upload failed.");
+                    } finally {
+                      setContractBusy(false);
+                    }
+                  }}
+                >
+                  {contractBusy ? "Uploading securely…" : "Submit signed contract"}
+                </button>
+                {contractMessage && <p role="status">{contractMessage}</p>}
+              </div>
+            )}
+            <h3>Contract and activation safeguards</h3>
+            <p>A partnership is not approved or activated solely because its review stages are complete. An administrator must verify the signed contract and record final authorization. Any negotiated payment requirement must also be confirmed through a trusted payment record before activation.</p>
             <p><strong>Administrator update:</strong> {application.lastReviewedAt ? displayDate(application.lastReviewedAt) : "No administrator review recorded yet"}</p>
           </section>
         )}
