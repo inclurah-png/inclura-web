@@ -214,6 +214,14 @@ export function AccessibilityProvider({ children }) {
         "neurodivergent",
         "neurodivers"
       ),
+
+      colorBlind: hasNeed("color blind", "colour blind", "color blindness", "colour blindness"),
+      screenReader: hasNeed("screen reader", "screenreader"),
+      braille: hasNeed("braille"),
+      voiceNavigation: hasNeed("voice navigation", "voice control", "voice access"),
+      keyboardNavigation: hasNeed("keyboard navigation", "keyboard only"),
+      captions: hasNeed("caption", "subtitles"),
+      signLanguage: hasNeed("sign language", "asl", "nsl"),
     }),
     [hasNeed]
   );
@@ -458,6 +466,13 @@ export function AccessibilityProvider({ children }) {
         { key: "dyslexia", values: ["Dyslexia"] },
         { key: "adhd", values: ["ADHD"] },
         { key: "autism", values: ["Autism"] },
+        { key: "colorBlind", values: ["Color Blind Support"] },
+        { key: "screenReader", values: ["Screen Reader"] },
+        { key: "braille", values: ["Braille"] },
+        { key: "voiceNavigation", values: ["Voice Navigation"] },
+        { key: "keyboardNavigation", values: ["Keyboard Navigation"] },
+        { key: "captions", values: ["Captions"] },
+        { key: "signLanguage", values: ["Sign Language"] },
       ];
 
       mappings.forEach(({ key, values }) => {
