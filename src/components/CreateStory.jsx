@@ -40,15 +40,6 @@ useState("");
 const [uploading, setUploading] =
 useState(false);
 
-const [screenReader, setScreenReader] =
-useState(true);
-
-const [textOnly, setTextOnly] =
-useState(true);
-
-const [voiceStory, setVoiceStory] =
-useState(false);
-
 const [highContrast, setHighContrast] =
 useState(false);
 
@@ -184,19 +175,13 @@ verificationMetadata:
       profile?.premiumTier ||
       "",
 
-      storyType:
-        voiceStory
-          ? "voice"
-          : "text",
+      storyType: "text",
 
       storyText,
 
       storyUrl: "",
 
       accessibility: {
-        screenReader,
-        textOnly,
-        voiceStory,
         highContrast,
         largeText,
       },
@@ -304,9 +289,6 @@ async function submitMediaStory(file, mediaType) {
       mediaUrl,
       mediaType: file.type,
       accessibility: {
-        screenReader,
-        textOnly,
-        voiceStory,
         highContrast,
         largeText,
       },
@@ -400,57 +382,6 @@ marginBottom:
       color: "white",
     }}
   >
-    <label>
-      <input
-        type="checkbox"
-        checked={
-          screenReader
-        }
-        onChange={(e) =>
-          setScreenReader(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      🔊 {t("screenReader")} {t("support")}
-    </label>
-
-    <label>
-      <input
-        type="checkbox"
-        checked={
-          textOnly
-        }
-        onChange={(e) =>
-          setTextOnly(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      📄 {t("textOnlyStory")}
-    </label>
-
-    <label>
-      <input
-        type="checkbox"
-        checked={
-          voiceStory
-        }
-        onChange={(e) =>
-          setVoiceStory(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      🎤 {t("voiceStory")}
-    </label>
-
     <label>
       <input
         type="checkbox"
