@@ -395,10 +395,7 @@ service cloud.firestore {
                            'status',
                            'suspendedAt',
                            'bannedAt',
-                           'restoredAt',
-                           'verified',
-                           'verificationStatus',
-                           'verifiedAt'
+                           'restoredAt'
                          ])
                     );
     }
