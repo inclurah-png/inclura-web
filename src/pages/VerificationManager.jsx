@@ -673,7 +673,7 @@ marginBottom: "35px",
   ) : (
 
     filteredRequests
-      .filter((item) => item.status === "submitted")
+      .filter((item) => ["pending", "submitted"].includes(item.status))
       .map((request) => (
 
         <div
