@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+const makeTxRef = (uid) => "INCLURA-RECRUITER-" + (uid || "USER") + "-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 10)));
 import DashboardLayout from "../components/DashboardLayout";
 
 import { auth } from "../firebase";
@@ -15,11 +17,10 @@ function RecruiterSubscription() {
 
   const [selectedPlan, setSelectedPlan] =
     useState("starter");
+  const [txRef, setTxRef] = useState(() => makeTxRef(auth.currentUser?.uid));
 
   const user = auth.currentUser;
   const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-  // A fresh reference is generated for each render/payment attempt.
-  const txRef = `INCLURA-RECRUITER-${user?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const plans = {
     starter: {
@@ -119,10 +120,11 @@ function RecruiterSubscription() {
           alert(err.message || "Payment verification is pending. Please contact support.");
         } finally {
           setLoading(false);
+          setTxRef(makeTxRef(auth.currentUser?.uid));
           closePaymentModal();
         }
       },
-      onClose: () => setLoading(false),
+      onClose: () => { setLoading(false); setTxRef(makeTxRef(auth.currentUser?.uid)); },
     });
   }
 
