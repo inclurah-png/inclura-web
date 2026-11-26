@@ -23,6 +23,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -55,12 +57,14 @@ jobs:
         run: |
           node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); await import('./backend/src/routes/adminVerificationRoutes.js'); await import('./backend/src/services/premiumExpirySweeper.js'); console.log('Payment, passkey, administrator and expiry modules import successfully.');"
       - name: Commit validated backend dependency updates to this draft branch
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add backend/package.json backend/package-lock.json
           if ! git diff --cached --quiet; then
             git commit -m "Remediate IFSE backend dependency vulnerabilities"
-            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git push origin "HEAD:${TARGET_BRANCH}"
           fi
