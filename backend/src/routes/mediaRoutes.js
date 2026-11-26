@@ -16,6 +16,7 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const MIME_RESOURCE_TYPES = {
   "image/jpeg": "image",
+  "image/jpg": "image",
   "image/png": "image",
   "image/webp": "image",
   "image/gif": "image",
@@ -306,6 +307,12 @@ router.post("/sign-upload", requireMediaUser, async (req, res) => {
         success: false,
         message: "This media type is not allowed for the selected upload category.",
       });
+    }
+    if (rule.private) {
+      const requestedFileSize = Number(req.body?.fileSize);
+      if (!Number.isFinite(requestedFileSize) || requestedFileSize <= 0 || requestedFileSize > 10 * 1024 * 1024) {
+        return res.status(413).json({ success: false, message: "Private documents must be between 1 byte and 10 MB." });
+      }
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
