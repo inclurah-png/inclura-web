@@ -1,4 +1,5 @@
 import express from "express";
+import { limitPaymentVerification } from "../middleware/passkeyRateLimit.js";
 import { auth, firestore } from "../config/firebaseAdmin.js";
 import creator from "../../../src/config/pricing/creator.js";
 import group from "../../../src/config/pricing/group.js";
@@ -30,7 +31,7 @@ function unauthorized(res, status, message) {
   return res.status(status).json({ success: false, message });
 }
 
-router.post("/verify", async (req, res) => {
+router.post("/verify", limitPaymentVerification, async (req, res) => {
   try {
     const secretKey = process.env.FLW_SECRET_KEY;
     if (!secretKey) {
