@@ -79,6 +79,7 @@ const EnterpriseAnalytics = lazy(() => import("./pages/EnterpriseAnalytics"));
 const EnterprisePartnership = lazy(() => import("./pages/EnterprisePartnership"));
 const CorporatePartnership = lazy(() => import("./pages/CorporatePartnership"));
 const GovernmentPartnership = lazy(() => import("./pages/GovernmentPartnership"));
+const PartnershipStatus = lazy(() => import("./pages/PartnershipStatus"));
 const PremiumDashboard = lazy(() => import("./pages/PremiumDashboard"));
 const PremiumPayment = lazy(() => import("./pages/PremiumPayment"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
@@ -499,6 +500,15 @@ function App() {
         element={
           <ProtectedRoute>
             <CorporatePartnership />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/partnership-status/:type/:id"
+        element={
+          <ProtectedRoute>
+            <PartnershipStatus />
           </ProtectedRoute>
         }
       />
