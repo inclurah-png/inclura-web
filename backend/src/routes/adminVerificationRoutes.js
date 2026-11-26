@@ -735,6 +735,19 @@ router.post("/partnerships/:type/:partnershipId/review", async (req, res) => {
         throw error;
       }
 
+      const stageOrder = Object.keys(config.stages);
+      const stageIndex = stageOrder.indexOf(stage);
+      if (decision === "approved") {
+        const incompletePrerequisite = stageOrder
+          .slice(0, stageIndex)
+          .find((requiredStage) => application.reviewProgress?.[requiredStage] !== true);
+        if (incompletePrerequisite) {
+          const error = new Error("Complete the preceding review stages before approving this stage.");
+          error.statusCode = 409;
+          throw error;
+        }
+      }
+
       const now = new Date();
       const reviewProgress = { ...(application.reviewProgress || {}) };
       const timeline = Array.isArray(application.timeline) ? [...application.timeline] : [];
