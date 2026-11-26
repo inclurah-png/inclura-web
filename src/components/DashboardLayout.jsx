@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import DashboardSidebar from "./DashboardSidebar";
 import LanguageSelector from "./LanguageSelector";
 import { db } from "../firebase";
@@ -8,6 +9,7 @@ import { useAuth } from "../context/AuthContext";
 function DashboardLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useAuth();
+  const { t } = useTranslation();
 
   async function savePreferredLanguage(languageCode) {
     if (!user) return;
@@ -47,7 +49,9 @@ function DashboardLayout({ children }) {
         type="button"
         className="inclura-mobile-menu-button"
         onClick={() => setSidebarOpen((open) => !open)}
-        aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+        aria-label={sidebarOpen ? t("closeNavigationMenu") : t("openNavigationMenu")}
+        aria-expanded={sidebarOpen}
+        aria-controls="inclura-mobile-navigation"
         style={{
           display: "none",
           position: "fixed",
@@ -63,7 +67,7 @@ function DashboardLayout({ children }) {
           cursor: "pointer",
         }}
       >
-        ☰
+        <span aria-hidden="true">☰</span>
       </button>
 
       <div
@@ -79,7 +83,10 @@ function DashboardLayout({ children }) {
           boxSizing: "border-box",
         }}
       >
-        <div className={sidebarOpen ? "inclura-mobile-sidebar open" : "inclura-mobile-sidebar"}>
+        <div
+          id="inclura-mobile-navigation"
+          className={sidebarOpen ? "inclura-mobile-sidebar open" : "inclura-mobile-sidebar"}
+        >
           <DashboardSidebar />
         </div>
 
@@ -107,7 +114,6 @@ function DashboardLayout({ children }) {
           <div style={{ position: "relative", zIndex: 3 }}>
             {children}
           </div>
-
         </div>
       </div>
     </>
