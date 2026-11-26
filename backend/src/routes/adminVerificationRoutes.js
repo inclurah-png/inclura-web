@@ -55,6 +55,9 @@ router.post("/creators/:userId/approve", async (req, res) => {
       if (user.creatorVerified === true) {
         throw new Error("This creator account is already verified.");
       }
+      if (user.status === "banned" || user.status === "suspended") {
+        throw new Error("A banned or suspended account cannot receive creator verification.");
+      }
       if (user.creatorVerificationPaymentStatus !== "paid") {
         throw new Error("A server-confirmed creator verification payment is required.");
       }
