@@ -309,33 +309,7 @@ const [reviewProgress,
       );
 
     };
-        const enterpriseRiskScore =
-    calculateEnterpriseRisk();
-
-  const threatLevel =
-    enterpriseRiskScore >= 75
-      ? "High"
-      : enterpriseRiskScore >= 40
-      ? "Medium"
-      : "Low";
-
-  const ifseSecurityScore =
-100 - enterpriseRiskScore;
-
-const trustScore =
-enterpriseRiskScore >= 70
-?
-"Low"
-
-:
-enterpriseRiskScore >= 40
-?
-"Medium"
-
-:
-"High";
-  
-    const handleSubmit =
+        const handleSubmit =
     async (e) => {
 
       e.preventDefault();
@@ -559,14 +533,6 @@ approvalStatus:
 
 contractStatus:
 "Inactive",
-
-              riskScore: enterpriseRiskScore,
-              riskScoreSource: "member_self_assessment",
-              threatLevel,
-              ifseSecurityScore,
-              ifseSecurityScoreSource: "member_self_assessment",
-              trustScore,
-              trustScoreSource: "member_self_assessment",
 
               createdAt:
                 serverTimestamp(),
@@ -1255,11 +1221,7 @@ serverTimestamp(),
 
             </h2>
 
-            <p>
-
-              Completion: {getReviewPercentage()}%
-
-            </p>
+            
 
             <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
 
@@ -1311,40 +1273,7 @@ serverTimestamp(),
 
           </section>
 
-          <section className="enterprise-risk">
-
-            <h2>
-
-              Preliminary Applicant Self-Assessment
-
-            </h2>
-            <p>These figures are calculated from the application form only. They are not server-verified IFSE findings and do not complete security, accessibility, compliance or approval checks.</p>
-
-            <p>
-
-              <strong>
-
-                Enterprise Risk Score:
-
-              </strong>{" "}
-
-              {enterpriseRiskScore}%
-
-            </p>
-
-            <p>
-
-              <strong>
-
-                Threat Level:
-
-              </strong>{" "}
-
-              {threatLevel}
-
-            </p>
-
-          </section>
+          
 
           <section className="enterprise-agreements">
 
