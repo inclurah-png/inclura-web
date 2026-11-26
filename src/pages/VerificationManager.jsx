@@ -13,9 +13,7 @@ import {
   auth,
 } from "../firebase";
 
-import {
-  calculateIFSERisk
-} from "../services/ifseRiskAutomation";
+import { getVerificationDocumentAccess } from "../services/cloudinaryUpload";
 
 const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
 
@@ -61,11 +59,62 @@ const [recentRequests, setRecentRequests] =
 const [selectedRequest, setSelectedRequest] =
   useState(null);
 
+const [selectedDocuments, setSelectedDocuments] = useState([]);
+const [documentsLoading, setDocumentsLoading] = useState(false);
+const [documentsError, setDocumentsError] = useState("");
+const [documentRefreshKey, setDocumentRefreshKey] = useState(0);
+
 const [searchTerm, setSearchTerm] =
   useState("");
 
 const [selectedCategory, setSelectedCategory] =
   useState("all");
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadSelectedDocuments() {
+    const request = selectedRequest;
+    const entries = Object.entries(request?.uploadedDocuments || {})
+      .filter(([, metadata]) => metadata?.cloudinaryPublicId);
+
+    if (!request?.id || entries.length === 0) {
+      setSelectedDocuments([]);
+      setDocumentsError("");
+      setDocumentsLoading(false);
+      return;
+    }
+
+    setDocumentsLoading(true);
+    setDocumentsError("");
+    try {
+      const documents = await Promise.all(entries.map(async ([key, metadata]) => {
+        const access = await getVerificationDocumentAccess(
+          request.id,
+          metadata.cloudinaryPublicId
+        );
+        return {
+          id: key,
+          name: metadata.fileName || access.fileName || key,
+          fileType: metadata.fileType || "",
+          url: access.downloadUrl,
+          expiresAt: access.expiresAt,
+        };
+      }));
+      if (!cancelled) setSelectedDocuments(documents);
+    } catch (documentError) {
+      if (!cancelled) {
+        setSelectedDocuments([]);
+        setDocumentsError(documentError.message || "Unable to load private verification documents.");
+      }
+    } finally {
+      if (!cancelled) setDocumentsLoading(false);
+    }
+  }
+
+  loadSelectedDocuments();
+  return () => { cancelled = true; };
+}, [selectedRequest, documentRefreshKey]);
 
 const [verificationRevenue, setVerificationRevenue] =
   useState({
