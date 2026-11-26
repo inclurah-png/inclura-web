@@ -20,6 +20,7 @@ import {
   db,
 } from "../firebase";
 import { uploadProfilePhotoToCloudinary } from "../services/cloudinaryUpload";
+import { useTranslation } from "react-i18next";
 
 function isPlaceholderName(
   value
@@ -155,6 +156,7 @@ function resolveProfileName(
 function ProfileHeader({
   profile,
 }) {
+  const { t } = useTranslation();
   const fileInputRef =
     useRef(null);
   const [uploadedPhotoURL, setUploadedPhotoURL] = useState("");
@@ -184,7 +186,7 @@ function ProfileHeader({
     try {
       const user = auth.currentUser;
       if (!user) {
-        alert("Please log in again before changing your photo.");
+        alert(t("postLoginAgain"));
         return;
       }
 
@@ -200,7 +202,7 @@ function ProfileHeader({
       setUploadedPhotoURL(url);
     } catch (error) {
       console.error("Profile photo upload failed:", error);
-      alert(error.message || "Profile photo upload failed. Please try again.");
+      alert(error.message || t("error"));
     } finally {
       setPhotoUploading(false);
     }
@@ -293,7 +295,7 @@ function ProfileHeader({
           {uploadedPhotoURL ? (
             <img
               src={uploadedPhotoURL}
-              alt={`${profileName} profile`}
+              alt={`${profileName} ${t("profile")}`}
               style={{
                 width: "120px",
                 height: "120px",
@@ -305,7 +307,7 @@ function ProfileHeader({
           ) : (
             <div
               role="img"
-              aria-label={`${profileName} profile initials`}
+              aria-label={`${profileName} ${t("profile")} initials`}
               style={{
                 width: "120px",
                 height: "120px",
@@ -339,7 +341,7 @@ function ProfileHeader({
               opacity: photoUploading ? 0.65 : 1,
             }}
           >
-            {photoUploading ? "Uploading Photo..." : "📷 Change Photo"}
+            {photoUploading ? t("uploadingPhoto") : `📷 ${t("changePhoto")}`}
           </button>
 
           <input
@@ -404,7 +406,7 @@ function ProfileHeader({
                     "700",
                 }}
               >
-                🛡️ Trust Level{" "}
+                🛡️ {t("trustLevel")}{" "}
                 {
                   verificationMeta.trustLevel
                 }
@@ -446,7 +448,7 @@ function ProfileHeader({
                         "700",
                     }}
                   >
-                    ⭐ Premium Trust Level{" "}
+                    ⭐ {t("premiumTrustLevel")}{" "}
                     {
                       getVerificationMetadata(
                         profile.premiumTier
@@ -470,8 +472,7 @@ function ProfileHeader({
                 }}
               >
                 ⏳{" "}
-                {getDaysLeft()}{" "}
-                days left
+                {t("daysLeft", { count: getDaysLeft() })}
               </div>
             )}
           </div>
@@ -482,7 +483,7 @@ function ProfileHeader({
             }}
           >
             {profile?.bio ||
-              "No bio yet"}
+              t("noBioYet")}
           </p>
 
           <div
@@ -498,7 +499,7 @@ function ProfileHeader({
             >
               🏷️{" "}
               {profile?.category ||
-                "Member"}
+                t("statsUser")}
             </span>
 
             <span
@@ -506,13 +507,13 @@ function ProfileHeader({
             >
               📍{" "}
               {profile?.location ||
-                "Unknown"}
+                t("unknown")}
             </span>
 
             <span
               style={tag}
             >
-              ⭐ XP:{" "}
+              ⭐ {t("statsXP")}:{" "}
               {profile?.xp || 0}
             </span>
           </div>
