@@ -1004,22 +1004,12 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'verificationType', 'organizationName', 'contactName', 'contactEmail',
           'country', 'state', 'city', 'notes', 'accessibilityNeeds', 'uploadedDocuments',
-          'documentsSubmitted', 'documentSubmissionStatus', 'status',
-          'updatedAt'
+          'documentsSubmitted', 'documentSubmissionStatus', 'status', 'updatedAt'
         ])
         && request.resource.data.status in ['pending', 'under_review']
-        && request.resource.data.paymentStatus == resource.data.paymentStatus
-        && request.resource.data.paymentId == resource.data.paymentId
-        && request.resource.data.paymentAmount == resource.data.paymentAmount
-        && request.resource.data.userId == resource.data.userId
-        && request.resource.data.submittedBy == resource.data.submittedBy
-        && request.resource.data.status != 'approved'
-        && request.resource.data.status != 'rejected'
-        && request.resource.data.paymentStatus != 'paid'
-        && request.resource.data.paymentId == resource.data.paymentId
-        && request.resource.data.paymentAmount == resource.data.paymentAmount
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-        ]);
+        && request.resource.data.get('paymentStatus', 'pending') == resource.data.get('paymentStatus', 'pending')
+        && request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null)
+        && request.resource.data.paymentAmount == resource.data.paymentAmount;
 
       allow delete: if false;
     }
