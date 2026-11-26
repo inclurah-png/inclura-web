@@ -138,13 +138,18 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
 router.post("/verification/:verificationId/reject", async (req, res) => {
   try {
     const id = String(req.params.verificationId || "");
+    const reason = String(req.body?.reason || "").trim();
     if (!/^[A-Za-z0-9_-]{10,150}$/.test(id)) {
       return res.status(400).json({ success: false, message: "Invalid verification application." });
+    }
+    if (reason.length < 5 || reason.length > 1000) {
+      return res.status(400).json({ success: false, message: "Provide a rejection reason between 5 and 1000 characters." });
     }
     const db = firestore();
     const requestRef = db.collection("verificationRequests").doc(id);
     const timelineRef = db.collection("verificationTimeline").doc();
     const auditRef = db.collection("verificationAuditLogs").doc();
+    const securityRef = db.collection("ifseSecurityEvents").doc();
     await db.runTransaction(async (tx) => {
       const snap = await tx.get(requestRef);
       if (!snap.exists) throw new Error("Verification application not found.");
@@ -156,6 +161,7 @@ router.post("/verification/:verificationId/reject", async (req, res) => {
       tx.update(requestRef, {
         status: "rejected",
         verificationActive: false,
+        rejectionReason: reason,
         rejectedAt: now,
         rejectedBy: req.adminUid,
         updatedAt: now,
@@ -171,7 +177,17 @@ router.post("/verification/:verificationId/reject", async (req, res) => {
       tx.create(auditRef, {
         verificationId: id,
         action: "Verification Rejected",
+        rejectionReason: reason,
         performedBy: req.adminUid,
+        createdAt: now,
+      });
+      tx.create(securityRef, {
+        verificationId: id,
+        eventType: "Verification Rejected",
+        threatLevel: "MEDIUM",
+        riskScore: 50,
+        resolved: true,
+        rejectionReason: reason,
         createdAt: now,
       });
     });
