@@ -29,7 +29,11 @@ service cloud.firestore {
         && !('finalApprovedBy' in request.resource.data)
         && !('finalApprovedAt' in request.resource.data)
         && !('activatedBy' in request.resource.data)
-        && !('activatedAt' in request.resource.data);
+        && !('activatedAt' in request.resource.data)
+        && !('paymentRequirementReviewedBy' in request.resource.data)
+        && !('paymentRequirementReviewedAt' in request.resource.data)
+        && !('finalApprovalNotes' in request.resource.data)
+        && !('contractReviewNotes' in request.resource.data);
     }
 
     function isActiveAccount() {
@@ -1094,6 +1098,8 @@ service cloud.firestore {
         && request.resource.data.agencyName is string
         && request.resource.data.officialEmail is string
         && request.resource.data.status == 'submitted'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
         && request.resource.data.reviewProgress.application == true
         && request.resource.data.reviewProgress.identityReview == false
         && request.resource.data.reviewProgress.securityReview == false
