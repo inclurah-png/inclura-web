@@ -586,8 +586,21 @@ export function AccessibilityProvider({ children }) {
       });
     }
 
+    const savedNeeds = normalizeAccessibilityNeeds(
+      overrides.accessibilityNeeds ?? userProfile.accessibilityNeeds
+    ).map(normalizeNeed);
+
+    const needsLargeText = savedNeeds.some((need) =>
+      need.includes("large text") || need.includes("large print")
+    );
+    const needsHighContrast = savedNeeds.some((need) =>
+      need.includes("high contrast")
+    );
+
     const savedFontScale =
-      overrides.fontScale ?? userProfile.fontScale;
+      overrides.fontScale ??
+      userProfile.fontScale ??
+      (needsLargeText ? 1.2 : 1);
 
     if (
       typeof savedFontScale === "number" &&
@@ -598,16 +611,18 @@ export function AccessibilityProvider({ children }) {
         Math.min(1.6, Math.max(0.8, savedFontScale))
       );
     } else {
-      setFontScaleState(1);
+      setFontScaleState(needsLargeText ? 1.2 : 1);
     }
 
     const savedHighContrast =
-      overrides.highContrast ?? userProfile.highContrast;
+      overrides.highContrast ??
+      userProfile.highContrast ??
+      needsHighContrast;
 
     setHighContrastState(
       typeof savedHighContrast === "boolean"
         ? savedHighContrast
-        : false
+        : needsHighContrast
     );
 
     const savedReducedMotion =
