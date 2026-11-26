@@ -63,6 +63,7 @@ function CreatorVerificationPayment() {
           }
           const result = await verifyFlutterwavePayment({
             purpose: "creator_verification",
+            plan: "verified_creator",
             transactionId: String(response.transaction_id),
             txRef: response.tx_ref || txRef,
           });
