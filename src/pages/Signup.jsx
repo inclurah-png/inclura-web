@@ -22,6 +22,7 @@ getAuthErrorInfo,
 } from "../services/authErrorMessages";
 
 import { useNavigate } from "react-router-dom";
+import LanguageSelector from "../components/LanguageSelector";
 
 const googleProvider =
 new GoogleAuthProvider();
@@ -155,7 +156,11 @@ async function handleSignup() {
 setError(null);
 const cleanName = fullName.trim().replace(/\s+/g, " ");
 const cleanEmail = email.trim().toLowerCase();
-if (cleanName.length < 2 || cleanName.length > 80) {
+if (cleanName.length < 2 || cleanName.length >
+      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+        <LanguageSelector />
+      </div>
+ 80) {
   setError({ message: "Enter your real display name (2–80 characters)." });
   return;
 }
