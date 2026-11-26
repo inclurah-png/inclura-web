@@ -1486,83 +1486,35 @@ function VerificationDocuments() {
            */
 
           <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdIfseNotice")}</h2>
-
-            <p>
-              Every uploaded verification document is
-              protected by the Inclura Fortress Security
-              Engine (IFSE).
-            </p>
-
-            <p>
-              Before approval, every document passes
-              through the following automated and human
-              verification processes:
-            </p>
-
-            <ul
-              style={{
-                lineHeight: "2",
-                marginTop: "16px",
-              }}
-            >
-
-              <li>
-                ✅ Identity Verification
-              </li>
-
-              <li>
-                ✅ Document Authenticity Verification
-              </li>
-
-              <li>
-                ✅ OCR Data Extraction
-              </li>
-
-              <li>
-                ✅ AI Fraud Detection
-              </li>
-
-              <li>
-                ✅ Duplicate Detection
-              </li>
-
-              <li>
-                ✅ Metadata Inspection
-              </li>
-
-              <li>
-                ✅ Malware &amp; File Security Scan
-              </li>
-
-              <li>
-                ✅ Accessibility Compliance Review
-              </li>
-
-              <li>
-                ✅ Risk Assessment
-              </li>
-
-              <li>
-                ✅ Executive Review (where required)
-              </li>
-
-              <li>
-                ✅ Continuous IFSE Monitoring
-              </li>
-
-            </ul>
-
-          </section>
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
+  <h2>{t("vdIfseNotice")}</h2>
+  <p>
+    IFSE authorizes document uploads, stores them as private authenticated
+    Cloudinary assets, and records the submission for audit. Only the applicant
+    or an authorized administrator can request a short-lived access link.
+  </p>
+  <p>
+    This upload screen does not perform OCR, document authenticity checks,
+    malware scanning, AI fraud detection, duplicate detection or final identity
+    approval. Those checks remain pending until a trusted service and an
+    authorized reviewer complete them.
+  </p>
+  <ul style={{ lineHeight: "2", marginTop: "16px" }}>
+    <li>○ Authenticated server-authorized upload</li>
+    <li>○ Allowed file types and 10 MB size limit</li>
+    <li>○ Private Cloudinary document storage</li>
+    <li>○ Short-lived signed document access for the applicant or administrator</li>
+    <li>○ Application, timeline and audit records</li>
+    <li>○ Manual identity and document review pending</li>
+  </ul>
+</section>
                     /*
            * ============================================
            * SUBMIT / CANCEL CONTROLS
