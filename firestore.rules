@@ -754,7 +754,7 @@ service cloud.firestore {
                     && request.resource.data.role == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user')
                     && request.resource.data.userName is string
                     && request.resource.data.userName.size() <= 100
-                    && request.resource.data.storyType in ['text', 'voice', 'image', 'video']
+                    && request.resource.data.storyType in ['text', 'image', 'video']
                     && request.resource.data.storyText is string
                     && request.resource.data.storyText.size() <= 5000
                     && request.resource.data.storyUrl is string
