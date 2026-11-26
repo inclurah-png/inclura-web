@@ -16,6 +16,17 @@ import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
 import { useTranslation } from "react-i18next";
 
+function getStoryExpiryMillis(value) {
+  if (value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  const numericValue = Number(value || 0);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
+
 function StoriesSection() {
   const { t } = useTranslation();
   const [stories, setStories] =
@@ -45,9 +56,7 @@ function StoriesSection() {
                 ...doc.data(),
               }))
               .filter(
-                (story) =>
-                  story.expiresAt >
-                  now
+                (story) => getStoryExpiryMillis(story.expiresAt) > now
               )
               .slice(0, 12);
 
