@@ -129,6 +129,7 @@ export default function PartnershipStatus() {
             <p>Upload the signed contract as a PDF, JPG or PNG (maximum 10 MB). It is stored privately and is only available through authorized access.</p>
             <p><strong>Contract document:</strong> {application.contractDocument?.fileName || "Not submitted"}</p>
             <p><strong>Verification:</strong> {application.contractVerificationStatus || "Not submitted"}</p>
+            {application.contractReviewNotes && <p><strong>Administrator contract feedback:</strong> {application.contractReviewNotes}</p>}
             {application.contractVerificationStatus !== "approved" && !rejected && status !== "active" && (
               <div>
                 <label htmlFor="partnership-contract-file">Choose signed contract</label>
