@@ -854,7 +854,8 @@ service cloud.firestore {
                     && resource.data.receiverId == request.auth.uid
                     && request.resource.data.receiverId == resource.data.receiverId
                     && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['read']);
+                       .hasOnly(['read'])
+                    && request.resource.data.read is bool;
 
       allow create: if isActiveAccount()
                     && request.resource.data.receiverId is string
