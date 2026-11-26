@@ -507,7 +507,28 @@ export function AccessibilityProvider({ children }) {
   useEffect(() => {
     if (!userProfile) {
       if (!user?.uid) {
-        setLanguageState("en");
+        let storedGuestLanguage = "en";
+
+        try {
+          if (typeof window !== "undefined") {
+            storedGuestLanguage =
+              window.localStorage.getItem("inclura-language") || "en";
+          }
+        } catch {
+          storedGuestLanguage = "en";
+        }
+
+        const guestLanguage = isSupportedLanguage(storedGuestLanguage)
+          ? storedGuestLanguage
+          : "en";
+
+        setLanguageState(guestLanguage);
+        if (i18n.language !== guestLanguage) {
+          void i18n.changeLanguage(guestLanguage).catch((error) => {
+            console.error("Unable to restore guest language:", error);
+          });
+        }
+
         setFontScaleState(1);
         setHighContrastState(false);
         setReducedMotionState(false);
