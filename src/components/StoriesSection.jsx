@@ -18,8 +18,10 @@ import {
 
 import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
+import { useTranslation } from "react-i18next";
 
 function StoriesSection() {
+  const { t } = useTranslation();
   const [stories, setStories] =
     useState([]);
 
@@ -112,7 +114,7 @@ function StoriesSection() {
         }}
       >
         <h3>
-          📸 Stories
+          📸 {t("stories")}
         </h3>
 
         <CreateStory />
@@ -131,8 +133,7 @@ function StoriesSection() {
           {stories.length ===
           0 ? (
             <div>
-              No active
-              stories
+              {t("noActiveStories")}
             </div>
           ) : (
             stories.map(
@@ -190,7 +191,7 @@ function StoriesSection() {
                         src={
                           story.storyUrl
                         }
-                        alt="story"
+                        alt={t("storyImageAlt")}
                         style={{
                           width:
                             "100%",
