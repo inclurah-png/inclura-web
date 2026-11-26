@@ -2344,7 +2344,7 @@ returnHome: "Komawa Gida",
       "Reels",
 
     // Verification
-    verificationCenter:
+    verificationCenter: "Centre de vérification",
     partnershipStatusTitle: "État de la demande de partenariat",
     partnershipStatusIntro: "Mises à jour en direct de votre demande de partenariat.",
     partnershipStatusLoading: "Chargement de l’état de la demande…",
@@ -2942,7 +2942,7 @@ returnHome: "Retour à l’accueil",
       "ريلز",
 
     // Verification
-    verificationCenter:
+    verificationCenter: "مركز التحقق",
     partnershipStatusTitle: "حالة طلب الشراكة",
     partnershipStatusIntro: "تحديثات مباشرة حول طلب الشراكة الخاص بك.",
     partnershipStatusLoading: "جارٍ تحميل حالة الطلب…",
@@ -3540,7 +3540,7 @@ returnHome: "العودة إلى الرئيسية",
       "Reels",
 
     // Verification
-    verificationCenter:
+    verificationCenter: "Centro de verificación",
     partnershipStatusTitle: "Estado de la solicitud de colaboración",
     partnershipStatusIntro: "Actualizaciones en directo de tu solicitud de colaboración.",
     partnershipStatusLoading: "Cargando el estado de la solicitud…",
@@ -4704,7 +4704,7 @@ returnHome: "返回首页",
       "Reels",
 
     // Verification
-    verificationCenter:
+    verificationCenter: "Centro de verificação",
     partnershipStatusTitle: "Estado do pedido de parceria",
     partnershipStatusIntro: "Atualizações em tempo real do seu pedido de parceria.",
     partnershipStatusLoading: "A carregar o estado do pedido…",
@@ -5302,7 +5302,7 @@ returnHome: "Voltar ao início",
       "Reels",
 
     // Verification
-    verificationCenter:
+    verificationCenter: "Kituo cha uthibitishaji",
     partnershipStatusTitle: "Hali ya ombi la ushirikiano",
     partnershipStatusIntro: "Taarifa za moja kwa moja kuhusu ombi lako la ushirikiano.",
     partnershipStatusLoading: "Inapakia hali ya ombi…",
