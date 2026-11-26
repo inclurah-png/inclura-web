@@ -228,7 +228,14 @@ app.post("/api/analytics/platform", async (req, res) => {
 
     // Use the server-issued Firebase Authentication custom claim.
     // This matches Inclura's existing Users Management authorization model.
-    const decoded = await auth().verifyIdToken(match[1]);
+    const decoded = await auth().verifyIdToken(match[1], true);
+    if (decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "A verified administrator account is required." });
+    }
+    const adminRecord = await auth().getUser(decoded.uid);
+    if (adminRecord.disabled) {
+      return res.status(403).json({ success: false, message: "This administrator account is disabled." });
+    }
     if (decoded.admin !== true) {
       return res.status(403).json({ success: false, message: "Administrator access required." });
     }
