@@ -210,7 +210,7 @@ const enterpriseSnapshot =
   await getDocs(
     query(
       collection(db, "enterprisePartnerships"),
-      where("status", "==", "submitted")
+      where("requestStatus", "==", "submitted")
     )
   );
 
