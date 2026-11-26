@@ -1019,7 +1019,11 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.verificationId is string
         && ownsVerification(request.resource.data.verificationId)
-        && request.resource.data.createdBy == request.auth.uid;
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.title in [
+          'Application Submitted', 'Verification Documents Submitted'
+        ]
+        && request.resource.data.status == 'Completed';
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
             || ownsVerification(resource.data.verificationId));
@@ -1042,6 +1046,9 @@ service cloud.firestore {
         && request.resource.data.verificationId is string
         && (request.resource.data.performedBy == request.auth.uid
             || request.resource.data.actor == request.auth.uid)
+        && request.resource.data.action in [
+          'Verification application submitted', 'Verification Documents Submitted'
+        ]
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
@@ -1052,6 +1059,7 @@ service cloud.firestore {
     match /ifseSecurityEvents/{eventId} {
       allow create: if request.auth != null
         && request.resource.data.verificationId is string
+        && request.resource.data.eventType in ['Application Received', 'documents_submitted']
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
