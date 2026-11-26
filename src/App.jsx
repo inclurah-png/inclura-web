@@ -30,6 +30,7 @@ import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import AccessibilityButton from "./components/AccessibilityButton";
 
 const Home = lazy(() => import("./pages/Home"));
 const AboutInclura = lazy(() => import("./pages/AboutInclura"));
@@ -788,6 +789,7 @@ function App() {
       />
 
     </Routes>
+    <AccessibilityButton />
     </RouteErrorBoundary>
     </Suspense>
   );
