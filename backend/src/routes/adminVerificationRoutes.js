@@ -61,7 +61,7 @@ router.post("/creators/:userId/approve", async (req, res) => {
 
       const paymentId = String(user.creatorVerificationPaymentTransactionId || "");
       const paymentReference = String(user.creatorVerificationPaymentReference || "");
-      if (!/^\\d{1,30}$/.test(paymentId) || !paymentReference) {
+      if (!/^\d{1,30}$/.test(paymentId) || !paymentReference) {
         throw new Error("The creator payment reference is missing or invalid.");
       }
 
