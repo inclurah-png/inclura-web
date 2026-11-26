@@ -780,17 +780,24 @@ marginBottom: "35px",
         <p><strong>Submission status:</strong> {application.requestStatus || application.status || "submitted"}</p>
         <p><strong>Contract:</strong> {application.contractStatus || "Not activated"}</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-          {stageConfig.map(([stage, label]) => (
-            <button
-              key={stage}
-              type="button"
-              disabled={Boolean(partnershipActionBusy) || application.reviewProgress?.[stage] === true}
-              onClick={() => submitPartnershipReview(application, stage, "approved")}
-              style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #64748b", background: application.reviewProgress?.[stage] === true ? "#166534" : "#1e293b", color: "#fff", cursor: "pointer" }}
-            >
-              {application.reviewProgress?.[stage] === true ? label + " ✓" : "Complete: " + label}
-            </button>
-          ))}
+          {stageConfig.map(([stage, label], stageIndex) => {
+            const prerequisitesComplete = stageConfig
+              .slice(0, stageIndex)
+              .every(([requiredStage]) => application.reviewProgress?.[requiredStage] === true);
+            const completed = application.reviewProgress?.[stage] === true;
+            return (
+              <button
+                key={stage}
+                type="button"
+                disabled={Boolean(partnershipActionBusy) || completed || !prerequisitesComplete}
+                onClick={() => submitPartnershipReview(application, stage, "approved")}
+                title={!prerequisitesComplete ? "Complete the preceding review stages first." : label}
+                style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #64748b", background: completed ? "#166534" : "#1e293b", color: "#fff", cursor: completed || !prerequisitesComplete ? "not-allowed" : "pointer", opacity: prerequisitesComplete ? 1 : 0.55 }}
+              >
+                {completed ? label + " ✓" : "Complete: " + label}
+              </button>
+            );
+          })}
           <button
             type="button"
             disabled={Boolean(partnershipActionBusy)}
