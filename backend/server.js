@@ -14,6 +14,7 @@ import emergencyRoutes from "./src/routes/emergencyRoutes.js";
 import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
 import textbeeWebhookRoutes from "./src/routes/textbeeWebhookRoutes.js";
 import paymentRoutes from "./src/routes/paymentRoutes.js";
+import adminVerificationRoutes from "./src/routes/adminVerificationRoutes.js";
 
 import {
   startSOSNotificationSweeper,
@@ -333,6 +334,7 @@ app.use(
 
 // Server-side Flutterwave verification and entitlement activation.
 app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminVerificationRoutes);
 
 // =======================================================
 // Emergency SOS Notification Routes
