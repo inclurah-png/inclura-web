@@ -44,7 +44,7 @@ async function verifyPrivateCloudinaryDocuments(userId, documents) {
     }
 
     const encodedPublicId = publicId.split("/").map(encodeURIComponent).join("/");
-    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/${resourceType}/upload/${encodedPublicId}?type=authenticated`;
+    const endpoint = `https://api.cloudinary.com/v1_1/${encodeURIComponent(cloudName)}/resources/${resourceType}/authenticated/${encodedPublicId}`;
     const response = await fetch(endpoint, {
       headers: {
         Authorization: "Basic " + Buffer.from(`${apiKey}:${apiSecret}`).toString("base64"),
