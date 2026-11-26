@@ -14,6 +14,8 @@ import { auth, db } from "../firebase";
 
 import DashboardLayout from "../components/DashboardLayout";
 
+const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
+
 function UsersManagement() {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
@@ -226,6 +228,53 @@ function UsersManagement() {
       setPageError(
         "The account could not be updated. Check administrator permissions and Firestore Security Rules."
       );
+    } finally {
+      setBusyUserId("");
+    }
+  }
+
+  async function approveCreatorVerification(userId) {
+    if (!authorized || !userId || busyUserId) return;
+    const targetUser = users.find((user) => user.id === userId);
+    if (!targetUser) {
+      setPageError("The selected creator account could not be found.");
+      return;
+    }
+    if (targetUser.creatorVerified === true || targetUser.creatorVerificationPaymentStatus !== "paid") {
+      setPageError("A server-confirmed creator verification payment is required before approval.");
+      return;
+    }
+    if (userId === auth.currentUser?.uid) {
+      setPageError("You cannot approve your own creator verification.");
+      return;
+    }
+    if (!window.confirm("Approve this creator after checking the submitted identity evidence?")) return;
+
+    setBusyUserId(userId);
+    setPageError("");
+    setPageMessage("");
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Your session has expired. Please sign in again.");
+      const tokenResult = await getIdTokenResult(currentUser, true);
+      if (tokenResult.claims.admin !== true) {
+        setAuthorized(false);
+        throw new Error("Administrator permission is no longer available.");
+      }
+      const token = await currentUser.getIdToken();
+      const response = await fetch(
+        `${IFSE_API_URL}/api/admin/creators/${encodeURIComponent(userId)}/approve`,
+        { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || "Creator verification approval failed.");
+      }
+      setPageMessage(result.message || "Creator verification approved.");
+      await loadUsers();
+    } catch (error) {
+      console.error("Creator verification approval failed:", error);
+      setPageError(error.message || "Creator verification could not be approved.");
     } finally {
       setBusyUserId("");
     }
@@ -450,6 +499,17 @@ function UsersManagement() {
                                 >
                                   Restore
                                 </button>
+
+                                {user.creatorVerificationPaymentStatus === "paid" && user.creatorVerified !== true && (
+                                  <button
+                                    type="button"
+                                    disabled={Boolean(busyUserId) || user.id === auth.currentUser?.uid}
+                                    onClick={() => approveCreatorVerification(user.id)}
+                                    style={smallButtonStyle}
+                                  >
+                                    Approve Creator Badge
+                                  </button>
+                                )}
 
                               </div>
 
