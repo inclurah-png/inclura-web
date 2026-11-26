@@ -199,7 +199,7 @@ marginBottom:
 <button
   ref={closeButtonRef}
   type="button"
-  onClick={onClose
+  onClick={onClose}
   style={{
     background: "#38bdf8",
     border: "none",
