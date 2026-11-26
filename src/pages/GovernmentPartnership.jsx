@@ -803,6 +803,8 @@ try {
 
   </p>
 
+            <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
+
 </section>
 
 <section className="government-risk">
