@@ -234,7 +234,7 @@ function AccessibilitySettings() {
               type="button"
               onClick={() =>
                 speakText(
-                  "Welcome to Inclura accessibility settings.",
+                  t("voiceGuidance"),
                   { language }
                 )
               }
