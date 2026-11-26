@@ -242,12 +242,7 @@ router.post("/prepare-crosspost", requireMediaUser, async (req, res) => {
   let processingStage = "authentication";
 
   try {
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     processingStage = "request_validation";
     const requestId = String(req.body?.requestId || "");
     if (!requestId || requestId.length > 150) {
