@@ -613,7 +613,8 @@ function VerificationDocuments() {
           eventType:
             "documents_submitted",
 
-          verificationType,
+          verificationType: activeRequest.verificationType,
+          documentCategory: verificationType,
 
           assessmentStatus: "pending_server_review",
 
