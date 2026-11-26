@@ -29,10 +29,11 @@ jobs:
         run: npm run build
       - name: Compatibility build with validated dependency security candidates
         run: |
+          npm install --package-lock-only --save-exact vite@6.4.6 @vitejs/plugin-react@4.4.1
           npm install --package-lock-only --save-exact react-router-dom@7.18.7
           npm install --package-lock-only --save-exact firebase@13.4.0
           npm pkg set 'overrides.axios=1.21.1' 'overrides.@grpc/grpc-js=1.14.7'
-          npm install --package-lock-only
+          npm audit fix
           npm ci
           npm audit
           npm run build
