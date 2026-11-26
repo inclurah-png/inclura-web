@@ -331,237 +331,32 @@ setGovernmentPending(
 }, []);
 
 useEffect(() => {
+  let cancelled = false;
 
   async function loadRevenueStatistics() {
-
     try {
-
-      const paymentSnapshot =
-        await getDocs(
-          collection(
-            db,
-            "verificationPayments"
-          )
-        );
-
-      let totalRevenue = 0;
-
-      let monthlyRevenue = 0;
-
-      let pendingPayments = 0;
-
-      let successfulPayments = 0;
-
-      let creatorRevenue = 0;
-
-      let organizationRevenue = 0;
-
-      let enterpriseRevenue = 0;
-
-      let governmentRevenue = 0;
-
-      let ngoRevenue = 0;
-
-      let institutionRevenue = 0;
-
-      let religiousRevenue = 0;
-
-      let healthcareRevenue = 0;
-
-      let museumRevenue = 0;
-
-      let tourismRevenue = 0;
-
-      let entertainmentRevenue = 0;
-
-      let mediaRevenue = 0;
-
-      let accessibilityRevenue = 0;
-
-      const today = new Date();
-
-      paymentSnapshot.forEach((doc) => {
-
-        const payment = doc.data();
-
-        const amount =
-          Number(payment.amount || 0);
-
-        if (
-          payment.status ===
-          "successful"
-        ) {
-
-          successfulPayments++;
-
-          totalRevenue += amount;
-
-          const createdAt =
-            payment.createdAt?.toDate?.();
-
-          if (createdAt) {
-
-            if (
-
-              createdAt.getMonth() ===
-                today.getMonth() &&
-
-              createdAt.getFullYear() ===
-                today.getFullYear()
-
-            ) {
-
-              monthlyRevenue += amount;
-
-            }
-
-          }
-
-          switch (
-            payment.category
-          ) {
-
-            case "creator":
-
-              creatorRevenue += amount;
-
-              break;
-
-            case "organization":
-
-              organizationRevenue += amount;
-
-              break;
-
-            case "enterprise":
-
-              enterpriseRevenue += amount;
-
-              break;
-
-            case "government":
-
-              governmentRevenue += amount;
-
-              break;
-
-            case "ngo":
-
-              ngoRevenue += amount;
-
-              break;
-
-            case "institution":
-
-              institutionRevenue += amount;
-
-              break;
-
-            case "religious":
-
-              religiousRevenue += amount;
-
-              break;
-
-            case "healthcare":
-
-              healthcareRevenue += amount;
-
-              break;
-
-            case "museum":
-
-              museumRevenue += amount;
-
-              break;
-
-            case "tourism":
-
-              tourismRevenue += amount;
-
-              break;
-
-            case "entertainment":
-
-              entertainmentRevenue += amount;
-
-              break;
-
-            case "media":
-
-              mediaRevenue += amount;
-
-              break;
-
-            case "accessibility":
-
-              accessibilityRevenue += amount;
-
-              break;
-
-            default:
-
-              break;
-
-          }
-
-        } else {
-
-          pendingPayments++;
-
-        }
-
-      });
-
-      setVerificationRevenue({
-
-        totalRevenue,
-
-        monthlyRevenue,
-
-        pendingPayments,
-
-        successfulPayments,
-
-        creatorRevenue,
-
-        organizationRevenue,
-
-        enterpriseRevenue,
-
-        governmentRevenue,
-
-        ngoRevenue,
-
-        institutionRevenue,
-
-        religiousRevenue,
-
-        healthcareRevenue,
-
-        museumRevenue,
-
-        tourismRevenue,
-
-        entertainmentRevenue,
-
-        mediaRevenue,
-
-        accessibilityRevenue,
-
-      });
-
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Administrator session is required.");
+      const token = await currentUser.getIdToken();
+      const response = await fetch(
+        `${IFSE_API_URL}/api/admin/verification/analytics`,
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true || !result.report) {
+        throw new Error(result.message || "Verification revenue analytics could not be loaded.");
+      }
+      if (!cancelled) setVerificationRevenue(result.report);
     } catch (err) {
-
-      console.error(err);
-
+      console.error("Verification revenue analytics failed:", err);
+      if (!cancelled) setError(err.message || "Verification revenue analytics could not be loaded.");
     }
-
   }
 
   loadRevenueStatistics();
-
+  return () => { cancelled = true; };
 }, []);
+
 
 const filteredRequests = verificationRequests.filter((item) => {
   const matchesSearch =
