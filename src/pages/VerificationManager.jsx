@@ -4,6 +4,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import {
   collection,
   getDocs,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
@@ -330,32 +331,31 @@ setGovernmentPending(
 }, []);
 
 useEffect(() => {
-  let cancelled = false;
-  async function loadPartnershipApplications() {
-    try {
-      const collections = [
-        ["enterprise", "enterprisePartnerships", "requestStatus"],
-        ["corporate", "corporatePartnerships", "requestStatus"],
-        ["government", "governmentPartnerships", "status"],
-      ];
-      const snapshots = await Promise.all(collections.map(([, name, statusField]) =>
-        getDocs(query(collection(db, name), where(statusField, "in", ["submitted", "pending"])))
-      ));
-      const records = snapshots.flatMap((snapshot, index) =>
-        snapshot.docs.map((document) => ({
-          id: document.id,
-          type: collections[index][0],
-          ...document.data(),
-        }))
-      );
-      if (!cancelled) setPartnershipApplications(records);
-    } catch (loadError) {
-      console.error("Partnership applications could not be loaded:", loadError);
-      if (!cancelled) setError("Unable to load partnership applications.");
-    }
-  }
-  loadPartnershipApplications();
-  return () => { cancelled = true; };
+  const collections = [
+    ["enterprise", "enterprisePartnerships", "requestStatus"],
+    ["corporate", "corporatePartnerships", "requestStatus"],
+    ["government", "governmentPartnerships", "status"],
+  ];
+  const unsubscribers = collections.map(([type, name, statusField]) =>
+    onSnapshot(
+      query(collection(db, name), where(statusField, "in", ["submitted", "pending"])),
+      (snapshot) => {
+        setPartnershipApplications((current) => [
+          ...current.filter((item) => item.type !== type),
+          ...snapshot.docs.map((document) => ({
+            id: document.id,
+            type,
+            ...document.data(),
+          })),
+        ]);
+      },
+      (loadError) => {
+        console.error("Partnership applications could not be loaded:", loadError);
+        setError("Unable to load partnership applications.");
+      }
+    )
+  );
+  return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
 }, []);
 
 useEffect(() => {
