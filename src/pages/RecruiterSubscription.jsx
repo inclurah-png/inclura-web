@@ -4,7 +4,7 @@ const makeTxRef = (uid) => "INCLURA-RECRUITER-" + (uid || "USER") + "-" + (globa
 import DashboardLayout from "../components/DashboardLayout";
 
 import { auth } from "../firebase";
-import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
 import {
   useFlutterwave,
@@ -91,7 +91,7 @@ function RecruiterSubscription() {
   const handleFlutterPayment =
     useFlutterwave(config);
 
-  function subscribe() {
+  async function subscribe() {
     if (!user) {
       alert("Please sign in before subscribing.");
       return;
@@ -102,6 +102,20 @@ function RecruiterSubscription() {
     }
 
     setLoading(true);
+    try {
+      const initialized = await initializeFlutterwavePayment({
+        purpose: "recruiter",
+        plan: selectedPlan,
+        txRef,
+      });
+      if (Number(initialized.amount) !== Number(plan.amount) || initialized.currency !== "NGN" || initialized.txRef !== txRef) {
+        throw new Error("The server checkout details do not match this recruiter plan.");
+      }
+    } catch (error) {
+      setLoading(false);
+      alert(error.message || "Secure checkout could not be initialized.");
+      return;
+    }
     handleFlutterPayment({
       callback: async (response) => {
         try {
