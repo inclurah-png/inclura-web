@@ -1010,7 +1010,9 @@ service cloud.firestore {
         && request.resource.data.status in ['pending', 'under_review']
         && request.resource.data.get('paymentStatus', 'pending') == resource.data.get('paymentStatus', 'pending')
         && request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null)
-        && request.resource.data.paymentAmount == resource.data.paymentAmount;
+        && request.resource.data.paymentAmount == resource.data.paymentAmount
+        && (resource.data.get('paymentStatus', 'pending') != 'paid'
+            || request.resource.data.verificationType == resource.data.verificationType);
 
       allow delete: if false;
     }
