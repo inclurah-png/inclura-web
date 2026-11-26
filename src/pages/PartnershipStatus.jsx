@@ -110,7 +110,9 @@ export default function PartnershipStatus() {
               {stageList.map(([key, label]) => {
                 const done = key === "application"
                   ? application.reviewProgress?.application === true
-                  : application.reviewProgress?.[key] === true;
+                  : ["approval", "executiveApproval"].includes(key)
+                    ? Boolean(application.finalApprovedAt || active)
+                    : application.reviewProgress?.[key] === true;
                 const timelineEntry = (application.timeline || []).find((entry) =>
                   String(entry.title || "").toLowerCase().includes(label.split(" ")[0].toLowerCase())
                 );
