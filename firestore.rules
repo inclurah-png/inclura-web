@@ -1204,7 +1204,11 @@ service cloud.firestore {
             && request.resource.data.status == 'Pending'
           )
         )
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.enterpriseId is string
+        && request.resource.data.keys().hasOnly([
+          'partnershipId', 'enterpriseId', 'title', 'status', 'createdAt'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
@@ -1229,7 +1233,12 @@ service cloud.firestore {
             && request.resource.data.status == 'Pending'
           )
         )
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.corporateId is string
+        && request.resource.data.keys().hasOnly([
+          'partnershipId', 'corporateId', 'partnershipType',
+          'title', 'status', 'createdAt'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
