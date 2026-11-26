@@ -360,27 +360,15 @@ corporateRiskScore >= 70
       setLoading(true);
 
       try {
-                const companyQuery =
-          query(
-            collection(
-              db,
-              "corporatePartnerships"
-            ),
-            where(
-              "companyName",
-              "==",
-              companyName
-            ),
-            where("userId", "==", currentUser.uid)
-          );
-
-        const companySnapshot =
-          await getDocs(
-            companyQuery
-          );
-
-        const companyExists =
-          !companySnapshot.empty;
+                const ownCorporateQuery = query(
+          collection(db, "corporatePartnerships"),
+          where("userId", "==", currentUser.uid)
+        );
+        const ownCorporateSnapshot = await getDocs(ownCorporateQuery);
+        const normalizedCompany = companyName.trim().toLowerCase();
+        const companyExists = ownCorporateSnapshot.docs.some((item) =>
+          String(item.data().companyName || "").trim().toLowerCase() === normalizedCompany
+        );
                 if (
           companyExists
         ) {
@@ -430,27 +418,10 @@ corporateRiskScore >= 70
           return;
 
         }
-                const emailQuery =
-          query(
-            collection(
-              db,
-              "corporatePartnerships"
-            ),
-            where(
-              "contactEmail",
-              "==",
-              contactEmail
-            ),
-            where("userId", "==", currentUser.uid)
-          );
-
-        const emailSnapshot =
-          await getDocs(
-            emailQuery
-          );
-
-        const emailExists =
-          !emailSnapshot.empty;
+                const normalizedContactEmail = contactEmail.trim().toLowerCase();
+        const emailExists = ownCorporateSnapshot.docs.some((item) =>
+          String(item.data().contactEmail || "").trim().toLowerCase() === normalizedContactEmail
+        );
                 if (
           emailExists
         ) {
