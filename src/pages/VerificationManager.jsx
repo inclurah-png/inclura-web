@@ -53,6 +53,9 @@ const [enterprisePending, setEnterprisePending] =
 const [governmentPending, setGovernmentPending] =
   useState(0);
 
+const [partnershipApplications, setPartnershipApplications] = useState([]);
+const [partnershipActionBusy, setPartnershipActionBusy] = useState("");
+
 const [recentRequests, setRecentRequests] =
   useState([]);
 
@@ -320,6 +323,33 @@ setGovernmentPending(
 
 useEffect(() => {
   let cancelled = false;
+  async function loadPartnershipApplications() {
+    try {
+      const collections = [
+        ["enterprise", "enterprisePartnerships"],
+        ["corporate", "corporatePartnerships"],
+        ["government", "governmentPartnerships"],
+      ];
+      const snapshots = await Promise.all(collections.map(([, name]) => getDocs(collection(db, name))));
+      const records = snapshots.flatMap((snapshot, index) =>
+        snapshot.docs.map((document) => ({
+          id: document.id,
+          type: collections[index][0],
+          ...document.data(),
+        }))
+      ).filter((item) => !["approved", "rejected"].includes(String(item.requestStatus || item.status || "").toLowerCase()));
+      if (!cancelled) setPartnershipApplications(records);
+    } catch (loadError) {
+      console.error("Partnership applications could not be loaded:", loadError);
+      if (!cancelled) setError("Unable to load partnership applications.");
+    }
+  }
+  loadPartnershipApplications();
+  return () => { cancelled = true; };
+}, []);
+
+useEffect(() => {
+  let cancelled = false;
 
   async function loadRevenueStatistics() {
     try {
@@ -424,6 +454,56 @@ const handleReject = async (requestId) => {
   const reason = window.prompt("Enter the rejection reason:");
   if (!reason || reason.trim().length < 5) return;
   await submitAdminDecision(requestId, "reject", reason.trim());
+};
+
+const submitPartnershipReview = async (application, stage, decision) => {
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const notes = decision === "rejected"
+    ? window.prompt("Enter the reason for rejecting this review stage:")
+    : "Review stage completed by an authorized administrator.";
+  if (decision === "rejected" && (!notes || notes.trim().length < 5)) return;
+  const actionKey = application.type + ":" + application.id + ":" + stage;
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/review`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, decision, notes: notes ? notes.trim() : "Review completed." }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Partnership review could not be saved.");
+    if (decision === "rejected") {
+      setPartnershipApplications((items) => items.filter((item) => item.id !== application.id || item.type !== application.type));
+    } else {
+      setPartnershipApplications((items) => items.map((item) =>
+        item.id === application.id && item.type === application.type
+          ? { ...item, reviewProgress: result.reviewProgress, timeline: (item.timeline || []).map((entry) =>
+              entry.title === ({
+                enterprise: { security: "Enterprise Security Review", accessibility: "Accessibility Review", compliance: "Compliance Review", integration: "Integration Review" },
+                corporate: { security: "Corporate Security Review", accessibility: "Accessibility Review", compliance: "Compliance Review" },
+                government: { identityReview: "Government Identity Review", securityReview: "IFSE Security Review", accessibilityReview: "Accessibility Compliance", complianceReview: "Compliance Review" },
+              }[item.type][stage]) ? { ...entry, status: "Completed" } : entry
+            ) }
+          : item
+      ));
+    }
+    window.alert(result.message || "Partnership review saved.");
+  } catch (reviewError) {
+    console.error("Partnership review failed:", reviewError);
+    setError(reviewError.message || "Partnership review could not be saved.");
+    window.alert(reviewError.message || "Partnership review could not be saved.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
 };
 
 const calculateApplicationCompleteness = (request) => {
@@ -652,6 +732,63 @@ marginBottom: "35px",
     Pending:
     <strong> {governmentPending}</strong>
   </p>
+</div>
+
+<div style={card}>
+  <h2>Enterprise, Corporate and Government Partnership Reviews</h2>
+  <p>Each stage is recorded by the secure administrator service. Completing review stages does not itself approve or activate a contract.</p>
+  {partnershipApplications.length === 0 ? (
+    <p>No partnership applications are awaiting review.</p>
+  ) : partnershipApplications.map((application) => {
+    const stageConfig = {
+      enterprise: [
+        ["security", "Enterprise Security Review"],
+        ["accessibility", "Accessibility Review"],
+        ["compliance", "Compliance Review"],
+        ["integration", "Integration Review"],
+      ],
+      corporate: [
+        ["security", "Corporate Security Review"],
+        ["accessibility", "Accessibility Review"],
+        ["compliance", "Compliance Review"],
+      ],
+      government: [
+        ["identityReview", "Government Identity Review"],
+        ["securityReview", "IFSE Security Review"],
+        ["accessibilityReview", "Accessibility Compliance"],
+        ["complianceReview", "Compliance Review"],
+      ],
+    }[application.type] || [];
+    return (
+      <div key={application.type + ":" + application.id} style={{ borderTop: "1px solid #334155", padding: "16px 0" }}>
+        <h3>{application.organizationName || application.companyName || application.agencyName || "Partnership applicant"}</h3>
+        <p><strong>Type:</strong> {application.type} | <strong>Contact:</strong> {application.contactEmail || application.officialEmail || "Not supplied"}</p>
+        <p><strong>Submission status:</strong> {application.requestStatus || application.status || "submitted"}</p>
+        <p><strong>Contract:</strong> {application.contractStatus || "Not activated"}</p>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {stageConfig.map(([stage, label]) => (
+            <button
+              key={stage}
+              type="button"
+              disabled={Boolean(partnershipActionBusy) || application.reviewProgress?.[stage] === true}
+              onClick={() => submitPartnershipReview(application, stage, "approved")}
+              style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #64748b", background: application.reviewProgress?.[stage] === true ? "#166534" : "#1e293b", color: "#fff", cursor: "pointer" }}
+            >
+              {application.reviewProgress?.[stage] === true ? label + " ✓" : "Complete: " + label}
+            </button>
+          ))}
+          <button
+            type="button"
+            disabled={Boolean(partnershipActionBusy)}
+            onClick={() => submitPartnershipReview(application, stageConfig[0]?.[0], "rejected")}
+            style={{ padding: "8px 12px", borderRadius: "8px", border: "none", background: "#991b1b", color: "#fff", cursor: "pointer" }}
+          >
+            Reject application
+          </button>
+        </div>
+      </div>
+    );
+  })}
 </div>
 
 <div style={card}>
