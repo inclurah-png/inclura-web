@@ -257,9 +257,6 @@ router.post("/flutterwave/webhook", async (req, res) => {
             creatorVerificationPaymentAt: now,
           }, { merge: true });
         } else {
-          transaction.update(applicationRef, {
-            paymentStatus: "paid", paymentId: transactionId, updatedAt: now,
-          });
           transaction.create(verificationPaymentRef, {
             userId: pending.userId, verificationId: pending.verificationId,
             category: pending.category, verificationType: pending.verificationType,
@@ -353,7 +350,7 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     }
 
     const database = firestore();
-    const pendingPaymentRef = purpose === "verification" ? database.collection("flutterwavePendingPayments").doc(reference) : null;
+    const pendingPaymentRef = database.collection("flutterwavePendingPayments").doc(reference);
     let expectedAmount;
     let expectedCurrency;
     let grant = null;
@@ -465,18 +462,18 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     const now = new Date();
 
     await database.runTransaction(async (transaction) => {
-      const pendingSnapshot = pendingPaymentRef ? await transaction.get(pendingPaymentRef) : null;
-      if (pendingPaymentRef) {
-        if (!pendingSnapshot?.exists) throw new Error("No server-created pending checkout matches this reference.");
-        const pending = pendingSnapshot.data();
-        if (pending.userId !== decoded.uid || pending.verificationId !== verificationId ||
-          pending.purpose !== "verification" ||
-          (pending.paymentStatus !== "pending" &&
-            !(pending.paymentStatus === "paid" && pending.transactionId === numericTransactionId)) ||
-          Number(pending.amount) !== expectedAmount || pending.currency !== expectedCurrency) {
-          throw new Error("The pending checkout does not match this account or application.");
-        }
-      }
+      const pendingSnapshot = await transaction.get(pendingPaymentRef);
+      if (!pendingSnapshot.exists) throw new Error("No server-created pending checkout matches this reference.");
+      const pending = pendingSnapshot.data();
+      if (
+        pending.userId !== decoded.uid || pending.purpose !== purpose ||
+        String(pending.plan || "") !== String(plan || "") ||
+        String(pending.verificationId || "") !== String(verificationId || "") ||
+        (pending.paymentStatus !== "pending" &&
+          !(pending.paymentStatus === "paid" && pending.transactionId === numericTransactionId)) ||
+        Number(pending.amount) !== expectedAmount ||
+        String(pending.currency).toUpperCase() !== expectedCurrency
+      ) throw new Error("The pending checkout does not match this account or purchase.");
       const existing = await transaction.get(paymentRef);
       if (existing.exists) {
         const prior = existing.data();
@@ -540,7 +537,7 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         createdAt: now,
       };
       transaction.create(paymentRef, paymentRecord);
-      if (pendingPaymentRef) transaction.update(pendingPaymentRef, {
+      transaction.update(pendingPaymentRef, {
         paymentStatus: "paid", transactionId: numericTransactionId,
         paidAt: now, verifiedByServer: true,
       });
