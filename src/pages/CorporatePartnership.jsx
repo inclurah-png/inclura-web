@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   addDoc,
@@ -35,8 +35,9 @@ const CONTRACT_TYPES = [
 ];
 function CorporatePartnership() {
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const prefill = location.state || {};
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -62,7 +63,7 @@ useEffect(() => {
 
   const [companyName,
     setCompanyName] =
-    useState("");
+    useState(prefill.organizationName || "");
 
   const [registrationNumber,
     setRegistrationNumber] =
@@ -70,23 +71,23 @@ useEffect(() => {
 
   const [website,
     setWebsite] =
-    useState("");
+    useState(prefill.website || "");
 
   const [industry,
     setIndustry] =
-    useState("");
+    useState(prefill.category || "");
 
   const [contactName,
     setContactName] =
-    useState("");
+    useState(prefill.fullName || "");
 
   const [contactEmail,
     setContactEmail] =
-    useState("");
+    useState(prefill.email || "");
 
   const [contactPhone,
     setContactPhone] =
-    useState("");
+    useState(prefill.phone || "");
 
   const [position,
     setPosition] =
@@ -120,7 +121,7 @@ useEffect(() => {
 
   const [businessNeeds,
     setBusinessNeeds] =
-    useState("");
+    useState(prefill.verificationType ? `Inclura verification type: ${prefill.verificationType}` : "");
 
   const partnershipFee =
     useMemo(() => {
