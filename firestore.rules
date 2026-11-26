@@ -225,12 +225,22 @@ service cloud.firestore {
                        .hasOnly([
                          'typing',
                          'typingUser',
-                         'participantNames',
-                         'participantProfiles',
                          'updatedAt',
                          'lastMessage',
                          'lastSenderId'
-                       ]);
+                       ])
+                    && (!('typing' in request.resource.data)
+                        || request.resource.data.typing is bool)
+                    && (!('typingUser' in request.resource.data)
+                        || request.resource.data.typingUser == request.auth.uid
+                        || request.resource.data.typingUser == '')
+                    && (!('lastMessage' in request.resource.data)
+                        || (request.resource.data.lastMessage is string
+                            && request.resource.data.lastMessage.size() <= 1000))
+                    && (!('lastSenderId' in request.resource.data)
+                        || request.resource.data.lastSenderId == request.auth.uid)
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastMessage', 'lastSenderId'])
+                        || request.resource.data.lastSenderId == request.auth.uid);
 
       allow delete: if false;
 
