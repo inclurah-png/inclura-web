@@ -27,7 +27,9 @@ function VerificationRequestsManager() {
 
   useEffect(() => { loadRequests(); }, [loadRequests]);
 
-  const submitAdminAction = async (request, action) => {\n    const rejectionReason = action === "reject" ? window.prompt("Enter the rejection reason (at least 5 characters):") : "";\n    if (action === "reject" && (!rejectionReason || rejectionReason.trim().length < 5)) return;
+  const submitAdminAction = async (request, action) => {
+    const rejectionReason = action === "reject" ? window.prompt("Enter the rejection reason (at least 5 characters):") : "";
+    if (action === "reject" && (!rejectionReason || rejectionReason.trim().length < 5)) return;
     const user = auth.currentUser;
     if (!user) {
       setError("Your administrator session has expired. Please sign in again.");
@@ -43,7 +45,8 @@ function VerificationRequestsManager() {
       const token = await user.getIdToken();
       const response = await fetch(
         `${IFSE_API_URL}/api/admin/verification/${encodeURIComponent(request.id)}/${action}`,
-        { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },\n          body: JSON.stringify(action === "reject" ? { reason: rejectionReason.trim() } : {}) }
+        { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+          body: JSON.stringify(action === "reject" ? { reason: rejectionReason.trim() } : {}) }
       );
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) throw new Error(result.message || "The administrator action could not be completed.");
