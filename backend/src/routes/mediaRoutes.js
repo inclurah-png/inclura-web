@@ -71,6 +71,9 @@ async function requireMediaUser(req, res, next) {
 
   try {
     const decoded = await auth().verifyIdToken(token, true);
+    if (decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "Verify your email address before accessing partnership contracts." });
+    }
     const account = await auth().getUser(decoded.uid);
     if (account.disabled) {
       return res.status(403).json({
@@ -196,6 +199,9 @@ router.post("/upload", requireMediaUser, upload.single("file"), async (req, res)
 
 router.post("/partnership-contract", requireMediaUser, async (req, res) => {
   try {
+    if (req.firebaseUser?.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "Verify your email address before submitting a signed contract." });
+    }
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return res.status(503).json({ success: false, message: "Private contract storage is not configured." });
     }
