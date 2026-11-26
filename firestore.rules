@@ -1006,6 +1006,18 @@ service cloud.firestore {
         && request.resource.data.reviewProgress.compliance == false
         && request.resource.data.reviewProgress.integration == false
         && request.resource.data.reviewProgress.approval == false
+        && request.resource.data.timeline is list
+        && request.resource.data.timeline.size() == 5
+        && request.resource.data.timeline[0].title == 'Application Started'
+        && request.resource.data.timeline[0].status == 'Completed'
+        && request.resource.data.timeline[1].title == 'Enterprise Security Review'
+        && request.resource.data.timeline[1].status == 'Pending'
+        && request.resource.data.timeline[2].title == 'Accessibility Review'
+        && request.resource.data.timeline[2].status == 'Pending'
+        && request.resource.data.timeline[3].title == 'Compliance Review'
+        && request.resource.data.timeline[3].status == 'Pending'
+        && request.resource.data.timeline[4].title == 'Enterprise Approval'
+        && request.resource.data.timeline[4].status == 'Pending'
         && request.resource.data.enterpriseStatus == 'Pending'
         && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
         && request.resource.data.approvalStatus == 'Not Approved'
