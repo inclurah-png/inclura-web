@@ -4,10 +4,6 @@ import DashboardLayout from "../components/DashboardLayout";
 import {
   collection,
   getDocs,
-  updateDoc,
-  doc,
-  addDoc,
-  serverTimestamp,
   query,
   where,
 } from "firebase/firestore";
@@ -20,6 +16,8 @@ import {
 import {
   calculateIFSERisk
 } from "../services/ifseRiskAutomation";
+
+const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
 
 function VerificationManager() {
 const [statistics, setStatistics] = useState({
@@ -566,309 +564,63 @@ const filteredRequests = verificationRequests.filter((item) => {
   return matchesSearch && matchesCategory;
 });
   
-const handleApprove = async (requestId) => {
-
+const submitAdminDecision = async (requestId, action, reason = "") => {
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  setError("");
   try {
-
-    const requestRef = doc(
-      db,
-      "verificationRequests",
-      requestId
-    );
-
-    await updateDoc(requestRef, {
-
-      status: "approved",
-
-      approvedAt: serverTimestamp(),
-
-      reviewedAt: serverTimestamp(),
-
-      updatedAt: serverTimestamp(),
-
-      executiveReviewCompleted: true,
-
-    });
-
-    await addDoc(
-
-      collection(
-        db,
-        "verificationAuditLogs"
-      ),
-
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/verification/${encodeURIComponent(requestId)}/${action}`,
       {
-
-        action:
-          "Verification Approved",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        createdAt:
-          serverTimestamp(),
-
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: action === "reject" ? JSON.stringify({ reason }) : undefined,
       }
-
     );
-
-    await addDoc(
-
-      collection(
-        db,
-        "ifseSecurityEvents"
-      ),
-
-      {
-
-        eventType:
-          "verification_approved",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        reviewed: true,
-
-        resolved: true,
-
-        severity: "low",
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    setVerificationRequests(previous =>
-
-      previous.map(item =>
-
-        item.id === requestId
-
-          ? {
-
-              ...item,
-
-              status: "approved",
-
-            }
-
-          : item
-
-      )
-
-    );
-
-    setRecentRequests(previous =>
-
-      previous.filter(
-
-        item => item.id !== requestId
-
-      )
-
-    );
-
-    if (
-
-      selectedRequest &&
-
-      selectedRequest.id === requestId
-
-    ) {
-
-      setSelectedRequest({
-
-        ...selectedRequest,
-
-        status: "approved",
-
-      });
-
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "The verification decision could not be completed.");
     }
 
-    alert(
-
-      "Verification approved successfully."
-
+    const nextStatus = action === "approve" ? "approved" : "rejected";
+    setVerificationRequests((previous) =>
+      previous.map((item) =>
+        item.id === requestId
+          ? { ...item, status: nextStatus, ...(action === "reject" ? { rejectionReason: reason } : {}) }
+          : item
+      )
     );
-
+    setRecentRequests((previous) => previous.filter((item) => item.id !== requestId));
+    if (selectedRequest?.id === requestId) {
+      setSelectedRequest({
+        ...selectedRequest,
+        status: nextStatus,
+        ...(action === "reject" ? { rejectionReason: reason } : {}),
+      });
+    }
+    window.alert(result.message || "Verification decision saved.");
   } catch (err) {
-
-    console.error(err);
-
-    alert(
-
-      "Unable to approve verification."
-
-    );
-
+    console.error("IFSE administrator verification decision failed:", err);
+    setError(err.message || "Unable to save the verification decision.");
+    window.alert(err.message || "Unable to save the verification decision.");
   }
+};
 
+const handleApprove = async (requestId) => {
+  await submitAdminDecision(requestId, "approve");
 };
 
 const handleReject = async (requestId) => {
-
-  const reason = window.prompt(
-
-    "Enter the rejection reason:"
-
-  );
-
-  if (!reason) return;
-
-  try {
-
-    const requestRef = doc(
-      db,
-      "verificationRequests",
-      requestId
-    );
-
-    await updateDoc(requestRef, {
-
-      status: "rejected",
-
-      rejectionReason: reason,
-
-      rejectedAt: serverTimestamp(),
-
-      reviewedAt: serverTimestamp(),
-
-      updatedAt: serverTimestamp(),
-
-      executiveReviewCompleted: true,
-
-    });
-
-    await addDoc(
-
-      collection(
-        db,
-        "verificationAuditLogs"
-      ),
-
-      {
-
-        action:
-          "Verification Rejected",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        rejectionReason: reason,
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    await addDoc(
-
-      collection(
-        db,
-        "ifseSecurityEvents"
-      ),
-
-      {
-        eventType:
-          "verification_rejected",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        reviewed: true,
-
-        resolved: true,
-
-        severity: "medium",
-
-        rejectionReason: reason,
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    setVerificationRequests(previous =>
-
-      previous.map(item =>
-
-        item.id === requestId
-
-          ? {
-
-              ...item,
-
-              status: "rejected",
-
-              rejectionReason: reason,
-
-            }
-
-          : item
-
-      )
-
-    );
-
-    setRecentRequests(previous =>
-
-      previous.filter(
-
-        item => item.id !== requestId
-
-      )
-
-    );
-
-    if (
-
-  selectedRequest &&
-
-  selectedRequest.id === requestId
-
-) {
-
-    setSelectedRequest({
-      ...selectedRequest,
-      status: "rejected",
-      rejectionReason: reason,
-    });
-
-}   // <-- ADD THIS
-
-alert(
-  "Verification rejected successfully."
-);
-
-} catch (err) {
-
-  console.error(err);
-
-  alert(
-    "Unable to reject verification."
-  );
-
-}
-
+  const reason = window.prompt("Enter the rejection reason:");
+  if (!reason || reason.trim().length < 5) return;
+  await submitAdminDecision(requestId, "reject", reason.trim());
 };
 
 const calculateIFSERisk = (request) => {
