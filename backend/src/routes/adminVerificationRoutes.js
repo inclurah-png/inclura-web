@@ -1,5 +1,6 @@
 import express from "express";
 import { auth, firestore } from "../config/firebaseAdmin.js";
+import creator from "../../../src/config/pricing/creator.js";
 
 const router = express.Router();
 
@@ -27,6 +28,98 @@ async function requireAdmin(req, res, next) {
 }
 
 router.use(requireAdmin);
+
+router.post("/creators/:userId/approve", async (req, res) => {
+  try {
+    const userId = String(req.params.userId || "");
+    if (!/^[A-Za-z0-9_-]{5,128}$/.test(userId)) {
+      return res.status(400).json({ success: false, message: "Invalid creator account." });
+    }
+
+    const expectedAmount = Number(
+      creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
+    );
+    if (!Number.isFinite(expectedAmount) || expectedAmount <= 0) {
+      return res.status(503).json({ success: false, message: "Creator verification pricing is not configured." });
+    }
+
+    const db = firestore();
+    const userRef = db.collection("users").doc(userId);
+    const auditRef = db.collection("creatorVerificationAuditLogs").doc();
+    const securityRef = db.collection("ifseSecurityEvents").doc();
+
+    await db.runTransaction(async (tx) => {
+      const userSnap = await tx.get(userRef);
+      if (!userSnap.exists) throw new Error("Creator account not found.");
+      const user = userSnap.data() || {};
+      if (user.creatorVerified === true) {
+        throw new Error("This creator account is already verified.");
+      }
+      if (user.creatorVerificationPaymentStatus !== "paid") {
+        throw new Error("A server-confirmed creator verification payment is required.");
+      }
+
+      const paymentId = String(user.creatorVerificationPaymentTransactionId || "");
+      const paymentReference = String(user.creatorVerificationPaymentReference || "");
+      if (!/^\\d{1,30}$/.test(paymentId) || !paymentReference) {
+        throw new Error("The creator payment reference is missing or invalid.");
+      }
+
+      const paymentRef = db.collection("flutterwavePayments").doc(paymentId);
+      const paymentSnap = await tx.get(paymentRef);
+      if (!paymentSnap.exists) {
+        throw new Error("The server-verified creator payment record was not found.");
+      }
+      const payment = paymentSnap.data() || {};
+      if (
+        payment.userId !== userId ||
+        payment.transactionId !== paymentId ||
+        payment.txRef !== paymentReference ||
+        payment.purpose !== "creator_verification" ||
+        payment.paymentStatus !== "paid" ||
+        payment.verifiedByServer !== true ||
+        String(payment.currency || "").toUpperCase() !== "USD" ||
+        !Number.isFinite(Number(payment.amount)) ||
+        Math.abs(Number(payment.amount) - expectedAmount) > 0.01
+      ) {
+        throw new Error("The creator payment record does not match the approved fee and account.");
+      }
+
+      const now = new Date();
+      tx.update(userRef, {
+        creatorVerified: true,
+        creatorVerificationStatus: "approved",
+        creatorVerifiedAt: now,
+        creatorVerificationReviewedAt: now,
+        creatorVerificationApprovedBy: req.adminUid,
+        badgeType: "creator",
+      });
+      tx.create(auditRef, {
+        userId,
+        paymentId,
+        action: "Creator Verification Approved",
+        performedBy: req.adminUid,
+        createdAt: now,
+      });
+      tx.create(securityRef, {
+        userId,
+        paymentId,
+        eventType: "creator_verification_approved",
+        source: "admin_review",
+        reviewed: true,
+        resolved: true,
+        reviewedBy: req.adminUid,
+        createdAt: now,
+      });
+    });
+
+    return res.json({ success: true, message: "Creator verification approved after payment and administrator review." });
+  } catch (error) {
+    const status = /not found/i.test(error.message) ? 404 :
+      /already verified|payment|required|reference|record|approved fee/i.test(error.message) ? 409 : 500;
+    return res.status(status).json({ success: false, message: error.message || "Creator approval failed." });
+  }
+});
 
 router.post("/verification/:verificationId/approve", async (req, res) => {
   try {
