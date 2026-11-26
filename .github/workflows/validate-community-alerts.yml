@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   frontend-build:
@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -29,38 +27,8 @@ jobs:
           VITE_SOS_NOTIFICATION_BACKEND_URL: https://inclura-ifse-backend.onrender.com
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
         run: npm run build
-      - name: Compatibility build with validated dependency security candidates
-        run: |
-          npm install --package-lock-only --save-exact vite@6.4.6 @vitejs/plugin-react@4.4.1
-          npm install --package-lock-only --save-exact react-router-dom@7.18.7
-          npm install --package-lock-only --save-exact firebase@13.4.0
-          npm pkg set 'overrides.axios=1.21.1' 'overrides.@grpc/grpc-js=1.14.7'
-          npm audit fix
-          npm ci
-          npm audit
-          npm run build
-      - name: Preserve validated dependency manifests
-        uses: actions/upload-artifact@v4
-        with:
-          name: inclura-validated-dependency-manifests
-          path: |
-            package.json
-            package-lock.json
-          if-no-files-found: error
-          retention-days: 1
-      - name: Commit audited dependency updates to the pull request branch
-        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package.json package-lock.json
-          if ! git diff --cached --quiet; then
-            git commit -m "fix(deps): apply validated zero-vulnerability updates"
-            git push origin "HEAD:${TARGET_BRANCH}"
-          fi
+      - name: Audit installed dependencies
+        run: npm audit --audit-level=moderate
 
   backend-syntax:
     runs-on: ubuntu-latest
