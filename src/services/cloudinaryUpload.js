@@ -229,6 +229,23 @@ export async function uploadPartnershipContract(type, partnershipId, file) {
   return result;
 }
 
+
+export async function getPartnershipContractAccess(type, partnershipId) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in again to access the contract.");
+  const token = await user.getIdToken();
+  const response = await fetch(IFSE_API_BASE + "/api/media/partnership-contract-access", {
+    method: "POST",
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ partnershipType: type, partnershipId }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success || !data.downloadUrl) {
+    throw new Error(data.message || "Unable to authorize private contract access.");
+  }
+  return data;
+}
+
 export async function getVerificationDocumentAccess(verificationId, publicId) {
   const user = auth.currentUser;
   if (!user) {
