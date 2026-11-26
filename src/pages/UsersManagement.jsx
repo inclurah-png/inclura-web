@@ -182,15 +182,6 @@ function UsersManagement() {
           restoredAt: serverTimestamp(),
         },
       },
-      verify: {
-        title: "Approve verification for this user?",
-        changes: {
-          verified: true,
-          verificationStatus: "approved",
-          status: "active",
-          verifiedAt: serverTimestamp(),
-        },
-      },
     };
 
     const selectedAction = actionDetails[action];
@@ -460,20 +451,6 @@ function UsersManagement() {
                                   Restore
                                 </button>
 
-                                <button
-                                  type="button"
-                                  disabled={
-                                    Boolean(busyUserId) ||
-                                    user.id === auth.currentUser?.uid ||
-                                    user.verified === true
-                                  }
-                                  onClick={() =>
-                                    performUserAction(user.id, "verify")
-                                  }
-                                  style={smallButtonStyle}
-                                >
-                                  Verify
-                                </button>
                               </div>
 
                               {busyUserId === user.id && (
