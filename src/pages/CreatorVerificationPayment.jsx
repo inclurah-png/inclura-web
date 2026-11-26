@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { auth } from "../firebase";
 import { VERIFICATION_PLANS } from "../config";
@@ -10,7 +10,7 @@ function CreatorVerificationPayment() {
     VERIFICATION_PLANS.creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
   );
   const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-  const txRef = useMemo(() => `INCLURA-CREATOR-${Date.now()}`, []);
+  // Generate a fresh reference for each render/payment attempt.\n  const txRef = `INCLURA-CREATOR-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const handleFlutterPayment = useFlutterwave({
     public_key: publicKey,
