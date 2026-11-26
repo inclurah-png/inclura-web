@@ -402,6 +402,8 @@ corporateRiskScore >= 70
               userId:
                 currentUser.uid,
 
+              source: "member_submission",
+
               severity:
                 "high",
 
@@ -469,6 +471,8 @@ corporateRiskScore >= 70
 
               userId:
                 currentUser.uid,
+
+              source: "member_submission",
 
               severity:
                 "medium",
@@ -660,6 +664,8 @@ serverTimestamp(),
 
     userId:
       currentUser.uid,
+
+    source: "member_submission",
 
     companyName,
 
