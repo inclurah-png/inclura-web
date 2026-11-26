@@ -561,6 +561,17 @@ export async function verifyAuthenticationService(data) {
     // Authentication successful
     // ---------------------------------------------------
 
+    // Re-check the Firebase account state before issuing a session.
+    // A previously registered passkey must not restore access to a disabled
+    // account or bypass Inclura's verified-email requirement.
+    const firebaseUser = await admin.auth().getUser(userId);
+    if (firebaseUser.disabled) {
+      throw new Error("This Inclura account is disabled. Contact support if you believe this is a mistake.");
+    }
+    if (firebaseUser.emailVerified !== true) {
+      throw new Error("Verify your Inclura email address before signing in with a passkey.");
+    }
+
     // Exchange the cryptographically verified passkey assertion for a
     // Firebase custom token so the browser receives a real Firebase session.
     const customToken = await admin.auth().createCustomToken(userId);
