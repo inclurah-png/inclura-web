@@ -4,6 +4,9 @@ import { auth, db } from "../firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
+const makeTxRef = (tier) =>
+  `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 function PremiumPayment() {
   const [pricing, setPricing] = useState({});
   const [loading, setLoading] = useState(false);
@@ -33,8 +36,6 @@ function PremiumPayment() {
     return () => { active = false; };
   }, []);
 
-  const makeTxRef = (tier) =>
-    `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const paymentConfigs = [
     ["silver", "SilverBadge", "Silver membership"],
