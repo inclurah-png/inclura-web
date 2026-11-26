@@ -71,8 +71,18 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         throw new Error("The payment record does not match this verification application.");
       }
       const userRef = db.collection("users").doc(userId);
-      const userSnap = await tx.get(userRef);
+      const [userSnap, badgeSnap, certificateSnap] = await Promise.all([
+        tx.get(userRef),
+        tx.get(badgeRef),
+        tx.get(certificateRef),
+      ]);
       if (!userSnap.exists) throw new Error("Applicant account not found.");
+      if (badgeSnap.exists && (badgeSnap.data().verificationId !== id || badgeSnap.data().userId !== userId)) {
+        throw new Error("A conflicting verification badge record already exists.");
+      }
+      if (certificateSnap.exists && (certificateSnap.data().verificationId !== id || certificateSnap.data().userId !== userId)) {
+        throw new Error("A conflicting verification certificate record already exists.");
+      }
 
       const trustScore = Math.max(0, Math.min(100,
         Number(application.ifseScore ?? application.ifseTrustScore ?? 0) || 0
@@ -110,22 +120,26 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         verifiedAt: now,
         lastVerificationUpdate: now,
       }, { merge: true });
-      tx.create(badgeRef, {
-        verificationId: id,
-        userId,
-        badgeType: application.accountType || "",
-        verificationType: application.verificationType || "",
-        category: application.category || "",
-        issuedAt: now,
-        active: true,
-      });
-      tx.create(certificateRef, {
-        verificationId: id,
-        userId,
-        certificateNumber,
-        issuedAt: now,
-        status: "active",
-      });
+      if (!badgeSnap.exists) {
+        tx.create(badgeRef, {
+          verificationId: id,
+          userId,
+          badgeType: application.accountType || "",
+          verificationType: application.verificationType || "",
+          category: application.category || "",
+          issuedAt: now,
+          active: true,
+        });
+      }
+      if (!certificateSnap.exists) {
+        tx.create(certificateRef, {
+          verificationId: id,
+          userId,
+          certificateNumber,
+          issuedAt: now,
+          status: "active",
+        });
+      }
       tx.create(timelineRef, {
         verificationId: id,
         title: "Executive Approval",
