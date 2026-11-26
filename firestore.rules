@@ -1099,6 +1099,12 @@ service cloud.firestore {
         && request.resource.data.reviewProgress.integration == false
         && request.resource.data.reviewProgress.approval == false
         && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'security', 'accessibility', 'compliance', 'integration', 'approval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
         && request.resource.data.timeline.size() == 5
         && request.resource.data.timeline[0].title == 'Application Started'
         && request.resource.data.timeline[0].status == 'Completed'
@@ -1143,6 +1149,12 @@ service cloud.firestore {
         && request.resource.data.reviewProgress.accessibility == false
         && request.resource.data.reviewProgress.approval == false
         && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'security', 'compliance', 'accessibility', 'approval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
         && request.resource.data.timeline.size() == 5
         && request.resource.data.timeline[0].title == 'Application Submitted'
         && request.resource.data.timeline[0].status == 'Completed'
@@ -1188,6 +1200,13 @@ service cloud.firestore {
         && request.resource.data.reviewProgress.complianceReview == false
         && request.resource.data.reviewProgress.executiveApproval == false
         && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'identityReview', 'securityReview', 'accessibilityReview', 'complianceReview', 'executiveApproval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[5].keys().hasOnly(['title', 'status'])
         && request.resource.data.timeline.size() == 6
         && request.resource.data.timeline[0].title == 'Application Started'
         && request.resource.data.timeline[0].status == 'Completed'
