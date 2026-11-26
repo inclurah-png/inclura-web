@@ -479,7 +479,13 @@ router.post("/verification-document-access", async (req, res) => {
       return res.status(401).json({ success: false, message: "Authentication required." });
     }
 
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = await auth().verifyIdToken(token, true);
+    if (decoded.admin === true) {
+      const adminRecord = await auth().getUser(decoded.uid);
+      if (adminRecord.disabled || decoded.email_verified !== true) {
+        return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
+      }
+    }
     const verificationId = String(req.body?.verificationId || "");
     const requestedPublicId = String(req.body?.publicId || "");
 
