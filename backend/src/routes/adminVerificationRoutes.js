@@ -335,7 +335,8 @@ router.post("/verification/:verificationId/reject", async (req, res) => {
     });
     return res.json({ success: true, message: "Verification application rejected." });
   } catch (error) {
-    const status = /not found/i.test(error.message) ? 404 :
+    const status = /administrators cannot/i.test(error.message) ? 403 :
+      /not found/i.test(error.message) ? 404 :
       /already been closed/i.test(error.message) ? 409 : 500;
     return res.status(status).json({ success: false, message: error.message || "Rejection failed." });
   }
