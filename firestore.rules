@@ -1312,7 +1312,12 @@ service cloud.firestore {
             request.resource.data.action == 'Government Partnership Submitted'
             && ownsPartnership(request.resource.data.verificationId)
           )
-        );
+        )
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'verificationId', 'action', 'performedBy', 'actor',
+          'category', 'verificationType', 'createdAt'
+        ]);
       allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId)
