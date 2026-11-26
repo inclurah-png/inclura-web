@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   frontend-build:
@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -46,6 +48,19 @@ jobs:
             package-lock.json
           if-no-files-found: error
           retention-days: 1
+      - name: Commit audited dependency updates to the pull request branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "fix(deps): apply validated zero-vulnerability updates"
+            git push origin "HEAD:${TARGET_BRANCH}"
+          fi
 
   backend-syntax:
     runs-on: ubuntu-latest
