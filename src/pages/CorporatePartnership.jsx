@@ -142,7 +142,7 @@ useEffect(() => {
     setAcceptedSecurity] =
     useState(false);
 
-    const [timeline, setTimeline] = useState([
+    const [timeline] = useState([
     { title: "Application Submitted", status: "Completed" },
     { title: "Corporate Security Review", status: "Pending" },
     { title: "Accessibility Review", status: "Pending" },
