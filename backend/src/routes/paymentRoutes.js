@@ -168,10 +168,38 @@ router.post("/verify", async (req, res) => {
       const existing = await transaction.get(paymentRef);
       if (existing.exists) {
         const prior = existing.data();
-        if (prior.userId !== decoded.uid || prior.txRef !== reference || prior.purpose !== purpose) {
-          throw new Error("This transaction reference has already been used.");
+        const priorMatches =
+          prior.userId === decoded.uid &&
+          prior.transactionId === numericTransactionId &&
+          prior.txRef === reference &&
+          prior.purpose === purpose &&
+          String(prior.plan || "") === String(plan || "") &&
+          String(prior.verificationId || "") === String(verificationId || "") &&
+          String(prior.currency || "").toUpperCase() === paidCurrency &&
+          Number.isFinite(Number(prior.amount)) &&
+          Math.abs(Number(prior.amount) - paidAmount) <= 0.01 &&
+          prior.paymentStatus === "paid" &&
+          prior.verifiedByServer === true;
+        if (!priorMatches) {
+          throw new Error("This transaction has already been recorded with different payment details.");
         }
         return;
+      }
+
+      if (verificationSnapshot) {
+        const currentApplication = await transaction.get(verificationSnapshot.ref);
+        if (!currentApplication.exists) {
+          throw new Error("Verification application no longer exists.");
+        }
+        const currentData = currentApplication.data();
+        if (
+          (currentData.userId !== decoded.uid && currentData.submittedBy !== decoded.uid) ||
+          currentData.paymentStatus === "paid" ||
+          currentData.status === "approved" ||
+          currentData.status === "rejected"
+        ) {
+          throw new Error("This verification application is no longer eligible for payment.");
+        }
       }
 
       const paymentRecord = {
