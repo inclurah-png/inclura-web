@@ -66,7 +66,7 @@ function VerificationApplication() {
     VERIFICATION_PLANS[category];
 
   const verificationTypes =
-    selectedCategory?.verificationTypes || [];
+    selectedCategory?.verificationTypes || selectedCategory?.certification || [];
 
   useEffect(() => {
 if (verificationTypes?.length > 0) {
@@ -81,25 +81,29 @@ if (verificationTypes?.length > 0) {
     );
 
   const paymentAmount =
-  selectedVerification?.monthlyUSD ??
-  selectedVerification?.yearlyUSD ??
-  0;
+    selectedVerification?.monthlyUSD ??
+    selectedVerification?.yearlyUSD ??
+    selectedVerification?.contractUSD ??
+    0;
 
-const paymentFrequency =
-  selectedVerification?.monthlyUSD
-    ? t("vaMonthly")
-    : selectedVerification?.yearlyUSD
-    ? t("vaYearly")
-    : t("vaOneTime");
+  const paymentFrequency =
+    selectedVerification?.monthlyUSD
+      ? t("vaMonthly")
+      : selectedVerification?.yearlyUSD
+      ? t("vaYearly")
+      : selectedVerification?.contractUSD
+      ? "Contract fee"
+      : t("vaOneTime");
 
   const isEnterprise =
   selectedVerification?.enterprise === true;
 
 const requiresContract =
-  selectedVerification?.contractRequired === true;
+  selectedVerification?.contractRequired === true && paymentAmount === 0;
 
 const contractRoute =
-  selectedVerification?.redirect || "";
+  selectedVerification?.redirect ||
+  (category === "organization" ? "/corporate-partnership" : "/enterprise-partnership");
 
 async function handleContinue() {
   const user = auth.currentUser;
@@ -126,6 +130,25 @@ async function handleContinue() {
 
   if (!verificationType) {
     alert(t("vaSelectType"));
+    return;
+  }
+
+  // Negotiated enterprise/corporate contracts use their dedicated
+  // partnership workflow. Do not create a zero-value payment request.
+  if (requiresContract) {
+    navigate(contractRoute, {
+      state: {
+        source: "verification-application",
+        category,
+        verificationType,
+        fullName,
+        email,
+        phone,
+        organizationName,
+        website,
+        officialEmail,
+      },
+    });
     return;
   }
 
