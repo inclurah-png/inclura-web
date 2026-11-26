@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import LanguageSelector from "../components/LanguageSelector";
 
 import {
   signInWithEmailAndPassword,
@@ -472,6 +473,10 @@ function Login() {
         padding: "24px",
       }}
     >
+      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+        <LanguageSelector />
+      </div>
+
       <div
         style={{
           width: "100%",
