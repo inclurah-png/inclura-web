@@ -250,6 +250,25 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       if (application.paymentStatus !== "paid") {
         throw new Error("Payment must be confirmed before verification can be approved.");
       }
+      const uploadedDocuments = application.uploadedDocuments && typeof application.uploadedDocuments === "object"
+        ? Object.values(application.uploadedDocuments)
+        : [];
+      const validDocumentTypes = new Set(["application/pdf", "image/jpeg", "image/jpg", "image/png"]);
+      const hasValidDocuments =
+        application.documentsSubmitted === true &&
+        application.documentSubmissionStatus === "submitted" &&
+        uploadedDocuments.length > 0 &&
+        uploadedDocuments.every((document) =>
+          typeof document?.cloudinaryPublicId === "string" &&
+          document.cloudinaryPublicId.startsWith("inclura/verificationDocuments/") &&
+          validDocumentTypes.has(String(document.fileType || "").toLowerCase()) &&
+          Number.isFinite(Number(document.fileSize)) &&
+          Number(document.fileSize) > 0 &&
+          Number(document.fileSize) <= 10 * 1024 * 1024
+        );
+      if (!hasValidDocuments) {
+        throw new Error("Required verification documents must be securely submitted before approval.");
+      }
       if (application.status === "approved" || application.status === "rejected") {
         throw new Error("This application has already been closed.");
       }
