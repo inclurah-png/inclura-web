@@ -115,6 +115,8 @@ color: "white",
 
 <p><strong>Payment Status:</strong> {request.paymentStatus}</p>
 
+<p><strong>Documents Submitted:</strong> {request.documentsSubmitted === true ? "Yes" : "No"}</p>
+
 <p><strong>Status:</strong> {request.status}</p>
 
 <p><strong>IFSE Assessment:</strong> Awaiting trusted server-side checks and administrator review. Client-submitted scores or badges are not used for approval.</p>
@@ -140,7 +142,7 @@ color: "white",
             >
               <button
                 onClick={() => submitAdminAction(request, "approve")}
-                disabled={request.paymentStatus !== "paid" || actionLoading === request.id + "approve"}
+                disabled={request.paymentStatus !== "paid" || request.documentsSubmitted !== true || actionLoading === request.id + "approve"}
                 style={{
                   background:
                     "green",
