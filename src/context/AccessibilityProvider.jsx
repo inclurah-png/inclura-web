@@ -27,7 +27,17 @@ import {
 
 import { db } from "../firebase";
 import i18n from "../i18n";
-import { getLanguageDirection, isSupportedLanguage } from "../config/languages";
+import { getLanguageDirection, isSupportedLanguage, SUPPORTED_LANGUAGES } from "../config/languages";
+
+function normalizePreferredLanguage(value) {
+  const requested = String(value || "en").trim().toLowerCase();
+  const match = SUPPORTED_LANGUAGES.find((language) =>
+    [language.code, language.name, language.nativeName].some(
+      (candidate) => candidate.toLowerCase() === requested
+    )
+  );
+  return match?.code || "en";
+}
 
 const AccessibilityContext = createContext();
 
@@ -340,13 +350,7 @@ export function AccessibilityProvider({ children }) {
    */
   const setLanguage = useCallback(
     (value) => {
-      const requestedLanguage =
-        typeof value === "string" && value.trim()
-          ? value.trim()
-          : "en";
-      const normalizedLanguage = isSupportedLanguage(requestedLanguage)
-        ? requestedLanguage
-        : "en";
+      const normalizedLanguage = normalizePreferredLanguage(value);
 
       setLanguageState(normalizedLanguage);
 
@@ -533,9 +537,7 @@ export function AccessibilityProvider({ children }) {
           storedGuestLanguage = "en";
         }
 
-        const guestLanguage = isSupportedLanguage(storedGuestLanguage)
-          ? storedGuestLanguage
-          : "en";
+        const guestLanguage = normalizePreferredLanguage(storedGuestLanguage);
 
         setLanguageState(guestLanguage);
         if (i18n.language !== guestLanguage) {
@@ -586,9 +588,7 @@ export function AccessibilityProvider({ children }) {
         ? userProfile.preferredLanguage
         : "en");
 
-    const normalizedSavedLanguage = isSupportedLanguage(savedLanguage)
-      ? savedLanguage
-      : "en";
+    const normalizedSavedLanguage = normalizePreferredLanguage(savedLanguage);
 
     setLanguageState(normalizedSavedLanguage);
 
