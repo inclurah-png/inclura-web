@@ -51,6 +51,42 @@ useState(false);
 
 const [acceptedSecurity, setAcceptedSecurity] =
 useState(false);
+
+// Resolve the selected fee from Inclura's published verification catalogue.
+// Never use a browser-supplied amount as the source of truth.
+const selectedVerification = useMemo(() => {
+  const category = String(verificationType || "").toLowerCase();
+  const catalogue = VERIFICATION_PLANS[category];
+  const entries = catalogue?.verificationTypes || catalogue?.certification || [];
+  return entries.find((item) => item.id === selectedTier) || null;
+}, [verificationType, selectedTier]);
+
+const paymentAmount = Number(
+  selectedVerification?.monthlyUSD ??
+  selectedVerification?.yearlyUSD ??
+  selectedVerification?.monthlyFee ??
+  selectedVerification?.fee ??
+  selectedVerification?.contractUSD ??
+  0
+);
+
+const flutterwaveConfig = {
+  public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || "",
+  tx_ref: flutterwaveTxRef,
+  amount: paymentAmount,
+  currency: "USD",
+  payment_options: paymentMethod === "Bank Transfer" ? "banktransfer" :
+    paymentMethod === "USSD" ? "ussd" : "card",
+  customer: {
+    email: currentUser?.email || "",
+    name: currentUser?.displayName || "Inclura Member",
+  },
+  customizations: {
+    title: "Inclura Verification",
+    description: "IFSE verification application payment",
+    logo: "",
+  },
+};
   useEffect(() => {
   const unsubscribe = onAuthStateChanged(
     auth,
@@ -292,7 +328,7 @@ Complete your verification payment securely through the
       >
 
         <div>
-          <strong>{t("vaFee")}</strong>
+          <strong>Verification fee</strong>
           <p>
             $
             {selectedVerification.monthlyUSD ??
