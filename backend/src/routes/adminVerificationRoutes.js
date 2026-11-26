@@ -48,7 +48,7 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       const userId = String(application.userId || application.submittedBy || "");
       if (!userId) throw new Error("The application has no valid member account.");
       const paymentId = String(application.paymentId || "");
-      if (!/^\\d{1,30}$/.test(paymentId)) {
+      if (!/^\d{1,30}$/.test(paymentId)) {
         throw new Error("A server-verified payment record is required before approval.");
       }
       const paymentRef = db.collection("verificationPayments").doc(paymentId);
