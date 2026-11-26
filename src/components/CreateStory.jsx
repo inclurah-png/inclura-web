@@ -236,12 +236,12 @@ async function submitMediaStory(file, mediaType) {
     }
 
     if (mediaType === "image" && !ALLOWED_STORY_IMAGE_TYPES.has(file.type)) {
-      alert("Choose a JPEG, PNG, WebP, GIF or AVIF image.");
+      alert(t("storyImageTypeError"));
       return;
     }
 
     if (mediaType === "video" && !ALLOWED_STORY_VIDEO_TYPES.has(file.type)) {
-      alert("Choose an MP4, WebM or MOV video.");
+      alert(t("storyVideoTypeError"));
       return;
     }
 
