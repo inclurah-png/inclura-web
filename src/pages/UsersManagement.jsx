@@ -3,9 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   collection,
   getDocs,
-  doc,
-  updateDoc,
-  serverTimestamp,
 } from "firebase/firestore";
 
 import { getIdTokenResult } from "firebase/auth";
@@ -163,27 +160,9 @@ function UsersManagement() {
     }
 
     const actionDetails = {
-      suspend: {
-        title: "Suspend this user?",
-        changes: {
-          status: "suspended",
-          suspendedAt: serverTimestamp(),
-        },
-      },
-      ban: {
-        title: "Ban this user?",
-        changes: {
-          status: "banned",
-          bannedAt: serverTimestamp(),
-        },
-      },
-      restore: {
-        title: "Restore this user?",
-        changes: {
-          status: "active",
-          restoredAt: serverTimestamp(),
-        },
-      },
+      suspend: { title: "Suspend this user?" },
+      ban: { title: "Ban this user?" },
+      restore: { title: "Restore this user?" },
     };
 
     const selectedAction = actionDetails[action];
@@ -216,10 +195,24 @@ function UsersManagement() {
         throw new Error("Administrator permission is no longer available.");
       }
 
-      // Firestore Security Rules must independently enforce admin access.
-      await updateDoc(doc(db, "users", userId), selectedAction.changes);
+      const token = await currentUser.getIdToken();
+      const response = await fetch(
+        `${IFSE_API_URL}/api/admin/users/${encodeURIComponent(userId)}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ action }),
+        }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || "The account status could not be updated.");
+      }
 
-      setPageMessage("The user account was updated successfully.");
+      setPageMessage(result.message || "The user account was updated successfully.");
 
       await loadUsers();
     } catch (error) {
