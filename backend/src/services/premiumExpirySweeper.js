@@ -1,3 +1,4 @@
+import { FieldValue } from "firebase-admin/firestore";
 import { firestore } from "../config/firebaseAdmin.js";
 
 let expirySweepRunning = false;
@@ -8,27 +9,46 @@ export async function runPremiumExpirySweep() {
   try {
     const db = firestore();
     const now = new Date();
-    const snapshot = await db.collection("users")
-      .where("premiumExpiryDate", "<=", now)
-      .limit(400)
-      .get();
+    let cursor = null;
+    let expired = 0;
+    let pages = 0;
 
-    const expiredUsers = snapshot.docs.filter((userDoc) => {
-      const data = userDoc.data();
-      return data.premium === true || data.premiumActive === true;
-    });
-    if (expiredUsers.length === 0) return { skipped: false, expired: 0 };
-    const batch = db.batch();
-    expiredUsers.forEach((userDoc) => {
-      batch.set(userDoc.ref, {
-        premium: false,
-        premiumActive: false,
-        premiumTier: "",
-        premiumExpiredAt: now,
-      }, { merge: true });
-    });
-    await batch.commit();
-    return { skipped: false, expired: expiredUsers.length };
+    // Remove processed expiry dates so a large set of already-expired,
+    // inactive accounts cannot block later expired subscriptions.
+    while (pages < 20) {
+      let query = db.collection("users")
+        .where("premiumExpiryDate", "<=", now)
+        .orderBy("premiumExpiryDate")
+        .limit(400);
+      if (cursor) query = query.startAfter(cursor);
+
+      const snapshot = await query.get();
+      if (snapshot.empty) break;
+
+      const batch = db.batch();
+      snapshot.docs.forEach((userDoc) => {
+        const data = userDoc.data();
+        const isActive = data.premium === true || data.premiumActive === true;
+        const update = {
+          premiumLastExpiryDate: data.premiumExpiryDate,
+          premiumExpiryDate: FieldValue.delete(),
+        };
+        if (isActive) {
+          update.premium = false;
+          update.premiumActive = false;
+          update.premiumTier = "";
+          update.premiumExpiredAt = now;
+          expired += 1;
+        }
+        batch.set(userDoc.ref, update, { merge: true });
+      });
+      await batch.commit();
+      cursor = snapshot.docs[snapshot.docs.length - 1];
+      pages += 1;
+      if (snapshot.size < 400) break;
+    }
+
+    return { skipped: false, expired, pages };
   } finally {
     expirySweepRunning = false;
   }
