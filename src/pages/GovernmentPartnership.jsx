@@ -103,8 +103,14 @@ const [acceptedPrivacy, setAcceptedPrivacy] =
 const [acceptedSecurity, setAcceptedSecurity] =
   useState(false);
 
-const [timeline, setTimeline] =
-  useState([]);
+const [timeline, setTimeline] = useState([
+  { title: "Application Started", status: "Completed" },
+  { title: "Government Identity Review", status: "Pending" },
+  { title: "IFSE Security Review", status: "Pending" },
+  { title: "Accessibility Compliance", status: "Pending" },
+  { title: "Compliance Review", status: "Pending" },
+  { title: "Executive Approval", status: "Pending" },
+]);
 
 const [reviewProgress, setReviewProgress] = useState({
   application: true,
@@ -115,36 +121,7 @@ const [reviewProgress, setReviewProgress] = useState({
   executiveApproval: false,
 });
 
-  useEffect(() => {
-
-  setTimeline([
-    {
-      title: "Application Started",
-      status: "Completed",
-    },
-    {
-      title: "Government Identity Review",
-      status: "Pending",
-    },
-    {
-      title: "IFSE Security Review",
-      status: "Pending",
-    },
-    {
-      title: "Accessibility Compliance",
-      status: "Pending",
-    },
-    {
-      title: "Compliance Review",
-      status: "Pending",
-    },
-    {
-      title: "Executive Approval",
-     status: "Pending",
-    },
-  ]);
-
-}, []);
+  
 
   const governmentBenefits = [
 
