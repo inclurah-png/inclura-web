@@ -581,16 +581,14 @@ export async function verifyAuthenticationService(data) {
 // Face Verification
 // =======================================================
 
-export async function verifyFaceService(data) {
+export async function verifyFaceService() {
   return {
-    success: true,
+    success: false,
     verified: false,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
     engine: "FaceAuthenticityEngine",
-
-    message:
-      "Face verification engine will be connected next.",
-
-    request: data,
+    message: "Face verification is unavailable until a trusted verification provider is configured.",
   };
 }
 
@@ -598,17 +596,14 @@ export async function verifyFaceService(data) {
 // Biometric Verification
 // =======================================================
 
-export async function verifyBiometricService(data) {
+export async function verifyBiometricService() {
   return {
-    success: true,
+    success: false,
     verified: false,
-    engine:
-      "BiometricVerificationEngine",
-
-    message:
-      "Biometric verification engine will be connected next.",
-
-    request: data,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
+    engine: "BiometricVerificationEngine",
+    message: "Biometric verification is unavailable until a trusted verification provider is configured.",
   };
 }
 
@@ -616,16 +611,13 @@ export async function verifyBiometricService(data) {
 // Identity Verification
 // =======================================================
 
-export async function verifyIdentityService(data) {
+export async function verifyIdentityService() {
   return {
-    success: true,
+    success: false,
     verified: false,
-    engine:
-      "IdentityVerificationEngine",
-
-    message:
-      "Identity verification engine will be connected next.",
-
-    request: data,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
+    engine: "IdentityVerificationEngine",
+    message: "Identity verification is unavailable until a trusted verification provider is configured.",
   };
-    }    
+}
