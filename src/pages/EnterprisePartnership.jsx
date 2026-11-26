@@ -423,7 +423,8 @@ enterpriseRiskScore >= 40
               "organizationName",
               "==",
               organizationName
-            )
+            ),
+            where("userId", "==", currentUser.uid)
           );
 
         const organizationSnapshot =
@@ -490,7 +491,8 @@ enterpriseRiskScore >= 40
               "contactEmail",
               "==",
               contactEmail
-            )
+            ),
+            where("userId", "==", currentUser.uid)
           );
 
         const emailSnapshot =
