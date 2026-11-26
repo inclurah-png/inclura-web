@@ -217,8 +217,15 @@ function ProfileHeader({
       return null;
     }
 
+    const expiryValue = profile.premiumExpiryDate;
     const expiry =
-      profile.premiumExpiryDate.toDate();
+      expiryValue && typeof expiryValue.toDate === "function"
+        ? expiryValue.toDate()
+        : new Date(expiryValue);
+
+    if (Number.isNaN(expiry.getTime())) {
+      return null;
+    }
 
     const diff =
       expiry - new Date();
