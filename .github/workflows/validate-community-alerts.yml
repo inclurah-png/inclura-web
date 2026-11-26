@@ -71,5 +71,5 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Validate Firestore rules with emulator
-        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-inclura-rules "echo Firestore rules loaded successfully"
+      - name: Validate Firestore and Storage rules with emulators
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore,storage --project demo-inclura-rules "echo Firestore and Storage rules loaded successfully"
