@@ -413,27 +413,15 @@ enterpriseRiskScore >= 40
       setLoading(true);
 
       try {
-                const organizationQuery =
-          query(
-            collection(
-              db,
-              "enterprisePartnerships"
-            ),
-            where(
-              "organizationName",
-              "==",
-              organizationName
-            ),
-            where("userId", "==", currentUser.uid)
-          );
-
-        const organizationSnapshot =
-          await getDocs(
-            organizationQuery
-          );
-
-        const organizationExists =
-          !organizationSnapshot.empty;
+                const ownEnterpriseQuery = query(
+          collection(db, "enterprisePartnerships"),
+          where("userId", "==", currentUser.uid)
+        );
+        const ownEnterpriseSnapshot = await getDocs(ownEnterpriseQuery);
+        const normalizedOrganization = organizationName.trim().toLowerCase();
+        const organizationExists = ownEnterpriseSnapshot.docs.some((item) =>
+          String(item.data().organizationName || "").trim().toLowerCase() === normalizedOrganization
+        );
                 if (
           organizationExists
         ) {
@@ -483,27 +471,10 @@ enterpriseRiskScore >= 40
           return;
 
         }
-                const emailQuery =
-          query(
-            collection(
-              db,
-              "enterprisePartnerships"
-            ),
-            where(
-              "contactEmail",
-              "==",
-              contactEmail
-            ),
-            where("userId", "==", currentUser.uid)
-          );
-
-        const emailSnapshot =
-          await getDocs(
-            emailQuery
-          );
-
-        const emailExists =
-          !emailSnapshot.empty;
+                const normalizedContactEmail = contactEmail.trim().toLowerCase();
+        const emailExists = ownEnterpriseSnapshot.docs.some((item) =>
+          String(item.data().contactEmail || "").trim().toLowerCase() === normalizedContactEmail
+        );
                 if (
           emailExists
         ) {
