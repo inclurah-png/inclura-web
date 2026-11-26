@@ -114,6 +114,9 @@ return `IFSE-${Date.now()}`;
 
 }, []);
 
+// Keep the application reference separate from Flutterwave's unique payment-attempt reference.
+const flutterwaveTxRef = `INCLURA-VERIFICATION-${currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+
 const calculatePaymentRisk = () => {
 
 let score = 0;
@@ -187,7 +190,7 @@ const flutterwaveConfig = {
   public_key:
     import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
 
-  tx_ref: transactionId,
+  tx_ref: flutterwaveTxRef,
 
   amount: paymentAmount,
 
@@ -353,7 +356,7 @@ const handlePayment = async (e) => {
           purpose: "verification",
           verificationId,
           transactionId: String(response.transaction_id),
-          txRef: response.tx_ref || transactionId,
+          txRef: response.tx_ref || flutterwaveTxRef,
           paymentMethod,
         });
 
