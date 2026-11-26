@@ -12,10 +12,6 @@ import {
   getPremiumBadge,
 } from "../config/verificationTypes";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
 import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
 import { useTranslation } from "react-i18next";
@@ -81,14 +77,7 @@ function StoriesSection() {
   function getBadge(story) {
   if (!story?.verified) return null;
 
-  const migratedType =
-    migrateVerificationId(
-      story.badgeType
-    );
-
-  return getVerificationBadge(
-    migratedType
-  );
+  return getVerificationBadge(story.badgeType);
 }
 
   function getPremium(story) {
