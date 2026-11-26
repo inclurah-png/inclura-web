@@ -1,128 +1,32 @@
-import {
-  collection,
-  getDocs,
-  doc,
-  updateDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { auth } from "../firebase";
 
-import { db } from "../firebase";
+const IFSE_API_URL =
+  import.meta.env.VITE_IFSE_API_URL ||
+  "https://inclura-ifse-backend.onrender.com";
 
+// Executive reports are generated only by the trusted IFSE backend.
+// Browser clients must never write platform-wide analytics documents.
 export async function updatePlatformInsights() {
-  try {
-    const usersSnapshot = await getDocs(
-      collection(db, "users")
-    );
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Sign in with an authorized administrator account.");
+  }
 
-    let totalUsers = 0;
-    let premiumUsers = 0;
-    let verifiedCreators = 0;
-    let qualifiedCreators = 0;
-    let activeUsers = 0;
+  const token = await user.getIdToken();
+  const response = await fetch(`${IFSE_API_URL}/api/analytics/platform`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+  });
 
-    usersSnapshot.forEach((docSnap) => {
-      const user = docSnap.data();
-
-      totalUsers++;
-
-      const expiryValue = user.premiumExpiryDate;
-      const expiryDate = expiryValue && typeof expiryValue.toDate === "function"
-        ? expiryValue.toDate()
-        : expiryValue
-          ? new Date(expiryValue)
-          : null;
-      const hasPremiumEntitlement =
-        user.premium === true ||
-        user.premiumActive === true ||
-        user.premiumPlan?.active === true;
-      const premiumIsCurrent =
-        !expiryDate ||
-        (Number.isFinite(expiryDate.getTime()) && expiryDate.getTime() > Date.now());
-
-      if (hasPremiumEntitlement && premiumIsCurrent) {
-        premiumUsers++;
-      }
-
-      if (user.creatorVerified === true) {
-        verifiedCreators++;
-      }
-
-      if (
-        user.creatorEconomy?.premiumQualified ===
-        true
-      ) {
-        qualifiedCreators++;
-      }
-
-      const lastLoginValue = user.lastLogin;
-      const lastLoginDate = lastLoginValue && typeof lastLoginValue.toDate === "function"
-        ? lastLoginValue.toDate()
-        : lastLoginValue
-          ? new Date(lastLoginValue)
-          : null;
-      if (
-        lastLoginDate &&
-        Number.isFinite(lastLoginDate.getTime()) &&
-        Date.now() - lastLoginDate.getTime() < 1000 * 60 * 60 * 24 * 20
-      ) {
-        activeUsers++;
-      }
-    });
-
-    //------------------------------------------------
-
-    let platformHealth = "Excellent";
-
-    if (activeUsers < 100)
-      platformHealth = "Poor";
-
-    else if (activeUsers < 500)
-      platformHealth = "Good";
-
-    //------------------------------------------------
-
-    let overallHealthScore = 100;
-
-    if (activeUsers < 500)
-      overallHealthScore -= 10;
-
-    if (qualifiedCreators < 100)
-      overallHealthScore -= 15;
-
-    if (premiumUsers < 50)
-      overallHealthScore -= 15;
-
-    if (verifiedCreators < 50)
-      overallHealthScore -= 10;
-
-    //------------------------------------------------
-
-    await updateDoc(
-      doc(db, "executiveReports", "current"),
-      {
-        totalUsers,
-
-        activeCreators:
-          activeUsers,
-
-        premiumUsers,
-
-        verifiedCreators,
-
-        qualifiedCreators,
-
-        platformHealth,
-
-        overallHealthScore,
-
-        generatedAt:
-          serverTimestamp(),
-      }
-    );
-  } catch (error) {
-    console.error(
-      "Platform Insights Error:",
-      error
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.success !== true || !result.report) {
+    throw new Error(
+      result.message || "The executive analytics report could not be generated."
     );
   }
+
+  return result.report;
 }
