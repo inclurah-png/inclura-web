@@ -182,6 +182,8 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
           prior.purpose === purpose &&
           String(prior.plan || "") === String(plan || "") &&
           String(prior.verificationId || "") === String(verificationId || "") &&
+          String(prior.category || "") === String(verificationSnapshot?.data()?.category || "") &&
+          String(prior.verificationType || "") === String(verificationSnapshot?.data()?.verificationType || "") &&
           String(prior.currency || "").toUpperCase() === paidCurrency &&
           Number.isFinite(Number(prior.amount)) &&
           Math.abs(Number(prior.amount) - paidAmount) <= 0.01 &&
@@ -223,6 +225,8 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         purpose,
         plan: plan || null,
         verificationId: verificationId || null,
+        category: verificationSnapshot?.data()?.category || null,
+        verificationType: verificationSnapshot?.data()?.verificationType || null,
         amount: paidAmount,
         currency: paidCurrency,
         paymentStatus: "paid",
