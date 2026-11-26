@@ -1,4 +1,5 @@
 import express from "express";
+import { timingSafeEqual } from "node:crypto";
 import { limitPaymentVerification } from "../middleware/passkeyRateLimit.js";
 import { auth, firestore } from "../config/firebaseAdmin.js";
 import creator from "../../../src/config/pricing/creator.js";
@@ -20,6 +21,123 @@ const VERIFICATION_PLANS = {
 };
 
 const router = express.Router();
+
+async function authenticatePaymentUser(req) {
+  const authorization = req.headers.authorization || "";
+  const match = authorization.match(/^Bearer\\s+(.+)$/i);
+  if (!match) { const error = new Error("A valid Inclura session is required."); error.status = 401; throw error; }
+  const decoded = await auth().verifyIdToken(match[1], true);
+  if (decoded.email_verified !== true) { const error = new Error("Verify your email address before making a payment."); error.status = 403; throw error; }
+  const userRecord = await auth().getUser(decoded.uid);
+  if (userRecord.disabled) { const error = new Error("This account is disabled."); error.status = 403; throw error; }
+  return { decoded, userRecord };
+}
+
+function resolveVerificationPrice(application) {
+  const categoryPricing = VERIFICATION_PLANS[String(application.category || "").toLowerCase()];
+  const selectedPlan = (categoryPricing?.verificationTypes || categoryPricing?.certification || [])
+    .find((item) => item.id === application.verificationType);
+  const amount = Number(selectedPlan?.monthlyUSD ?? selectedPlan?.yearlyUSD ?? selectedPlan?.monthlyFee ?? selectedPlan?.fee ?? selectedPlan?.contractUSD ?? 0);
+  const applicationAmount = Number(application.paymentAmount);
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(applicationAmount) || Math.abs(applicationAmount - amount) > 0.01) {
+    const error = new Error("The application price does not match Inclura's approved pricing."); error.status = 409; throw error;
+  }
+  return amount;
+}
+
+
+router.post("/initialize", limitPaymentVerification, async (req, res) => {
+  try {
+    const { decoded, userRecord } = await authenticatePaymentUser(req);
+    const { purpose, verificationId, txRef } = req.body || {};
+    if (purpose !== "verification") return unauthorized(res, 400, "This checkout type is not available.");
+    const reference = String(txRef || "");
+    const id = String(verificationId || "");
+    if (!/^[A-Za-z0-9_-]{8,120}$/.test(reference) || !/^[A-Za-z0-9_-]{10,150}$/.test(id)) {
+      return unauthorized(res, 400, "A valid checkout reference and verification application are required.");
+    }
+    if (!process.env.FLW_SECRET_KEY) return unauthorized(res, 503, "Flutterwave is not configured on the server.");
+    const database = firestore();
+    const applicationRef = database.collection("verificationRequests").doc(id);
+    const applicationSnapshot = await applicationRef.get();
+    if (!applicationSnapshot.exists) return unauthorized(res, 404, "Verification application not found.");
+    const application = applicationSnapshot.data();
+    if (application.userId !== decoded.uid && application.submittedBy !== decoded.uid) return unauthorized(res, 403, "This application does not belong to your account.");
+    if (application.paymentStatus === "paid" || application.status === "approved" || application.status === "rejected") return unauthorized(res, 409, "This application is not eligible for payment.");
+    const amount = resolveVerificationPrice(application);
+    const pendingRef = database.collection("flutterwavePendingPayments").doc(reference);
+    const pendingRecord = {
+      txRef: reference, userId: decoded.uid,
+      customerEmail: String(userRecord.email || "").trim().toLowerCase(),
+      purpose: "verification", verificationId: id,
+      category: String(application.category || ""),
+      verificationType: String(application.verificationType || ""),
+      amount, currency: "USD", gateway: "flutterwave",
+      paymentStatus: "pending", createdAt: new Date(),
+    };
+    await database.runTransaction(async (transaction) => {
+      const existing = await transaction.get(pendingRef);
+      if (existing.exists) {
+        const prior = existing.data();
+        if (prior.userId !== decoded.uid || prior.verificationId !== id || prior.paymentStatus !== "pending") throw new Error("This checkout reference has already been used.");
+        return;
+      }
+      transaction.create(pendingRef, pendingRecord);
+    });
+    return res.status(200).json({ success: true, txRef: reference, amount, currency: "USD", email: pendingRecord.customerEmail });
+  } catch (error) {
+    const status = Number.isInteger(error.status) ? error.status : 500;
+    if (status === 500) console.error("IFSE payment initialization failed:", error);
+    return res.status(status).json({ success: false, message: status === 500 ? "Payment checkout could not be initialized." : error.message });
+  }
+});
+
+router.post("/flutterwave/webhook", async (req, res) => {
+  try {
+    const configuredHash = process.env.FLW_SECRET_HASH || "";
+    const receivedHash = String(req.headers["verif-hash"] || "");
+    if (!configuredHash || !receivedHash) return res.status(401).json({ received: false });
+    const expected = Buffer.from(configuredHash);
+    const received = Buffer.from(receivedHash);
+    if (expected.length !== received.length || !timingSafeEqual(expected, received)) return res.status(401).json({ received: false });
+
+    const event = req.body || {};
+    if (event.event !== "charge.completed") return res.status(200).json({ received: true, ignored: true });
+    const transactionId = String(event.data?.id || "");
+    const reference = String(event.data?.tx_ref || "");
+    if (!/^\\d{1,30}$/.test(transactionId) || !/^[A-Za-z0-9_-]{8,120}$/.test(reference)) return res.status(400).json({ received: false });
+    if (!process.env.FLW_SECRET_KEY) return res.status(503).json({ received: false });
+
+    const database = firestore();
+    const pendingRef = database.collection("flutterwavePendingPayments").doc(reference);
+    const pendingSnapshot = await pendingRef.get();
+    if (!pendingSnapshot.exists) return res.status(404).json({ received: false });
+    const pending = pendingSnapshot.data();
+    if (pending.gateway !== "flutterwave") return res.status(409).json({ received: false });
+    if (pending.gatewayTransactionId === transactionId && pending.gatewayConfirmation === "verified") return res.status(200).json({ received: true, duplicate: true });
+
+    const verifyResponse = await fetch(`https://api.flutterwave.com/v3/transactions/${transactionId}/verify`, {
+      headers: { Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`, Accept: "application/json" },
+    });
+    const verification = await verifyResponse.json().catch(() => ({}));
+    const payment = verification.data || {};
+    const matches = verifyResponse.ok && verification.status === "success" &&
+      String(payment.id) === transactionId && payment.status === "successful" &&
+      payment.tx_ref === reference &&
+      String(payment.currency || "").toUpperCase() === String(pending.currency).toUpperCase() &&
+      Number.isFinite(Number(payment.amount)) && Math.abs(Number(payment.amount) - Number(pending.amount)) <= 0.01 &&
+      String(payment.customer?.email || "").trim().toLowerCase() === pending.customerEmail;
+    if (!matches) return res.status(409).json({ received: false, message: "Transaction did not match the pending checkout." });
+
+    await pendingRef.update({ gatewayConfirmation: "verified", gatewayTransactionId: transactionId, gatewayConfirmedAt: new Date() });
+    return res.status(200).json({ received: true, verified: true });
+  } catch (error) {
+    console.error("Flutterwave webhook processing failed:", error);
+    return res.status(500).json({ received: false });
+  }
+});
+
+
 
 const RECRUITER_PLANS = Object.freeze({
   starter: { amount: 20000, jobs: 5 },
@@ -67,6 +185,7 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     }
 
     const database = firestore();
+    const pendingPaymentRef = purpose === "verification" ? database.collection("flutterwavePendingPayments").doc(reference) : null;
     let expectedAmount;
     let expectedCurrency;
     let grant = null;
@@ -178,6 +297,16 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     const now = new Date();
 
     await database.runTransaction(async (transaction) => {
+      const pendingSnapshot = pendingPaymentRef ? await transaction.get(pendingPaymentRef) : null;
+      if (pendingPaymentRef) {
+        if (!pendingSnapshot?.exists) throw new Error("No server-created pending checkout matches this reference.");
+        const pending = pendingSnapshot.data();
+        if (pending.userId !== decoded.uid || pending.verificationId !== verificationId ||
+          pending.purpose !== "verification" || pending.paymentStatus !== "pending" ||
+          Number(pending.amount) !== expectedAmount || pending.currency !== expectedCurrency) {
+          throw new Error("The pending checkout does not match this account or application.");
+        }
+      }
       const existing = await transaction.get(paymentRef);
       if (existing.exists) {
         const prior = existing.data();
@@ -241,6 +370,10 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         createdAt: now,
       };
       transaction.create(paymentRef, paymentRecord);
+      if (pendingPaymentRef) transaction.update(pendingPaymentRef, {
+        paymentStatus: "paid", transactionId: numericTransactionId,
+        paidAt: now, verifiedByServer: true,
+      });
 
       if (grant?.type === "premium") {
         const expiry = new Date(now);
