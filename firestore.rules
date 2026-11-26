@@ -1031,6 +1031,26 @@ service cloud.firestore {
         && request.resource.data.agencyName is string
         && request.resource.data.officialEmail is string
         && request.resource.data.status == 'submitted'
+        && request.resource.data.reviewProgress.application == true
+        && request.resource.data.reviewProgress.identityReview == false
+        && request.resource.data.reviewProgress.securityReview == false
+        && request.resource.data.reviewProgress.accessibilityReview == false
+        && request.resource.data.reviewProgress.complianceReview == false
+        && request.resource.data.reviewProgress.executiveApproval == false
+        && request.resource.data.timeline is list
+        && request.resource.data.timeline.size() == 6
+        && request.resource.data.timeline[0].title == 'Application Started'
+        && request.resource.data.timeline[0].status == 'Completed'
+        && request.resource.data.timeline[1].title == 'Government Identity Review'
+        && request.resource.data.timeline[1].status == 'Pending'
+        && request.resource.data.timeline[2].title == 'IFSE Security Review'
+        && request.resource.data.timeline[2].status == 'Pending'
+        && request.resource.data.timeline[3].title == 'Accessibility Compliance'
+        && request.resource.data.timeline[3].status == 'Pending'
+        && request.resource.data.timeline[4].title == 'Compliance Review'
+        && request.resource.data.timeline[4].status == 'Pending'
+        && request.resource.data.timeline[5].title == 'Executive Approval'
+        && request.resource.data.timeline[5].status == 'Pending'
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
