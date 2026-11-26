@@ -240,7 +240,7 @@ function AccessibilitySettings() {
               }
               style={buttonStyle}
             >
-              Test voice
+              {t("testVoice")}
             </button>
 
             {speaking && (
