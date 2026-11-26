@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import DashboardLayout from "../components/DashboardLayout";
 
 import { auth } from "../firebase";
@@ -18,7 +18,8 @@ function RecruiterSubscription() {
 
   const user = auth.currentUser;
   const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-  const txRef = useMemo(() => `INCLURA-RECRUITER-${Date.now()}`, []);
+  // A fresh reference is generated for each render/payment attempt.
+  const txRef = `INCLURA-RECRUITER-${user?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const plans = {
     starter: {
