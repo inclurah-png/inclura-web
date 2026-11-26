@@ -61,6 +61,20 @@ function getBearerToken(req) {
   return match?.[1] || null;
 }
 
+async function requireMediaUser(req, res, next) {
+  const token = getBearerToken(req);
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Authentication required." });
+  }
+
+  try {
+    req.firebaseUser = await auth().verifyIdToken(token, true);
+    return next();
+  } catch {
+    return res.status(401).json({ success: false, message: "Your Inclura session is invalid or expired. Please sign in again." });
+  }
+}
+
 router.get("/status", (req, res) => {
   const configured = Boolean(CLOUD_NAME && API_KEY && API_SECRET);
   return res.status(configured ? 200 : 503).json({
@@ -74,18 +88,13 @@ router.get("/status", (req, res) => {
 });
 
 
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", requireMediaUser, upload.single("file"), async (req, res) => {
   try {
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
     }
 
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     const category = String(req.body?.category || "");
     const mimeType = String(req.file?.mimetype || "").toLowerCase();
     const rule = CATEGORY_RULES[category];
@@ -174,7 +183,7 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/sign-upload", async (req, res) => {
+router.post("/sign-upload", requireMediaUser, async (req, res) => {
   try {
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
@@ -232,7 +241,7 @@ router.post("/sign-upload", async (req, res) => {
 
 // Prepare a separate, permanently watermarked copy for an owner's external-sharing request.
 // The source Firebase Storage asset is never modified.
-router.post("/prepare-crosspost", async (req, res) => {
+router.post("/prepare-crosspost", requireMediaUser, async (req, res) => {
   let requestRef = null;
   let requestData = null;
   let processingStage = "authentication";
