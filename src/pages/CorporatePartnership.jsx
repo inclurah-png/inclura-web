@@ -471,6 +471,12 @@ corporateRiskScore >= 70
           return;
 
         }
+        const corporateId =
+`COR-${Date.now()}-${Math.random()
+  .toString(36)
+  .substring(2, 8)
+  .toUpperCase()}`;
+
                 const docRef =
           await addDoc(
             collection(
@@ -550,11 +556,6 @@ corporateBenefits,
 
         const partnershipId =
           docRef.id;
-        const corporateId =
-`COR-${Date.now()}-${Math.random()
-  .toString(36)
-  .substring(2, 8)
-  .toUpperCase()}`;
                 const timelineStages = [
 
 {
