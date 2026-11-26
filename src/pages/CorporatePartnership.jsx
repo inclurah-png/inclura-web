@@ -641,26 +641,9 @@ serverTimestamp(),
 
     companyName,
 
-    severity:
-      "low",
+    assessmentStatus: "pending_server_review",
 
-    riskScore:
-      corporateRiskScore,
-
-    ifseSecurityScore,
-
-    trustScore,
-
-    threatLevel,
-
-    automaticAssessment:
-      true,
-
-    requiresManualReview:
-      corporateRiskScore >= 50,
-
-    reviewed:
-      false,
+    reviewed: false,
 
     createdAt:
       serverTimestamp(),
