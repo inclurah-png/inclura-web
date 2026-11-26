@@ -9,8 +9,10 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { useTranslation } from "react-i18next";
 
 function Search() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [query, setQuery] = useState("");
@@ -99,7 +101,7 @@ function Search() {
         console.error("Failed to load search users:", err);
 
         if (isMounted) {
-          setError("Unable to load users. Please try again later.");
+          setError(t("error"));
         }
       } finally {
         if (isMounted) {
@@ -147,10 +149,10 @@ function Search() {
           marginBottom: "20px",
         }}
       >
-        ← Back
+        ← {t("back")}
       </button>
 
-      <h1>Search Users</h1>
+      <h1>{t("search")} {t("statsUser")}</h1>
 
       <div
         style={{
@@ -162,7 +164,7 @@ function Search() {
       >
         <input
           type="text"
-          placeholder="Enter user's name..."
+          placeholder={t("searchPlaceholder")}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           onKeyDown={(event) => {
@@ -170,7 +172,7 @@ function Search() {
               handleSearch();
             }
           }}
-          aria-label="Search users"
+          aria-label={t("search")}
           style={{
             flex: 1,
             minWidth: 0,
@@ -194,11 +196,11 @@ function Search() {
             fontWeight: "600",
           }}
         >
-          Search
+          {t("search")}
         </button>
       </div>
 
-      {loading && <p>Loading users...</p>}
+      {loading && <p>{t("loading")}</p>}
 
       {!loading && error && (
         <div>
@@ -213,7 +215,7 @@ function Search() {
               cursor: "pointer",
             }}
           >
-            Try Again
+            {t("retry")}
           </button>
         </div>
       )}
@@ -221,7 +223,7 @@ function Search() {
       {!loading &&
         !error &&
         searchTerm.trim() !== "" &&
-        filteredUsers.length === 0 && <p>No users found.</p>}
+        filteredUsers.length === 0 && <p>{t("noResults")}</p>}
 
       {!loading &&
         !error &&
@@ -246,8 +248,8 @@ function Search() {
               cursor: "pointer",
             }}
           >
-            <h3>{user.fullName || "Unnamed user"}</h3>
-            <p>{user.category || "Member"}</p>
+            <h3>{user.fullName || t("statsUser")}</h3>
+            <p>{user.category || t("statsUser")}</p>
           </div>
         ))}
     </div>
