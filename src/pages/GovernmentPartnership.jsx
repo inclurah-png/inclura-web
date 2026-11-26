@@ -103,7 +103,7 @@ const [acceptedPrivacy, setAcceptedPrivacy] =
 const [acceptedSecurity, setAcceptedSecurity] =
   useState(false);
 
-const [timeline, setTimeline] = useState([
+const [timeline] = useState([
   { title: "Application Started", status: "Completed" },
   { title: "Government Identity Review", status: "Pending" },
   { title: "IFSE Security Review", status: "Pending" },
