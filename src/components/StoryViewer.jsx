@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -16,25 +16,54 @@ story,
 onClose,
 }) {
 const { t } = useTranslation();
+const dialogRef = useRef(null);
+const closeButtonRef = useRef(null);
+
 useEffect(() => {
-function handleEsc(e) {
-if (e.key === "Escape") {
-onClose();
-}
-}
+  if (!story) return undefined;
 
-window.addEventListener(
-  "keydown",
-  handleEsc
-);
+  const previousFocus = document.activeElement;
+  closeButtonRef.current?.focus();
 
-return () =>
-  window.removeEventListener(
-    "keydown",
-    handleEsc
-  );
+  function handleDialogKeys(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
 
-}, [onClose]);
+    if (event.key !== "Tab") return;
+
+    const focusable = dialogRef.current?.querySelectorAll(
+      'button, a[href], input, select, textarea, video[controls], [tabindex]:not([tabindex="-1"])'
+    );
+    const items = Array.from(focusable || []).filter(
+      (element) => !element.hasAttribute("disabled")
+    );
+    if (!items.length) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  window.addEventListener("keydown", handleDialogKeys);
+  return () => {
+    window.removeEventListener("keydown", handleDialogKeys);
+    if (previousFocus && typeof previousFocus.focus === "function") {
+      previousFocus.focus();
+    }
+  };
+}, [story, onClose]);
 
 if (!story) return null;
 
@@ -90,6 +119,10 @@ padding: "20px",
 }}
 >
 <div
+ref={dialogRef}
+role="dialog"
+aria-modal="true"
+aria-label={t("stories")}
 onClick={(e) =>
 e.stopPropagation()
 }
@@ -177,12 +210,15 @@ marginBottom:
 </div>
 
 <button
-  onClick={onClose}
+  ref={closeButtonRef}
+  type="button"
+  onClick={onClose
   style={{
     background: "#38bdf8",
     border: "none",
     color: "white",
     padding: "10px 16px",
+    minHeight: "44px",
     borderRadius: "12px",
     cursor: "pointer",
   }}
