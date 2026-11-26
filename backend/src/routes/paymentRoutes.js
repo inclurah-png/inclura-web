@@ -119,6 +119,7 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         selectedPlan?.yearlyUSD ??
         selectedPlan?.monthlyFee ??
         selectedPlan?.fee ??
+        selectedPlan?.contractUSD ??
         0
       );
       const applicationAmount = Number(application.paymentAmount);
