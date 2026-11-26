@@ -27,7 +27,7 @@ import {
 
 import { db } from "../firebase";
 import i18n from "../i18n";
-import { getLanguageDirection } from "../config/languages";
+import { getLanguageDirection, isSupportedLanguage } from "../config/languages";
 
 const AccessibilityContext = createContext();
 
@@ -332,12 +332,23 @@ export function AccessibilityProvider({ children }) {
    */
   const setLanguage = useCallback(
     (value) => {
-      const normalizedLanguage =
+      const requestedLanguage =
         typeof value === "string" && value.trim()
           ? value.trim()
           : "en";
+      const normalizedLanguage = isSupportedLanguage(requestedLanguage)
+        ? requestedLanguage
+        : "en";
 
       setLanguageState(normalizedLanguage);
+
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("inclura-language", normalizedLanguage);
+        }
+      } catch (error) {
+        console.warn("Unable to persist the selected language locally:", error);
+      }
 
       void i18n.changeLanguage(normalizedLanguage).catch((error) => {
         console.error(
