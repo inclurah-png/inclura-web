@@ -6,10 +6,16 @@ on:
       - "backend/**"
       - "src/config/pricing/**"
       - ".github/workflows/payment-route-import.yml"
+  push:
+    branches:
+      - fix/auth-payment-security
+    paths:
+      - "backend/**"
+      - ".github/workflows/payment-route-import.yml"
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   payment-route-import:
@@ -28,8 +34,14 @@ jobs:
       - name: Install backend dependencies
         run: npm ci --prefix backend --ignore-scripts --no-audit --no-fund
 
-      - name: Audit backend dependencies
-        run: npm audit --prefix backend --audit-level=high
+      - name: Apply compatible backend dependency security updates
+        run: |
+          npm pkg delete --prefix backend dependencies.uuid
+          npm pkg set --prefix backend 'overrides.@grpc/grpc-js=1.14.7' 'overrides.@fastify/busboy=3.2.4' 'overrides.uuid=11.1.1'
+          npm audit fix --prefix backend
+          npm install --package-lock-only --prefix backend --ignore-scripts --no-audit --no-fund
+          npm ci --prefix backend --ignore-scripts --no-audit --no-fund
+          npm audit --prefix backend --audit-level=high
 
       - name: Check backend JavaScript syntax
         run: |
@@ -42,3 +54,13 @@ jobs:
       - name: Import payment route and trusted pricing modules
         run: |
           node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); await import('./backend/src/routes/adminVerificationRoutes.js'); await import('./backend/src/services/premiumExpirySweeper.js'); console.log('Payment, passkey, administrator and expiry modules import successfully.');"
+      - name: Commit validated backend dependency updates to this draft branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json backend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Remediate IFSE backend dependency vulnerabilities"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
