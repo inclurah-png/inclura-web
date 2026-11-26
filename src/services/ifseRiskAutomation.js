@@ -3,8 +3,6 @@ import {
   query,
   where,
   getDocs,
-  addDoc,
-  serverTimestamp,
 } from "firebase/firestore";
 
 import { db } from "../firebase";
@@ -262,36 +260,6 @@ export async function calculateIFSERisk(request) {
     riskScore >=
     RISK_WEIGHTS.executiveReviewThreshold;
 
-  await addDoc(
-    collection(
-      db,
-      COLLECTIONS.ifseSecurityEvents
-    ),
-    {
-      userId: request.userId || null,
-
-      verificationId:
-        request.id || null,
-
-      verificationCategory:
-        request.category || null,
-
-      riskScore,
-
-      threatLevel,
-
-      executiveReview,
-
-      reasons,
-
-      reviewed: false,
-
-      resolved: false,
-
-      createdAt:
-        serverTimestamp(),
-    }
-  );
 
   return {
     riskScore,
