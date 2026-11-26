@@ -1,41 +1,11 @@
-// =======================================================
-// IFSE Decision Engine
-// =======================================================
+// Deprecated: a browser-calculated score must never approve or reject identity.
+// Keep the export for compatibility, but always require trusted server review.
 
-export function getIFSEDecision(score) {
-
-  if (score >= 90) {
-    return {
-      status: "approved",
-      badge: true,
-      executiveReview: false,
-      message: "Verification Approved",
-    };
-  }
-
-  if (score >= 70) {
-    return {
-      status: "manual_review",
-      badge: false,
-      executiveReview: true,
-      message: "Executive Review Required",
-    };
-  }
-
-  if (score >= 50) {
-    return {
-      status: "additional_documents",
-      badge: false,
-      executiveReview: false,
-      message: "Additional Documents Required",
-    };
-  }
-
+export function getIFSEDecision() {
   return {
-    status: "rejected",
+    status: "PENDING_SERVER_REVIEW",
     badge: false,
-    executiveReview: false,
-    message: "Verification Rejected",
+    executiveReview: true,
+    message: "Awaiting trusted server-side checks and authorized administrator review.",
   };
-
 }
