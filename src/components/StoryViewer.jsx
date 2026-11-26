@@ -243,38 +243,32 @@ marginBottom:
       </div>
     )}
 
-    {story.storyType ===
-      "image" &&
-      story.storyUrl && (
-        <img
-          src={
-            story.storyUrl
-          }
-          alt="Story"
-          style={{
-            width:
-              "100%",
-            borderRadius:
-              "16px",
-          }}
-        />
-      )}
-
-    {story.storyType ===
-      "video" && (
-      <div
+    {story.storyType === "image" && story.storyUrl && (
+      <img
+        src={story.storyUrl}
+        alt={t("storyImageAlt")}
         style={{
-          textAlign:
-            "center",
+          width: "100%",
+          maxHeight: "70vh",
+          objectFit: "contain",
+          borderRadius: "16px",
         }}
-      >
-        🎥 Video
-        Story
-        <br />
-        Storage
-        upgrade
-        required
-      </div>
+      />
+    )}
+
+    {story.storyType === "video" && story.storyUrl && (
+      <video
+        src={story.storyUrl}
+        controls
+        playsInline
+        aria-label={t("videoStory")}
+        style={{
+          width: "100%",
+          maxHeight: "70vh",
+          borderRadius: "16px",
+          background: "#000",
+        }}
+      />
     )}
 
     <div
