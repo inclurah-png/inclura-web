@@ -527,12 +527,13 @@ const finalizePartnershipActivation = async (application) => {
   const approvals = {};
   for (const key of required) {
     const label = key === "government" ? "Government approval" : key.charAt(0).toUpperCase() + key.slice(1) + " approval";
-    if (!window.confirm("Confirm that " + label + " has actually been obtained for this application?")) return;
-    approvals[key] = true;
+    const reference = window.prompt("Enter the official reference or record identifier for the " + label + " already obtained:");
+    if (!reference || reference.trim().length < 3) return;
+    approvals[key] = reference.trim();
   }
-  const paymentRequired = window.confirm(
-    "Does the negotiated partnership agreement require payment before activation? Choose OK for YES or Cancel for NO."
-  );
+  const paymentDecision = window.prompt("Does the negotiated agreement require payment before activation? Type YES or NO.");
+  if (!paymentDecision || !["YES", "NO"].includes(paymentDecision.trim().toUpperCase())) return;
+  const paymentRequired = paymentDecision.trim().toUpperCase() === "YES";
   const notes = window.prompt("Enter the final authorization and activation notes:");
   if (!notes || notes.trim().length < 5) return;
   const user = auth.currentUser;
