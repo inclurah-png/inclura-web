@@ -678,12 +678,13 @@ router.post("/partnership-contract-access", async (req, res) => {
     const token = getBearerToken(req);
     if (!token) return res.status(401).json({ success: false, message: "Authentication required." });
     const decoded = await auth().verifyIdToken(token, true);
-    let isAdmin = decoded.admin === true;
-    if (isAdmin) {
-      const adminRecord = await auth().getUser(decoded.uid);
-      if (adminRecord.disabled || decoded.email_verified !== true) {
-        return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
-      }
+    const account = await auth().getUser(decoded.uid);
+    if (account.disabled) {
+      return res.status(403).json({ success: false, message: "This Inclura account is disabled." });
+    }
+    const isAdmin = decoded.admin === true;
+    if (isAdmin && decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
     }
     const type = String(req.body?.partnershipType || "").toLowerCase();
     const partnershipId = String(req.body?.partnershipId || "");
