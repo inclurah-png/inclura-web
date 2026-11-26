@@ -92,7 +92,7 @@ if (verificationTypes?.length > 0) {
       : selectedVerification?.yearlyUSD
       ? t("vaYearly")
       : selectedVerification?.contractUSD
-      ? "Contract fee"
+      ? t("vaOneTime")
       : t("vaOneTime");
 
   const isEnterprise =
