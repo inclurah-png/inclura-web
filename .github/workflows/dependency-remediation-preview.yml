@@ -1,0 +1,81 @@
+name: Dependency remediation preview
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/dependency-remediation-preview.yml'
+      - 'package.json'
+      - 'package-lock.json'
+  push:
+    branches:
+      - security/dependency-remediation
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-remediation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  remediation-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Test React Router v7 candidate without changing the branch manifest
+        run: |
+          npm install --package-lock-only --save-exact react-router-dom@7.18.7
+      - name: Test Firebase 13.4.0 candidate without changing the branch manifest
+        run: |
+          npm install --package-lock-only --save-exact firebase@13.4.0
+      - name: Test safe Axios override for the Flutterwave SDK
+        run: |
+          npm pkg set 'overrides.axios=1.21.1'
+          npm install --package-lock-only
+          npm ci
+      - name: Test Firebase Firestore gRPC security fix candidate
+        run: |
+          npm pkg set 'overrides.@grpc/grpc-js=1.14.7'
+          npm install --package-lock-only
+          npm ci
+      - name: Build application
+        run: npm run build
+      - name: Smoke-test built application preview
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/inclura-preview.log 2>&1 &
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:4173/ > /tmp/inclura-preview.html; then
+              break
+            fi
+            sleep 2
+          done
+          test -s /tmp/inclura-preview.html
+          grep -qi '<html' /tmp/inclura-preview.html
+      - name: Produce and enforce dependency audit report
+        run: |
+          npm audit --json > npm-audit-after.json || true
+          node --input-type=module -e "import fs from 'node:fs'; const a=JSON.parse(fs.readFileSync('npm-audit-after.json','utf8')); const v=a.metadata?.vulnerabilities || {}; console.log(JSON.stringify(v,null,2)); if ((v.total ?? 0) !== 0) process.exit(1)"
+      - name: Package remediation evidence
+        run: |
+          zip dependency-remediation-preview.zip package.json package-lock.json npm-audit-after.json
+      - name: Commit the validated dependency manifest and lockfile to this draft branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Apply validated dependency security updates"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dependency-remediation-preview
+          path: dependency-remediation-preview.zip
+          retention-days: 2
