@@ -5,6 +5,7 @@
 
 import express from "express";
 import { auth as firebaseAuth } from "../config/firebaseAdmin.js";
+import { limitPasskeyOptions, limitPasskeyVerification } from "../middleware/passkeyRateLimit.js";
 
 import {
   health,
@@ -77,11 +78,13 @@ router.post(
 
 router.post(
   "/authentication/options",
+  limitPasskeyOptions,
   authenticationOptions
 );
 
 router.post(
   "/authentication/verify",
+  limitPasskeyVerification,
   verifyAuthentication
 );
 
@@ -105,11 +108,13 @@ router.post(
 
 router.post(
   "/passkeys/authentication-options",
+  limitPasskeyOptions,
   authenticationOptions
 );
 
 router.post(
   "/passkeys/verify-authentication",
+  limitPasskeyVerification,
   verifyAuthentication
 );
 
