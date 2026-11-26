@@ -26,7 +26,7 @@ jobs:
           cache-dependency-path: backend/package-lock.json
 
       - name: Install backend dependencies
-        run: npm install --prefix backend --ignore-scripts --no-audit --no-fund
+        run: npm ci --prefix backend --ignore-scripts --no-audit --no-fund
 
       - name: Check backend JavaScript syntax
         run: |
