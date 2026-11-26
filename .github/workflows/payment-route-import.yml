@@ -30,4 +30,4 @@ jobs:
 
       - name: Import payment route and trusted pricing modules
         run: |
-          node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); console.log('Payment and passkey routes import successfully.');"
+          node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); await import('./backend/src/routes/adminVerificationRoutes.js'); console.log('Payment, passkey and administrator verification routes import successfully.');"
