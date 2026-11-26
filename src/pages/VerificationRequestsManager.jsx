@@ -4,8 +4,6 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
 
-const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
-
 function VerificationRequestsManager() {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
