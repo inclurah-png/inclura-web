@@ -105,7 +105,7 @@ router.post("/flutterwave/webhook", async (req, res) => {
     if (event.event !== "charge.completed") return res.status(200).json({ received: true, ignored: true });
     const transactionId = String(event.data?.id || "");
     const reference = String(event.data?.tx_ref || "");
-    if (!/^\\d{1,30}$/.test(transactionId) || !/^[A-Za-z0-9_-]{8,120}$/.test(reference)) return res.status(400).json({ received: false });
+    if (!/^\d{1,30}$/.test(transactionId) || !/^[A-Za-z0-9_-]{8,120}$/.test(reference)) return res.status(400).json({ received: false });
     if (!process.env.FLW_SECRET_KEY) return res.status(503).json({ received: false });
 
     const database = firestore();
@@ -129,7 +129,81 @@ router.post("/flutterwave/webhook", async (req, res) => {
       String(payment.customer?.email || "").trim().toLowerCase() === pending.customerEmail;
     if (!matches) return res.status(409).json({ received: false, message: "Transaction did not match the pending checkout." });
 
-    await pendingRef.update({ gatewayConfirmation: "verified", gatewayTransactionId: transactionId, gatewayConfirmedAt: new Date() });
+    if (pending.purpose !== "verification" || !pending.verificationId || !pending.userId) {
+      return res.status(409).json({ received: false });
+    }
+
+    const paymentRef = database.collection("flutterwavePayments").doc(transactionId);
+    const applicationRef = database.collection("verificationRequests").doc(pending.verificationId);
+    const verificationPaymentRef = database.collection("verificationPayments").doc(transactionId);
+    const securityEventRef = database.collection("ifsePaymentEvents").doc();
+    const auditLogRef = database.collection("paymentAuditLogs").doc();
+    const timelineRef = database.collection("paymentTimeline").doc();
+    const now = new Date();
+
+    await database.runTransaction(async (transaction) => {
+      const [currentPending, existingPayment, applicationSnapshot] = await Promise.all([
+        transaction.get(pendingRef),
+        transaction.get(paymentRef),
+        transaction.get(applicationRef),
+      ]);
+      if (!currentPending.exists || !applicationSnapshot.exists) throw new Error("Pending checkout or verification application no longer exists.");
+      const current = currentPending.data();
+      const application = applicationSnapshot.data();
+      if (
+        current.userId !== pending.userId || current.txRef !== reference ||
+        current.verificationId !== pending.verificationId ||
+        (current.paymentStatus === "paid" && current.transactionId !== transactionId) ||
+        (application.userId !== pending.userId && application.submittedBy !== pending.userId) ||
+        application.category !== pending.category || application.verificationType !== pending.verificationType ||
+        Math.abs(Number(application.paymentAmount) - Number(pending.amount)) > 0.01 ||
+        (application.paymentStatus === "paid" && application.paymentId !== transactionId)
+      ) throw new Error("Pending checkout no longer matches its verification application.");
+
+      if (existingPayment.exists) {
+        const prior = existingPayment.data();
+        const priorMatches = prior.userId === pending.userId && prior.transactionId === transactionId &&
+          prior.txRef === reference && prior.purpose === "verification" &&
+          prior.verificationId === pending.verificationId && prior.category === pending.category &&
+          prior.verificationType === pending.verificationType && Number(prior.amount) === Number(payment.amount) &&
+          String(prior.currency).toUpperCase() === String(payment.currency).toUpperCase() &&
+          prior.paymentStatus === "paid" && prior.verifiedByServer === true;
+        if (!priorMatches) throw new Error("Transaction already recorded with different payment details.");
+      } else {
+        transaction.create(paymentRef, {
+          userId: pending.userId, transactionId, txRef: reference, purpose: "verification",
+          plan: null, verificationId: pending.verificationId, category: pending.category,
+          verificationType: pending.verificationType, amount: Number(payment.amount),
+          currency: String(payment.currency).toUpperCase(), paymentStatus: "paid",
+          gateway: "flutterwave", verifiedByServer: true, createdAt: now,
+        });
+        transaction.create(verificationPaymentRef, {
+          userId: pending.userId, verificationId: pending.verificationId, category: pending.category,
+          verificationType: pending.verificationType, transactionId, flutterwaveReference: reference,
+          amount: Number(payment.amount), currency: String(payment.currency).toUpperCase(),
+          paymentStatus: "paid", status: "completed", verifiedByServer: true,
+          paymentMethod: "Flutterwave", createdAt: now, updatedAt: now,
+        });
+        transaction.create(securityEventRef, {
+          paymentId: transactionId, transactionId, eventType: "verification_payment_server_verified",
+          riskScore: 0, threatLevel: "Low", requiresExecutiveApproval: true, reviewed: false, createdAt: now,
+        });
+        transaction.create(auditLogRef, {
+          paymentId: transactionId, transactionId,
+          action: "Flutterwave webhook payment verified by IFSE", actor: "flutterwave_webhook", createdAt: now,
+        });
+        transaction.create(timelineRef, {
+          paymentId: transactionId, transactionId, title: "Payment confirmed by Flutterwave",
+          status: "Completed", createdAt: now,
+        });
+      }
+
+      transaction.update(applicationRef, { paymentStatus: "paid", paymentId: transactionId, updatedAt: now });
+      transaction.update(pendingRef, {
+        paymentStatus: "paid", gatewayConfirmation: "verified", gatewayTransactionId: transactionId,
+        transactionId, verifiedByServer: true, paidAt: now,
+      });
+    });
     return res.status(200).json({ received: true, verified: true });
   } catch (error) {
     console.error("Flutterwave webhook processing failed:", error);
