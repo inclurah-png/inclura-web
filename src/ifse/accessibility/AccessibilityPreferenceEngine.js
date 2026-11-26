@@ -106,7 +106,7 @@ export function evaluateAccessibilityPreference(request = {}) {
     if (
       typeof value !== "string"
     ) {
-      return "medium";
+      return fallback;
     }
 
     const fontSize =
