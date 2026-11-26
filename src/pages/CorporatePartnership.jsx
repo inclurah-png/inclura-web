@@ -370,7 +370,8 @@ corporateRiskScore >= 70
               "companyName",
               "==",
               companyName
-            )
+            ),
+            where("userId", "==", currentUser.uid)
           );
 
         const companySnapshot =
@@ -437,7 +438,8 @@ corporateRiskScore >= 70
               "contactEmail",
               "==",
               contactEmail
-            )
+            ),
+            where("userId", "==", currentUser.uid)
           );
 
         const emailSnapshot =
