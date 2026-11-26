@@ -17,14 +17,14 @@ function useAccessibilityManager() {
     ...accessibility,
 
     increaseFont() {
-      accessibility.setFontScale((prev) =>
-        Math.min(prev + 0.1, 1.8)
+      accessibility.setFontScale(
+        Math.min(accessibility.fontScale + 0.1, 1.6)
       );
     },
 
     decreaseFont() {
-      accessibility.setFontScale((prev) =>
-        Math.max(prev - 0.1, 0.8)
+      accessibility.setFontScale(
+        Math.max(accessibility.fontScale - 0.1, 0.8)
       );
     },
 
