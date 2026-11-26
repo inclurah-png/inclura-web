@@ -1020,7 +1020,8 @@ service cloud.firestore {
         && ownsVerification(request.resource.data.verificationId)
         && request.resource.data.createdBy == request.auth.uid;
       allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && (request.auth.token.admin == true
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
@@ -1030,7 +1031,8 @@ service cloud.firestore {
         && request.resource.data.submittedBy == request.auth.uid
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && (request.auth.token.admin == true
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
@@ -1041,7 +1043,8 @@ service cloud.firestore {
             || request.resource.data.actor == request.auth.uid)
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && (request.auth.token.admin == true
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
@@ -1050,7 +1053,8 @@ service cloud.firestore {
         && request.resource.data.verificationId is string
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && (request.auth.token.admin == true
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
@@ -1060,7 +1064,8 @@ service cloud.firestore {
       // Browser clients cannot self-assert a successful gateway payment.
       allow create: if false;
       allow get, list: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+        && (request.auth.token.admin == true
+            || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
@@ -1068,7 +1073,8 @@ service cloud.firestore {
       // IFSE creates payment-security events after gateway verification.
       allow create: if false;
       allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+        && (request.auth.token.admin == true
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
@@ -1076,7 +1082,8 @@ service cloud.firestore {
       // Audit records are server-generated and immutable to browser clients.
       allow create: if false;
       allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+        && (request.auth.token.admin == true
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
@@ -1084,7 +1091,8 @@ service cloud.firestore {
       // Payment timeline entries are written by the trusted backend.
       allow create: if false;
       allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+        && (request.auth.token.admin == true
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
