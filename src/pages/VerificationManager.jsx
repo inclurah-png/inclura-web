@@ -711,6 +711,8 @@ marginBottom: "35px",
             Payment: {request.paymentStatus || "Unknown"}
           </p>
 
+          <p>Documents Submitted: {request.documentsSubmitted === true ? "Yes" : "No"}</p>
+
           <div
             style={{
               marginTop: "10px",
@@ -720,8 +722,8 @@ marginBottom: "35px",
           >
 
             <button
-              disabled={request.paymentStatus !== "paid"}
-              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : "Approve after administrator review."}
+              disabled={request.paymentStatus !== "paid" || request.documentsSubmitted !== true}
+              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : request.documentsSubmitted !== true ? "Required verification documents must be submitted before approval." : "Approve after administrator review."}
               onClick={(e) => {
                 e.stopPropagation();
                 handleApprove(request.id);
