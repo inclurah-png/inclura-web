@@ -584,6 +584,8 @@ securityLayers,
 
               reviewProgress,
 
+              timeline,
+
               userId:
                 currentUser.uid,
 
