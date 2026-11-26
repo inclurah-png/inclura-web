@@ -19,6 +19,7 @@ import adminVerificationRoutes from "./src/routes/adminVerificationRoutes.js";
 import {
   startSOSNotificationSweeper,
 } from "./src/services/sosNotificationSweeper.js";
+import { startPremiumExpirySweeper } from "./src/services/premiumExpirySweeper.js";
 
 
 import {
@@ -449,6 +450,7 @@ app.listen(
     // Automatic SOS notification retry loop. Independent of
     // any administrator being online.
     startSOSNotificationSweeper();
+    startPremiumExpirySweeper();
 
   }
 );
