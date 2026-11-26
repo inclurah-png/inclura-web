@@ -629,10 +629,7 @@ async function handleContinue() {
             lineHeight: 1.5,
           }}
         >
-          {t("vaUploadSupporting")}{" "}
-          After submitting your application and completing payment, upload
-          supporting files through the secure Documents page in Verification Status.
-          Files are not uploaded from this application form.
+          {t("vaUploadSupportingNotice")}
         </div>
 
 <div
