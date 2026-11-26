@@ -7,6 +7,12 @@ import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 function PremiumPayment() {
   const [pricing, setPricing] = useState({});
   const [loading, setLoading] = useState(false);
+  const [txRefs, setTxRefs] = useState(() => ({
+    silver: makeTxRef("silver"),
+    gold: makeTxRef("gold"),
+    platinum: makeTxRef("platinum"),
+    enterprise: makeTxRef("enterprise"),
+  }));
   const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
   useEffect(() => {
@@ -29,14 +35,6 @@ function PremiumPayment() {
 
   const makeTxRef = (tier) =>
     `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  // Generate one unique reference per rendered payment attempt and pass that same
-  // reference to both Flutterwave and the server-side verification request.
-  const txRefs = {
-    silver: makeTxRef("silver"),
-    gold: makeTxRef("gold"),
-    platinum: makeTxRef("platinum"),
-    enterprise: makeTxRef("enterprise"),
-  };
 
   const paymentConfigs = [
     ["silver", "SilverBadge", "Silver membership"],
@@ -106,10 +104,11 @@ function PremiumPayment() {
           alert(error.message || "Payment verification is pending. Please contact support before retrying.");
         } finally {
           setLoading(false);
+          setTxRefs((current) => ({ ...current, [tier]: makeTxRef(tier) }));
           closePaymentModal();
         }
       },
-      onClose: () => setLoading(false),
+      onClose: () => { setLoading(false); setTxRefs((current) => ({ ...current, [tier]: makeTxRef(tier) })); },
     });
   }
 
