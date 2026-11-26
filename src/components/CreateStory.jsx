@@ -18,10 +18,6 @@ auth,
 } from "../firebase";
 
 import {
-  getVerificationMetadata,
-} from "../config/verificationTypes";
-
-import {
   ref,
   uploadBytes,
   getDownloadURL,
