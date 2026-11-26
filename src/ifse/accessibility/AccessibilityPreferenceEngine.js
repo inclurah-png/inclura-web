@@ -86,7 +86,22 @@ export function evaluateAccessibilityPreference(request = {}) {
 
   };
 
-  const normalizeFontSize = (value) => {
+  const normalizeAccessibilityNeeds = (value) => {
+    if (Array.isArray(value)) {
+      return value.map((need) => String(need).trim().toLowerCase().replace(/[_-]+/g, " "));
+    }
+    if (typeof value === "string") {
+      return value.split(",").map((need) => need.trim().toLowerCase().replace(/[_-]+/g, " "));
+    }
+    return [];
+  };
+
+  const needs = normalizeAccessibilityNeeds(source.accessibilityNeeds);
+  const hasNeed = (...patterns) => needs.some((need) =>
+    patterns.some((pattern) => need.includes(pattern))
+  );
+
+  const normalizeFontSize = (value, fallback = "medium") => {
 
     if (
       typeof value !== "string"
@@ -108,7 +123,7 @@ export function evaluateAccessibilityPreference(request = {}) {
       return fontSize;
     }
 
-    return "medium";
+    return fallback;
 
   };
 
@@ -126,12 +141,14 @@ export function evaluateAccessibilityPreference(request = {}) {
 
     fontSize:
       normalizeFontSize(
-        source.fontSize
+        source.fontSize,
+        hasNeed("large text", "large print") ? "large" : "medium"
       ),
 
     highContrast:
       normalizeBoolean(
-        source.highContrast
+        source.highContrast,
+        hasNeed("high contrast")
       ),
 
     reducedMotion:
@@ -141,22 +158,26 @@ export function evaluateAccessibilityPreference(request = {}) {
 
     screenReader:
       normalizeBoolean(
-        source.screenReader
+        source.screenReader,
+        hasNeed("screen reader", "screenreader", "blind", "blindness")
       ),
 
     voiceNavigation:
       normalizeBoolean(
-        source.voiceNavigation
+        source.voiceNavigation,
+        hasNeed("voice navigation", "voice control", "voice access")
       ),
 
     keyboardNavigation:
       normalizeBoolean(
-        source.keyboardNavigation
+        source.keyboardNavigation,
+        hasNeed("keyboard navigation", "keyboard only", "keyboard")
       ),
 
     captions:
       normalizeBoolean(
-        source.captions
+        source.captions,
+        hasNeed("caption", "subtitles")
       ),
 
     liveTranscription:
@@ -166,12 +187,14 @@ export function evaluateAccessibilityPreference(request = {}) {
 
     signLanguage:
       normalizeBoolean(
-        source.signLanguage
+        source.signLanguage,
+        hasNeed("sign language", "asl", "nsl")
       ),
 
     braille:
       normalizeBoolean(
-        source.braille
+        source.braille,
+        hasNeed("braille")
       ),
 
     simplifiedReading:
