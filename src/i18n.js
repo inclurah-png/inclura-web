@@ -5325,7 +5325,6 @@ returnHome: "Voltar ao início",
     partnershipStatusAdminUpdate: "Taarifa ya msimamizi",
     partnershipStatusNoUpdate: "Hakuna ukaguzi wa msimamizi uliorekodiwa bado",
     partnershipStatusReturn: "Rudi kwenye Kituo cha Uthibitishaji",
-      "Kituo cha Uthibitishaji",
 
     // Sidebar
         creatorActivityTitle: "Shughuli za mbunifu",
