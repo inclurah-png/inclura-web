@@ -315,14 +315,19 @@ try {
 
   const existing = query(
     collection(db, "governmentPartnerships"),
-    where("agencyName", "==", agencyName),
-    where("country", "==", country),
     where("userId", "==", currentUser.uid)
   );
 
   const snapshot = await getDocs(existing);
+  const normalizedAgency = agencyName.trim().toLowerCase();
+  const normalizedCountry = country.trim().toLowerCase();
+  const duplicateAgency = snapshot.docs.some((item) => {
+    const data = item.data();
+    return String(data.agencyName || "").trim().toLowerCase() === normalizedAgency
+      && String(data.country || "").trim().toLowerCase() === normalizedCountry;
+  });
 
-  if (!snapshot.empty) {
+  if (duplicateAgency) {
 
     setError(
       "A government partnership request for this agency already exists."
