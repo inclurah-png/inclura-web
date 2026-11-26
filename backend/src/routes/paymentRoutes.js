@@ -302,7 +302,9 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
         if (!pendingSnapshot?.exists) throw new Error("No server-created pending checkout matches this reference.");
         const pending = pendingSnapshot.data();
         if (pending.userId !== decoded.uid || pending.verificationId !== verificationId ||
-          pending.purpose !== "verification" || pending.paymentStatus !== "pending" ||
+          pending.purpose !== "verification" ||
+          (pending.paymentStatus !== "pending" &&
+            !(pending.paymentStatus === "paid" && pending.transactionId === numericTransactionId)) ||
           Number(pending.amount) !== expectedAmount || pending.currency !== expectedCurrency) {
           throw new Error("The pending checkout does not match this account or application.");
         }
