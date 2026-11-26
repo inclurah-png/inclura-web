@@ -75,6 +75,8 @@ const resources = {
     // Language
     language: "Language",
 
+    openNavigationMenu: "Open navigation menu",
+    closeNavigationMenu: "Close navigation menu",
     // Wallet
     walletTitle: "Inclura Wallet", walletBalance: "Wallet balance", walletTopUp: "Pay & Top-Up", walletWithdraw: "Withdraw", walletTransfer: "Transfer", walletTransactions: "Transactions", walletTransactionHistory: "Transaction History", walletNoTransactions: "No transactions yet.", walletLoadError: "Unable to load wallet balance.", walletCurrencyUnavailable: "Not available", walletLoading: "Loading wallet…", walletAccessibilityLabel: "Wallet and financial actions", walletTopUpDescription: "Add funds securely through an available payment method.", walletWithdrawDescription: "Withdraw available funds to your verified account.", walletTransferDescription: "Send available funds to another Inclura user.", walletTransactionsDescription: "View your wallet transaction history.",
     // Accessibility
@@ -657,6 +659,8 @@ returnHome: "Return Home",
     // Language
     language: "Èdè",
 
+    openNavigationMenu: "Ṣí àkójọ ìrìnàjò",
+    closeNavigationMenu: "Pa àkójọ ìrìnàjò",
     // Wallet
     walletTitle: "Apamọwọ Inclura", walletBalance: "Iye owo apamọwọ", walletTopUp: "Sanwo ati Fi Owo Kun", walletWithdraw: "Yọ Owo", walletTransfer: "Gbe Owo", walletTransactions: "Awọn Iṣowo", walletTransactionHistory: "Itan Awọn Iṣowo", walletNoTransactions: "Ko si iṣowo kankan sibẹ.", walletLoadError: "Ko ṣee gbe iye owo apamọwọ.", walletCurrencyUnavailable: "Ko si", walletLoading: "N n gbe apamọwọ…", walletAccessibilityLabel: "Apamọwọ ati awọn iṣe inawo", walletTopUpDescription: "Fi owo kun ni aabo nipa lilo ọna isanwo to wa.", walletWithdrawDescription: "Yọ owo ti o wa si akọọlẹ ti o ti jẹrisi.", walletTransferDescription: "Firanṣẹ owo ti o wa si olumulo Inclura miiran.", walletTransactionsDescription: "Wo itan awọn iṣowo apamọwọ rẹ.",
     // Accessibility
@@ -1239,6 +1243,8 @@ returnHome: "Padà sí Ilé",
     // Language
     language: "Asụsụ",
 
+    openNavigationMenu: "Mepee menu igodo",
+    closeNavigationMenu: "Mechie menu igodo",
     // Wallet
     walletTitle: "Akpa Ego Inclura", walletBalance: "Ego dị na akpa", walletTopUp: "Kwụọ ma Tinye Ego", walletWithdraw: "Wepụ Ego", walletTransfer: "Nyefee Ego", walletTransactions: "Azụmahịa", walletTransactionHistory: "Akụkọ Azụmahịa", walletNoTransactions: "Ọ dịghị azụmahịa ugbu a.", walletLoadError: "Enweghị ike ibunye ego akpa.", walletCurrencyUnavailable: "Adịghị", walletLoading: "Na-ebunye akpa ego…", walletAccessibilityLabel: "Akpa ego na omume ego", walletTopUpDescription: "Tinye ego n'enweghị nsogbu site n'iji ụzọ ịkwụ ụgwọ dị.", walletWithdrawDescription: "Wepụ ego dị na akaụntụ gị akwadoro.", walletTransferDescription: "Ziga onye ọrụ Inclura ọzọ ego dị.", walletTransactionsDescription: "Lelee akụkọ azụmahịa akpa ego gị.",
     // Accessibility
@@ -1798,6 +1804,8 @@ returnHome: "Laghachi n'ụlọ",
     // Language
     language: "Harshe",
 
+    openNavigationMenu: "Buɗe menu na kewayawa",
+    closeNavigationMenu: "Rufe menu na kewayawa",
     // Wallet
     walletTitle: "Jakunkunan Inclura", walletBalance: "Ma'aunin jakunkuna", walletTopUp: "Biya kuma Ƙara Kudi", walletWithdraw: "Cire Kudi", walletTransfer: "Tura Kudi", walletTransactions: "Mu'amaloli", walletTransactionHistory: "Tarihin Mu'amaloli", walletNoTransactions: "Babu mu'amala tukuna.", walletLoadError: "An kasa loda ma'aunin jakunkuna.", walletCurrencyUnavailable: "Babu", walletLoading: "Ana loda jakunkuna…", walletAccessibilityLabel: "Jakunkuna da ayyukan kuɗi", walletTopUpDescription: "Ƙara kuɗi cikin aminci ta hanyar hanyar biyan kuɗi da ake da ita.", walletWithdrawDescription: "Cire kuɗin da ake da shi zuwa asusun da aka tabbatar.", walletTransferDescription: "Tura kuɗin da ake da shi zuwa wani mai amfani da Inclura.", walletTransactionsDescription: "Duba tarihin mu'amalolin jakunkunanka.",
     // Accessibility
@@ -2363,6 +2371,8 @@ returnHome: "Komawa Gida",
     // Language
     language: "Langue",
 
+    openNavigationMenu: "Ouvrir le menu de navigation",
+    closeNavigationMenu: "Fermer le menu de navigation",
     // Wallet
     walletTitle: "Portefeuille Inclura", walletBalance: "Solde du portefeuille", walletTopUp: "Payer et recharger", walletWithdraw: "Retirer", walletTransfer: "Transférer", walletTransactions: "Transactions", walletTransactionHistory: "Historique des transactions", walletNoTransactions: "Aucune transaction pour le moment.", walletLoadError: "Impossible de charger le solde du portefeuille.", walletCurrencyUnavailable: "Non disponible", walletLoading: "Chargement du portefeuille…", walletAccessibilityLabel: "Portefeuille et opérations financières", walletTopUpDescription: "Ajoutez des fonds en toute sécurité avec un moyen de paiement disponible.", walletWithdrawDescription: "Retirez les fonds disponibles vers votre compte vérifié.", walletTransferDescription: "Envoyez des fonds disponibles à un autre utilisateur Inclura.", walletTransactionsDescription: "Consultez l’historique des transactions de votre portefeuille.",
     // Accessibility
@@ -2974,6 +2984,8 @@ returnHome: "Retour à l’accueil",
     // Language
     language: "اللغة",
 
+    openNavigationMenu: "فتح قائمة التنقل",
+    closeNavigationMenu: "إغلاق قائمة التنقل",
     // Wallet
     walletTitle: "محفظة إنكلورا", walletBalance: "رصيد المحفظة", walletTopUp: "الدفع والشحن", walletWithdraw: "سحب", walletTransfer: "تحويل", walletTransactions: "المعاملات", walletTransactionHistory: "سجل المعاملات", walletNoTransactions: "لا توجد معاملات بعد.", walletLoadError: "تعذر تحميل رصيد المحفظة.", walletCurrencyUnavailable: "غير متاح", walletLoading: "جارٍ تحميل المحفظة…", walletAccessibilityLabel: "المحفظة والإجراءات المالية", walletTopUpDescription: "أضف الأموال بأمان باستخدام وسيلة دفع متاحة.", walletWithdrawDescription: "اسحب الأموال المتاحة إلى حسابك الموثق.", walletTransferDescription: "أرسل الأموال المتاحة إلى مستخدم آخر في إنكلورا.", walletTransactionsDescription: "اعرض سجل معاملات محفظتك.",
     // Accessibility
@@ -3585,6 +3597,8 @@ returnHome: "العودة إلى الرئيسية",
     // Language
     language: "Idioma",
 
+    openNavigationMenu: "Abrir el menú de navegación",
+    closeNavigationMenu: "Cerrar el menú de navegación",
     // Wallet
     walletTitle: "Billetera Inclura", walletBalance: "Saldo de la billetera", walletTopUp: "Pagar y recargar", walletWithdraw: "Retirar", walletTransfer: "Transferir", walletTransactions: "Transacciones", walletTransactionHistory: "Historial de transacciones", walletNoTransactions: "Aún no hay transacciones.", walletLoadError: "No se pudo cargar el saldo de la billetera.", walletCurrencyUnavailable: "No disponible", walletLoading: "Cargando billetera…", walletAccessibilityLabel: "Billetera y acciones financieras", walletTopUpDescription: "Añade fondos de forma segura mediante un método de pago disponible.", walletWithdrawDescription: "Retira los fondos disponibles a tu cuenta verificada.", walletTransferDescription: "Envía fondos disponibles a otro usuario de Inclura.", walletTransactionsDescription: "Consulta el historial de transacciones de tu billetera.",
     // Accessibility
@@ -4192,6 +4206,8 @@ returnHome: "Volver al inicio",
     // Language
     language: "语言",
 
+    openNavigationMenu: "打开导航菜单",
+    closeNavigationMenu: "关闭导航菜单",
     // Wallet
     walletTitle: "Inclura 钱包", walletBalance: "钱包余额", walletTopUp: "支付并充值", walletWithdraw: "提现", walletTransfer: "转账", walletTransactions: "交易", walletTransactionHistory: "交易记录", walletNoTransactions: "暂无交易。", walletLoadError: "无法加载钱包余额。", walletCurrencyUnavailable: "不可用", walletLoading: "正在加载钱包…", walletAccessibilityLabel: "钱包和财务操作", walletTopUpDescription: "通过可用的支付方式安全地充值。", walletWithdrawDescription: "将可用资金提现到已验证的账户。", walletTransferDescription: "向其他 Inclura 用户发送可用资金。", walletTransactionsDescription: "查看钱包交易记录。",
     // Accessibility
@@ -4776,6 +4792,8 @@ returnHome: "返回首页",
     // Language
     language: "Idioma",
 
+    openNavigationMenu: "Abrir menu de navegação",
+    closeNavigationMenu: "Fechar menu de navegação",
     // Wallet
     walletTitle: "Carteira Inclura", walletBalance: "Saldo da carteira", walletTopUp: "Pagar e adicionar saldo", walletWithdraw: "Levantar", walletTransfer: "Transferir", walletTransactions: "Transações", walletTransactionHistory: "Histórico de transações", walletNoTransactions: "Ainda não há transações.", walletLoadError: "Não foi possível carregar o saldo da carteira.", walletCurrencyUnavailable: "Indisponível", walletLoading: "A carregar carteira…", walletAccessibilityLabel: "Carteira e ações financeiras", walletTopUpDescription: "Adicione fundos com segurança através de um método de pagamento disponível.", walletWithdrawDescription: "Levante os fundos disponíveis para a sua conta verificada.", walletTransferDescription: "Envie fundos disponíveis para outro utilizador da Inclura.", walletTransactionsDescription: "Veja o histórico de transações da sua carteira.",
     // Accessibility
@@ -5387,6 +5405,8 @@ returnHome: "Voltar ao início",
     // Language
     language: "Lugha",
 
+    openNavigationMenu: "Fungua menyu ya urambazaji",
+    closeNavigationMenu: "Funga menyu ya urambazaji",
     // Wallet
     walletTitle: "Pochi ya Inclura", walletBalance: "Salio ya pochi", walletTopUp: "Lipa na Ongeza Salio", walletWithdraw: "Toa Pesa", walletTransfer: "Hamisha Pesa", walletTransactions: "Miamala", walletTransactionHistory: "Historia ya Miamala", walletNoTransactions: "Bado hakuna miamala.", walletLoadError: "Imeshindwa kupakia salio la pochi.", walletCurrencyUnavailable: "Haipatikani", walletLoading: "Inapakia pochi…", walletAccessibilityLabel: "Pochi na shughuli za kifedha", walletTopUpDescription: "Ongeza fedha kwa usalama kwa kutumia njia ya malipo inayopatikana.", walletWithdrawDescription: "Toa fedha zinazopatikana kwenda kwenye akaunti yako iliyothibitishwa.", walletTransferDescription: "Tuma fedha zinazopatikana kwa mtumiaji mwingine wa Inclura.", walletTransactionsDescription: "Tazama historia ya miamala ya pochi yako.",
     // Accessibility
