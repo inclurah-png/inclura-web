@@ -78,29 +78,12 @@ useState(false);
 ];
 
 const IFSE_PAYMENT_SECURITY = [
-
-"Identity Verification",
-
-"AI Payment Fraud Detection",
-
-"Chargeback Protection",
-
-"Velocity Monitoring",
-
-"Device Fingerprinting",
-
-"IP Reputation Analysis",
-
-"Country Verification",
-
-"AML Screening",
-
-"Sanctions Screening",
-
-"Continuous Transaction Monitoring",
-
-"Executive Approval",
-
+  "Authenticated Inclura account required",
+  "Server-side Flutterwave transaction verification",
+  "Transaction ID and reference validation",
+  "Account email, amount and currency matching",
+  "Duplicate transaction protection",
+  "Payment and identity approval kept separate",
 ];
 
 const transactionId = useMemo(() => {
@@ -671,7 +654,7 @@ Executive Review:
 
   <section>
 
-<h2>IFSE Protection Layers</h2>
+<h2>IFSE Payment Verification Checks</h2>
 
 <ul>
 
