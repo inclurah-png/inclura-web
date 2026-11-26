@@ -669,4 +669,69 @@ router.post("/verification-document-access", async (req, res) => {
   }
 });
 
+
+router.post("/partnership-contract-access", async (req, res) => {
+  try {
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Private contract access is not configured." });
+    }
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ success: false, message: "Authentication required." });
+    const decoded = await auth().verifyIdToken(token, true);
+    let isAdmin = decoded.admin === true;
+    if (isAdmin) {
+      const adminRecord = await auth().getUser(decoded.uid);
+      if (adminRecord.disabled || decoded.email_verified !== true) {
+        return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
+      }
+    }
+    const type = String(req.body?.partnershipType || "").toLowerCase();
+    const partnershipId = String(req.body?.partnershipId || "");
+    const collections = {
+      enterprise: "enterprisePartnerships",
+      corporate: "corporatePartnerships",
+      government: "governmentPartnerships",
+    };
+    const collectionName = collections[type];
+    if (!collectionName || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId)) {
+      return res.status(400).json({ success: false, message: "A valid partnership reference is required." });
+    }
+    const snapshot = await firestore().collection(collectionName).doc(partnershipId).get();
+    if (!snapshot.exists) return res.status(404).json({ success: false, message: "Partnership application not found." });
+    const application = snapshot.data() || {};
+    if (application.userId !== decoded.uid && !isAdmin) {
+      return res.status(403).json({ success: false, message: "You are not authorized to access this contract." });
+    }
+    const document = application.contractDocument || {};
+    const publicId = String(document.cloudinaryPublicId || "");
+    const resourceType = String(document.cloudinaryResourceType || "");
+    const fileType = String(document.fileType || "").toLowerCase();
+    const format = fileType === "application/pdf" ? "pdf" :
+      fileType === "image/png" ? "png" :
+      ["image/jpeg", "image/jpg"].includes(fileType) ? "jpg" : "";
+    if (!format || !["image", "raw"].includes(resourceType) ||
+        !publicId.startsWith("inclura/partnershipContracts/" + application.userId + "/")) {
+      return res.status(404).json({ success: false, message: "No valid private signed contract is attached." });
+    }
+    const expiresAt = Math.floor(Date.now() / 1000) + 90;
+    const downloadParams = {
+      expires_at: String(expiresAt),
+      format,
+      public_id: publicId,
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      type: "authenticated",
+    };
+    const signature = signCloudinaryParams(downloadParams, API_SECRET);
+    const query = new URLSearchParams({ ...downloadParams, api_key: API_KEY, signature });
+    const downloadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/" +
+      resourceType + "/download?" + query.toString();
+    return res.status(200).json({
+      success: true, downloadUrl, expiresAt,
+      fileName: document.fileName || "signed-partnership-contract",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Unable to authorize private contract access." });
+  }
+});
+
 export default router;
