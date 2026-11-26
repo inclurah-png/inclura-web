@@ -1260,7 +1260,7 @@ function VerificationDocuments() {
                         flexShrink: 0,
                       }}
                     >
-                      ✅
+                      ○
                     </span>
 
                     <span>
