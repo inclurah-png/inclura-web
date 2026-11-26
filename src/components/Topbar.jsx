@@ -80,24 +80,4 @@ const iconBtn = {
   fontSize: "18px",
 };
 
-const selectStyle = {
-  padding: "10px 12px",
-  borderRadius: "12px",
-  border: "1px solid #334155",
-  background: "#0f172a",
-  color: "white",
-  cursor: "pointer",
-};
-
-const iconBtn = {
-  background: "#0f172a",
-  border: "none",
-  color: "white",
-  width: "42px",
-  height: "42px",
-  borderRadius: "50%",
-  cursor: "pointer",
-  fontSize: "18px",
-};
-
 export default Topbar;
