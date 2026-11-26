@@ -2371,7 +2371,6 @@ returnHome: "Komawa Gida",
     partnershipStatusAdminUpdate: "Mise à jour de l’administrateur",
     partnershipStatusNoUpdate: "Aucun examen administrateur enregistré",
     partnershipStatusReturn: "Retour au centre de vérification",
-      "Centre de vérification",
 
     // Sidebar
         creatorActivityTitle: "Activité du créateur",
@@ -2969,7 +2968,6 @@ returnHome: "Retour à l’accueil",
     partnershipStatusAdminUpdate: "تحديث المسؤول",
     partnershipStatusNoUpdate: "لم يتم تسجيل مراجعة إدارية بعد",
     partnershipStatusReturn: "العودة إلى مركز التحقق",
-      "مركز التحقق",
 
     // Sidebar
         creatorActivityTitle: "نشاط المبدع",
@@ -3567,7 +3565,6 @@ returnHome: "العودة إلى الرئيسية",
     partnershipStatusAdminUpdate: "Actualización del administrador",
     partnershipStatusNoUpdate: "Aún no hay una revisión administrativa registrada",
     partnershipStatusReturn: "Volver al Centro de verificación",
-      "Centro de verificación",
 
     // Sidebar
         creatorActivityTitle: "Actividad del creador",
@@ -4731,7 +4728,6 @@ returnHome: "返回首页",
     partnershipStatusAdminUpdate: "Atualização do administrador",
     partnershipStatusNoUpdate: "Ainda não existe análise administrativa registada",
     partnershipStatusReturn: "Voltar ao Centro de Verificação",
-      "Centro de verificação",
 
     // Sidebar
         creatorActivityTitle: "Atividade do criador",
