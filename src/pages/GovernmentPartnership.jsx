@@ -284,6 +284,10 @@ try {
 
       status: REQUEST_STATUS.SUBMITTED,
 
+      approvalStatus: "Not Approved",
+
+      contractStatus: "Inactive",
+
       reviewProgress,
 
       timeline,
