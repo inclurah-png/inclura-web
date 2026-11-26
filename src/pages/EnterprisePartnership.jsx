@@ -602,14 +602,13 @@ approvalStatus:
 contractStatus:
 "Inactive",
 
-              riskScore:
-enterpriseRiskScore,
-
-threatLevel,
-
-ifseSecurityScore,
-
-trustScore,
+              riskScore: enterpriseRiskScore,
+              riskScoreSource: "member_self_assessment",
+              threatLevel,
+              ifseSecurityScore,
+              ifseSecurityScoreSource: "member_self_assessment",
+              trustScore,
+              trustScoreSource: "member_self_assessment",
 
               createdAt:
                 serverTimestamp(),
@@ -1267,9 +1266,10 @@ serverTimestamp(),
 
             <h2>
 
-              IFSE Enterprise Security Assessment
+              Requested Review Areas (Pending)
 
             </h2>
+            <p>Each listed area remains pending until an authorized reviewer records its outcome.</p>
 
             <ul>
 
@@ -1355,9 +1355,10 @@ serverTimestamp(),
 
             <h2>
 
-              IFSE Risk Assessment
+              Preliminary Applicant Self-Assessment
 
             </h2>
+            <p>These figures are calculated from the application form only. They are not server-verified IFSE findings and do not complete security, accessibility, compliance or approval checks.</p>
 
             <p>
 
