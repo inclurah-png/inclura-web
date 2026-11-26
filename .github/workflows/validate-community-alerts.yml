@@ -47,6 +47,7 @@ jobs:
           node --check backend/src/config/notificationConfig.js
           node --check backend/src/services/notificationProviders.js
           node --check backend/src/middleware/firebaseAuth.js
+          node --check backend/src/controllers/emergencyController.js
           node --check backend/src/routes/sosNotificationRoutes.js
           node --check backend/src/routes/emergencyRoutes.js
           node --check backend/src/services/pushNotificationService.js
