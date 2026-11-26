@@ -25,6 +25,26 @@ html {
   font-size: 100%;
 }
 
+html[data-inclura-high-contrast="true"] * {
+  color: #fff !important;
+  border-color: #fff !important;
+}
+
+html[data-inclura-high-contrast="true"] div,
+html[data-inclura-high-contrast="true"] p,
+html[data-inclura-high-contrast="true"] span,
+html[data-inclura-high-contrast="true"] h1,
+html[data-inclura-high-contrast="true"] h2,
+html[data-inclura-high-contrast="true"] h3,
+html[data-inclura-high-contrast="true"] h4,
+html[data-inclura-high-contrast="true"] h5,
+html[data-inclura-high-contrast="true"] h6,
+html[data-inclura-high-contrast="true"] label,
+html[data-inclura-high-contrast="true"] li,
+html[data-inclura-high-contrast="true"] small {
+  background-color: transparent !important;
+}
+
 html[data-inclura-high-contrast="true"] body,
 html[data-inclura-high-contrast="true"] main,
 html[data-inclura-high-contrast="true"] section,
