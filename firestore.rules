@@ -1336,6 +1336,12 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // Checkout intents and webhook reconciliation records are backend-only.
+    // A browser must never create, read, or modify pending gateway transactions.
+    match /flutterwavePendingPayments/{pendingId} {
+      allow read, write: if false;
+    }
+
     // Payment records are visible only to the member who paid.
     match /verificationPayments/{paymentId} {
       // Only the trusted IFSE backend may create payment confirmations.
