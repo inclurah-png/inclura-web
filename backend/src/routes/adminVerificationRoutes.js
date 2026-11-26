@@ -1013,14 +1013,25 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
         error.statusCode = 409;
         throw error;
       }
-      if (paymentRequired && (
-        application.paymentStatus !== "paid" ||
-        !application.paymentVerifiedAt ||
-        !application.paymentVerifiedBy
-      )) {
-        const error = new Error("Payment is required but no trusted server-confirmed payment record is attached. Activation is blocked.");
-        error.statusCode = 409;
-        throw error;
+      if (paymentRequired) {
+        const paymentSnapshot = await tx.get(
+          db.collection("flutterwavePayments")
+            .where("partnershipId", "==", partnershipId)
+            .limit(10)
+        );
+        const trustedPayment = paymentSnapshot.docs.find((paymentDoc) => {
+          const payment = paymentDoc.data() || {};
+          return payment.userId === applicantId &&
+            payment.purpose === "partnership" &&
+            payment.paymentStatus === "paid" &&
+            payment.verifiedByServer === true &&
+            payment.transactionId;
+        });
+        if (!trustedPayment) {
+          const error = new Error("Payment is required but no matching server-verified partnership payment record exists. Activation is blocked.");
+          error.statusCode = 409;
+          throw error;
+        }
       }
       const statusField = type === "government" ? "status" : "requestStatus";
       tx.update(requestRef, {
