@@ -28,6 +28,14 @@ jobs:
       - name: Install backend dependencies
         run: npm install --prefix backend --ignore-scripts --no-audit --no-fund
 
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check backend/server.js
+          node --check backend/src/routes/paymentRoutes.js
+          node --check backend/src/routes/passkeyRoutes.js
+          node --check backend/src/routes/adminVerificationRoutes.js
+          node --check backend/src/services/premiumExpirySweeper.js
+
       - name: Import payment route and trusted pricing modules
         run: |
           node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); await import('./backend/src/routes/adminVerificationRoutes.js'); console.log('Payment, passkey and administrator verification routes import successfully.');"
