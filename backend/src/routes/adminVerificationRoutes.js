@@ -29,6 +29,102 @@ async function requireAdmin(req, res, next) {
 
 router.use(requireAdmin);
 
+router.get("/verification/analytics", async (req, res) => {
+  try {
+    const db = firestore();
+    const [paymentsSnapshot, requestsSnapshot] = await Promise.all([
+      db.collection("flutterwavePayments").get(),
+      db.collection("verificationRequests").get(),
+    ]);
+
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const report = {
+      totalRevenue: 0,
+      monthlyRevenue: 0,
+      pendingPayments: 0,
+      successfulPayments: 0,
+      creatorRevenue: 0,
+      groupRevenue: 0,
+      organizationRevenue: 0,
+      enterpriseRevenue: 0,
+      governmentRevenue: 0,
+      ngoRevenue: 0,
+      institutionRevenue: 0,
+      religiousRevenue: 0,
+      healthcareRevenue: 0,
+      museumRevenue: 0,
+      tourismRevenue: 0,
+      entertainmentRevenue: 0,
+      mediaRevenue: 0,
+      accessibilityRevenue: 0,
+      currency: "USD",
+      generatedAt: now.toISOString(),
+    };
+
+    const revenueFields = {
+      creator: "creatorRevenue",
+      group: "groupRevenue",
+      organization: "organizationRevenue",
+      enterprise: "enterpriseRevenue",
+      government: "governmentRevenue",
+      ngo: "ngoRevenue",
+      institution: "institutionRevenue",
+      religious: "religiousRevenue",
+      healthcare: "healthcareRevenue",
+      museum: "museumRevenue",
+      tourism: "tourismRevenue",
+      entertainment: "entertainmentRevenue",
+      media: "mediaRevenue",
+      accessibility: "accessibilityRevenue",
+    };
+
+    paymentsSnapshot.forEach((paymentDoc) => {
+      const payment = paymentDoc.data() || {};
+      if (
+        payment.paymentStatus !== "paid" ||
+        payment.verifiedByServer !== true ||
+        !["verification", "creator_verification"].includes(payment.purpose) ||
+        String(payment.currency || "").toUpperCase() !== "USD"
+      ) return;
+
+      const amount = Number(payment.amount);
+      if (!Number.isFinite(amount) || amount <= 0) return;
+
+      report.successfulPayments += 1;
+      report.totalRevenue += amount;
+
+      const createdAt = payment.createdAt?.toDate
+        ? payment.createdAt.toDate()
+        : (payment.createdAt ? new Date(payment.createdAt) : null);
+      if (createdAt && Number.isFinite(createdAt.getTime()) && createdAt >= monthStart) {
+        report.monthlyRevenue += amount;
+      }
+
+      const category = payment.purpose === "creator_verification"
+        ? "creator"
+        : String(payment.category || "").toLowerCase();
+      const field = revenueFields[category];
+      if (field) report[field] += amount;
+    });
+
+    requestsSnapshot.forEach((requestDoc) => {
+      const request = requestDoc.data() || {};
+      if (
+        request.paymentStatus === "pending" &&
+        !["approved", "rejected"].includes(request.status)
+      ) {
+        report.pendingPayments += 1;
+      }
+    });
+
+    return res.status(200).json({ success: true, report });
+  } catch (error) {
+    console.error("Verification analytics failed:", error);
+    return res.status(500).json({ success: false, message: "Verification analytics could not be loaded." });
+  }
+});
+
 router.post("/creators/:userId/approve", async (req, res) => {
   try {
     const userId = String(req.params.userId || "");
