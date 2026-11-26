@@ -39,6 +39,11 @@ router.post("/creators/:userId/approve", async (req, res) => {
       return res.status(403).json({ success: false, message: "Administrators cannot approve their own creator verification." });
     }
 
+    const creatorAccount = await auth().getUser(userId);
+    if (creatorAccount.disabled || creatorAccount.emailVerified !== true) {
+      return res.status(403).json({ success: false, message: "The creator account must be active and email verified." });
+    }
+
     const expectedAmount = Number(
       creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
     );
@@ -188,6 +193,14 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         tx.get(certificateRef),
       ]);
       if (!userSnap.exists) throw new Error("Applicant account not found.");
+      const applicantData = userSnap.data() || {};
+      if (applicantData.status === "banned" || applicantData.status === "suspended") {
+        throw new Error("A banned or suspended account cannot be verified.");
+      }
+      const applicantAccount = await auth().getUser(userId);
+      if (applicantAccount.disabled || applicantAccount.emailVerified !== true) {
+        throw new Error("The applicant account must be active and email verified.");
+      }
       if (badgeSnap.exists && (badgeSnap.data().verificationId !== id || badgeSnap.data().userId !== userId)) {
         throw new Error("A conflicting verification badge record already exists.");
       }
