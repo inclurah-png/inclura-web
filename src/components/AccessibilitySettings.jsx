@@ -305,6 +305,9 @@ function AccessibilitySettings() {
         <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
           {t("accessibilityProfileDesc")}
         </p>
+        <p style={{ fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5, marginTop: "8px" }}>
+          {t("accessibilityProfileLimitations")}
+        </p>
 
         {PROFILE_OPTIONS.map((option) => (
           <SettingRow key={option.key} controlId={`inclura-accessibility-${option.key}`} label={t(option.labelKey)}>
