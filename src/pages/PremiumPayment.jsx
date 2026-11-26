@@ -28,7 +28,15 @@ function PremiumPayment() {
   }, []);
 
   const makeTxRef = (tier) =>
-    `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}`;
+    `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  // Generate one unique reference per rendered payment attempt and pass that same
+  // reference to both Flutterwave and the server-side verification request.
+  const txRefs = {
+    silver: makeTxRef("silver"),
+    gold: makeTxRef("gold"),
+    platinum: makeTxRef("platinum"),
+    enterprise: makeTxRef("enterprise"),
+  };
 
   const paymentConfigs = [
     ["silver", "SilverBadge", "Silver membership"],
@@ -39,6 +47,7 @@ function PremiumPayment() {
 
   const silverPayment = useFlutterwave({
     public_key: publicKey,
+    tx_ref: txRefs.silver,
     amount: Number(pricing.SilverBadge?.price || 0),
     currency: "NGN",
     payment_options: "card,banktransfer,ussd",
@@ -47,6 +56,7 @@ function PremiumPayment() {
   });
   const goldPayment = useFlutterwave({
     public_key: publicKey,
+    tx_ref: txRefs.gold,
     amount: Number(pricing.GoldBadge?.price || 0),
     currency: "NGN",
     payment_options: "card,banktransfer,ussd",
@@ -55,6 +65,7 @@ function PremiumPayment() {
   });
   const platinumPayment = useFlutterwave({
     public_key: publicKey,
+    tx_ref: txRefs.platinum,
     amount: Number(pricing.PlatinumBadge?.price || 0),
     currency: "NGN",
     payment_options: "card,banktransfer,ussd",
@@ -63,6 +74,7 @@ function PremiumPayment() {
   });
   const enterprisePayment = useFlutterwave({
     public_key: publicKey,
+    tx_ref: txRefs.enterprise,
     amount: Number(pricing.EnterpriseBadge?.price || 0),
     currency: "NGN",
     payment_options: "card,banktransfer,ussd",
@@ -70,12 +82,11 @@ function PremiumPayment() {
     customizations: { title: "Inclura Premium Upgrade", description: "Enterprise membership" },
   });
 
-  async function startPayment(tier, amount, paymentHandler) {
+  async function startPayment(tier, amount, paymentHandler, txRef) {
     if (!auth.currentUser) { alert("Please sign in first."); return; }
     if (!publicKey) { alert("Payment is temporarily unavailable. Please contact support."); return; }
     if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) { alert("This plan is not currently available for payment."); return; }
 
-    const txRef = makeTxRef(tier);
     setLoading(true);
     paymentHandler({
       callback: async (response) => {
@@ -102,7 +113,12 @@ function PremiumPayment() {
     });
   }
 
-  const handlers = [silverPayment, goldPayment, platinumPayment, enterprisePayment];
+  const handlers = [
+    [silverPayment, txRefs.silver],
+    [goldPayment, txRefs.gold],
+    [platinumPayment, txRefs.platinum],
+    [enterprisePayment, txRefs.enterprise],
+  ];
 
   return (
     <div style={{ padding: "24px", color: "white" }}>
@@ -112,7 +128,7 @@ function PremiumPayment() {
           <button
             type="button"
             disabled={loading || !publicKey}
-            onClick={() => startPayment(tier, pricing[key]?.price, handlers[index])}
+            onClick={() => startPayment(tier, pricing[key]?.price, handlers[index][0], handlers[index][1])}
           >
             {tier[0].toUpperCase() + tier.slice(1)} — ₦{Number(pricing[key]?.price || 0).toLocaleString()}
           </button>
