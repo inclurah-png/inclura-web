@@ -27,6 +27,20 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 
+const ALLOWED_STORY_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
+const ALLOWED_STORY_VIDEO_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
+
 function CreateStory() {
 const { t } = useTranslation();
 
@@ -221,13 +235,13 @@ async function submitMediaStory(file, mediaType) {
       return;
     }
 
-    if (mediaType === "image" && !file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+    if (mediaType === "image" && !ALLOWED_STORY_IMAGE_TYPES.has(file.type)) {
+      alert("Choose a JPEG, PNG, WebP, GIF or AVIF image.");
       return;
     }
 
-    if (mediaType === "video" && !file.type.startsWith("video/")) {
-      alert("Please select a video file.");
+    if (mediaType === "video" && !ALLOWED_STORY_VIDEO_TYPES.has(file.type)) {
+      alert("Choose an MP4, WebM or MOV video.");
       return;
     }
 
@@ -449,7 +463,7 @@ marginBottom:
   <input
     ref={imageInputRef}
     type="file"
-    accept="image/*"
+    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
     onChange={handleImageSelection}
     style={{ display: "none" }}
   />
@@ -457,7 +471,7 @@ marginBottom:
   <input
     ref={videoInputRef}
     type="file"
-    accept="video/*"
+    accept="video/mp4,video/webm,video/quicktime"
     onChange={handleVideoSelection}
     style={{ display: "none" }}
   />
