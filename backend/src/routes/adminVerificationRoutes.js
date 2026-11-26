@@ -31,7 +31,6 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
     const requestRef = db.collection("verificationRequests").doc(id);
     const badgeRef = db.collection("verificationBadges").doc(id);
     const certificateRef = db.collection("verificationCertificates").doc(id);
-    const userRefHolder = { current: null };
     const timelineRef = db.collection("verificationTimeline").doc();
     const auditRef = db.collection("verificationAuditLogs").doc();
     const securityRef = db.collection("ifseSecurityEvents").doc();
@@ -49,7 +48,6 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       const userId = String(application.userId || application.submittedBy || "");
       if (!userId) throw new Error("The application has no valid member account.");
       const userRef = db.collection("users").doc(userId);
-      userRefHolder.current = userRef;
       const userSnap = await tx.get(userRef);
       if (!userSnap.exists) throw new Error("Applicant account not found.");
 
