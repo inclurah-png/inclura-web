@@ -486,9 +486,10 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
 
     return res.json({ success: true, message: "Verification approved and records issued." });
   } catch (error) {
-    const status = /administrators cannot|banned or suspended|must be active and email verified/i.test(error.message) ? 403 :
+    const status = error.statusCode ||
+      (/administrators cannot|banned or suspended|must be active and email verified/i.test(error.message) ? 403 :
       /verification application not found|applicant account not found/i.test(error.message) ? 404 :
-      /payment|documents|already been closed|conflicting verification/i.test(error.message) ? 409 : 500;
+      /payment|documents|already been closed|conflicting verification|application changed/i.test(error.message) ? 409 : 500);
     return res.status(status).json({ success: false, message: error.message || "Approval failed." });
   }
 });
