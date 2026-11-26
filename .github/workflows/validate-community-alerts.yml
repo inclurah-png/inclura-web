@@ -27,6 +27,15 @@ jobs:
           VITE_SOS_NOTIFICATION_BACKEND_URL: https://inclura-ifse-backend.onrender.com
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
         run: npm run build
+      - name: Compatibility build with validated dependency security candidates
+        run: |
+          npm install --package-lock-only --save-exact react-router-dom@7.18.7
+          npm install --package-lock-only --save-exact firebase@13.4.0
+          npm pkg set 'overrides.axios=1.21.1' 'overrides.@grpc/grpc-js=1.14.7'
+          npm install --package-lock-only
+          npm ci
+          npm audit
+          npm run build
 
   backend-syntax:
     runs-on: ubuntu-latest
