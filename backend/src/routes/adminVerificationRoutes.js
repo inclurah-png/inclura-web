@@ -47,6 +47,29 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       }
       const userId = String(application.userId || application.submittedBy || "");
       if (!userId) throw new Error("The application has no valid member account.");
+      const paymentId = String(application.paymentId || "");
+      if (!/^\\d{1,30}$/.test(paymentId)) {
+        throw new Error("A server-verified payment record is required before approval.");
+      }
+      const paymentRef = db.collection("verificationPayments").doc(paymentId);
+      const paymentSnap = await tx.get(paymentRef);
+      if (!paymentSnap.exists) {
+        throw new Error("The server-verified payment record could not be found.");
+      }
+      const payment = paymentSnap.data();
+      if (
+        payment.userId !== userId ||
+        payment.verificationId !== id ||
+        payment.transactionId !== paymentId ||
+        payment.paymentStatus !== "paid" ||
+        payment.verifiedByServer !== true ||
+        String(payment.currency || "").toUpperCase() !== "USD" ||
+        Math.abs(Number(payment.amount) - Number(application.paymentAmount)) > 0.01 ||
+        payment.category !== application.category ||
+        payment.verificationType !== application.verificationType
+      ) {
+        throw new Error("The payment record does not match this verification application.");
+      }
       const userRef = db.collection("users").doc(userId);
       const userSnap = await tx.get(userRef);
       if (!userSnap.exists) throw new Error("Applicant account not found.");
