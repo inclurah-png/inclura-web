@@ -83,7 +83,7 @@ export default function PartnershipStatus() {
   const stageList = useMemo(() => STAGES[type] || [], [type]);
   const status = String(application?.requestStatus || application?.status || "submitted").toLowerCase();
   const rejected = status === "rejected";
-  const active = status === "active" || application?.contractStatus === "Active";
+  const active = status === "active";
 
   return (
     <DashboardLayout>
