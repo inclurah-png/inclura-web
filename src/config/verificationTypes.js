@@ -317,15 +317,26 @@ export const VERIFICATION_TYPES = Object.freeze({
 
 export const VERIFICATION_BADGES = Object.freeze({
   creator: "🎥",
+  verified_creator: "🎥",
   group: "👥",
+  verified_group: "👥",
   institution: "🎓",
+  verified_institution: "🎓",
   organization: "🏢",
+  verified_organization: "🏢",
   healthcare: "🏥",
+  verified_healthcare: "🏥",
   government: "🏛️",
+  verified_government: "🏛️",
   media: "📰",
+  verified_media: "📰",
   religious: "⛪",
+  verified_religious: "⛪",
   financial: "🏦",
+  verified_financial: "🏦",
   emergency_services: "🚑",
+  verified_emergency_service: "🚑",
+  enterprise_partner: "🏆",
 });
 
 // =======================================================
@@ -561,8 +572,24 @@ export function getVerificationMetadata(type) {
     };
   }
 
+  const normalizedType = type.toLowerCase();
+  const legacyCategory = {
+    verified_creator: "creator",
+    verified_group: "group",
+    verified_institution: "institution",
+    verified_organization: "organization",
+    verified_healthcare: "healthcare",
+    verified_government: "government",
+    verified_media: "media",
+    verified_religious: "religious",
+    verified_financial: "financial",
+    verified_emergency_service: "emergency_services",
+    enterprise_partner: "enterprise",
+  }[normalizedType];
+
   return (
-    VERIFICATION_METADATA[type.toLowerCase()] || {
+    VERIFICATION_METADATA[normalizedType] ||
+    VERIFICATION_METADATA[legacyCategory] || {
       trustLevel: 1,
       riskLevel: "low",
       renewal: {

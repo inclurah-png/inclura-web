@@ -30,6 +30,7 @@ import AdvertiserRoute from "./components/AdvertiserRoute";
 import EnterpriseRoute from "./components/EnterpriseRoute";
 import AdminRoute from "./components/AdminRoute";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
+import AccessibilityButton from "./components/AccessibilityButton";
 
 const Home = lazy(() => import("./pages/Home"));
 const AboutInclura = lazy(() => import("./pages/AboutInclura"));
@@ -78,6 +79,7 @@ const EnterpriseAnalytics = lazy(() => import("./pages/EnterpriseAnalytics"));
 const EnterprisePartnership = lazy(() => import("./pages/EnterprisePartnership"));
 const CorporatePartnership = lazy(() => import("./pages/CorporatePartnership"));
 const GovernmentPartnership = lazy(() => import("./pages/GovernmentPartnership"));
+const PartnershipStatus = lazy(() => import("./pages/PartnershipStatus"));
 const PremiumDashboard = lazy(() => import("./pages/PremiumDashboard"));
 const PremiumPayment = lazy(() => import("./pages/PremiumPayment"));
 const AdminPanel = lazy(() => import("./pages/AdminPanel"));
@@ -503,6 +505,15 @@ function App() {
       />
 
       <Route
+        path="/partnership-status/:type/:id"
+        element={
+          <ProtectedRoute>
+            <PartnershipStatus />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
         path="/government-partnership"
         element={
           <ProtectedRoute>
@@ -788,6 +799,7 @@ function App() {
       />
 
     </Routes>
+    <AccessibilityButton />
     </RouteErrorBoundary>
     </Suspense>
   );

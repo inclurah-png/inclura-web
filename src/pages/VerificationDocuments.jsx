@@ -23,7 +23,6 @@ import { uploadVerificationDocumentToCloudinary } from "../services/cloudinaryUp
 
 import DashboardLayout from "../components/DashboardLayout";
 
-import { VERIFICATION_PLANS } from "../config";
 
 
 function VerificationDocuments() {
@@ -300,84 +299,6 @@ function VerificationDocuments() {
   };
 
 
-  const calculateRiskScore = () => {
-    let score = 0;
-
-    if (!contactName.trim()) {
-      score += 10;
-    }
-
-    if (!contactEmail.trim()) {
-      score += 10;
-    }
-
-    if (!country.trim()) {
-      score += 5;
-    }
-
-    if (!state.trim()) {
-      score += 5;
-    }
-
-    if (!city.trim()) {
-      score += 5;
-    }
-
-    if (
-      [
-        "Enterprise",
-        "Corporate",
-        "Government",
-      ].includes(verificationType) &&
-      !organizationName.trim()
-    ) {
-      score += 20;
-    }
-
-    if (
-      [
-        "Religious",
-        "Museum",
-        "Tourism",
-        "Entertainment",
-        "Accessibility",
-      ].includes(verificationType) &&
-      !organizationName.trim()
-    ) {
-      score += 10;
-    }
-
-    return Math.min(score, 100);
-  };
-
-
-  const riskScore = calculateRiskScore();
-
-
-  const threatLevel =
-    riskScore >= 75
-      ? "High"
-      : riskScore >= 40
-      ? "Medium"
-      : "Low";
-
-
-  const executiveReviewRequired =
-    [
-      "Enterprise",
-      "Corporate",
-      "Government",
-    ].includes(verificationType) ||
-    riskScore >= 60;
-
-
-  const selectedPlan =
-    VERIFICATION_PLANS?.[verificationType] || {
-      monthlyUSD: 0,
-      renewal: "Monthly",
-      trustLevel: "Standard",
-      benefits: [],
-    };
     const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -489,13 +410,37 @@ function VerificationDocuments() {
         return;
       }
 
+      const categoryLabels = {
+        creator: "Creator",
+        group: "Group",
+        organization: "Organization",
+        ngo: "NGO",
+        institution: "Institution",
+        religious: "Religious",
+        healthcare: "Healthcare",
+        museum: "Museum",
+        tourism: "Tourism",
+        entertainment: "Entertainment",
+        media: "Media",
+        accessibility: "Accessibility",
+        corporate: "Corporate",
+        government: "Government",
+        enterprise: "Enterprise",
+      };
+      const expectedDocumentCategory =
+        categoryLabels[String(activeRequest.category || "").toLowerCase()];
+      if (expectedDocumentCategory && verificationType !== expectedDocumentCategory) {
+        setError("The document category must match the category on your active verification application.");
+        return;
+      }
+
       const verificationId =
         activeRequest.id;
 
 
       /*
        * ============================================
-       * UPLOAD DOCUMENTS TO FIREBASE STORAGE
+       * UPLOAD DOCUMENTS TO PRIVATE CLOUDINARY STORAGE
        * ============================================
        */
 
@@ -558,8 +503,6 @@ function VerificationDocuments() {
           verificationId
         ),
         {
-          verificationType,
-
           organizationName,
 
           contactName,
@@ -608,7 +551,8 @@ function VerificationDocuments() {
         {
           verificationId,
 
-          verificationType,
+          verificationType: activeRequest.verificationType,
+          documentCategory: verificationType,
 
           uploadedDocuments:
             uploadedFiles,
@@ -669,13 +613,10 @@ function VerificationDocuments() {
           eventType:
             "documents_submitted",
 
-          verificationType,
+          verificationType: activeRequest.verificationType,
+          documentCategory: verificationType,
 
-          riskScore,
-
-          threatLevel,
-
-          executiveReviewRequired,
+          assessmentStatus: "pending_server_review",
 
           reviewed:
             false,
@@ -1129,7 +1070,7 @@ function VerificationDocuments() {
                     >
 
                       <strong>
-                        ✅{" "}
+                        ○{" "}
                         {
                           uploadedDocuments[
                             documentName
@@ -1260,101 +1201,17 @@ function VerificationDocuments() {
            */
 
           <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdSecurityAssessment")}</h2>
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns:
-                  "repeat(auto-fit,minmax(220px,1fr))",
-                gap: "16px",
-                marginTop: "20px",
-              }}
-            >
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Risk Score
-                </h3>
-
-                <h1
-                  style={{
-                    marginTop: "10px",
-                  }}
-                >
-                  {riskScore}%
-                </h1>
-
-              </div>
-
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Threat Level
-                </h3>
-
-                <h2
-                  style={{
-                    color:
-                      threatLevel === "High"
-                        ? "#ef4444"
-                        : threatLevel === "Medium"
-                        ? "#f59e0b"
-                        : "#22c55e",
-                  }}
-                >
-                  {threatLevel}
-                </h2>
-
-              </div>
-
-
-              <div
-                style={{
-                  padding: "16px",
-                  background: "#1e293b",
-                  borderRadius: "10px",
-                }}
-              >
-
-                <h3>
-                  Executive Review
-                </h3>
-
-                <h2>
-                  {executiveReviewRequired
-                    ? "Required"
-                    : "Not Required"}
-                </h2>
-
-              </div>
-
-            </div>
-
-          </section>
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
+  <h2>{t("vdSecurityAssessment")}</h2>
+  <p role="status" aria-live="polite">{t("vdAssessmentPending")}</p>
+</section>
                     /*
            * ============================================
            * IFSE PROTECTION LAYERS
@@ -1379,9 +1236,7 @@ function VerificationDocuments() {
                 color: "#cbd5e1",
               }}
             >
-              Every verification request is processed
-              through multiple independent security
-              engines before approval.
+              {t("vdReviewAreasPending")}
             </p>
 
             <div
@@ -1411,12 +1266,12 @@ function VerificationDocuments() {
 
                     <span
                       style={{
-                        color: "#22c55e",
+                        color: "#94a3b8",
                         fontSize: "20px",
                         flexShrink: 0,
                       }}
                     >
-                      ✅
+                      ○
                     </span>
 
                     <span>
@@ -1530,129 +1385,10 @@ function VerificationDocuments() {
            * ============================================
            */
 
-          <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdSelectedPlan")}</h2>
-
-            <div
-              style={{
-                marginTop: "18px",
-                background: "#1e293b",
-                padding: "18px",
-                borderRadius: "10px",
-              }}
-            >
-
-              <p>
-                <strong>
-                  Verification Type:
-                </strong>{" "}
-                {verificationType}
-              </p>
-
-              <p>
-                <strong>
-                  Risk Score:
-                </strong>{" "}
-                {riskScore}%
-              </p>
-
-              <p>
-                <strong>
-                  Threat Level:
-                </strong>{" "}
-                {threatLevel}
-              </p>
-
-              <p>
-                <strong>
-                  Executive Review:
-                </strong>{" "}
-                {executiveReviewRequired
-                  ? "Required"
-                  : "Not Required"}
-              </p>
-
-              <hr
-                style={{
-                  margin: "18px 0",
-                  borderColor: "#334155",
-                }}
-              />
-
-              <h3
-                style={{
-                  marginTop: "20px",
-                  marginBottom: "15px",
-                }}
-              >
-                Verification Plan Details
-              </h3>
-
-              <p>
-                <strong>
-                  Verification Fee:
-                </strong>{" "}
-                $
-                {selectedPlan.monthlyUSD || 0}
-              </p>
-
-              <p>
-                <strong>
-                  Renewal:
-                </strong>{" "}
-                {selectedPlan.renewal || "Monthly"}
-              </p>
-
-              <p>
-                <strong>
-                  Trust Level:
-                </strong>{" "}
-                {selectedPlan.trustLevel || "Standard"}
-              </p>
-
-              {selectedPlan.benefits &&
-                selectedPlan.benefits.length > 0 && (
-
-                  <div
-                    style={{
-                      marginTop: "15px",
-                    }}
-                  >
-
-                    <strong>
-                      Benefits
-                    </strong>
-
-                    <ul>
-
-                      {selectedPlan.benefits.map(
-                        (benefit) => (
-
-                          <li key={benefit}>
-                            {benefit}
-                          </li>
-
-                        )
-                      )}
-
-                    </ul>
-
-                  </div>
-
-                )}
-
-            </div>
-
-          </section>
+          <section style={{ marginBottom: "24px", padding: "20px", background: "#0f172a", border: "1px solid #334155", borderRadius: "12px" }}>
+  <h2>{t("vdSelectedPlan")}</h2>
+  <p>Document submission is linked to your existing verification application. It does not change your selected plan, payment amount or payment status.</p>
+</section>
                     /*
            * ============================================
            * IFSE NOTICE
@@ -1660,83 +1396,26 @@ function VerificationDocuments() {
            */
 
           <section
-            style={{
-              marginBottom: "24px",
-              padding: "20px",
-              background: "#0f172a",
-              border: "1px solid #334155",
-              borderRadius: "12px",
-            }}
-          >
-
-            <h2>{t("vdIfseNotice")}</h2>
-
-            <p>
-              Every uploaded verification document is
-              protected by the Inclura Fortress Security
-              Engine (IFSE).
-            </p>
-
-            <p>
-              Before approval, every document passes
-              through the following automated and human
-              verification processes:
-            </p>
-
-            <ul
-              style={{
-                lineHeight: "2",
-                marginTop: "16px",
-              }}
-            >
-
-              <li>
-                ✅ Identity Verification
-              </li>
-
-              <li>
-                ✅ Document Authenticity Verification
-              </li>
-
-              <li>
-                ✅ OCR Data Extraction
-              </li>
-
-              <li>
-                ✅ AI Fraud Detection
-              </li>
-
-              <li>
-                ✅ Duplicate Detection
-              </li>
-
-              <li>
-                ✅ Metadata Inspection
-              </li>
-
-              <li>
-                ✅ Malware &amp; File Security Scan
-              </li>
-
-              <li>
-                ✅ Accessibility Compliance Review
-              </li>
-
-              <li>
-                ✅ Risk Assessment
-              </li>
-
-              <li>
-                ✅ Executive Review (where required)
-              </li>
-
-              <li>
-                ✅ Continuous IFSE Monitoring
-              </li>
-
-            </ul>
-
-          </section>
+  style={{
+    marginBottom: "24px",
+    padding: "20px",
+    background: "#0f172a",
+    border: "1px solid #334155",
+    borderRadius: "12px",
+  }}
+>
+  <h2>{t("vdIfseNotice")}</h2>
+  <p>{t("vdUploadStorageDetails")}</p>
+  <p>{t("vdChecksNotPerformed")}</p>
+  <ul style={{ lineHeight: "2", marginTop: "16px" }}>
+    <li>{t("vdUploadControl1")}</li>
+    <li>{t("vdUploadControl2")}</li>
+    <li>{t("vdUploadControl3")}</li>
+    <li>{t("vdUploadControl4")}</li>
+    <li>{t("vdUploadControl5")}</li>
+    <li>{t("vdUploadControl6")}</li>
+  </ul>
+</section>
                     /*
            * ============================================
            * SUBMIT / CANCEL CONTROLS

@@ -17,14 +17,6 @@ import {
 } from "../utils/creatorScore";
 
 import {
-  getVerificationMetadata,
-} from "../config/verificationTypes";
-
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
-import {
   detectLanguage,
 } from "../translation/languageDetector";
 
@@ -273,13 +265,7 @@ function CreatePost() {
       // 4. Prepare the existing verification fields.
       operation = "post preparation";
 
-      const badgeType = migrateVerificationId(
-        profile?.badgeType
-      );
-
-      const verificationMetadata = profile?.verified
-        ? getVerificationMetadata(badgeType)
-        : null;
+      const badgeType = profile?.badgeType || "";
 
       // 5. Create the Firestore post.
       operation = "post creation";
@@ -315,7 +301,6 @@ function CreatePost() {
 
           verified: profile?.verified || false,
           badgeType,
-          verificationMetadata,
 
           premium: profile?.premium || false,
           premiumTier: profile?.premiumTier || "",

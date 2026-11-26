@@ -18,18 +18,24 @@ auth,
 } from "../firebase";
 
 import {
-  getVerificationMetadata,
-} from "../config/verificationTypes";
-
-import {
   ref,
   uploadBytes,
   getDownloadURL,
 } from "firebase/storage";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
+const ALLOWED_STORY_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+  "image/avif",
+]);
+
+const ALLOWED_STORY_VIDEO_TYPES = new Set([
+  "video/mp4",
+  "video/webm",
+  "video/quicktime",
+]);
 
 function CreateStory() {
 const { t } = useTranslation();
@@ -38,15 +44,6 @@ const [storyText, setStoryText] =
 useState("");
 
 const [uploading, setUploading] =
-useState(false);
-
-const [screenReader, setScreenReader] =
-useState(true);
-
-const [textOnly, setTextOnly] =
-useState(true);
-
-const [voiceStory, setVoiceStory] =
 useState(false);
 
 const [highContrast, setHighContrast] =
@@ -104,12 +101,12 @@ auth.currentUser;
     );
 
   const activeStories =
-    storiesSnapshot.docs.filter(
-      (doc) =>
-        doc.data()
-          .expiresAt >
-        Date.now()
-    );
+    storiesSnapshot.docs.filter((storyDoc) => {
+      const expiresAt = storyDoc.data().expiresAt;
+      return expiresAt?.toMillis
+        ? expiresAt.toMillis() > Date.now()
+        : Number(expiresAt || 0) > Date.now();
+    });
 
   if (
     activeStories.length >=
@@ -151,23 +148,16 @@ auth.currentUser;
   profile?.verified ||
   false,
 
-badgeType:
-  migrateVerificationId(
-    profile?.badgeType
-  ),
+badgeType: profile?.badgeType || "",
 
 verificationMetadata:
   profile?.verified
-    ? getVerificationMetadata(
-        migrateVerificationId(
-          profile?.badgeType
-        )
-      )
+    ? getVerificationMetadata(profile?.badgeType || "")
     : null,
 
     role:
       profile?.role ||
-      "individual",
+      "user",
 
     category:
       profile?.category ||
@@ -184,19 +174,13 @@ verificationMetadata:
       profile?.premiumTier ||
       "",
 
-      storyType:
-        voiceStory
-          ? "voice"
-          : "text",
+      storyType: "text",
 
       storyText,
 
       storyUrl: "",
 
       accessibility: {
-        screenReader,
-        textOnly,
-        voiceStory,
         highContrast,
         largeText,
       },
@@ -247,13 +231,13 @@ async function submitMediaStory(file, mediaType) {
       return;
     }
 
-    if (mediaType === "image" && !file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+    if (mediaType === "image" && !ALLOWED_STORY_IMAGE_TYPES.has(file.type)) {
+      alert(t("storyImageTypeError"));
       return;
     }
 
-    if (mediaType === "video" && !file.type.startsWith("video/")) {
-      alert("Please select a video file.");
+    if (mediaType === "video" && !ALLOWED_STORY_VIDEO_TYPES.has(file.type)) {
+      alert(t("storyVideoTypeError"));
       return;
     }
 
@@ -289,11 +273,11 @@ async function submitMediaStory(file, mediaType) {
       userName: profile?.fullName || user.displayName || "Inclura User",
       profilePhoto: profile?.profilePhoto || profile?.photoURL || user.photoURL || "",
       verified: profile?.verified || false,
-      badgeType: migrateVerificationId(profile?.badgeType),
+      badgeType: profile?.badgeType || "",
       verificationMetadata: profile?.verified
-        ? getVerificationMetadata(migrateVerificationId(profile?.badgeType))
+        ? getVerificationMetadata(profile?.badgeType || "")
         : null,
-      role: profile?.role || "individual",
+      role: profile?.role || "user",
       category: profile?.category || "Member",
       accessibilityNeeds: profile?.accessibilityNeeds || [],
       premium: profile?.premium || false,
@@ -304,9 +288,6 @@ async function submitMediaStory(file, mediaType) {
       mediaUrl,
       mediaType: file.type,
       accessibility: {
-        screenReader,
-        textOnly,
-        voiceStory,
         highContrast,
         largeText,
       },
@@ -404,57 +385,6 @@ marginBottom:
       <input
         type="checkbox"
         checked={
-          screenReader
-        }
-        onChange={(e) =>
-          setScreenReader(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      🔊 {t("screenReader")} {t("support")}
-    </label>
-
-    <label>
-      <input
-        type="checkbox"
-        checked={
-          textOnly
-        }
-        onChange={(e) =>
-          setTextOnly(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      📄 {t("textOnlyStory")}
-    </label>
-
-    <label>
-      <input
-        type="checkbox"
-        checked={
-          voiceStory
-        }
-        onChange={(e) =>
-          setVoiceStory(
-            e.target
-              .checked
-          )
-        }
-      />
-      {" "}
-      🎤 {t("voiceStory")}
-    </label>
-
-    <label>
-      <input
-        type="checkbox"
-        checked={
           highContrast
         }
         onChange={(e) =>
@@ -529,7 +459,7 @@ marginBottom:
   <input
     ref={imageInputRef}
     type="file"
-    accept="image/*"
+    accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
     onChange={handleImageSelection}
     style={{ display: "none" }}
   />
@@ -537,7 +467,7 @@ marginBottom:
   <input
     ref={videoInputRef}
     type="file"
-    accept="video/*"
+    accept="video/mp4,video/webm,video/quicktime"
     onChange={handleVideoSelection}
     style={{ display: "none" }}
   />

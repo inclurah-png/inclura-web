@@ -15,9 +15,16 @@ const PROFILE_OPTIONS = [
   { key: "dyslexia", labelKey: "dyslexia" },
   { key: "adhd", labelKey: "adhd" },
   { key: "autism", labelKey: "autism" },
+  { key: "colorBlind", labelKey: "colorBlindSupport" },
+  { key: "screenReader", labelKey: "screenReader" },
+  { key: "braille", labelKey: "braille" },
+  { key: "voiceNavigation", labelKey: "voiceNavigation" },
+  { key: "keyboardNavigation", labelKey: "keyboardNavigation" },
+  { key: "captions", labelKey: "captions" },
+  { key: "signLanguage", labelKey: "signLanguage" },
 ];
 
-function SettingRow({ label, description, children }) {
+function SettingRow({ label, description, children, controlId }) {
   return (
     <div
       style={{
@@ -34,30 +41,48 @@ function SettingRow({ label, description, children }) {
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div
-            style={{
-              fontSize: "14px",
-              fontWeight: 600,
-              color: "inherit",
-            }}
-          >
-            {label}
-          </div>
-
-          {description && (
-            <div
+          {controlId ? (
+            <label
+              htmlFor={controlId}
               style={{
-                fontSize: "12px",
-                color: "#cbd5e1",
-                marginTop: "4px",
-                lineHeight: 1.5,
+                minHeight: "44px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                cursor: "pointer",
+                fontSize: "14px",
+                fontWeight: 600,
+                color: "inherit",
               }}
             >
-              {description}
-            </div>
+              {label}
+              {description && (
+                <span
+                  style={{
+                    fontSize: "12px",
+                    color: "#cbd5e1",
+                    marginTop: "4px",
+                    lineHeight: 1.5,
+                    fontWeight: 400,
+                  }}
+                >
+                  {description}
+                </span>
+              )}
+            </label>
+          ) : (
+            <>
+              <div style={{ fontSize: "14px", fontWeight: 600, color: "inherit" }}>
+                {label}
+              </div>
+              {description && (
+                <div style={{ fontSize: "12px", color: "#cbd5e1", marginTop: "4px", lineHeight: 1.5 }}>
+                  {description}
+                </div>
+              )}
+            </>
           )}
         </div>
-
         {children}
       </div>
     </div>
@@ -101,8 +126,8 @@ function AccessibilitySettings() {
   };
 
   const checkboxStyle = {
-    width: "20px",
-    height: "20px",
+    width: "24px",
+    height: "24px",
     flexShrink: 0,
     cursor: "pointer",
     accentColor: "#38bdf8",
@@ -167,10 +192,12 @@ function AccessibilitySettings() {
         />
 
         <SettingRow
+          controlId="inclura-high-contrast"
           label={t("highContrast")}
           description={t("highContrastDesc")}
         >
           <input
+            id="inclura-high-contrast"
             type="checkbox"
             aria-label={t("highContrast")}
             checked={highContrast}
@@ -180,10 +207,12 @@ function AccessibilitySettings() {
         </SettingRow>
 
         <SettingRow
+          controlId="inclura-reduced-motion"
           label={t("reduceMotion")}
           description={t("reduceMotionDesc")}
         >
           <input
+            id="inclura-reduced-motion"
             type="checkbox"
             aria-label={t("reduceMotion")}
             checked={reducedMotion}
@@ -201,14 +230,16 @@ function AccessibilitySettings() {
           id="accessibility-voice-heading"
           style={{ fontSize: "16px", margin: "0 0 8px" }}
         >
-          Voice guidance
+          {t("voiceGuidance")}
         </h3>
 
         <SettingRow
+          controlId="inclura-voice-guidance"
           label={t("enableVoiceGuidance")}
           description={t("voiceGuidanceDesc")}
         >
           <input
+            id="inclura-voice-guidance"
             type="checkbox"
             aria-label={t("enableVoiceGuidance")}
             checked={voiceEnabled}
@@ -234,13 +265,13 @@ function AccessibilitySettings() {
               type="button"
               onClick={() =>
                 speakText(
-                  "Welcome to Inclura accessibility settings.",
+                  t("voiceGuidance"),
                   { language }
                 )
               }
               style={buttonStyle}
             >
-              Test voice
+              {t("testVoice")}
             </button>
 
             {speaking && (
@@ -249,7 +280,7 @@ function AccessibilitySettings() {
                 onClick={stopSpeaking}
                 style={buttonStyle}
               >
-                Stop speaking
+                {t("stopSpeaking")}
               </button>
             )}
           </div>
@@ -268,16 +299,20 @@ function AccessibilitySettings() {
           id="accessibility-profile-heading"
           style={{ fontSize: "16px", margin: "0 0 8px" }}
         >
-          Accessibility profile
+          {t("accessibilityProfile")}
         </h3>
 
         <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
           {t("accessibilityProfileDesc")}
         </p>
+        <p style={{ fontSize: "12px", color: "#cbd5e1", lineHeight: 1.5, marginTop: "8px" }}>
+          {t("accessibilityProfileLimitations")}
+        </p>
 
         {PROFILE_OPTIONS.map((option) => (
-          <SettingRow key={option.key} label={t(option.labelKey)}>
+          <SettingRow key={option.key} controlId={`inclura-accessibility-${option.key}`} label={t(option.labelKey)}>
             <input
+              id={`inclura-accessibility-${option.key}`}
               type="checkbox"
               aria-label={t(option.labelKey)}
               checked={Boolean(accessibilityProfile[option.key])}

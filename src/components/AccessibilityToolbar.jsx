@@ -9,12 +9,16 @@ function AccessibilityToolbar({ close }) {
       id="inclura-accessibility-toolbar"
       role="region"
       aria-label={t("accessibilityHub", { defaultValue: "Accessibility settings" })}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") close();
+      }}
       style={{
         position: "fixed",
         right: "20px",
         bottom: "95px",
-        width: "340px",
-        maxHeight: "75vh",
+        width: "min(340px, calc(100vw - 32px))",
+        boxSizing: "border-box",
+        maxHeight: "min(75vh, calc(100dvh - 120px))",
         overflowY: "auto",
         background: "#0f172a",
         border: "1px solid #334155",
@@ -56,6 +60,12 @@ function AccessibilityToolbar({ close }) {
             background: "transparent",
             color: "white",
             fontSize: "22px",
+            width: "44px",
+            height: "44px",
+            minWidth: "44px",
+            minHeight: "44px",
+            display: "grid",
+            placeItems: "center",
             cursor: "pointer",
           }}
         >

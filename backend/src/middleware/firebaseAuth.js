@@ -41,7 +41,7 @@ export function requireFirebaseUser(req, res, next) {
 
   app
     .auth()
-    .verifyIdToken(match[1])
+    .verifyIdToken(match[1], true)
     .then((decoded) => {
       req.user = {
         uid: decoded.uid,

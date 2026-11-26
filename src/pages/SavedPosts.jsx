@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   doc,
@@ -10,6 +11,7 @@ import {
 import { db, auth } from "../firebase";
 
 function SavedPosts() {
+  const { t } = useTranslation();
   const [posts, setPosts] =
     useState([]);
 
@@ -129,7 +131,7 @@ function SavedPosts() {
           alignItems: "center",
         }}
       >
-        Loading saved posts...
+        {t("loading")}
       </div>
     );
   }
@@ -154,7 +156,7 @@ function SavedPosts() {
             marginBottom: "24px",
           }}
         >
-          🔖 Saved Posts
+          🔖 {t("savedPosts")}
         </h1>
 
         {posts.length === 0 ? (
@@ -167,7 +169,7 @@ function SavedPosts() {
               color: "#94a3b8",
             }}
           >
-            No saved posts yet.
+            {t("noResults")}
           </div>
         ) : (
           posts.map((post) => (
@@ -195,7 +197,7 @@ function SavedPosts() {
                     src={
                       post.profilePhoto
                     }
-                    alt="profile"
+                    alt={t("profile")}
                     style={{
                       width: "56px",
                       height: "56px",
@@ -238,7 +240,7 @@ function SavedPosts() {
                     }}
                   >
                     {post.userName ||
-                      "Inclura User"}
+                      t("statsUser")}
                     {" "}
                     {getBadge(
                       post
@@ -284,7 +286,7 @@ function SavedPosts() {
               {post.imageUrl && (
                 <img
                   src={post.imageUrl}
-                  alt="Post"
+                  alt={t("postImage")}
                   style={{
                     width: "100%",
                     marginTop: "16px",

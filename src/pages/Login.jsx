@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import LanguageSelector from "../components/LanguageSelector";
 
 import {
   signInWithEmailAndPassword,
+  signInWithCustomToken,
   signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
@@ -426,14 +428,17 @@ function Login() {
       }
 
       if (
-        verifyResult.authenticated !== true
+        verifyResult.authenticated !== true ||
+        typeof verifyResult.customToken !== "string" ||
+        !verifyResult.customToken
       ) {
         throw new Error(
-          "Passkey authentication was not confirmed."
+          "Passkey authentication was not confirmed by Firebase."
         );
       }
 
-      // Success
+      // Establish the Firebase Auth session before entering protected routes.
+      await signInWithCustomToken(auth, verifyResult.customToken);
 
       navigate("/profile");
 
@@ -468,6 +473,10 @@ function Login() {
         padding: "24px",
       }}
     >
+      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+        <LanguageSelector />
+      </div>
+
       <div
         style={{
           width: "100%",

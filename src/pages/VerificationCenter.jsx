@@ -22,22 +22,19 @@ import {
 } from "../config";
 
 function getIFSEAssessment(record = {}) {
-  const trustScoreValue = record.ifseScore ?? record.ifseTrustScore;
-  const hasTrustScore =
-    trustScoreValue !== null &&
-    trustScoreValue !== undefined &&
-    Number.isFinite(Number(trustScoreValue));
+  const scoreValue = Number(record.ifseFinalScore);
+  if (record.ifseScoreSource !== "server_verified" || !Number.isFinite(scoreValue)) {
+    return { riskScore: null, threatLevel: "PENDING", trustScore: null };
+  }
 
-  const riskScore = hasTrustScore
-    ? Math.max(0, Math.min(100, 100 - Number(trustScoreValue)))
-    : Math.max(0, Math.min(100, Number(record.riskScore) || 0));
-
+  const trustScore = Math.max(0, Math.min(100, scoreValue));
+  const riskScore = 100 - trustScore;
   const threatLevel =
     riskScore >= 80 ? "CRITICAL" :
     riskScore >= 60 ? "HIGH" :
     riskScore >= 35 ? "MEDIUM" : "LOW";
 
-  return { riskScore, threatLevel };
+  return { riskScore, threatLevel, trustScore };
 }
 
 function VerificationCenter() {
@@ -377,12 +374,12 @@ const [verificationStatistics, setVerificationStatistics] =
 
   <p>
     <strong>{t("riskScore")}:</strong>{" "}
-    {assessment.riskScore}%
+    {assessment.riskScore === null ? t("pending") : `${assessment.riskScore}%`}
   </p>
 
   <p>
     <strong>{t("threatLevel")}:</strong>{" "}
-    {t("ifseThreat" + assessment.threatLevel.charAt(0) + assessment.threatLevel.slice(1).toLowerCase())}
+    {assessment.threatLevel === "PENDING" ? t("pending") : t("ifseThreat" + assessment.threatLevel.charAt(0) + assessment.threatLevel.slice(1).toLowerCase())}
   </p>
 
   <p>
@@ -545,7 +542,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {t(getIFSEAssessment(item).threatLevel.toLowerCase(), { defaultValue: getIFSEAssessment(item).threatLevel })}
+                {getIFSEAssessment(item).threatLevel === "PENDING" ? t("pending") : t(getIFSEAssessment(item).threatLevel.toLowerCase(), { defaultValue: getIFSEAssessment(item).threatLevel })}
               </td>
 
               <td
@@ -553,7 +550,7 @@ const [verificationStatistics, setVerificationStatistics] =
                   padding: "12px",
                 }}
               >
-                {getIFSEAssessment(item).riskScore}%
+                {getIFSEAssessment(item).riskScore === null ? t("pending") : `${getIFSEAssessment(item).riskScore}%`}
               </td>
 
               <td
@@ -1120,9 +1117,7 @@ const [verificationStatistics, setVerificationStatistics] =
       <strong>{t("vc_ifseTrustScore")}</strong>
 
       <p style={{ marginTop: "10px" }}>
-        {verification
-          ? `${Number(verification.ifseScore ?? (100 - assessment.riskScore))}%`
-          : "--"}
+        {assessment.trustScore === null ? t("pending") : `${assessment.trustScore}%`}
       </p>
 
     </div>

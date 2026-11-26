@@ -27,7 +27,17 @@ import {
 
 import { db } from "../firebase";
 import i18n from "../i18n";
-import { getLanguageDirection } from "../config/languages";
+import { getLanguageDirection, SUPPORTED_LANGUAGES } from "../config/languages";
+
+function normalizePreferredLanguage(value) {
+  const requested = String(value || "en").trim().toLowerCase();
+  const match = SUPPORTED_LANGUAGES.find((language) =>
+    [language.code, language.name, language.nativeName].some(
+      (candidate) => candidate.toLowerCase() === requested
+    )
+  );
+  return match?.code || "en";
+}
 
 const AccessibilityContext = createContext();
 
@@ -214,6 +224,14 @@ export function AccessibilityProvider({ children }) {
         "neurodivergent",
         "neurodivers"
       ),
+
+      colorBlind: hasNeed("color blind", "colour blind", "color blindness", "colour blindness"),
+      screenReader: hasNeed("screen reader", "screenreader"),
+      braille: hasNeed("braille"),
+      voiceNavigation: hasNeed("voice navigation", "voice control", "voice access"),
+      keyboardNavigation: hasNeed("keyboard navigation", "keyboard only"),
+      captions: hasNeed("caption", "subtitles"),
+      signLanguage: hasNeed("sign language", "asl", "nsl"),
     }),
     [hasNeed]
   );
@@ -332,12 +350,17 @@ export function AccessibilityProvider({ children }) {
    */
   const setLanguage = useCallback(
     (value) => {
-      const normalizedLanguage =
-        typeof value === "string" && value.trim()
-          ? value.trim()
-          : "en";
+      const normalizedLanguage = normalizePreferredLanguage(value);
 
       setLanguageState(normalizedLanguage);
+
+      try {
+        if (typeof window !== "undefined") {
+          window.localStorage.setItem("inclura-language", normalizedLanguage);
+        }
+      } catch (error) {
+        console.warn("Unable to persist the selected language locally:", error);
+      }
 
       void i18n.changeLanguage(normalizedLanguage).catch((error) => {
         console.error(
@@ -447,6 +470,13 @@ export function AccessibilityProvider({ children }) {
         { key: "dyslexia", values: ["Dyslexia"] },
         { key: "adhd", values: ["ADHD"] },
         { key: "autism", values: ["Autism"] },
+        { key: "colorBlind", values: ["Color Blind Support"] },
+        { key: "screenReader", values: ["Screen Reader"] },
+        { key: "braille", values: ["Braille"] },
+        { key: "voiceNavigation", values: ["Voice Navigation"] },
+        { key: "keyboardNavigation", values: ["Keyboard Navigation"] },
+        { key: "captions", values: ["Captions"] },
+        { key: "signLanguage", values: ["Sign Language"] },
       ];
 
       mappings.forEach(({ key, values }) => {
@@ -496,7 +526,26 @@ export function AccessibilityProvider({ children }) {
   useEffect(() => {
     if (!userProfile) {
       if (!user?.uid) {
-        setLanguageState("en");
+        let storedGuestLanguage = "en";
+
+        try {
+          if (typeof window !== "undefined") {
+            storedGuestLanguage =
+              window.localStorage.getItem("inclura-language") || "en";
+          }
+        } catch {
+          storedGuestLanguage = "en";
+        }
+
+        const guestLanguage = normalizePreferredLanguage(storedGuestLanguage);
+
+        setLanguageState(guestLanguage);
+        if (i18n.language !== guestLanguage) {
+          void i18n.changeLanguage(guestLanguage).catch((error) => {
+            console.error("Unable to restore guest language:", error);
+          });
+        }
+
         setFontScaleState(1);
         setHighContrastState(false);
         setReducedMotionState(false);
@@ -514,10 +563,16 @@ export function AccessibilityProvider({ children }) {
      * Do not let an older Firestore userProfile snapshot overwrite
      * a language the user has just selected.
      */
-    const storedBrowserLanguage =
-      typeof window !== "undefined"
-        ? window.localStorage.getItem("inclura-language")
-        : "";
+    let storedBrowserLanguage = "";
+
+    try {
+      if (typeof window !== "undefined") {
+        storedBrowserLanguage =
+          window.localStorage.getItem("inclura-language") || "";
+      }
+    } catch {
+      storedBrowserLanguage = "";
+    }
 
     const savedLanguage =
       overrides.language ??
@@ -533,10 +588,12 @@ export function AccessibilityProvider({ children }) {
         ? userProfile.preferredLanguage
         : "en");
 
-    setLanguageState(savedLanguage);
+    const normalizedSavedLanguage = normalizePreferredLanguage(savedLanguage);
 
-    if (i18n.language !== savedLanguage) {
-      void i18n.changeLanguage(savedLanguage).catch((error) => {
+    setLanguageState(normalizedSavedLanguage);
+
+    if (i18n.language !== normalizedSavedLanguage) {
+      void i18n.changeLanguage(normalizedSavedLanguage).catch((error) => {
         console.error(
           "Unable to restore application language:",
           error
@@ -544,8 +601,21 @@ export function AccessibilityProvider({ children }) {
       });
     }
 
+    const savedNeeds = normalizeAccessibilityNeeds(
+      overrides.accessibilityNeeds ?? userProfile.accessibilityNeeds
+    ).map(normalizeNeed);
+
+    const needsLargeText = savedNeeds.some((need) =>
+      need.includes("large text") || need.includes("large print")
+    );
+    const needsHighContrast = savedNeeds.some((need) =>
+      need.includes("high contrast")
+    );
+
     const savedFontScale =
-      overrides.fontScale ?? userProfile.fontScale;
+      overrides.fontScale ??
+      userProfile.fontScale ??
+      (needsLargeText ? 1.2 : 1);
 
     if (
       typeof savedFontScale === "number" &&
@@ -556,16 +626,18 @@ export function AccessibilityProvider({ children }) {
         Math.min(1.6, Math.max(0.8, savedFontScale))
       );
     } else {
-      setFontScaleState(1);
+      setFontScaleState(needsLargeText ? 1.2 : 1);
     }
 
     const savedHighContrast =
-      overrides.highContrast ?? userProfile.highContrast;
+      overrides.highContrast ??
+      userProfile.highContrast ??
+      needsHighContrast;
 
     setHighContrastState(
       typeof savedHighContrast === "boolean"
         ? savedHighContrast
-        : false
+        : needsHighContrast
     );
 
     const savedReducedMotion =

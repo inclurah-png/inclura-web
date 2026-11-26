@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import LanguageSelector from "../components/LanguageSelector";
 
 import {
   sendPasswordResetEmail,
@@ -70,6 +71,10 @@ function ForgotPassword() {
         color: "white",
       }}
     >
+      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+        <LanguageSelector />
+      </div>
+
       <div
         style={{
           width: "400px",

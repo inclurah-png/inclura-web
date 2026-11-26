@@ -4,7 +4,10 @@ import {
   FaceLandmarker,
   FilesetResolver,
 } from "@mediapipe/tasks-vision";
-import { startRegistration } from "@simplewebauthn/browser";
+import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
+import { useNavigate } from "react-router-dom";
+import { signInWithCustomToken } from "firebase/auth";
+import { auth } from "../firebase";
 
 const MODEL_ASSET_URL =
   "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task";
@@ -13,6 +16,7 @@ const WASM_URL =
   "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.0/wasm";
 
 export default function BiometricsDemo() {
+  const navigate = useNavigate();
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -322,140 +326,65 @@ export default function BiometricsDemo() {
 
   const handleRegisterPasskey = async () => {
     try {
-      setPasskeyStatus(
-        "Connecting to Inclura IFSE and creating a secure registration challenge..."
-      );
+      const user = auth.currentUser;
+      if (!user || !user.email) {
+        throw new Error("Please sign in with a verified email before registering a passkey.");
+      }
 
-      // --------------------------------------------------------
-      // STEP 1
-      // Ask IFSE backend for registration options
-      // --------------------------------------------------------
+      setPasskeyStatus("Connecting to Inclura IFSE and creating a secure registration challenge...");
+      const idToken = await user.getIdToken();
 
       const response = await fetch(
         "https://inclura-ifse-backend.onrender.com/api/identity/register/options",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
           },
-
           body: JSON.stringify({
-            userId: "inclura-demo-user",
-            email: "demo@inclura.com",
-            fullName: "Inclura Demo User",
+            fullName: user.displayName || "",
           }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error(
-          `IFSE registration-options request failed (${response.status})`
-        );
+      const backend = await response.json().catch(() => ({}));
+      if (!response.ok || !backend.success || !backend.optionsJSON || !backend.challengeId) {
+        throw new Error(backend.message || `IFSE registration-options request failed (${response.status}).`);
       }
 
-      const backend = await response.json();
-
-      if (!backend.success) {
-        throw new Error(
-          backend.message ||
-            "IFSE could not create passkey registration options."
-        );
-      }
-
-      if (!backend.optionsJSON) {
-        throw new Error(
-          "IFSE did not return WebAuthn registration options."
-        );
-      }
-
-      if (!backend.challengeId) {
-        throw new Error(
-          "IFSE did not return a challenge ID."
-        );
-      }
-
-      setPasskeyStatus(
-        "IFSE challenge created. Your browser is now requesting a passkey..."
-      );
-
-      // --------------------------------------------------------
-      // STEP 2
-      // Browser creates the passkey
-      // --------------------------------------------------------
-
+      setPasskeyStatus("IFSE challenge created. Your browser is now requesting a passkey...");
       const attestation = await startRegistration({
         optionsJSON: backend.optionsJSON,
       });
 
-      setPasskeyStatus(
-        "Passkey created. Sending the registration response to IFSE for verification..."
-      );
-
-      // --------------------------------------------------------
-      // STEP 3
-      // Send browser response back to IFSE
-      // --------------------------------------------------------
-
+      setPasskeyStatus("Passkey created. Sending the registration response to IFSE for verification...");
       const verifyResponse = await fetch(
         "https://inclura-ifse-backend.onrender.com/api/identity/register/verify",
         {
           method: "POST",
-
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${idToken}`,
           },
-
           body: JSON.stringify({
             challengeId: backend.challengeId,
-
             response: attestation,
-
             deviceName: navigator.userAgent,
-
             platform: navigator.platform,
           }),
         }
       );
 
-      if (!verifyResponse.ok) {
-        throw new Error(
-          `IFSE registration verification request failed (${verifyResponse.status})`
-        );
+      const verification = await verifyResponse.json().catch(() => ({}));
+      if (!verifyResponse.ok || !verification.success || !verification.verified) {
+        throw new Error(verification.message || `IFSE registration verification failed (${verifyResponse.status}).`);
       }
 
-      const verification =
-        await verifyResponse.json();
-
-      if (
-        !verification.success ||
-        !verification.verified
-      ) {
-        throw new Error(
-          verification.message ||
-            "IFSE could not verify the passkey registration."
-        );
-      }
-
-      // --------------------------------------------------------
-      // STEP 4
-      // Registration completed
-      // --------------------------------------------------------
-
-      setPasskeyStatus(
-        "✅ Passkey registered and verified successfully by Inclura IFSE."
-      );
+      setPasskeyStatus("Passkey registered and verified for your Inclura account.");
     } catch (error) {
-      console.error(
-        "IFSE passkey registration error:",
-        error
-      );
-
-      setPasskeyStatus(
-        `Registration failed: ${
-          error?.message || "Unknown error"
-        }`
-      );
+      console.error("IFSE passkey registration error:", error);
+      setPasskeyStatus(`Registration failed: ${error?.message || "Unknown error"}`);
     }
   };
 
@@ -463,51 +392,67 @@ export default function BiometricsDemo() {
   // PASSKEY AUTHENTICATION
   // ============================================================
 
-  /*
-   * IMPORTANT:
-   *
-   * We are deliberately NOT attempting startAuthentication()
-   * here yet.
-   *
-   * WebAuthn authentication must receive a fresh challenge
-   * from IFSE. The previous code tried to use an undefined
-   * "challenge" variable and an undefined local credential.
-   *
-   * We will connect this button to:
-   *
-   *   /api/identity/authenticate/options
-   *
-   * and:
-   *
-   *   /api/identity/authenticate/verify
-   *
-   * once those IFSE routes are ready.
-   */
+  // This protected-page action tests passkey re-authentication. The public
+  // sign-in flow for signed-out members is provided on the Inclura login page.
 
   const handleAuthenticatePasskey = async () => {
     try {
       if (!passkeySupported) {
-        setPasskeyStatus(
-          "Passkey authentication is not available on this browser or device."
-        );
-
-        return;
+        throw new Error("Passkey authentication is not available on this browser or device.");
       }
 
-      setPasskeyStatus(
-        "IFSE passkey authentication is not connected yet. Registration is available, but authentication requires the IFSE authentication challenge and verification routes."
-      );
-    } catch (error) {
-      console.error(
-        "Passkey authentication error:",
-        error
-      );
+      const user = auth.currentUser;
+      if (!user?.email) {
+        throw new Error("Please enter your email on the Inclura login page to use a passkey.");
+      }
 
-      setPasskeyStatus(
-        `Authentication failed: ${
-          error?.message || "Unknown error"
-        }`
+      setPasskeyStatus("Requesting a fresh authentication challenge from IFSE...");
+      const optionsResponse = await fetch(
+        "https://inclura-ifse-backend.onrender.com/api/identity/authentication/options",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: user.email }),
+        }
       );
+      const optionsResult = await optionsResponse.json().catch(() => ({}));
+      if (!optionsResponse.ok || !optionsResult.success || !optionsResult.optionsJSON) {
+        throw new Error(optionsResult.message || "IFSE could not create passkey authentication options.");
+      }
+
+      setPasskeyStatus("Complete the passkey prompt on your device...");
+      const assertion = await startAuthentication({
+        optionsJSON: optionsResult.optionsJSON,
+      });
+
+      const verifyResponse = await fetch(
+        "https://inclura-ifse-backend.onrender.com/api/identity/authentication/verify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: user.email,
+            challengeId: optionsResult.challengeId,
+            credentialId: assertion.id,
+            authenticationResponse: assertion,
+          }),
+        }
+      );
+      const verifyResult = await verifyResponse.json().catch(() => ({}));
+      if (
+        !verifyResponse.ok ||
+        verifyResult.authenticated !== true ||
+        typeof verifyResult.customToken !== "string"
+      ) {
+        throw new Error(verifyResult.message || "IFSE could not verify this passkey.");
+      }
+
+      await signInWithCustomToken(auth, verifyResult.customToken);
+      setPasskeyStatus("Passkey verified. Your secure Inclura session is active.");
+      navigate("/profile");
+    } catch (error) {
+      console.error("IFSE passkey authentication error:", error);
+      setPasskeyStatus(`Authentication failed: ${error?.message || "Unknown error"}`);
     }
   };
 
@@ -528,7 +473,7 @@ export default function BiometricsDemo() {
           marginBottom: "8px",
         }}
       >
-        MediaPipe + Passkey Demo
+        Camera Preview & Passkey Management
       </h1>
 
       <p
@@ -537,11 +482,9 @@ export default function BiometricsDemo() {
           marginBottom: "24px",
         }}
       >
-        This route demonstrates browser-based face
-        landmarking and WebAuthn passkey creation.
-        For production deployments, WebAuthn responses
-        must be verified by the IFSE backend and
-        registration data must be stored securely.
+        Passkey registration and authentication are verified by the IFSE backend.
+        The camera preview only detects facial landmarks locally; it does not
+        identify or verify a person, and the camera stream is not uploaded.
       </p>
 
       <div
@@ -570,7 +513,7 @@ export default function BiometricsDemo() {
               marginTop: 0,
             }}
           >
-            Face Landmarker
+Local Face-Landmark Preview (Not Identity Verification)
           </h2>
 
           <p
@@ -714,7 +657,7 @@ export default function BiometricsDemo() {
                   : 0.8,
               }}
             >
-              Sign in with Passkey
+Test Passkey Re-authentication
             </button>
           </div>
         </section>

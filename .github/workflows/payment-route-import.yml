@@ -1,0 +1,70 @@
+name: Payment route import smoke test
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "src/config/pricing/**"
+      - ".github/workflows/payment-route-import.yml"
+  push:
+    branches:
+      - fix/auth-payment-security
+    paths:
+      - "backend/**"
+      - ".github/workflows/payment-route-import.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  payment-route-import:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        run: npm ci --prefix backend --ignore-scripts --no-audit --no-fund
+
+      - name: Apply compatible backend dependency security updates
+        run: |
+          npm pkg delete --prefix backend dependencies.uuid
+          npm pkg set --prefix backend 'overrides.@grpc/grpc-js=1.14.7' 'overrides.@fastify/busboy=3.2.4' 'overrides.uuid=11.1.1' 'overrides.minimatch=11.0.9' 'overrides.qs=6.17.1'
+          npm audit fix --prefix backend
+          npm install --package-lock-only --prefix backend --ignore-scripts --no-audit --no-fund
+          npm ci --prefix backend --ignore-scripts --no-audit --no-fund
+          npm audit --prefix backend
+
+      - name: Check backend JavaScript syntax
+        run: |
+          node --check backend/server.js
+          node --check backend/src/routes/paymentRoutes.js
+          node --check backend/src/routes/passkeyRoutes.js
+          node --check backend/src/routes/adminVerificationRoutes.js
+          node --check backend/src/services/premiumExpirySweeper.js
+
+      - name: Import payment route and trusted pricing modules
+        run: |
+          node --input-type=module -e "await import('./backend/src/routes/paymentRoutes.js'); await import('./backend/src/routes/passkeyRoutes.js'); await import('./backend/src/routes/adminVerificationRoutes.js'); await import('./backend/src/services/premiumExpirySweeper.js'); console.log('Payment, passkey, administrator and expiry modules import successfully.');"
+      - name: Commit validated backend dependency updates to this draft branch
+        if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          TARGET_BRANCH: ${{ github.event.pull_request.head.ref || github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add backend/package.json backend/package-lock.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Remediate IFSE backend dependency vulnerabilities"
+            git push origin "HEAD:${TARGET_BRANCH}"
+          fi

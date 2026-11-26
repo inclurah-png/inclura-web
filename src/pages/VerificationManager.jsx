@@ -4,10 +4,7 @@ import DashboardLayout from "../components/DashboardLayout";
 import {
   collection,
   getDocs,
-  updateDoc,
-  doc,
-  addDoc,
-  serverTimestamp,
+  onSnapshot,
   query,
   where,
 } from "firebase/firestore";
@@ -17,9 +14,9 @@ import {
   auth,
 } from "../firebase";
 
-import {
-  calculateIFSERisk
-} from "../services/ifseRiskAutomation";
+import { getVerificationDocumentAccess, getPartnershipContractAccess } from "../services/cloudinaryUpload";
+
+const IFSE_API_URL = import.meta.env.VITE_IFSE_API_URL || "https://inclura-ifse-backend.onrender.com";
 
 function VerificationManager() {
 const [statistics, setStatistics] = useState({
@@ -54,8 +51,14 @@ const [organizationPending, setOrganizationPending] =
 const [enterprisePending, setEnterprisePending] =
   useState(0);
 
+const [corporatePending, setCorporatePending] = useState(0);
+
 const [governmentPending, setGovernmentPending] =
   useState(0);
+
+const [partnershipApplications, setPartnershipApplications] = useState([]);
+const [partnershipActionBusy, setPartnershipActionBusy] = useState("");
+const [partnershipContractLinks, setPartnershipContractLinks] = useState({});
 
 const [recentRequests, setRecentRequests] =
   useState([]);
@@ -63,11 +66,62 @@ const [recentRequests, setRecentRequests] =
 const [selectedRequest, setSelectedRequest] =
   useState(null);
 
+const [selectedDocuments, setSelectedDocuments] = useState([]);
+const [documentsLoading, setDocumentsLoading] = useState(false);
+const [documentsError, setDocumentsError] = useState("");
+const [documentRefreshKey, setDocumentRefreshKey] = useState(0);
+
 const [searchTerm, setSearchTerm] =
   useState("");
 
 const [selectedCategory, setSelectedCategory] =
   useState("all");
+
+useEffect(() => {
+  let cancelled = false;
+
+  async function loadSelectedDocuments() {
+    const request = selectedRequest;
+    const entries = Object.entries(request?.uploadedDocuments || {})
+      .filter(([, metadata]) => metadata?.cloudinaryPublicId);
+
+    if (!request?.id || entries.length === 0) {
+      setSelectedDocuments([]);
+      setDocumentsError("");
+      setDocumentsLoading(false);
+      return;
+    }
+
+    setDocumentsLoading(true);
+    setDocumentsError("");
+    try {
+      const documents = await Promise.all(entries.map(async ([key, metadata]) => {
+        const access = await getVerificationDocumentAccess(
+          request.id,
+          metadata.cloudinaryPublicId
+        );
+        return {
+          id: key,
+          name: metadata.fileName || access.fileName || key,
+          fileType: metadata.fileType || "",
+          url: access.downloadUrl,
+          expiresAt: access.expiresAt,
+        };
+      }));
+      if (!cancelled) setSelectedDocuments(documents);
+    } catch (documentError) {
+      if (!cancelled) {
+        setSelectedDocuments([]);
+        setDocumentsError(documentError.message || "Unable to load private verification documents.");
+      }
+    } finally {
+      if (!cancelled) setDocumentsLoading(false);
+    }
+  }
+
+  loadSelectedDocuments();
+  return () => { cancelled = true; };
+}, [selectedRequest, documentRefreshKey]);
 
 const [verificationRevenue, setVerificationRevenue] =
   useState({
@@ -80,6 +134,8 @@ const [verificationRevenue, setVerificationRevenue] =
     successfulPayments: 0,
 
     creatorRevenue: 0,
+
+    groupRevenue: 0,
 
     organizationRevenue: 0,
 
@@ -128,7 +184,7 @@ const [verificationRevenue, setVerificationRevenue] =
   requests
     .filter(
       item =>
-        item.status === "submitted"
+        ["pending", "submitted"].includes(item.status)
     )
     .sort((a, b) => {
 
@@ -152,7 +208,7 @@ setRecentRequests(
 
         pending: requests.filter(
           item =>
-            item.status === "submitted"
+            ["pending", "submitted"].includes(item.status)
         ).length,
 
         underReview: requests.filter(
@@ -182,43 +238,34 @@ setRecentRequests(
 
       });
 
-      const creatorSnapshot =
-  await getDocs(
-    query(
-      collection(db, "verificationRequests"),
-      where("category", "==", "creator"),
-      where("status", "==", "submitted")
-    )
-  );
-
-setCreatorPending(
-  creatorSnapshot.size
-);
-
-const organizationSnapshot =
-  await getDocs(
-    query(
-      collection(db, "verificationRequests"),
-      where("category", "==", "organization"),
-      where("status", "==", "submitted")
-    )
-  );
-
-setOrganizationPending(
-  organizationSnapshot.size
-);
+      const openRequestStatuses = ["pending", "submitted"];
+      setCreatorPending(
+        requests.filter((item) =>
+          item.category === "creator" && openRequestStatuses.includes(item.status)
+        ).length
+      );
+      setOrganizationPending(
+        requests.filter((item) =>
+          item.category === "organization" && openRequestStatuses.includes(item.status)
+        ).length
+      );
 
 const enterpriseSnapshot =
   await getDocs(
     query(
       collection(db, "enterprisePartnerships"),
-      where("status", "==", "submitted")
+      where("requestStatus", "==", "submitted")
     )
   );
 
 setEnterprisePending(
   enterpriseSnapshot.size
 );
+
+const corporateSnapshot = await getDocs(
+  query(collection(db, "corporatePartnerships"), where("requestStatus", "==", "submitted"))
+);
+setCorporatePending(corporateSnapshot.size);
 
 const governmentSnapshot =
   await getDocs(
@@ -267,38 +314,9 @@ setGovernmentPending(
         ...doc.data(),
       }));
 
-      const requestsWithRisk = await Promise.all(
+      setVerificationRequests(requests);
 
-  requests.map(async (request) => {
 
-    const riskResult =
-      await calculateIFSERisk(request);
-
-    return {
-
-      ...request,
-
-      riskScore:
-        riskResult.riskScore,
-
-      threatLevel:
-        riskResult.threatLevel,
-
-      executiveReview:
-        riskResult.executiveReview,
-
-      riskReasons:
-        riskResult.reasons,
-
-    };
-
-  })
-
-);
-
-setVerificationRequests(
-  requestsWithRisk
-);
 
     } catch (err) {
 
@@ -313,237 +331,60 @@ setVerificationRequests(
 }, []);
 
 useEffect(() => {
+  const collections = [
+    ["enterprise", "enterprisePartnerships", "requestStatus"],
+    ["corporate", "corporatePartnerships", "requestStatus"],
+    ["government", "governmentPartnerships", "status"],
+  ];
+  const unsubscribers = collections.map(([type, name, statusField]) =>
+    onSnapshot(
+      query(collection(db, name), where(statusField, "in", ["submitted", "pending"])),
+      (snapshot) => {
+        setPartnershipApplications((current) => [
+          ...current.filter((item) => item.type !== type),
+          ...snapshot.docs.map((document) => ({
+            id: document.id,
+            type,
+            ...document.data(),
+          })),
+        ]);
+      },
+      (loadError) => {
+        console.error("Partnership applications could not be loaded:", loadError);
+        setError("Unable to load partnership applications.");
+      }
+    )
+  );
+  return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+}, []);
+
+useEffect(() => {
+  let cancelled = false;
 
   async function loadRevenueStatistics() {
-
     try {
-
-      const paymentSnapshot =
-        await getDocs(
-          collection(
-            db,
-            "verificationPayments"
-          )
-        );
-
-      let totalRevenue = 0;
-
-      let monthlyRevenue = 0;
-
-      let pendingPayments = 0;
-
-      let successfulPayments = 0;
-
-      let creatorRevenue = 0;
-
-      let organizationRevenue = 0;
-
-      let enterpriseRevenue = 0;
-
-      let governmentRevenue = 0;
-
-      let ngoRevenue = 0;
-
-      let institutionRevenue = 0;
-
-      let religiousRevenue = 0;
-
-      let healthcareRevenue = 0;
-
-      let museumRevenue = 0;
-
-      let tourismRevenue = 0;
-
-      let entertainmentRevenue = 0;
-
-      let mediaRevenue = 0;
-
-      let accessibilityRevenue = 0;
-
-      const today = new Date();
-
-      paymentSnapshot.forEach((doc) => {
-
-        const payment = doc.data();
-
-        const amount =
-          Number(payment.amount || 0);
-
-        if (
-          payment.status ===
-          "successful"
-        ) {
-
-          successfulPayments++;
-
-          totalRevenue += amount;
-
-          const createdAt =
-            payment.createdAt?.toDate?.();
-
-          if (createdAt) {
-
-            if (
-
-              createdAt.getMonth() ===
-                today.getMonth() &&
-
-              createdAt.getFullYear() ===
-                today.getFullYear()
-
-            ) {
-
-              monthlyRevenue += amount;
-
-            }
-
-          }
-
-          switch (
-            payment.category
-          ) {
-
-            case "creator":
-
-              creatorRevenue += amount;
-
-              break;
-
-            case "organization":
-
-              organizationRevenue += amount;
-
-              break;
-
-            case "enterprise":
-
-              enterpriseRevenue += amount;
-
-              break;
-
-            case "government":
-
-              governmentRevenue += amount;
-
-              break;
-
-            case "ngo":
-
-              ngoRevenue += amount;
-
-              break;
-
-            case "institution":
-
-              institutionRevenue += amount;
-
-              break;
-
-            case "religious":
-
-              religiousRevenue += amount;
-
-              break;
-
-            case "healthcare":
-
-              healthcareRevenue += amount;
-
-              break;
-
-            case "museum":
-
-              museumRevenue += amount;
-
-              break;
-
-            case "tourism":
-
-              tourismRevenue += amount;
-
-              break;
-
-            case "entertainment":
-
-              entertainmentRevenue += amount;
-
-              break;
-
-            case "media":
-
-              mediaRevenue += amount;
-
-              break;
-
-            case "accessibility":
-
-              accessibilityRevenue += amount;
-
-              break;
-
-            default:
-
-              break;
-
-          }
-
-        } else {
-
-          pendingPayments++;
-
-        }
-
-      });
-
-      setVerificationRevenue({
-
-        totalRevenue,
-
-        monthlyRevenue,
-
-        pendingPayments,
-
-        successfulPayments,
-
-        creatorRevenue,
-
-        organizationRevenue,
-
-        enterpriseRevenue,
-
-        governmentRevenue,
-
-        ngoRevenue,
-
-        institutionRevenue,
-
-        religiousRevenue,
-
-        healthcareRevenue,
-
-        museumRevenue,
-
-        tourismRevenue,
-
-        entertainmentRevenue,
-
-        mediaRevenue,
-
-        accessibilityRevenue,
-
-      });
-
+      const currentUser = auth.currentUser;
+      if (!currentUser) throw new Error("Administrator session is required.");
+      const token = await currentUser.getIdToken();
+      const response = await fetch(
+        `${IFSE_API_URL}/api/admin/verification/analytics`,
+        { method: "GET", headers: { Authorization: `Bearer ${token}` } }
+      );
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true || !result.report) {
+        throw new Error(result.message || "Verification revenue analytics could not be loaded.");
+      }
+      if (!cancelled) setVerificationRevenue(result.report);
     } catch (err) {
-
-      console.error(err);
-
+      console.error("Verification revenue analytics failed:", err);
+      if (!cancelled) setError(err.message || "Verification revenue analytics could not be loaded.");
     }
-
   }
 
   loadRevenueStatistics();
-
+  return () => { cancelled = true; };
 }, []);
+
 
 const filteredRequests = verificationRequests.filter((item) => {
   const matchesSearch =
@@ -566,345 +407,229 @@ const filteredRequests = verificationRequests.filter((item) => {
   return matchesSearch && matchesCategory;
 });
   
-const handleApprove = async (requestId) => {
-
+const submitAdminDecision = async (requestId, action, reason = "") => {
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  setError("");
   try {
-
-    const requestRef = doc(
-      db,
-      "verificationRequests",
-      requestId
-    );
-
-    await updateDoc(requestRef, {
-
-      status: "approved",
-
-      approvedAt: serverTimestamp(),
-
-      reviewedAt: serverTimestamp(),
-
-      updatedAt: serverTimestamp(),
-
-      executiveReviewCompleted: true,
-
-    });
-
-    await addDoc(
-
-      collection(
-        db,
-        "verificationAuditLogs"
-      ),
-
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/verification/${encodeURIComponent(requestId)}/${action}`,
       {
-
-        action:
-          "Verification Approved",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        createdAt:
-          serverTimestamp(),
-
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: action === "reject" ? JSON.stringify({ reason }) : undefined,
       }
-
     );
-
-    await addDoc(
-
-      collection(
-        db,
-        "ifseSecurityEvents"
-      ),
-
-      {
-
-        eventType:
-          "verification_approved",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        reviewed: true,
-
-        resolved: true,
-
-        severity: "low",
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    setVerificationRequests(previous =>
-
-      previous.map(item =>
-
-        item.id === requestId
-
-          ? {
-
-              ...item,
-
-              status: "approved",
-
-            }
-
-          : item
-
-      )
-
-    );
-
-    setRecentRequests(previous =>
-
-      previous.filter(
-
-        item => item.id !== requestId
-
-      )
-
-    );
-
-    if (
-
-      selectedRequest &&
-
-      selectedRequest.id === requestId
-
-    ) {
-
-      setSelectedRequest({
-
-        ...selectedRequest,
-
-        status: "approved",
-
-      });
-
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || "The verification decision could not be completed.");
     }
 
-    alert(
-
-      "Verification approved successfully."
-
+    const nextStatus = action === "approve" ? "approved" : "rejected";
+    setVerificationRequests((previous) =>
+      previous.map((item) =>
+        item.id === requestId
+          ? { ...item, status: nextStatus, ...(action === "reject" ? { rejectionReason: reason } : {}) }
+          : item
+      )
     );
-
+    setRecentRequests((previous) => previous.filter((item) => item.id !== requestId));
+    if (selectedRequest?.id === requestId) {
+      setSelectedRequest({
+        ...selectedRequest,
+        status: nextStatus,
+        ...(action === "reject" ? { rejectionReason: reason } : {}),
+      });
+    }
+    window.alert(result.message || "Verification decision saved.");
   } catch (err) {
-
-    console.error(err);
-
-    alert(
-
-      "Unable to approve verification."
-
-    );
-
+    console.error("IFSE administrator verification decision failed:", err);
+    setError(err.message || "Unable to save the verification decision.");
+    window.alert(err.message || "Unable to save the verification decision.");
   }
+};
 
+const handleApprove = async (requestId) => {
+  await submitAdminDecision(requestId, "approve");
 };
 
 const handleReject = async (requestId) => {
-
-  const reason = window.prompt(
-
-    "Enter the rejection reason:"
-
-  );
-
-  if (!reason) return;
-
-  try {
-
-    const requestRef = doc(
-      db,
-      "verificationRequests",
-      requestId
-    );
-
-    await updateDoc(requestRef, {
-
-      status: "rejected",
-
-      rejectionReason: reason,
-
-      rejectedAt: serverTimestamp(),
-
-      reviewedAt: serverTimestamp(),
-
-      updatedAt: serverTimestamp(),
-
-      executiveReviewCompleted: true,
-
-    });
-
-    await addDoc(
-
-      collection(
-        db,
-        "verificationAuditLogs"
-      ),
-
-      {
-
-        action:
-          "Verification Rejected",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        rejectionReason: reason,
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    await addDoc(
-
-      collection(
-        db,
-        "ifseSecurityEvents"
-      ),
-
-      {
-        eventType:
-          "verification_rejected",
-
-        verificationId:
-          requestId,
-
-        performedBy:
-          auth.currentUser?.uid || "system",
-
-        reviewed: true,
-
-        resolved: true,
-
-        severity: "medium",
-
-        rejectionReason: reason,
-
-        createdAt:
-          serverTimestamp(),
-
-      }
-
-    );
-
-    setVerificationRequests(previous =>
-
-      previous.map(item =>
-
-        item.id === requestId
-
-          ? {
-
-              ...item,
-
-              status: "rejected",
-
-              rejectionReason: reason,
-
-            }
-
-          : item
-
-      )
-
-    );
-
-    setRecentRequests(previous =>
-
-      previous.filter(
-
-        item => item.id !== requestId
-
-      )
-
-    );
-
-    if (
-
-  selectedRequest &&
-
-  selectedRequest.id === requestId
-
-) {
-
-    setSelectedRequest({
-      ...selectedRequest,
-      status: "rejected",
-      rejectionReason: reason,
-    });
-
-}   // <-- ADD THIS
-
-alert(
-  "Verification rejected successfully."
-);
-
-} catch (err) {
-
-  console.error(err);
-
-  alert(
-    "Unable to reject verification."
-  );
-
-}
-
+  const reason = window.prompt("Enter the rejection reason:");
+  if (!reason || reason.trim().length < 5) return;
+  await submitAdminDecision(requestId, "reject", reason.trim());
 };
 
-const calculateIFSERisk = (request) => {
-      
-  let score = 100;
 
-  if (!request.email && !request.officialEmail) score -= 10;
-  if (!request.country) score -= 5;
-  if (!request.documents || request.documents.length === 0) score -= 30;
-  if (request.duplicateIdentity) score -= 40;
-  if (request.blacklisted) score -= 60;
+const openPartnershipContract = async (application) => {
+  try {
+    const access = await getPartnershipContractAccess(application.type, application.id);
+    setPartnershipContractLinks((items) => ({
+      ...items,
+      [application.type + ":" + application.id]: access.downloadUrl,
+    }));
+  } catch (accessError) {
+    setError(accessError.message || "Unable to authorize contract access.");
+  }
+};
 
-  if (score < 0) score = 0;
+const submitPartnershipContractReview = async (application, decision) => {
+  const notes = window.prompt(
+    decision === "approved" ? "Record your contract verification notes:" : "Explain why this signed contract is rejected:"
+  );
+  if (!notes || notes.trim().length < 5) return;
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const actionKey = application.type + ":" + application.id + ":contract";
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/contract-review`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ decision, notes: notes.trim() }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Contract review failed.");
+    setPartnershipApplications((items) => items.map((item) =>
+      item.id === application.id && item.type === application.type
+        ? { ...item, contractVerificationStatus: result.contractVerificationStatus, contractStatus: decision === "approved" ? "Verified" : "Rejected - resubmission required" }
+        : item
+    ));
+    window.alert(result.message || "Contract review saved.");
+  } catch (reviewError) {
+    setError(reviewError.message || "Contract review failed.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
+};
 
-  let threatLevel = "LOW";
+const finalizePartnershipActivation = async (application) => {
+  const approvalsByType = {
+    enterprise: ["executive", "board", "legal"],
+    corporate: ["executive", "board"],
+    government: ["executive", "government"],
+  };
+  const required = approvalsByType[application.type] || [];
+  const approvals = {};
+  for (const key of required) {
+    const label = key === "government" ? "Government approval" : key.charAt(0).toUpperCase() + key.slice(1) + " approval";
+    const reference = window.prompt("Enter the official reference or record identifier for the " + label + " already obtained:");
+    if (!reference || reference.trim().length < 3) return;
+    approvals[key] = reference.trim();
+  }
+  const paymentDecision = window.prompt("Does the negotiated agreement require payment before activation? Type YES or NO. IMPORTANT: if YES, activation will remain blocked until a partnership-specific server-verified payment record exists; do not mark NO unless the signed agreement confirms no payment is due.");
+  if (!paymentDecision || !["YES", "NO"].includes(paymentDecision.trim().toUpperCase())) return;
+  const paymentRequired = paymentDecision.trim().toUpperCase() === "YES";
+  const notes = window.prompt("Enter the final authorization and activation notes:");
+  if (!notes || notes.trim().length < 5) return;
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const actionKey = application.type + ":" + application.id + ":activate";
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/activate`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ approvals, paymentRequired, notes: notes.trim() }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Final activation was blocked.");
+    setPartnershipApplications((items) => items.filter((item) => item.id !== application.id || item.type !== application.type));
+    window.alert(result.message || "Partnership activated.");
+  } catch (activationError) {
+    setError(activationError.message || "Final activation was blocked.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
+};
 
-  if (score < 80) threatLevel = "MEDIUM";
-  if (score < 50) threatLevel = "HIGH";
-  if (score < 25) threatLevel = "CRITICAL";
+const submitPartnershipReview = async (application, stage, decision) => {
+  const user = auth.currentUser;
+  if (!user) {
+    setError("Your administrator session has expired. Please sign in again.");
+    return;
+  }
+  const notes = decision === "rejected"
+    ? window.prompt("Enter the reason for rejecting this review stage:")
+    : "Review stage completed by an authorized administrator.";
+  if (decision === "rejected" && (!notes || notes.trim().length < 5)) return;
+  const actionKey = application.type + ":" + application.id + ":" + stage;
+  setPartnershipActionBusy(actionKey);
+  setError("");
+  try {
+    const token = await user.getIdToken();
+    const response = await fetch(
+      `${IFSE_API_URL}/api/admin/partnerships/${encodeURIComponent(application.type)}/${encodeURIComponent(application.id)}/review`,
+      {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ stage, decision, notes: notes ? notes.trim() : "Review completed." }),
+      }
+    );
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.success !== true) throw new Error(result.message || "Partnership review could not be saved.");
+    if (decision === "rejected") {
+      setPartnershipApplications((items) => items.filter((item) => item.id !== application.id || item.type !== application.type));
+    } else {
+      setPartnershipApplications((items) => items.map((item) =>
+        item.id === application.id && item.type === application.type
+          ? { ...item, reviewProgress: result.reviewProgress, timeline: (item.timeline || []).map((entry) =>
+              entry.title === ({
+                enterprise: { security: "Enterprise Security Review", accessibility: "Accessibility Review", compliance: "Compliance Review", integration: "Integration Review" },
+                corporate: { security: "Corporate Security Review", accessibility: "Accessibility Review", compliance: "Compliance Review" },
+                government: { identityReview: "Government Identity Review", securityReview: "IFSE Security Review", accessibilityReview: "Accessibility Compliance", complianceReview: "Compliance Review" },
+              }[item.type][stage]) ? { ...entry, status: "Completed" } : entry
+            ) }
+          : item
+      ));
+    }
+    window.alert(result.message || "Partnership review saved.");
+  } catch (reviewError) {
+    console.error("Partnership review failed:", reviewError);
+    setError(reviewError.message || "Partnership review could not be saved.");
+    window.alert(reviewError.message || "Partnership review could not be saved.");
+  } finally {
+    setPartnershipActionBusy("");
+  }
+};
 
-  let recommendation = "Approve";
-
-  if (score < 80) recommendation = "Manual Review";
-  if (score < 50) recommendation = "Reject";
-
+const calculateApplicationCompleteness = (request) => {
+  const hasContact = Boolean(request.email || request.officialEmail);
+  const hasLocation = Boolean(request.country);
+  const documentCount = Object.keys(request.uploadedDocuments || {}).length;
+  const score = Math.round(
+    ((Number(hasContact) + Number(hasLocation) + Number(documentCount > 0)) / 3) * 100
+  );
   return {
     score,
-    threatLevel,
-    recommendation,
+    reviewSignal: "SERVER REVIEW PENDING",
+    recommendation: "Manual administrator review required; this is not an approval decision.",
   };
-};
+}
 
-const ifse =
-  selectedRequest
-    ? calculateIFSERisk(selectedRequest)
-    : null;
+const applicationReview = selectedRequest ? calculateApplicationCompleteness(selectedRequest) : null;
 
 return (
 <DashboardLayout>
@@ -1110,12 +835,108 @@ marginBottom: "35px",
 </div>
 
 <div style={card}>
+  <h3>🏢 Corporate Partnership</h3>
+  <p>Pending: <strong>{corporatePending}</strong></p>
+</div>
+
+<div style={card}>
   <h3>🏛 Government Verification</h3>
 
   <p>
     Pending:
     <strong> {governmentPending}</strong>
   </p>
+</div>
+
+<div style={card}>
+  <h2>Enterprise, Corporate and Government Partnership Reviews</h2>
+  <p>Each stage is recorded by the secure administrator service. Completing review stages does not itself approve or activate a contract.</p>
+  {partnershipApplications.length === 0 ? (
+    <p>No partnership applications are awaiting review.</p>
+  ) : partnershipApplications.map((application) => {
+    const stageConfig = {
+      enterprise: [
+        ["security", "Enterprise Security Review"],
+        ["accessibility", "Accessibility Review"],
+        ["compliance", "Compliance Review"],
+        ["integration", "Integration Review"],
+      ],
+      corporate: [
+        ["security", "Corporate Security Review"],
+        ["accessibility", "Accessibility Review"],
+        ["compliance", "Compliance Review"],
+      ],
+      government: [
+        ["identityReview", "Government Identity Review"],
+        ["securityReview", "IFSE Security Review"],
+        ["accessibilityReview", "Accessibility Compliance"],
+        ["complianceReview", "Compliance Review"],
+      ],
+    }[application.type] || [];
+    return (
+      <div key={application.type + ":" + application.id} style={{ borderTop: "1px solid #334155", padding: "16px 0" }}>
+        <h3>{application.organizationName || application.companyName || application.agencyName || "Partnership applicant"}</h3>
+        <p><strong>Type:</strong> {application.type} | <strong>Contact:</strong> {application.contactEmail || application.officialEmail || "Not supplied"}</p>
+        <p><strong>Submission status:</strong> {application.requestStatus || application.status || "submitted"}</p>
+        <p><strong>Contract:</strong> {application.contractStatus || "Not activated"} | <strong>Verification:</strong> {application.contractVerificationStatus || "Not submitted"}</p>
+        {application.contractDocument?.cloudinaryPublicId && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginBottom: "10px" }}>
+            <button type="button" disabled={Boolean(partnershipActionBusy)} onClick={() => openPartnershipContract(application)}>
+              Open private signed contract
+            </button>
+            {partnershipContractLinks[application.type + ":" + application.id] && (
+              <a href={partnershipContractLinks[application.type + ":" + application.id]} target="_blank" rel="noopener noreferrer">
+                View contract (expires shortly)
+              </a>
+            )}
+            <button type="button" disabled={Boolean(partnershipActionBusy) || application.contractVerificationStatus === "approved" || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)} onClick={() => submitPartnershipContractReview(application, "approved")}>
+              Verify contract
+            </button>
+            <button type="button" disabled={Boolean(partnershipActionBusy) || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)} onClick={() => submitPartnershipContractReview(application, "rejected")}>
+              Reject contract
+            </button>
+          </div>
+        )}
+        {application.contractVerificationStatus === "approved" && (
+          <button
+            type="button"
+            disabled={Boolean(partnershipActionBusy) || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)}
+            onClick={() => finalizePartnershipActivation(application)}
+          >
+            Final approvals and activate partnership
+          </button>
+        )}
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+          {stageConfig.map(([stage, label], stageIndex) => {
+            const prerequisitesComplete = stageConfig
+              .slice(0, stageIndex)
+              .every(([requiredStage]) => application.reviewProgress?.[requiredStage] === true);
+            const completed = application.reviewProgress?.[stage] === true;
+            return (
+              <button
+                key={stage}
+                type="button"
+                disabled={Boolean(partnershipActionBusy) || completed || !prerequisitesComplete}
+                onClick={() => submitPartnershipReview(application, stage, "approved")}
+                title={!prerequisitesComplete ? "Complete the preceding review stages first." : label}
+                style={{ padding: "8px 12px", borderRadius: "8px", border: "1px solid #64748b", background: completed ? "#166534" : "#1e293b", color: "#fff", cursor: completed || !prerequisitesComplete ? "not-allowed" : "pointer", opacity: prerequisitesComplete ? 1 : 0.55 }}
+              >
+                {completed ? label + " ✓" : "Complete: " + label}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            disabled={Boolean(partnershipActionBusy)}
+            onClick={() => submitPartnershipReview(application, stageConfig[0]?.[0], "rejected")}
+            style={{ padding: "8px 12px", borderRadius: "8px", border: "none", background: "#991b1b", color: "#fff", cursor: "pointer" }}
+          >
+            Reject application
+          </button>
+        </div>
+      </div>
+    );
+  })}
 </div>
 
 <div style={card}>
@@ -1129,7 +950,7 @@ marginBottom: "35px",
   </h2>
 
   {filteredRequests
-    .filter((item) => item.status === "submitted")
+    .filter((item) => ["pending", "submitted"].includes(item.status))
     .length === 0 ? (
 
     <p>No pending verification requests.</p>
@@ -1137,7 +958,7 @@ marginBottom: "35px",
   ) : (
 
     filteredRequests
-      .filter((item) => item.status === "submitted")
+      .filter((item) => ["pending", "submitted"].includes(item.status))
       .map((request) => (
 
         <div
@@ -1171,6 +992,12 @@ marginBottom: "35px",
             Status: {request.status}
           </p>
 
+          <p>
+            Payment: {request.paymentStatus || "Unknown"}
+          </p>
+
+          <p>Documents Submitted: {request.documentsSubmitted === true ? "Yes" : "No"}</p>
+
           <div
             style={{
               marginTop: "10px",
@@ -1180,6 +1007,8 @@ marginBottom: "35px",
           >
 
             <button
+              disabled={request.paymentStatus !== "paid" || request.documentsSubmitted !== true || Object.keys(request.uploadedDocuments || {}).length === 0}
+              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : request.documentsSubmitted !== true || Object.keys(request.uploadedDocuments || {}).length === 0 ? "Required verification documents must be submitted before approval." : "Approve after administrator review."}
               onClick={(e) => {
                 e.stopPropagation();
                 handleApprove(request.id);
@@ -1232,106 +1061,42 @@ marginBottom: "35px",
   >
     Verification Review Panel
   </h2>
-const ifse =
-selectedRequest
-? calculateIFSERisk(selectedRequest)
-: null;
-  
 {selectedRequest ? (
 
 <>
 
-  <h3 style={{ marginBottom: "16px" }}>
-  Uploaded Verification Documents
-</h3>
+  <h3 style={{ marginBottom: "16px" }}>Uploaded Verification Documents</h3>
 
-{selectedRequest.documents &&
-selectedRequest.documents.length > 0 ? (
-
-  <div
-    style={{
-      display: "grid",
-      gap: "16px",
-      marginBottom: "24px",
-    }}
-  >
-
-    {selectedRequest.documents.map((file, index) => (
-
-      <div
-        key={index}
-        style={{
-          background: "#111827",
-          padding: "14px",
-          borderRadius: "10px",
-          border: "1px solid #334155",
-        }}
-      >
-
-        <p>
-          <strong>{file.name || `Document ${index + 1}`}</strong>
-        </p>
-
-        {file.url &&
-(file.url.toLowerCase().includes(".pdf") ? (
-
-  <iframe
-    src={file.url}
-    title={file.name}
-    style={{
-      width: "100%",
-      height: "420px",
-      border: "none",
-      marginTop: "10px",
-      borderRadius: "8px",
-      background: "#fff",
-    }}
-  />
-
-) : (
-
-  <img
-    src={file.url}
-    alt={file.name}
-    style={{
-      width: "100%",
-      maxHeight: "300px",
-      objectFit: "contain",
-      marginTop: "10px",
-      borderRadius: "8px",
-    }}
-  />
-
-))}
-
-        {file.url && (
-          <div style={{ marginTop: "12px" }}>
-            <a
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: "#38bdf8",
-                textDecoration: "none",
-              }}
-            >
-              Open Full Document
-            </a>
-          </div>
+{documentsLoading ? (
+  <p role="status" aria-live="polite">Authorizing secure document access…</p>
+) : documentsError ? (
+  <p role="alert" aria-live="assertive">{documentsError}</p>
+) : selectedDocuments.length > 0 ? (
+  <div style={{ display: "grid", gap: "16px", marginBottom: "24px" }}>
+    {selectedDocuments.map((file) => (
+      <div key={file.id} style={{ background: "#111827", padding: "14px", borderRadius: "10px", border: "1px solid #334155" }}>
+        <p><strong>{file.name}</strong></p>
+        {file.fileType === "application/pdf" ? (
+          <iframe src={file.url} title={file.name} style={{ width: "100%", height: "420px", border: "none", marginTop: "10px", borderRadius: "8px", background: "#fff" }} />
+        ) : (
+          <img src={file.url} alt={file.name} style={{ width: "100%", maxHeight: "300px", objectFit: "contain", marginTop: "10px", borderRadius: "8px" }} />
         )}
-
+        <div style={{ marginTop: "12px" }}>
+          <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ color: "#38bdf8", textDecoration: "none" }}>
+            Open secure document
+          </a>
+        </div>
       </div>
-
     ))}
-
   </div>
-
 ) : (
-
-  <p>No uploaded documents found.</p>
-
+  <p>No uploaded verification documents were found for this application.</p>
 )}
-  
+
+<button type="button" onClick={() => setDocumentRefreshKey((value) => value + 1)} disabled={documentsLoading} style={smallButtonStyle}>
+  Refresh secure document links
+</button>
+
 <p>
 
 <strong>Name:</strong>
@@ -1389,27 +1154,7 @@ selectedRequest.officialEmail ||
 
 </p>
 
-<p>
-
-<strong>Risk Score:</strong>
-
-{" "}
-
-{selectedRequest.riskScore ??
-"Not Calculated"}
-
-</p>
-
-<p>
-
-<strong>Threat Level:</strong>
-
-{" "}
-
-{selectedRequest.threatLevel ??
-"Unknown"}
-
-</p>
+<p><strong>IFSE assessment:</strong> Awaiting trusted server-side assessment. No client-generated risk score is used for approval.</p>
 
 <p>
 
@@ -1434,7 +1179,7 @@ selectedRequest.officialEmail ||
     color: "#38bdf8",
   }}
 >
-🛡 IFSE Security Summary
+Application Review Summary
 </h3>
 
 <div
@@ -1447,42 +1192,29 @@ selectedRequest.officialEmail ||
 >
 
   <div style={miniCard}>
-    <h4>Verification Score</h4>
-    <h2>{ifse?.score}</h2>
+    <h4>Form Completeness Estimate</h4>
+    <h2>{applicationReview?.score}</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>Threat Level</h4>
-    <h2>{ifse?.threatLevel}</h2>
+    <h4>Server Risk Assessment</h4>
+    <h2>Pending</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>AI Recommendation</h4>
-    <h2>{ifse?.recommendation}</h2>
+    <h4>Next Step</h4>
+    <h2>{applicationReview?.recommendation}</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>Duplicate Identity</h4>
-    <h2>
-      {selectedRequest?.duplicateIdentity
-        ? "⚠ Detected"
-        : "✅ Clear"}
-    </h2>
-  </div>
-
-  <div style={miniCard}>
-    <h4>Blacklist Status</h4>
-    <h2>
-      {selectedRequest?.blacklisted
-        ? "🚫 Blacklisted"
-        : "✅ Clean"}
-    </h2>
+    <h4>Payment Status</h4>
+    <h2>{selectedRequest?.paymentStatus || "Unknown"}</h2>
   </div>
 
   <div style={miniCard}>
     <h4>Documents Uploaded</h4>
     <h2>
-      {selectedRequest?.documents?.length || 0}
+      {selectedDocuments.length}
     </h2>
   </div>
 
@@ -1583,6 +1315,14 @@ Revenue By Verification Category
     <h2>
       $
       {verificationRevenue.creatorRevenue.toLocaleString()}
+    </h2>
+  </div>
+
+  <div style={miniCard}>
+    <h4>Group</h4>
+    <h2>
+      $
+      {verificationRevenue.groupRevenue.toLocaleString()}
     </h2>
   </div>
 

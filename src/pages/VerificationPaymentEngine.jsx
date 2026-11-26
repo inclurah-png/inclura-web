@@ -11,19 +11,12 @@ import {
 
 import { useEffect, useMemo, useState } from "react";
 
+const makeVerificationTxRef = (uid) => "INCLURA-VERIFICATION-" + (uid || "USER") + "-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 10)));
+
 import { useLocation, useNavigate } from "react-router-dom";
 
-import {
-
-addDoc,
-
-collection,
-
-serverTimestamp,
-
-} from "firebase/firestore";
-
-import { auth, db } from "../firebase";
+import { auth } from "../firebase";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 import { onAuthStateChanged } from "firebase/auth";
 
 import DashboardLayout from "../components/DashboardLayout";
@@ -38,6 +31,7 @@ const verificationId = routeState.verificationId || "";
 const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(false);
+const [flutterwaveTxRef, setFlutterwaveTxRef] = useState(() => makeVerificationTxRef(auth.currentUser?.uid));
 
 const [error, setError] = useState("");
 
@@ -52,17 +46,47 @@ useState(routeState.verificationType || "");
 const [paymentMethod, setPaymentMethod] =
 useState("");
 
-const [couponCode, setCouponCode] =
-useState("");
-
-const [invoiceRequested, setInvoiceRequested] =
-useState(false);
-
 const [acceptedTerms, setAcceptedTerms] =
 useState(false);
 
 const [acceptedSecurity, setAcceptedSecurity] =
 useState(false);
+
+// Resolve the selected fee from Inclura's published verification catalogue.
+// Never use a browser-supplied amount as the source of truth.
+const selectedVerification = useMemo(() => {
+  const category = String(verificationType || "").toLowerCase();
+  const catalogue = VERIFICATION_PLANS[category];
+  const entries = catalogue?.verificationTypes || catalogue?.certification || [];
+  return entries.find((item) => item.id === selectedTier) || null;
+}, [verificationType, selectedTier]);
+
+const paymentAmount = Number(
+  selectedVerification?.monthlyUSD ??
+  selectedVerification?.yearlyUSD ??
+  selectedVerification?.monthlyFee ??
+  selectedVerification?.fee ??
+  selectedVerification?.contractUSD ??
+  0
+);
+
+const flutterwaveConfig = {
+  public_key: import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY || "",
+  tx_ref: flutterwaveTxRef,
+  amount: paymentAmount,
+  currency: "USD",
+  payment_options: paymentMethod === "Bank Transfer" ? "banktransfer" :
+    paymentMethod === "USSD" ? "ussd" : "card",
+  customer: {
+    email: currentUser?.email || "",
+    name: currentUser?.displayName || "Inclura Member",
+  },
+  customizations: {
+    title: "Inclura Verification",
+    description: "IFSE verification application payment",
+    logo: "",
+  },
+};
   useEffect(() => {
   const unsubscribe = onAuthStateChanged(
     auth,
@@ -85,229 +109,21 @@ useState(false);
 
 "Bank Transfer",
 
-"Enterprise Invoice",
-
-"Private Negotiation",
+"USSD",
 
 ];
 
 const IFSE_PAYMENT_SECURITY = [
-
-"Identity Verification",
-
-"AI Payment Fraud Detection",
-
-"Chargeback Protection",
-
-"Velocity Monitoring",
-
-"Device Fingerprinting",
-
-"IP Reputation Analysis",
-
-"Country Verification",
-
-"AML Screening",
-
-"Sanctions Screening",
-
-"Continuous Transaction Monitoring",
-
-"Executive Approval",
-
+  "Authenticated Inclura account required",
+  "Server-side Flutterwave transaction verification",
+  "Transaction ID and reference validation",
+  "Account email, amount and currency matching",
+  "Duplicate transaction protection",
+  "Payment and identity approval kept separate",
 ];
-
-const transactionId = useMemo(() => {
-
-return `IFSE-${Date.now()}`;
-
-}, []);
-
-const calculatePaymentRisk = () => {
-
-let score = 0;
-
-if (!paymentMethod)
-
-score += 20;
-
-if (!acceptedTerms)
-
-score += 20;
-
-if (!acceptedSecurity)
-
-score += 25;
-
-if (paymentMethod === "Private Negotiation")
-
-score += 15;
-
-if (paymentMethod === "Enterprise Invoice")
-
-score += 10;
-
-return Math.min(score, 100);
-
-};
-
-const paymentRiskScore =
-calculatePaymentRisk();
-
-const threatLevel =
-
-paymentRiskScore >= 75
-
-? "High"
-
-: paymentRiskScore >= 40
-
-? "Medium"
-
-: "Low";
-
-const selectedCategory =
-  VERIFICATION_PLANS[verificationType] ||
-  (verificationType === "Corporate" ? partnerships.corporate : null) ||
-  (verificationType === "Government" ? partnerships.government : null) ||
-  (verificationType === "Enterprise" ? partnerships.enterprise : null);
-
-const selectedVerification = useMemo(() => {
-  if (!selectedCategory) return null;
-  const matchingTier = selectedCategory.verificationTypes?.find(
-    (item) => item.id === selectedTier
-  );
-  return matchingTier || selectedCategory.verificationTypes?.[0] || selectedCategory;
-}, [selectedCategory, selectedTier]);
-
-const paymentAmount = useMemo(() => {
-  if (!selectedVerification) return 0;
-  return Number(
-    selectedVerification.monthlyUSD ??
-    selectedVerification.yearlyUSD ??
-    selectedVerification.monthlyFee ??
-    selectedVerification.fee ??
-    0
-  );
-}, [selectedVerification]);
-
-const flutterwaveConfig = {
-
-  public_key:
-    import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY,
-
-  tx_ref: transactionId,
-
-  amount: paymentAmount,
-
-  currency: "USD",
-
-  payment_options:
-    "card,banktransfer,ussd",
-
-  customer: {
-
-    email:
-      currentUser?.email ||
-      "user@inclura.com",
-
-    phone_number:
-      currentUser?.phoneNumber || "",
-
-    name:
-      currentUser?.displayName ||
-      "Inclura User",
-
-  },
-
-  customizations: {
-
-    title:
-      "Inclura Verification Payment",
-
-    description:
-      `${verificationType} Verification`,
-
-    logo: "",
-
-  },
-
-};
 
 const handleFlutterPayment =
   useFlutterwave(flutterwaveConfig);
-
-const paymentSummary = useMemo(() => {
-
-return {
-
-verificationType,
-
-selectedTier,
-
-transactionId,
-
-paymentMethod,
-
-pricing: selectedVerification,
-
-riskScore: paymentRiskScore,
-
-threatLevel,
-
-};
-
-}, [
-
-verificationType,
-
-selectedTier,
-
-transactionId,
-
-paymentMethod,
-
-selectedVerification,
-
-paymentRiskScore,
-
-threatLevel,
-
-]);
-  
-  const requiresExecutiveApproval =
-
-verificationType === "Enterprise" ||
-
-verificationType === "Corporate" ||
-
-verificationType === "Government" ||
-
-paymentRiskScore >= 60;
-
-const paymentSecurityStatus =
-
-paymentRiskScore >= 75
-
-? "Payment Blocked"
-
-: paymentRiskScore >= 40
-
-? "Manual Review"
-
-: "Approved for Processing";
-
-const PAYMENT_COLLECTION =
-
-"verificationPayments";
-
-const AUDIT_COLLECTION =
-
-"paymentAuditLogs";
-
-const SECURITY_COLLECTION =
-
-"ifsePaymentEvents";
 
 const handlePayment = async (e) => {
 
@@ -348,6 +164,25 @@ const handlePayment = async (e) => {
 
   setLoading(true);
 
+  try {
+    const initialized = await initializeFlutterwavePayment({
+      purpose: "verification",
+      verificationId,
+      txRef: flutterwaveTxRef,
+    });
+    if (
+      Number(initialized.amount) !== paymentAmount ||
+      initialized.currency !== "USD" ||
+      initialized.txRef !== flutterwaveTxRef
+    ) {
+      throw new Error("The server checkout details do not match this verification application.");
+    }
+  } catch (initializationError) {
+    setError(initializationError.message || "Unable to initialize secure checkout.");
+    setLoading(false);
+    return;
+  }
+
   handleFlutterPayment({
 
     callback: async (response) => {
@@ -366,127 +201,17 @@ const handlePayment = async (e) => {
 
         }
 
-        const paymentRef = await addDoc(
+        if (!verificationId) {
+          throw new Error("The verification application reference is missing. Please reopen payment from your submitted application.");
+        }
 
-          collection(db, PAYMENT_COLLECTION),
-
-          {
-
-            verificationId,
-
-            transactionId,
-
-            flutterwaveTransactionId:
-              response.transaction_id,
-
-            flutterwaveReference:
-              response.tx_ref,
-
-            verificationType,
-
-            selectedTier,
-
-            paymentMethod,
-
-            couponCode,
-
-            invoiceRequested,
-
-            paymentRiskScore,
-
-            threatLevel,
-
-            paymentSecurityStatus,
-
-            requiresExecutiveApproval,
-
-            amount: paymentAmount,
-
-            currency: "USD",
-
-            paymentStatus: "paid",
-
-            flutterwaveStatus: response.status,
-            
-flutterwaveCurrency: response.currency,
-            
-flutterwaveAmount: response.amount,
-            
-flutterwaveProcessorResponse: response.processor_response,
-            
-flutterwavePaymentType: response.payment_type,
-            
-            userId: currentUser.uid,
-
-            status: "completed",
-
-            createdAt: serverTimestamp(),
-
-            updatedAt: serverTimestamp(),
-
-          }
-
-        );
-
-        const paymentId = paymentRef.id;
-        await addDoc(
-  collection(db, SECURITY_COLLECTION),
-  {
-    paymentId,
-    transactionId,
-    eventType: "verification_payment_success",
-    riskScore: paymentRiskScore,
-    threatLevel,
-    requiresExecutiveApproval,
-    reviewed: false,
-    createdAt: serverTimestamp(),
-  }
-);
-        await addDoc(
-
-          collection(db, AUDIT_COLLECTION),
-
-          {
-
-            paymentId,
-
-            transactionId,
-
-            action:
-              "Verification Payment Completed",
-
-            actor:
-              currentUser.uid,
-
-            createdAt:
-              serverTimestamp(),
-
-          }
-
-        );
-
-        await addDoc(
-
-          collection(db, "paymentTimeline"),
-
-          {
-
-            paymentId,
-
-            transactionId,
-
-            title:
-              "Payment Completed",
-
-            status:
-              "Completed",
-
-            createdAt:
-              serverTimestamp(),
-
-          }
-
-        );
+        await verifyFlutterwavePayment({
+          purpose: "verification",
+          verificationId,
+          transactionId: String(response.transaction_id),
+          txRef: response.tx_ref || flutterwaveTxRef,
+          paymentMethod,
+        });
 
         setSuccess(
 
@@ -511,12 +236,14 @@ flutterwavePaymentType: response.payment_type,
       }
 
       setLoading(false);
+      setFlutterwaveTxRef(makeVerificationTxRef(currentUser?.uid));
 
     },
 
     onClose: () => {
 
       setLoading(false);
+      setFlutterwaveTxRef(makeVerificationTxRef(currentUser?.uid));
 
     },
 
@@ -583,9 +310,9 @@ Complete your verification payment securely through the
 
 <p>
 
-<strong>IFSE Transaction ID:</strong>
+<strong>Checkout Reference:</strong>
 
-{transactionId}
+{flutterwaveTxRef}
 
 </p>
 
@@ -620,11 +347,14 @@ Complete your verification payment securely through the
       >
 
         <div>
-          <strong>Monthly Fee</strong>
+          <strong>Verification fee</strong>
           <p>
             $
             {selectedVerification.monthlyUSD ??
+              selectedVerification.yearlyUSD ??
               selectedVerification.monthlyFee ??
+              selectedVerification.fee ??
+              selectedVerification.contractUSD ??
               0}
           </p>
         </div>
@@ -732,117 +462,26 @@ value={method}
 
 </section>
 
-<section>
-
-<h2>Payment Options</h2>
-
-<input
-
-type="text"
-
-placeholder="Coupon Code"
-
-value={couponCode}
-
-onChange={(e)=>
-
-setCouponCode(
-
-e.target.value
-
-)
-
-}
-
-/>
-
-<label>
-
-<input
-
-type="checkbox"
-
-checked={invoiceRequested}
-
-onChange={(e)=>
-
-setInvoiceRequested(
-
-e.target.checked
-
-)
-
-}
-
-/>
-
-Request Enterprise Invoice
-
-</label>
-
+<section aria-label="Additional payment guidance">
+  <p>
+    Enterprise invoices and negotiated contract fees are handled through
+    Inclura's Corporate and Enterprise Partnership applications, not this
+    online checkout.
+  </p>
 </section>
 
-<section>
-
-<h2>IFSE Payment Security</h2>
-
-<p>
-
-Risk Score:
-
-<strong>
-
-{paymentRiskScore}%
-
-</strong>
-
-</p>
-
-<p>
-
-Threat Level:
-
-<strong>
-
-{threatLevel}
-
-</strong>
-
-</p>
-
-<p>
-
-Status:
-
-<strong>
-
-{paymentSecurityStatus}
-
-</strong>
-
-</p>
-
-<p>
-
-Executive Review:
-
-<strong>
-
-{requiresExecutiveApproval
-
-? " Required"
-
-: " Not Required"}
-
-</strong>
-
-</p>
-
+<section aria-label="Payment verification status">
+  <h2>Payment Verification</h2>
+  <p>
+    IFSE verifies successful payments directly with Flutterwave and checks the
+    transaction reference, account email, amount and currency. Payment
+    confirmation does not itself approve identity or issue a verification badge.
+  </p>
 </section>
 
   <section>
 
-<h2>IFSE Protection Layers</h2>
+<h2>IFSE Payment Verification Checks</h2>
 
 <ul>
 
@@ -910,13 +549,7 @@ e.target.checked
 
 />
 
-I consent to IFSE payment verification,
-
-fraud screening,
-
-security monitoring,
-
-and transaction auditing.
+I consent to IFSE verifying the transaction details with Flutterwave and recording the payment confirmation for security and audit purposes.
 
 </label>
 
@@ -974,39 +607,7 @@ Back
 
 </div>
 
-  <section className="ifse-payment-notice">
-
-<h2>IFSE Notice</h2>
-
-<p>
-
-Every verification payment is protected by the
-
-Inclura Fortress Security Engine (IFSE).
-
-</p>
-
-<ul>
-
-<li>AI Fraud Detection</li>
-
-<li>Transaction Risk Analysis</li>
-
-<li>Identity Verification</li>
-
-<li>Executive Approval</li>
-
-<li>Audit Logging</li>
-
-<li>Accessibility Compliance</li>
-
-<li>Continuous Monitoring</li>
-
-<li>Enterprise Security Review</li>
-
-</ul>
-
-</section>
+  
 
   </form>
 

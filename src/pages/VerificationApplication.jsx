@@ -1,4 +1,3 @@
-import { processVerification } from "../utils/processVerification";
 import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -59,14 +58,11 @@ function VerificationApplication() {
   const [officialEmail, setOfficialEmail] =
     useState("");
 
-  const [documentFile, setDocumentFile] =
-    useState(null);
-
   const selectedCategory =
     VERIFICATION_PLANS[category];
 
   const verificationTypes =
-    selectedCategory?.verificationTypes || [];
+    selectedCategory?.verificationTypes || selectedCategory?.certification || [];
 
   useEffect(() => {
 if (verificationTypes?.length > 0) {
@@ -81,25 +77,27 @@ if (verificationTypes?.length > 0) {
     );
 
   const paymentAmount =
-  selectedVerification?.monthlyUSD ??
-  selectedVerification?.yearlyUSD ??
-  0;
+    selectedVerification?.monthlyUSD ??
+    selectedVerification?.yearlyUSD ??
+    selectedVerification?.contractUSD ??
+    0;
 
-const paymentFrequency =
-  selectedVerification?.monthlyUSD
-    ? t("vaMonthly")
-    : selectedVerification?.yearlyUSD
-    ? t("vaYearly")
-    : t("vaOneTime");
+  const paymentFrequency =
+    selectedVerification?.monthlyUSD
+      ? t("vaMonthly")
+      : selectedVerification?.yearlyUSD
+      ? t("vaYearly")
+      : t("vaOneTime");
 
   const isEnterprise =
   selectedVerification?.enterprise === true;
 
 const requiresContract =
-  selectedVerification?.contractRequired === true;
+  selectedVerification?.contractRequired === true && paymentAmount === 0;
 
 const contractRoute =
-  selectedVerification?.redirect || "";
+  selectedVerification?.redirect ||
+  (category === "organization" ? "/corporate-partnership" : "/enterprise-partnership");
 
 async function handleContinue() {
   const user = auth.currentUser;
@@ -129,47 +127,40 @@ async function handleContinue() {
     return;
   }
 
-  try {
-    const ifseResult = processVerification({
-      identityVerified:
-        !!fullName.trim() &&
-        !!email.trim() &&
-        !!phone.trim(),
-
-      // Selecting a document does NOT mean
-      // the document has already been authenticated.
-      documentVerified: false,
-
-      duplicateChecked: true,
-
-      fraudChecked: true,
-
-      businessValidated:
-        category === "creator"
-          ? true
-          : !!organizationName.trim(),
-
-      governmentValidated:
-        category === "government",
-
-      accessibilityValidated: true,
-
-      paymentVerified:
-        paymentAmount === 0,
+  // Enterprise and negotiated corporate contracts use their dedicated
+  // partnership workflow. Do not create an unpriced payment request.
+  if (requiresContract || isEnterprise) {
+    navigate(contractRoute, {
+      state: {
+        source: "verification-application",
+        category,
+        verificationType,
+        fullName,
+        email,
+        phone,
+        organizationName,
+        website,
+        officialEmail,
+      },
     });
+    return;
+  }
 
-    // The processor score represents completed verification checks
-    // (a higher score is better), not risk. Keep both measures separate.
-    const ifseTrustScore = Math.max(
-      0,
-      Math.min(100, Number(ifseResult.score) || 0)
-    );
-    const riskScore = 100 - ifseTrustScore;
-    const threatLevel =
-      riskScore >= 80 ? "CRITICAL" :
-      riskScore >= 60 ? "HIGH" :
-      riskScore >= 35 ? "MEDIUM" : "LOW";
+  if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+    alert("This verification option has no published fee. Please select a priced verification type or use the relevant partnership application for a negotiated quote.");
+    return;
+  }
 
+  try {
+    // Identity, document, fraud and accessibility checks have not yet been
+    // completed by a trusted server or authorized reviewer. Do not issue a
+    // client-generated approval, score or badge.
+    const ifseResult = {
+      status: "PENDING_SERVER_REVIEW",
+      message: "Awaiting server-side verification and authorized administrator review.",
+      badge: false,
+      executiveReview: true,
+    };
     // ==========================================
     // CREATE VERIFICATION REQUEST
     // ==========================================
@@ -233,32 +224,22 @@ async function handleContinue() {
         // IFSE SCREENING RESULT
         // ========================================
 
-        ifseScore:
-          ifseTrustScore,
-
-        ifseStatus:
-          ifseResult.status || "PENDING",
-
-        ifseMessage:
-          ifseResult.message || "",
-
-        ifseBadge:
-          ifseResult.badge || "",
-
-        executiveReview:
-          !!ifseResult.executiveReview,
+        ifseScore: null,
+        ifseScoreSource: "not_server_verified",
+        ifseStatus: ifseResult.status,
+        ifseMessage: ifseResult.message,
+        ifseBadge: false,
+        executiveReview: true,
 
         // ========================================
         // NORMALIZED IFSE FIELDS
         // Used by VerificationCenter
         // ========================================
 
-        riskScore,
-
-        threatLevel,
-
-        executiveReviewRequired:
-          !!ifseResult.executiveReview,
+        riskScore: null,
+        riskScoreSource: "not_server_verified",
+        threatLevel: "UNASSESSED",
+        executiveReviewRequired: true,
 
         // ========================================
         // ENTERPRISE
@@ -270,11 +251,6 @@ async function handleContinue() {
         // ========================================
         // DOCUMENT
         // ========================================
-
-        documentName:
-          documentFile
-            ? documentFile.name
-            : "",
 
         // Actual storage URL will be added
         // by the document workflow.
@@ -363,9 +339,7 @@ async function handleContinue() {
         eventType:
           "Application Received",
 
-        threatLevel,
-
-        riskScore,
+        assessmentStatus: "pending_server_review",
 
         // The security lifecycle is not finished
         // simply because the application was received.
@@ -392,21 +366,6 @@ async function handleContinue() {
       return;
     }
 
-    // Enterprise partnership
-    if (isEnterprise) {
-      navigate(
-        "/enterprise-partnership",
-        {
-          state: {
-            verificationId:
-              verificationRef.id,
-          },
-        }
-      );
-
-      return;
-    }
-
     // Paid verification
     if (paymentAmount > 0) {
       navigate(
@@ -424,17 +383,7 @@ async function handleContinue() {
       return;
     }
 
-    // ==========================================
-    // FREE / NO-PAYMENT VERIFICATION
-    // ==========================================
-
-    alert(
-      t("vaSubmitSuccess")
-    );
-
-    navigate(
-      "/verification-status"
-    );
+    throw new Error("This verification option requires a published payment fee or an approved partnership contract.");
 
   } catch (error) {
     console.error(
@@ -668,23 +617,20 @@ async function handleContinue() {
           </>
         )}
 
-        <label>
-          {t("vaUploadSupporting")}
-        </label>
-
-        <input
-          type="file"
-          onChange={(e) =>
-            setDocumentFile(
-              e.target.files[0]
-            )
-          }
+        <div
+          role="note"
           style={{
             marginTop: "10px",
             marginBottom: "24px",
-            color: "white",
+            padding: "12px 14px",
+            borderRadius: "10px",
+            background: "#1e293b",
+            color: "#e2e8f0",
+            lineHeight: 1.5,
           }}
-        />
+        >
+          {t("vaUploadSupportingNotice")}
+        </div>
 
 <div
   style={{

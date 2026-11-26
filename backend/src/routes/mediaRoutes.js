@@ -16,6 +16,7 @@ const API_SECRET = process.env.CLOUDINARY_API_SECRET;
 
 const MIME_RESOURCE_TYPES = {
   "image/jpeg": "image",
+  "image/jpg": "image",
   "image/png": "image",
   "image/webp": "image",
   "image/gif": "image",
@@ -42,6 +43,7 @@ const CATEGORY_RULES = {
   chat: { folder: "chat", private: false, resources: ["image", "video", "raw"] },
   voiceNote: { folder: "voiceNotes", private: false, resources: ["video"] },
   verificationDocument: { folder: "verificationDocuments", private: true, resources: ["image", "raw"] },
+  partnershipContract: { folder: "partnershipContracts", private: true, resources: ["image", "raw"] },
 };
 
 function signCloudinaryParams(params, secret) {
@@ -61,6 +63,31 @@ function getBearerToken(req) {
   return match?.[1] || null;
 }
 
+async function requireMediaUser(req, res, next) {
+  const token = getBearerToken(req);
+  if (!token) {
+    return res.status(401).json({ success: false, message: "Authentication required." });
+  }
+
+  try {
+    const decoded = await auth().verifyIdToken(token, true);
+    if (decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "Verify your email address before accessing partnership contracts." });
+    }
+    const account = await auth().getUser(decoded.uid);
+    if (account.disabled) {
+      return res.status(403).json({
+        success: false,
+        message: "This Inclura account is disabled.",
+      });
+    }
+    req.firebaseUser = decoded;
+    return next();
+  } catch {
+    return res.status(401).json({ success: false, message: "Your Inclura session is invalid or expired. Please sign in again." });
+  }
+}
+
 router.get("/status", (req, res) => {
   const configured = Boolean(CLOUD_NAME && API_KEY && API_SECRET);
   return res.status(configured ? 200 : 503).json({
@@ -74,18 +101,13 @@ router.get("/status", (req, res) => {
 });
 
 
-router.post("/upload", upload.single("file"), async (req, res) => {
+router.post("/upload", requireMediaUser, upload.single("file"), async (req, res) => {
   try {
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
     }
 
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     const category = String(req.body?.category || "");
     const mimeType = String(req.file?.mimetype || "").toLowerCase();
     const rule = CATEGORY_RULES[category];
@@ -174,18 +196,113 @@ router.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-router.post("/sign-upload", async (req, res) => {
+
+router.post("/partnership-contract", requireMediaUser, async (req, res) => {
+  try {
+    if (req.firebaseUser?.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "Verify your email address before submitting a signed contract." });
+    }
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Private contract storage is not configured." });
+    }
+    const type = String(req.body?.partnershipType || "").toLowerCase();
+    const partnershipId = String(req.body?.partnershipId || "");
+    const publicId = String(req.body?.publicId || "");
+    const assetId = String(req.body?.assetId || "");
+    const resourceType = String(req.body?.resourceType || "");
+    const fileType = String(req.body?.fileType || "").toLowerCase();
+    const fileName = String(req.body?.fileName || "").slice(0, 180);
+    const fileSize = Number(req.body?.fileSize);
+    const collections = {
+      enterprise: "enterprisePartnerships",
+      corporate: "corporatePartnerships",
+      government: "governmentPartnerships",
+    };
+    const collectionName = collections[type];
+    const allowedTypes = ["application/pdf", "image/jpeg", "image/jpg", "image/png"];
+    const ownerPrefix = "inclura/partnershipContracts/" + req.firebaseUser.uid + "/";
+    if (!collectionName || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId) ||
+        !publicId.startsWith(ownerPrefix) || !assetId ||
+        !["image", "raw"].includes(resourceType) || !allowedTypes.includes(fileType) ||
+        !Number.isFinite(fileSize) || fileSize <= 0 || fileSize > 10 * 1024 * 1024 ||
+        (fileType === "application/pdf" && resourceType !== "raw") ||
+        (fileType.startsWith("image/") && resourceType !== "image")) {
+      return res.status(400).json({ success: false, message: "Contract document metadata is invalid." });
+    }
+
+    const encodedPublicId = publicId.split("/").map(encodeURIComponent).join("/");
+    const assetUrl = "https://api.cloudinary.com/v1_1/" + encodeURIComponent(CLOUD_NAME) +
+      "/resources/" + resourceType + "/authenticated/" + encodedPublicId;
+    const assetResponse = await fetch(assetUrl, {
+      headers: { Authorization: "Basic " + Buffer.from(API_KEY + ":" + API_SECRET).toString("base64") },
+    });
+    if (!assetResponse.ok) {
+      return res.status([401, 403, 429].includes(assetResponse.status) || assetResponse.status >= 500 ? 503 : 409)
+        .json({ success: false, message: "The uploaded private contract could not be verified." });
+    }
+    const asset = await assetResponse.json();
+    const format = String(asset.format || "").toLowerCase();
+    const formatMatches = fileType === "application/pdf" ? format === "pdf" :
+      fileType === "image/png" ? format === "png" :
+      ["image/jpeg", "image/jpg"].includes(fileType) ? ["jpg", "jpeg"].includes(format) : false;
+    if (asset.public_id !== publicId || asset.asset_id !== assetId ||
+        asset.type !== "authenticated" || asset.resource_type !== resourceType ||
+        !formatMatches || Number(asset.bytes) !== fileSize) {
+      return res.status(409).json({ success: false, message: "The uploaded contract failed private-storage validation." });
+    }
+
+    const db = firestore();
+    const requestRef = db.collection(collectionName).doc(partnershipId);
+    await db.runTransaction(async (tx) => {
+      const snapshot = await tx.get(requestRef);
+      if (!snapshot.exists || snapshot.data()?.userId !== req.firebaseUser.uid) {
+        const error = new Error("Partnership application not found for this account.");
+        error.statusCode = 404;
+        throw error;
+      }
+      const application = snapshot.data() || {};
+      if (["rejected", "active", "suspended"].includes(String(application.requestStatus || application.status || "").toLowerCase())) {
+        const error = new Error("This application is closed and cannot accept a contract upload.");
+        error.statusCode = 409;
+        throw error;
+      }
+      if (application.contractVerificationStatus === "approved") {
+        const error = new Error("An approved contract cannot be replaced through applicant upload.");
+        error.statusCode = 409;
+        throw error;
+      }
+      tx.update(requestRef, {
+        contractDocument: {
+          cloudinaryPublicId: publicId,
+          cloudinaryAssetId: assetId,
+          cloudinaryResourceType: resourceType,
+          fileType,
+          fileSize,
+          fileName: fileName || "signed-partnership-contract",
+          submittedBy: req.firebaseUser.uid,
+          submittedAt: new Date(),
+        },
+        contractStatus: "Submitted for verification",
+        contractVerificationStatus: "pending",
+        updatedAt: new Date(),
+      });
+    });
+    return res.status(200).json({ success: true, message: "Signed contract uploaded to private storage and submitted for administrator verification." });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Unable to submit the partnership contract.",
+    });
+  }
+});
+
+router.post("/sign-upload", requireMediaUser, async (req, res) => {
   try {
     if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
       return res.status(503).json({ success: false, message: "Media uploads are not configured yet." });
     }
 
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     const category = req.body?.category;
     const mimeType = String(req.body?.mimeType || "").toLowerCase();
     const rule = CATEGORY_RULES[category];
@@ -196,6 +313,12 @@ router.post("/sign-upload", async (req, res) => {
         success: false,
         message: "This media type is not allowed for the selected upload category.",
       });
+    }
+    if (rule.private) {
+      const requestedFileSize = Number(req.body?.fileSize);
+      if (!Number.isFinite(requestedFileSize) || requestedFileSize <= 0 || requestedFileSize > 10 * 1024 * 1024) {
+        return res.status(413).json({ success: false, message: "Private documents must be between 1 byte and 10 MB." });
+      }
     }
 
     const timestamp = Math.floor(Date.now() / 1000);
@@ -232,18 +355,13 @@ router.post("/sign-upload", async (req, res) => {
 
 // Prepare a separate, permanently watermarked copy for an owner's external-sharing request.
 // The source Firebase Storage asset is never modified.
-router.post("/prepare-crosspost", async (req, res) => {
+router.post("/prepare-crosspost", requireMediaUser, async (req, res) => {
   let requestRef = null;
   let requestData = null;
   let processingStage = "authentication";
 
   try {
-    const token = getBearerToken(req);
-    if (!token) {
-      return res.status(401).json({ success: false, message: "Authentication required." });
-    }
-
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = req.firebaseUser;
     processingStage = "request_validation";
     const requestId = String(req.body?.requestId || "");
     if (!requestId || requestId.length > 150) {
@@ -479,7 +597,13 @@ router.post("/verification-document-access", async (req, res) => {
       return res.status(401).json({ success: false, message: "Authentication required." });
     }
 
-    const decoded = await auth().verifyIdToken(token);
+    const decoded = await auth().verifyIdToken(token, true);
+    if (decoded.admin === true) {
+      const adminRecord = await auth().getUser(decoded.uid);
+      if (adminRecord.disabled || decoded.email_verified !== true) {
+        return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
+      }
+    }
     const verificationId = String(req.body?.verificationId || "");
     const requestedPublicId = String(req.body?.publicId || "");
 
@@ -497,11 +621,15 @@ router.post("/verification-document-access", async (req, res) => {
     }
 
     const verification = requestSnapshot.data() || {};
-    const isOwner = verification.userId === decoded.uid || verification.submittedBy === decoded.uid;
+    const requestOwnerId = String(verification.userId || verification.submittedBy || "");
+    const isOwner = requestOwnerId === decoded.uid;
     const isAdmin = decoded.admin === true;
 
     if (!isOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: "You are not authorized to access this verification document." });
+    }
+    if (!requestOwnerId || !requestedPublicId.startsWith(`inclura/verificationDocuments/${requestOwnerId}/`)) {
+      return res.status(403).json({ success: false, message: "Document does not belong to this verification applicant." });
     }
 
     const uploadedDocuments = verification.uploadedDocuments || {};
@@ -551,6 +679,72 @@ router.post("/verification-document-access", async (req, res) => {
   } catch (error) {
     console.error("Verification document access failed:", error);
     return res.status(500).json({ success: false, message: "Unable to authorize document access." });
+  }
+});
+
+
+router.post("/partnership-contract-access", async (req, res) => {
+  try {
+    if (!CLOUD_NAME || !API_KEY || !API_SECRET) {
+      return res.status(503).json({ success: false, message: "Private contract access is not configured." });
+    }
+    const token = getBearerToken(req);
+    if (!token) return res.status(401).json({ success: false, message: "Authentication required." });
+    const decoded = await auth().verifyIdToken(token, true);
+    const account = await auth().getUser(decoded.uid);
+    if (account.disabled) {
+      return res.status(403).json({ success: false, message: "This Inclura account is disabled." });
+    }
+    const isAdmin = decoded.admin === true;
+    if (isAdmin && decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "An active, verified administrator session is required." });
+    }
+    const type = String(req.body?.partnershipType || "").toLowerCase();
+    const partnershipId = String(req.body?.partnershipId || "");
+    const collections = {
+      enterprise: "enterprisePartnerships",
+      corporate: "corporatePartnerships",
+      government: "governmentPartnerships",
+    };
+    const collectionName = collections[type];
+    if (!collectionName || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId)) {
+      return res.status(400).json({ success: false, message: "A valid partnership reference is required." });
+    }
+    const snapshot = await firestore().collection(collectionName).doc(partnershipId).get();
+    if (!snapshot.exists) return res.status(404).json({ success: false, message: "Partnership application not found." });
+    const application = snapshot.data() || {};
+    if (application.userId !== decoded.uid && !isAdmin) {
+      return res.status(403).json({ success: false, message: "You are not authorized to access this contract." });
+    }
+    const document = application.contractDocument || {};
+    const publicId = String(document.cloudinaryPublicId || "");
+    const resourceType = String(document.cloudinaryResourceType || "");
+    const fileType = String(document.fileType || "").toLowerCase();
+    const format = fileType === "application/pdf" ? "pdf" :
+      fileType === "image/png" ? "png" :
+      ["image/jpeg", "image/jpg"].includes(fileType) ? "jpg" : "";
+    if (!format || !["image", "raw"].includes(resourceType) ||
+        !publicId.startsWith("inclura/partnershipContracts/" + application.userId + "/")) {
+      return res.status(404).json({ success: false, message: "No valid private signed contract is attached." });
+    }
+    const expiresAt = Math.floor(Date.now() / 1000) + 90;
+    const downloadParams = {
+      expires_at: String(expiresAt),
+      format,
+      public_id: publicId,
+      timestamp: String(Math.floor(Date.now() / 1000)),
+      type: "authenticated",
+    };
+    const signature = signCloudinaryParams(downloadParams, API_SECRET);
+    const query = new URLSearchParams({ ...downloadParams, api_key: API_KEY, signature });
+    const downloadUrl = "https://api.cloudinary.com/v1_1/" + CLOUD_NAME + "/" +
+      resourceType + "/download?" + query.toString();
+    return res.status(200).json({
+      success: true, downloadUrl, expiresAt,
+      fileName: document.fileName || "signed-partnership-contract",
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Unable to authorize private contract access." });
   }
 });
 

@@ -1,297 +1,152 @@
-import { useState, useEffect } from "react";
-
-import {
-useFlutterwave,
-closePaymentModal,
-} from "flutterwave-react-v3";
-
+import { useEffect, useMemo, useState } from "react";
+import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { auth, db } from "../firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
-import {
-doc,
-updateDoc,
-serverTimestamp,
-getDoc,
-} from "firebase/firestore";
+const makeTxRef = (tier) =>
+  `INCLURA-${tier.toUpperCase()}-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 function PremiumPayment() {
-const [pricing, setPricing] =
-useState({});
+  const [pricing, setPricing] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [txRefs, setTxRefs] = useState(() => ({
+    silver: makeTxRef("silver"),
+    gold: makeTxRef("gold"),
+    platinum: makeTxRef("platinum"),
+    enterprise: makeTxRef("enterprise"),
+  }));
+  const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
-const [loading, setLoading] =
-useState(false);
+  useEffect(() => {
+    let active = true;
+    async function loadPricing() {
+      try {
+        const ids = ["SilverBadge", "GoldBadge", "PlatinumBadge", "EnterpriseBadge"];
+        const entries = await Promise.all(ids.map(async (id) => {
+          const snapshot = await getDoc(doc(db, "pricing", id));
+          return [id, snapshot.exists() ? snapshot.data() : {}];
+        }));
+        if (active) setPricing(Object.fromEntries(entries));
+      } catch (error) {
+        console.error("Premium pricing load failed:", error);
+      }
+    }
+    loadPricing();
+    return () => { active = false; };
+  }, []);
 
-useEffect(() => {
-loadPricing();
-}, []);
 
-async function loadPricing() {
-try {
-const silver =
-await getDoc(
-doc(
-db,
-"pricing",
-"SilverBadge"
-)
-);
+  const paymentConfigs = [
+    ["silver", "SilverBadge", "Silver membership"],
+    ["gold", "GoldBadge", "Gold membership"],
+    ["platinum", "PlatinumBadge", "Platinum membership"],
+    ["enterprise", "EnterpriseBadge", "Enterprise membership"],
+  ];
 
-  const gold =
-    await getDoc(
-      doc(
-        db,
-        "pricing",
-        "GoldBadge"
-      )
-    );
-
-  const platinum =
-    await getDoc(
-      doc(
-        db,
-        "pricing",
-        "PlatinumBadge"
-      )
-    );
-
-  const enterprise =
-    await getDoc(
-      doc(
-        db,
-        "pricing",
-        "EnterpriseBadge"
-      )
-    );
-
-  setPricing({
-    SilverBadge:
-      silver.exists()
-        ? silver.data()
-        : {},
-
-    GoldBadge:
-      gold.exists()
-        ? gold.data()
-        : {},
-
-    PlatinumBadge:
-      platinum.exists()
-        ? platinum.data()
-        : {},
-
-    EnterpriseBadge:
-      enterprise.exists()
-        ? enterprise.data()
-        : {},
+  const silverPayment = useFlutterwave({
+    public_key: publicKey,
+    tx_ref: txRefs.silver,
+    amount: Number(pricing.SilverBadge?.price || 0),
+    currency: "NGN",
+    payment_options: "card,banktransfer,ussd",
+    customer: { email: auth.currentUser?.email || "", name: auth.currentUser?.displayName || "Inclura User" },
+    customizations: { title: "Inclura Premium Upgrade", description: "Silver membership" },
   });
-} catch (error) {
-  console.log(error);
-}
+  const goldPayment = useFlutterwave({
+    public_key: publicKey,
+    tx_ref: txRefs.gold,
+    amount: Number(pricing.GoldBadge?.price || 0),
+    currency: "NGN",
+    payment_options: "card,banktransfer,ussd",
+    customer: { email: auth.currentUser?.email || "", name: auth.currentUser?.displayName || "Inclura User" },
+    customizations: { title: "Inclura Premium Upgrade", description: "Gold membership" },
+  });
+  const platinumPayment = useFlutterwave({
+    public_key: publicKey,
+    tx_ref: txRefs.platinum,
+    amount: Number(pricing.PlatinumBadge?.price || 0),
+    currency: "NGN",
+    payment_options: "card,banktransfer,ussd",
+    customer: { email: auth.currentUser?.email || "", name: auth.currentUser?.displayName || "Inclura User" },
+    customizations: { title: "Inclura Premium Upgrade", description: "Platinum membership" },
+  });
+  const enterprisePayment = useFlutterwave({
+    public_key: publicKey,
+    tx_ref: txRefs.enterprise,
+    amount: Number(pricing.EnterpriseBadge?.price || 0),
+    currency: "NGN",
+    payment_options: "card,banktransfer,ussd",
+    customer: { email: auth.currentUser?.email || "", name: auth.currentUser?.displayName || "Inclura User" },
+    customizations: { title: "Inclura Premium Upgrade", description: "Enterprise membership" },
+  });
 
-}
+  async function startPayment(tier, amount, paymentHandler, txRef) {
+    if (!auth.currentUser) { alert("Please sign in first."); return; }
+    if (!publicKey) { alert("Payment is temporarily unavailable. Please contact support."); return; }
+    if (!Number.isFinite(Number(amount)) || Number(amount) <= 0) { alert("This plan is not currently available for payment."); return; }
 
-const upgrade = async (
-tier,
-amount
-) => {
-const user =
-auth.currentUser;
-
-if (!user) {
-  alert("Login first");
-  return;
-}
-
-setLoading(true);
-
-const config = {
-  public_key:
-    "FLWPUBK_TEST-1ee584892828ffa6942ef2e45a970768-X",
-
-  tx_ref:
-    Date.now().toString(),
-
-  amount,
-
-  currency: "NGN",
-
-  payment_options:
-    "card,banktransfer,ussd",
-
-  customer: {
-    email:
-      user.email,
-
-    name:
-      user.displayName ||
-      "Inclura User",
-  },
-
-  customizations: {
-    title:
-      "Premium Upgrade",
-
-    description:
-      `Upgrade to ${tier}`,
-
-    logo: "",
-  },
-};
-
-const payment =
-  useFlutterwave(config);
-
-payment({
-  callback: async (
-    response
-  ) => {
+    setLoading(true);
     try {
-      if (
-        response.status ===
-        "successful"
-      ) {
-        const expiry =
-          new Date();
-
-        expiry.setMonth(
-          expiry.getMonth() + 1
-        );
-
-        await updateDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          ),
-          {
-            premium: true,
-
-            premiumActive:
-              true,
-
-            premiumTier:
-              tier,
-
-            premiumStartedAt:
-              serverTimestamp(),
-
-            premiumExpiryDate:
-              expiry,
-
-            premiumReference:
-              response.tx_ref,
-
-            premiumTransactionId:
-              String(
-                response.transaction_id
-              ),
-          }
-        );
-
-        alert(
-          `${tier.toUpperCase()} activated successfully`
-        );
+      const initialized = await initializeFlutterwavePayment({ purpose: "premium", plan: tier, txRef });
+      if (Number(initialized.amount) !== Number(amount) || initialized.currency !== "NGN" || initialized.txRef !== txRef) {
+        throw new Error("The server checkout details do not match this membership plan.");
       }
     } catch (error) {
-      console.log(error);
-      alert(
-        error.message
-      );
+      setLoading(false);
+      alert(error.message || "Secure checkout could not be initialized.");
+      return;
     }
+    paymentHandler({
+      callback: async (response) => {
+        try {
+          if (response.status !== "successful" || !response.transaction_id) {
+            throw new Error("Flutterwave did not report a successful transaction.");
+          }
+          await verifyFlutterwavePayment({
+            purpose: "premium",
+            plan: tier,
+            transactionId: String(response.transaction_id),
+            txRef: response.tx_ref || txRef,
+          });
+          alert(`${tier.toUpperCase()} membership activated after server verification.`);
+        } catch (error) {
+          console.error("Premium payment verification failed:", error);
+          alert(error.message || "Payment verification is pending. Please contact support before retrying.");
+        } finally {
+          setLoading(false);
+          setTxRefs((current) => ({ ...current, [tier]: makeTxRef(tier) }));
+          closePaymentModal();
+        }
+      },
+      onClose: () => { setLoading(false); setTxRefs((current) => ({ ...current, [tier]: makeTxRef(tier) })); },
+    });
+  }
 
-    closePaymentModal();
-  },
+  const handlers = [
+    [silverPayment, txRefs.silver],
+    [goldPayment, txRefs.gold],
+    [platinumPayment, txRefs.platinum],
+    [enterprisePayment, txRefs.enterprise],
+  ];
 
-  onClose: () => {
-    setLoading(false);
-  },
-});
-
-};
-
-return (
-<div
-style={{
-padding: "24px",
-color: "white",
-}}
->
-<h1>
-⭐ Premium Membership
-</h1>
-
-  <button
-    onClick={() =>
-      upgrade(
-        "silver",
-        pricing
-          ?.SilverBadge
-          ?.price || 0
-      )
-    }
-  >
-    Silver — ₦
-    {pricing?.SilverBadge?.price ||
-      0}
-  </button>
-
-  <br />
-  <br />
-
-  <button
-    onClick={() =>
-      upgrade(
-        "gold",
-        pricing
-          ?.GoldBadge
-          ?.price || 0
-      )
-    }
-  >
-    Gold — ₦
-    {pricing?.GoldBadge?.price ||
-      0}
-  </button>
-
-  <br />
-  <br />
-
-  <button
-    onClick={() =>
-      upgrade(
-        "platinum",
-        pricing
-          ?.PlatinumBadge
-          ?.price || 0
-      )
-    }
-  >
-    Platinum — ₦
-    {pricing?.PlatinumBadge
-      ?.price || 0}
-  </button>
-
-  <br />
-  <br />
-
-  <button
-    onClick={() =>
-      upgrade(
-        "enterprise",
-        pricing
-          ?.EnterpriseBadge
-          ?.price || 0
-      )
-    }
-  >
-    Enterprise — ₦
-    {pricing
-      ?.EnterpriseBadge
-      ?.price || 0}
-  </button>
-</div>
-
-);
+  return (
+    <div style={{ padding: "24px", color: "white" }}>
+      <h1>⭐ Premium Membership</h1>
+      {paymentConfigs.map(([tier, key], index) => (
+        <div key={tier} style={{ margin: "18px 0" }}>
+          <button
+            type="button"
+            disabled={loading || !publicKey}
+            onClick={() => startPayment(tier, pricing[key]?.price, handlers[index][0], handlers[index][1])}
+          >
+            {tier[0].toUpperCase() + tier.slice(1)} — ₦{Number(pricing[key]?.price || 0).toLocaleString()}
+          </button>
+        </div>
+      ))}
+      {loading && <p role="status">Verifying payment securely…</p>}
+    </div>
+  );
 }
 
 export default PremiumPayment;

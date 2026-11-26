@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
 createUserWithEmailAndPassword,
+sendEmailVerification,
 signInWithPopup,
 signInWithRedirect,
 getRedirectResult,
@@ -21,6 +22,7 @@ getAuthErrorInfo,
 } from "../services/authErrorMessages";
 
 import { useNavigate } from "react-router-dom";
+import LanguageSelector from "../components/LanguageSelector";
 
 const googleProvider =
 new GoogleAuthProvider();
@@ -404,6 +406,10 @@ fontFamily:
 "Arial, sans-serif",
 }}
 >
+
+<div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+  <LanguageSelector />
+</div>
 
 <div
 style={{

@@ -72,7 +72,6 @@ export async function notifySOS(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS notification pipeline failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }
@@ -150,7 +149,6 @@ export async function sendSOSNotification(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS notification pipeline failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }
@@ -162,6 +160,16 @@ export async function testSOSNotification(req, res) {
   const channel = ["sms", "email", "push", "both"].includes(req.body?.channel)
     ? req.body.channel
     : "both";
+
+  // Ordinary members may test push delivery only to their own signed-in device.
+  // SMS/email test recipients are shared operational contacts and are restricted
+  // to administrators to prevent members from triggering unwanted test messages.
+  if (channel !== "push" && req.user?.token?.admin !== true) {
+    return res.status(403).json({
+      success: false,
+      message: "Only an administrator may send SMS or email test notifications.",
+    });
+  }
 
   try {
     if (dryRun) {
@@ -185,7 +193,6 @@ export async function testSOSNotification(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS test notification failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }

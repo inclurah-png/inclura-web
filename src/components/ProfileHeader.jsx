@@ -7,10 +7,6 @@ import {
 } from "../config/verificationTypes";
 
 import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
-import {
   doc,
   updateDoc,
 } from "firebase/firestore";
@@ -20,6 +16,7 @@ import {
   db,
 } from "../firebase";
 import { uploadProfilePhotoToCloudinary } from "../services/cloudinaryUpload";
+import { useTranslation } from "react-i18next";
 
 function isPlaceholderName(
   value
@@ -51,7 +48,8 @@ function isPlaceholderName(
 }
 
 function resolveProfileName(
-  profile
+  profile,
+  fallbackName = "Inclura User"
 ) {
   const currentUser =
     auth.currentUser;
@@ -149,12 +147,13 @@ function resolveProfileName(
     return email.split("@")[0];
   }
 
-  return "Inclura User";
+  return fallbackName;
 }
 
 function ProfileHeader({
   profile,
 }) {
+  const { t } = useTranslation();
   const fileInputRef =
     useRef(null);
   const [uploadedPhotoURL, setUploadedPhotoURL] = useState("");
@@ -171,7 +170,8 @@ function ProfileHeader({
 
   const profileName =
     resolveProfileName(
-      profile
+      profile,
+      t("statsUser")
     );
 
   async function uploadPhoto(e) {
@@ -184,7 +184,7 @@ function ProfileHeader({
     try {
       const user = auth.currentUser;
       if (!user) {
-        alert("Please log in again before changing your photo.");
+        alert(t("error"));
         return;
       }
 
@@ -200,7 +200,7 @@ function ProfileHeader({
       setUploadedPhotoURL(url);
     } catch (error) {
       console.error("Profile photo upload failed:", error);
-      alert(error.message || "Profile photo upload failed. Please try again.");
+      alert(error.message || t("error"));
     } finally {
       setPhotoUploading(false);
     }
@@ -213,8 +213,15 @@ function ProfileHeader({
       return null;
     }
 
+    const expiryValue = profile.premiumExpiryDate;
     const expiry =
-      profile.premiumExpiryDate.toDate();
+      expiryValue && typeof expiryValue.toDate === "function"
+        ? expiryValue.toDate()
+        : new Date(expiryValue);
+
+    if (Number.isNaN(expiry.getTime())) {
+      return null;
+    }
 
     const diff =
       expiry - new Date();
@@ -236,14 +243,7 @@ function ProfileHeader({
       return null;
     }
 
-    const migratedType =
-      migrateVerificationId(
-        profile.badgeType
-      );
-
-    return getVerificationBadge(
-      migratedType
-    );
+    return getVerificationBadge(profile.badgeType);
   };
 
   const getPremium = () => {
@@ -258,11 +258,7 @@ function ProfileHeader({
 
   const verificationMeta =
     profile?.verified
-      ? getVerificationMetadata(
-          migrateVerificationId(
-            profile.badgeType
-          )
-        )
+      ? getVerificationMetadata(profile.badgeType)
       : null;
 
   return (
@@ -290,21 +286,38 @@ function ProfileHeader({
             alignItems: "center",
           }}
         >
-          <img
-            src={
-              uploadedPhotoURL ||
-              "https://via.placeholder.com/120"
-            }
-            alt={`${profileName} profile`}
-            style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              objectFit: "cover",
-              border:
-                "4px solid #38bdf8",
-            }}
-          />
+          {uploadedPhotoURL ? (
+            <img
+              src={uploadedPhotoURL}
+              alt={`${profileName} ${t("profile")}`}
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "4px solid #38bdf8",
+              }}
+            />
+          ) : (
+            <div
+              role="img"
+              aria-label={`${profileName} ${t("profile")} initials`}
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                display: "grid",
+                placeItems: "center",
+                background: "#134e4a",
+                color: "#facc15",
+                border: "4px solid #38bdf8",
+                fontSize: "44px",
+                fontWeight: 800,
+              }}
+            >
+              {(profileName || "Inclura").trim().charAt(0).toUpperCase()}
+            </div>
+          )}
 
           <button
             onClick={() =>
@@ -322,7 +335,7 @@ function ProfileHeader({
               opacity: photoUploading ? 0.65 : 1,
             }}
           >
-            {photoUploading ? "Uploading Photo..." : "📷 Change Photo"}
+            {photoUploading ? t("uploadingPhoto") : `📷 ${t("changePhoto")}`}
           </button>
 
           <input
@@ -387,7 +400,7 @@ function ProfileHeader({
                     "700",
                 }}
               >
-                🛡️ Trust Level{" "}
+                🛡️ {t("trustLevel")}{" "}
                 {
                   verificationMeta.trustLevel
                 }
@@ -429,7 +442,7 @@ function ProfileHeader({
                         "700",
                     }}
                   >
-                    ⭐ Premium Trust Level{" "}
+                    ⭐ {t("premiumTrustLevel")}{" "}
                     {
                       getVerificationMetadata(
                         profile.premiumTier
@@ -453,8 +466,7 @@ function ProfileHeader({
                 }}
               >
                 ⏳{" "}
-                {getDaysLeft()}{" "}
-                days left
+                {t("daysLeft", { count: getDaysLeft() })}
               </div>
             )}
           </div>
@@ -465,7 +477,7 @@ function ProfileHeader({
             }}
           >
             {profile?.bio ||
-              "No bio yet"}
+              t("noBioYet")}
           </p>
 
           <div
@@ -481,7 +493,7 @@ function ProfileHeader({
             >
               🏷️{" "}
               {profile?.category ||
-                "Member"}
+                t("statsUser")}
             </span>
 
             <span
@@ -489,13 +501,13 @@ function ProfileHeader({
             >
               📍{" "}
               {profile?.location ||
-                "Unknown"}
+                t("unknown")}
             </span>
 
             <span
               style={tag}
             >
-              ⭐ XP:{" "}
+              ⭐ {t("statsXP")}:{" "}
               {profile?.xp || 0}
             </span>
           </div>

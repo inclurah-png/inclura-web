@@ -1,5 +1,4 @@
 import { useState } from "react";
-import AccessibilityButton from "./AccessibilityButton";
 import DashboardSidebar from "./DashboardSidebar";
 import LanguageSelector from "./LanguageSelector";
 import { db } from "../firebase";
@@ -109,7 +108,6 @@ function DashboardLayout({ children }) {
             {children}
           </div>
 
-          <AccessibilityButton />
         </div>
       </div>
     </>

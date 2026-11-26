@@ -4,8 +4,44 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Email ownership must be confirmed before an account can publish or contact members.
     function isVerifiedMember() {
+      return isActiveAccount()
+        && request.auth.token.email_verified == true
+        && isActiveAccount();
+    }
+
+    function isVerifiedAdmin() {
+      return isActiveAccount()
+        && request.auth.token.admin == true
+        && request.auth.token.email_verified == true
+        && isActiveAccount();
+    }
+
+    function hasNoServerManagedPartnershipFields() {
+      return !('contractDocument' in request.resource.data)
+        && !('contractVerificationStatus' in request.resource.data)
+        && !('contractReviewedBy' in request.resource.data)
+        && !('contractReviewedAt' in request.resource.data)
+        && !('paymentRequired' in request.resource.data)
+        && !('paymentStatus' in request.resource.data)
+        && !('paymentVerifiedAt' in request.resource.data)
+        && !('paymentVerifiedBy' in request.resource.data)
+        && !('finalApprovals' in request.resource.data)
+        && !('finalApprovedBy' in request.resource.data)
+        && !('finalApprovedAt' in request.resource.data)
+        && !('activatedBy' in request.resource.data)
+        && !('activatedAt' in request.resource.data)
+        && !('paymentRequirementReviewedBy' in request.resource.data)
+        && !('paymentRequirementReviewedAt' in request.resource.data)
+        && !('finalApprovalNotes' in request.resource.data)
+        && !('contractReviewNotes' in request.resource.data);
+    }
+
+    function isActiveAccount() {
       return request.auth != null
-        && request.auth.token.email_verified == true;
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'active'
+        );
     }
 
     // Public share snapshots contain only creator-approved display fields.
@@ -15,10 +51,10 @@ service cloud.firestore {
       // Anonymous visitors may fetch only active snapshots; collection listing stays forbidden.
       allow get: if resource == null
                  || resource.data.active == true
-                 || (request.auth != null && resource.data.ownerId == request.auth.uid);
+                 || (isActiveAccount() && resource.data.ownerId == request.auth.uid);
       allow list: if false;
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.sourcePostId == postId
                     && get(/databases/$(database)/documents/posts/$(postId)).data.userId == request.auth.uid
@@ -56,7 +92,7 @@ service cloud.firestore {
       // The owner may activate/revoke the snapshot and replace its original
       // media URL with the secure watermarked Cloudinary copy after processing.
       // All other approved display fields remain immutable.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.ownerId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['active', 'imageUrl', 'videoUrl'])
@@ -87,10 +123,10 @@ service cloud.firestore {
     // Full source posts are never exposed to anonymous visitors.
     // Public links use the separate, minimal publicSharedPosts collection below.
     match /posts/{postId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       // Only the post owner may enable or disable external sharing, and no other post field may change here.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['externalShareEnabled'])
@@ -100,6 +136,12 @@ service cloud.firestore {
       // Media URLs must come from Inclura's Cloudinary upload pipeline.
       allow create: if isVerifiedMember()
                     && request.resource.data.userId == request.auth.uid
+                    // Badge and subscription claims must match the server-controlled member profile.
+                    && request.resource.data.verified == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('verified', false)
+                    && request.resource.data.badgeType == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('badgeType', '')
+                    && request.resource.data.premium == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('premium', false)
+                    && request.resource.data.premiumTier == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('premiumTier', '')
+                    && request.resource.data.role == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user')
                     && request.resource.data.text is string
                     && request.resource.data.text.size() <= 10000
                     && request.resource.data.category is string
@@ -125,7 +167,7 @@ service cloud.firestore {
                       'text', 'language', 'originalLanguage', 'translatedText',
                       'category', 'userId', 'userName', 'profilePhoto', 'role',
                       'accessibilityNeeds', 'accessibilityTags', 'verified',
-                      'badgeType', 'verificationMetadata', 'premium', 'premiumTier',
+                      'badgeType', 'premium', 'premiumTier',
                       'imageUrl', 'videoUrl', 'imagePublicId', 'videoPublicId',
                       'mediaProvider', 'likes', 'comments', 'reactions',
                       'userReactions', 'creatorScore', 'commentCount', 'crossPosts',
@@ -135,7 +177,7 @@ service cloud.firestore {
 
     // Comments are stored under each post.
     match /posts/{postId}/comments/{commentId} {
-      allow read: if request.auth != null;
+      allow read: if isActiveAccount();
       allow create: if isVerifiedMember()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.text is string
@@ -148,37 +190,64 @@ service cloud.firestore {
     match /chats/{chatId} {
       // A participant may check a deterministic chat ID before creating it.
       // Existing conversations remain readable only by their two participants.
-      allow get: if request.auth != null
+      allow get: if isActiveAccount()
                  && (resource == null
                      || request.auth.uid in resource.data.participants);
-      allow list: if request.auth != null
+      allow list: if isActiveAccount()
                   && request.auth.uid in resource.data.participants;
 
       allow create: if isVerifiedMember()
                     && request.resource.data.participants is list
                     && request.resource.data.participants.size() == 2
+                    && request.resource.data.participants[0] is string
+                    && request.resource.data.participants[1] is string
+                    && request.resource.data.participants[0] != request.resource.data.participants[1]
                     && request.auth.uid in request.resource.data.participants
-                    && request.resource.data.createdBy == request.auth.uid;
+                    && request.resource.data.createdBy == request.auth.uid
+                    && request.resource.data.participantNames is map
+                    && request.resource.data.participantNames.size() == 2
+                    && request.resource.data.participantNames.keys().hasOnly(request.resource.data.participants)
+                    && request.resource.data.participantProfiles is map
+                    && request.resource.data.participantProfiles.size() == 2
+                    && request.resource.data.participantProfiles.keys().hasOnly(request.resource.data.participants)
+                    && request.resource.data.updatedAt is timestamp
+                    && request.resource.data.lastMessage == ''
+                    && request.resource.data.lastSenderId == ''
+                    && request.resource.data.keys().hasOnly([
+                      'participants', 'participantNames', 'participantProfiles',
+                      'createdBy', 'updatedAt', 'lastMessage', 'lastSenderId'
+                    ]);
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && request.auth.uid in resource.data.participants
                     && request.resource.data.participants == resource.data.participants
+                    && request.resource.data.updatedAt is timestamp
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly([
                          'typing',
                          'typingUser',
-                         'participantNames',
-                         'participantProfiles',
                          'updatedAt',
                          'lastMessage',
                          'lastSenderId'
-                       ]);
+                       ])
+                    && (!('typing' in request.resource.data)
+                        || request.resource.data.typing is bool)
+                    && (!('typingUser' in request.resource.data)
+                        || request.resource.data.typingUser == request.auth.uid
+                        || request.resource.data.typingUser == '')
+                    && (!('lastMessage' in request.resource.data)
+                        || (request.resource.data.lastMessage is string
+                            && request.resource.data.lastMessage.size() <= 1000))
+                    && (!('lastSenderId' in request.resource.data)
+                        || request.resource.data.lastSenderId == request.auth.uid)
+                    && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['lastMessage', 'lastSenderId'])
+                        || request.resource.data.lastSenderId == request.auth.uid);
 
       allow delete: if false;
 
       match /messages/{messageId} {
         function isChatParticipant() {
-          return request.auth != null
+          return isActiveAccount()
                  && request.auth.uid in
                     get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
         }
@@ -277,13 +346,13 @@ service cloud.firestore {
     match /users/{userId} {
       // A signed-in member may read their own private profile document.
       // This is required by the publication Follow button to load the member's following list.
-      allow get: if request.auth != null && request.auth.uid == userId;
+      allow get: if isActiveAccount() && request.auth.uid == userId;
       // Only a server-authorized administrator may enumerate private member records.
-      allow list: if request.auth != null && request.auth.token.admin == true;
+      allow list: if isActiveAccount() && isVerifiedAdmin();
 
       // A member may create their own profile document and update only
       // profile/accessibility fields belonging to that member.
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.auth.uid == userId
                     && request.resource.data.uid == userId
                     && request.resource.data.role == 'user'
@@ -330,7 +399,7 @@ service cloud.firestore {
                         || request.resource.data.acceptedCommunityStandardsAt is timestamp);
 
       allow update: if (
-                      request.auth != null
+                      isActiveAccount()
                       && request.auth.uid == userId
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly([
@@ -372,7 +441,7 @@ service cloud.firestore {
                       && (!('accessibilityNeeds' in request.resource.data)
                           || request.resource.data.accessibilityNeeds is list)
                     ) || (
-                      request.auth != null
+                      isActiveAccount()
                       && request.auth.uid != userId
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['followers'])
@@ -387,20 +456,13 @@ service cloud.firestore {
                           && request.auth.uid in resource.data.get('followers', [])
                         )
                       )
-                    ) || (
-                      request.auth != null
-                      && request.auth.token.admin == true
-                      && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly([
-                           'status',
-                           'suspendedAt',
-                           'bannedAt',
-                           'restoredAt',
-                           'verified',
-                           'verificationStatus',
-                           'verifiedAt'
-                         ])
-                    );
+                     );
+    }
+
+    // Account moderation records are server-generated and immutable to clients.
+    match /userModerationAuditLogs/{logId} {
+      allow get, list: if isVerifiedAdmin();
+      allow create, update, delete: if false;
     }
 
     // Executive analytics are private. Only a signed-in account whose own
@@ -409,8 +471,8 @@ service cloud.firestore {
     function isIncluraAdmin() {
       // Match the server-issued Firebase Authentication admin claim used
       // by the existing Users Management page. Never trust a profile field.
-      return request.auth != null
-        && request.auth.token.admin == true;
+      return isActiveAccount()
+        && isVerifiedAdmin();
     }
 
     match /executiveReports/{reportId} {
@@ -422,7 +484,7 @@ service cloud.firestore {
     // This allows members to create a request and read only their own requests.
     // Provider discovery, applications, assignment and status changes remain disabled.
     match /careRequests/{requestId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.requesterId == request.auth.uid
                     && request.resource.data.serviceType in [
                       'caregiver', 'home_assistance', 'transportation', 'support'
@@ -469,7 +531,7 @@ service cloud.firestore {
                       'updatedAt'
                     ]);
 
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.requesterId == request.auth.uid;
 
       allow update, delete: if false;
@@ -479,7 +541,7 @@ service cloud.firestore {
     // must never be stored in client-readable Firestore documents; authorized backend
     // services own credential storage and publishing updates.
     match /socialConnections/{connectionId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.userId == request.auth.uid;
       allow create, update, delete: if false;
     }
@@ -491,7 +553,7 @@ service cloud.firestore {
     // or alter watermark/XP outcomes. Those fields are reserved for an
     // authorized backend workflow.
     match /crossPostRequests/{requestId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.sourcePostId is string
                     && request.resource.data.sourcePostId.size() > 0
@@ -537,17 +599,17 @@ service cloud.firestore {
                       'creatorGrowth', 'createdAt'
                     ]);
 
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.creatorId == request.auth.uid;
 
       allow update, delete: if false;
     }
 
     match /memberDirectory/{memberId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       function isOwnerMember() {
-        return request.auth != null && request.auth.uid == memberId;
+        return isActiveAccount() && request.auth.uid == memberId;
       }
 
       function hasSafeMemberFields() {
@@ -575,10 +637,10 @@ service cloud.firestore {
     // Public mentor directory contains only deliberately selected profile fields.
     // Private contact details and non-public accessibility preferences stay in users/{uid}.
     match /mentorDirectory/{mentorId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       function isOwnerMentor() {
-        return request.auth != null
+        return isActiveAccount()
           && request.auth.uid == mentorId
           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == "Mentor";
       }
@@ -607,9 +669,9 @@ service cloud.firestore {
     // Opportunities are public to signed-in members. Posting requires an
     // active recruiter subscription recorded on the member's private profile.
     match /opportunities/{opportunityId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.recruiterId == request.auth.uid
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.status == 'active'
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan in ['starter', 'business', 'enterprise']
@@ -655,7 +717,7 @@ service cloud.firestore {
       // The application and counter update must be committed together.
       // getAfter() confirms that the matching application was created in
       // the same atomic batch, and exists() prevents reusing an old one.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && request.auth.uid != resource.data.recruiterId
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['applications', 'lastApplicationId'])
@@ -672,11 +734,11 @@ service cloud.firestore {
     // Applications are private to the applicant and the recruiter who posted
     // the opportunity. Applicants create their own pending applications.
     match /applications/{applicationId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && (resource.data.applicantId == request.auth.uid
                            || resource.data.recruiterId == request.auth.uid);
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.applicantId == request.auth.uid
                     && request.resource.data.opportunityId is string
                     && get(/databases/$(database)/documents/opportunities/$(request.resource.data.opportunityId)).data.status == 'active'
@@ -695,7 +757,7 @@ service cloud.firestore {
                       'status', 'createdAt'
                     ]);
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.recruiterId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                     && request.resource.data.status in [
@@ -708,12 +770,18 @@ service cloud.firestore {
     // Stories are visible to signed-in members; members may create only
     // stories attributed to their own authenticated account.
     match /stories/{storyId} {
-      allow get, list: if request.auth != null;
-      allow create: if request.auth != null
+      allow get, list: if isActiveAccount();
+      allow create: if isActiveAccount()
                     && request.resource.data.userId == request.auth.uid
+                    // Story badges and paid status must come from the server-controlled profile.
+                    && request.resource.data.verified == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('verified', false)
+                    && request.resource.data.badgeType == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('badgeType', '')
+                    && request.resource.data.premium == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('premium', false)
+                    && request.resource.data.premiumTier == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('premiumTier', '')
+                    && request.resource.data.role == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user')
                     && request.resource.data.userName is string
                     && request.resource.data.userName.size() <= 100
-                    && request.resource.data.storyType in ['text', 'voice', 'image', 'video']
+                    && request.resource.data.storyType in ['text', 'image', 'video']
                     && request.resource.data.storyText is string
                     && request.resource.data.storyText.size() <= 5000
                     && request.resource.data.storyUrl is string
@@ -723,7 +791,7 @@ service cloud.firestore {
                     && request.resource.data.views is list
                     && request.resource.data.keys().hasOnly([
                       'userId', 'userName', 'profilePhoto', 'verified',
-                      'badgeType', 'verificationMetadata', 'role', 'category',
+                      'badgeType', 'role', 'category',
                       'accessibilityNeeds', 'premium', 'premiumTier',
                       'storyType', 'storyText', 'storyUrl', 'mediaUrl',
                       'mediaType', 'accessibility', 'createdAt', 'expiresAt',
@@ -734,10 +802,10 @@ service cloud.firestore {
 
     // Advertising records are owned by the submitting advertiser and moderated by administrators.
     match /advertisements/{advertisementId} {
-      allow get: if request.auth != null
-        && (resource.data.advertiserId == request.auth.uid || request.auth.token.admin == true);
-      allow list: if request.auth != null
-        && (request.auth.token.admin == true
+      allow get: if isActiveAccount()
+        && (resource.data.advertiserId == request.auth.uid || isVerifiedAdmin());
+      allow list: if isActiveAccount()
+        && (isVerifiedAdmin()
             || resource.data.advertiserId == request.auth.uid);
       allow create: if isVerifiedMember()
         && request.resource.data.advertiserId == request.auth.uid
@@ -758,7 +826,7 @@ service cloud.firestore {
           'advertiserId','advertiserEmail','title','description','type','budget',
           'targeting','status','impressions','clicks','createdAt','updatedAt'
         ]);
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
         && (
           (
             resource.data.advertiserId == request.auth.uid
@@ -768,7 +836,7 @@ service cloud.firestore {
             ])
           )
           || (
-            request.auth.token.admin == true
+            isVerifiedAdmin()
             && request.resource.data.advertiserId == resource.data.advertiserId
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'status','reviewedBy','reviewedAt','updatedAt'
@@ -779,21 +847,44 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if request.auth != null
+      allow read: if isActiveAccount()
                   && resource.data.receiverId == request.auth.uid;
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.receiverId == request.auth.uid
                     && request.resource.data.receiverId == resource.data.receiverId
                     && request.resource.data.diff(resource.data).affectedKeys()
-                       .hasOnly(['read']);
+                       .hasOnly(['read'])
+                    && request.resource.data.read is bool;
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.receiverId is string
+                    && request.resource.data.senderId is string
+                    && request.resource.data.type is string
+                    && request.resource.data.text is string
+                    && request.resource.data.text.size() <= 300
+                    && request.resource.data.read == false
+                    && request.resource.data.createdAt is timestamp
+                    && request.resource.data.keys().hasOnly([
+                      'receiverId', 'senderId', 'type', 'text', 'read', 'createdAt'
+                    ])
                     && (
-                      request.resource.data.senderId == request.auth.uid
+                      (
+                        request.resource.data.senderId == request.auth.uid
+                        && request.resource.data.type == 'follow'
+                        && request.resource.data.receiverId != request.auth.uid
+                        && request.resource.data.receiverId in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('following', [])
+                        && request.auth.uid in get(/databases/$(database)/documents/users/$(request.resource.data.receiverId)).data.get('followers', [])
+                        && request.resource.data.text == (
+                          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('fullName', '') is string
+                          && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('fullName', '').size() > 0
+                            ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('fullName', '')
+                            : 'Someone'
+                        ) + ' started following you'
+                      )
                       || (
                         request.resource.data.senderId == 'system'
+                        && request.resource.data.type == 'premium'
                         && request.resource.data.receiverId == request.auth.uid
                       )
                     );
@@ -804,8 +895,8 @@ service cloud.firestore {
     // IFSE SOS audit records are written only by the trusted backend.
     // Only administrators or separately designated SOS notification-only monitors may inspect them.
     match /ifseAuditLogs/{logId} {
-      allow get, list: if request.auth != null
-                      && (request.auth.token.admin == true
+      allow get, list: if isActiveAccount()
+                      && (isVerifiedAdmin()
                           || request.auth.token.sosNotificationOnly == true);
       allow create, update, delete: if false;
     }
@@ -815,10 +906,10 @@ service cloud.firestore {
     // change dispatch decisions, responder assignments, or case outcomes.
     match /emergencySOS/{emergencyId} {
       function ownsRequest() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       allow get, list: if ownsRequest();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.systemPlaceholder == false
@@ -873,7 +964,7 @@ service cloud.firestore {
     // Each member can read and maintain only their own readiness record.
     match /sosReadiness/{userId} {
       function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
+        return isActiveAccount() && request.auth.uid == userId;
       }
       function validReadiness() {
         return request.resource.data.userId == userId
@@ -906,7 +997,7 @@ service cloud.firestore {
     // Trusted contacts are private to the member who created them.
     match /trustedContacts/{contactId} {
       function ownsContact() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       function validContact(data) {
         return data.userId == request.auth.uid
@@ -924,7 +1015,7 @@ service cloud.firestore {
           && data.status == 'Active';
       }
       allow get, list: if ownsContact();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && validContact(request.resource.data)
                     && request.resource.data.createdAt is timestamp
                     && request.resource.data.updatedAt is timestamp
@@ -954,7 +1045,7 @@ service cloud.firestore {
 
     // Verification applications and supporting records are private to the applicant.
     function ownsVerification(verificationId) {
-      return request.auth != null
+      return isActiveAccount()
         && exists(/databases/$(database)/documents/verificationRequests/$(verificationId))
         && (
           get(/databases/$(database)/documents/verificationRequests/$(verificationId)).data.userId == request.auth.uid
@@ -962,14 +1053,247 @@ service cloud.firestore {
         );
     }
 
+    function ownsPartnership(partnershipId) {
+      return isActiveAccount() && (
+        (
+          exists(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+        || (
+          exists(/databases/$(database)/documents/corporatePartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/corporatePartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+        || (
+          exists(/databases/$(database)/documents/governmentPartnerships/$(partnershipId))
+          && get(/databases/$(database)/documents/governmentPartnerships/$(partnershipId)).data.userId == request.auth.uid
+        )
+      );
+    }
+
     function ownsPayment(paymentId) {
-      return request.auth != null
+      return isActiveAccount()
         && exists(/databases/$(database)/documents/verificationPayments/$(paymentId))
         && get(/databases/$(database)/documents/verificationPayments/$(paymentId)).data.userId == request.auth.uid;
     }
 
+
+    // Published plan prices are readable by signed-in members. Only accounts
+    // carrying the server-issued administrator claim may manage pricing.
+    match /pricing/{pricingId} {
+      allow get, list: if isActiveAccount();
+      allow create, update, delete: if isActiveAccount()
+        && isVerifiedAdmin();
+    }
+
+    match /enterprisePartnerships/{partnershipId} {
+      allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.organizationName is string
+        && request.resource.data.contactEmail is string
+        && request.resource.data.requestStatus == 'submitted'
+        && request.resource.data.reviewProgress.application == true
+        && request.resource.data.reviewProgress.security == false
+        && request.resource.data.reviewProgress.accessibility == false
+        && request.resource.data.reviewProgress.compliance == false
+        && request.resource.data.reviewProgress.integration == false
+        && request.resource.data.reviewProgress.approval == false
+        && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'security', 'accessibility', 'compliance', 'integration', 'approval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline.size() == 5
+        && request.resource.data.timeline[0].title == 'Application Started'
+        && request.resource.data.timeline[0].status == 'Completed'
+        && request.resource.data.timeline[1].title == 'Enterprise Security Review'
+        && request.resource.data.timeline[1].status == 'Pending'
+        && request.resource.data.timeline[2].title == 'Accessibility Review'
+        && request.resource.data.timeline[2].status == 'Pending'
+        && request.resource.data.timeline[3].title == 'Compliance Review'
+        && request.resource.data.timeline[3].status == 'Pending'
+        && request.resource.data.timeline[4].title == 'Enterprise Approval'
+        && request.resource.data.timeline[4].status == 'Pending'
+        && request.resource.data.enterpriseStatus == 'Pending'
+        && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'organizationName', 'organizationType', 'registrationNumber',
+          'taxNumber', 'website', 'industry', 'contactName', 'contactEmail',
+          'contactPhone', 'position', 'country', 'state', 'city', 'address',
+          'partnershipType', 'contractType', 'estimatedUsers', 'customRequirements',
+          'enterpriseModules', 'enterpriseBenefits', 'securityLayers',
+          'requestStatus', 'reviewProgress', 'timeline', 'userId', 'enterpriseId',
+          'enterpriseStatus', 'verificationStatus', 'approvalStatus', 'contractStatus',
+          'createdAt', 'updatedAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /corporatePartnerships/{partnershipId} {
+      allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.companyName is string
+        && request.resource.data.contactEmail is string
+        && request.resource.data.requestStatus == 'submitted'
+        && request.resource.data.reviewProgress.application == true
+        && request.resource.data.reviewProgress.security == false
+        && request.resource.data.reviewProgress.compliance == false
+        && request.resource.data.reviewProgress.accessibility == false
+        && request.resource.data.reviewProgress.approval == false
+        && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'security', 'compliance', 'accessibility', 'approval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline.size() == 5
+        && request.resource.data.timeline[0].title == 'Application Submitted'
+        && request.resource.data.timeline[0].status == 'Completed'
+        && request.resource.data.timeline[1].title == 'Corporate Security Review'
+        && request.resource.data.timeline[1].status == 'Pending'
+        && request.resource.data.timeline[2].title == 'Accessibility Review'
+        && request.resource.data.timeline[2].status == 'Pending'
+        && request.resource.data.timeline[3].title == 'Compliance Review'
+        && request.resource.data.timeline[3].status == 'Pending'
+        && request.resource.data.timeline[4].title == 'Corporate Approval'
+        && request.resource.data.timeline[4].status == 'Pending'
+        && request.resource.data.verificationStatus == 'Awaiting IFSE Review'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'companyName', 'registrationNumber', 'website', 'industry',
+          'companyClassification', 'contactName', 'contactEmail', 'contactPhone',
+          'position', 'country', 'province', 'city', 'address', 'contractType',
+          'estimatedEmployees', 'businessNeeds', 'requestStatus', 'verificationStatus',
+          'approvalStatus', 'contractStatus', 'reviewProgress', 'timeline',
+          'userId', 'corporateId', 'createdAt', 'updatedAt', 'securityLayers',
+          'corporateBenefits'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /governmentPartnerships/{partnershipId} {
+      allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.agencyName is string
+        && request.resource.data.officialEmail is string
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.approvalStatus == 'Not Approved'
+        && request.resource.data.contractStatus == 'Inactive'
+        && request.resource.data.reviewProgress.application == true
+        && request.resource.data.reviewProgress.identityReview == false
+        && request.resource.data.reviewProgress.securityReview == false
+        && request.resource.data.reviewProgress.accessibilityReview == false
+        && request.resource.data.reviewProgress.complianceReview == false
+        && request.resource.data.reviewProgress.executiveApproval == false
+        && request.resource.data.timeline is list
+        && request.resource.data.reviewProgress.keys().hasOnly(['application', 'identityReview', 'securityReview', 'accessibilityReview', 'complianceReview', 'executiveApproval'])
+        && request.resource.data.timeline[0].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[1].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[2].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[3].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[4].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline[5].keys().hasOnly(['title', 'status'])
+        && request.resource.data.timeline.size() == 6
+        && request.resource.data.timeline[0].title == 'Application Started'
+        && request.resource.data.timeline[0].status == 'Completed'
+        && request.resource.data.timeline[1].title == 'Government Identity Review'
+        && request.resource.data.timeline[1].status == 'Pending'
+        && request.resource.data.timeline[2].title == 'IFSE Security Review'
+        && request.resource.data.timeline[2].status == 'Pending'
+        && request.resource.data.timeline[3].title == 'Accessibility Compliance'
+        && request.resource.data.timeline[3].status == 'Pending'
+        && request.resource.data.timeline[4].title == 'Compliance Review'
+        && request.resource.data.timeline[4].status == 'Pending'
+        && request.resource.data.timeline[5].title == 'Executive Approval'
+        && request.resource.data.timeline[5].status == 'Pending'
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'agencyName', 'governmentLevel', 'ministry', 'department',
+          'contactName', 'position', 'officialEmail', 'officialPhone',
+          'country', 'state', 'city', 'address', 'contractType',
+          'estimatedCitizens', 'projectDescription', 'accessibilityGoals',
+          'status', 'approvalStatus', 'contractStatus', 'reviewProgress',
+          'timeline', 'userId', 'createdAt', 'updatedAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
+    }
+
+    match /enterpriseTimeline/{entryId} {
+      allow create: if isActiveAccount()
+        && request.resource.data.partnershipId is string
+        && ownsPartnership(request.resource.data.partnershipId)
+        && (
+          (
+            request.resource.data.title == 'Application Submitted'
+            && request.resource.data.status == 'Completed'
+          )
+          || (
+            request.resource.data.title in [
+              'Security Review', 'Accessibility Review', 'Compliance Review',
+              'Executive Approval', 'Activation'
+            ]
+            && request.resource.data.status == 'Pending'
+          )
+        )
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.enterpriseId is string
+        && request.resource.data.keys().hasOnly([
+          'partnershipId', 'enterpriseId', 'title', 'status', 'createdAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsPartnership(resource.data.partnershipId));
+      allow update, delete: if false;
+    }
+
+    match /corporateTimeline/{entryId} {
+      allow create: if isActiveAccount()
+        && request.resource.data.partnershipId is string
+        && ownsPartnership(request.resource.data.partnershipId)
+        && request.resource.data.partnershipType == 'corporate'
+        && (
+          (
+            request.resource.data.title == 'Application Submitted'
+            && request.resource.data.status == 'Completed'
+          )
+          || (
+            request.resource.data.title in [
+              'Security Review', 'Accessibility Review', 'Compliance Review',
+              'Executive Approval', 'Activation'
+            ]
+            && request.resource.data.status == 'Pending'
+          )
+        )
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.corporateId is string
+        && request.resource.data.keys().hasOnly([
+          'partnershipId', 'corporateId', 'partnershipType',
+          'title', 'status', 'createdAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsPartnership(resource.data.partnershipId));
+      allow update, delete: if false;
+    }
+
     match /verificationRequests/{verificationId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.submittedBy == request.auth.uid
         && request.resource.data.category is string
@@ -978,117 +1302,271 @@ service cloud.firestore {
         && request.resource.data.email is string
         && request.resource.data.phone is string
         && request.resource.data.paymentAmount is number
-        && request.resource.data.paymentAmount >= 0
+        && request.resource.data.paymentAmount > 0
+        && request.resource.data.paymentStatus == 'pending'
         && request.resource.data.status == 'pending'
-        && request.resource.data.createdAt is timestamp;
+        && request.resource.data.createdAt is timestamp
+        // Client submissions cannot claim server screening, document approval or risk clearance.
+        && request.resource.data.ifseScore == null
+        && request.resource.data.ifseScoreSource == 'not_server_verified'
+        && request.resource.data.ifseStatus == 'PENDING_SERVER_REVIEW'
+        && request.resource.data.ifseBadge == false
+        && request.resource.data.executiveReview == true
+        && request.resource.data.riskScore == null
+        && request.resource.data.riskScoreSource == 'not_server_verified'
+        && request.resource.data.threatLevel == 'UNASSESSED'
+        && request.resource.data.executiveReviewRequired == true
+        && request.resource.data.documentUrl == ''
+        && request.resource.data.documentVerified == false
+        && request.resource.data.accountType == request.resource.data.category
+        && request.resource.data.keys().hasOnly([
+          'userId', 'submittedBy', 'category', 'verificationType',
+          'accountType', 'fullName', 'email', 'phone', 'organizationName',
+          'website', 'socialLink1', 'socialLink2', 'officialEmail',
+          'paymentAmount', 'paymentStatus', 'status', 'ifseScore',
+          'ifseScoreSource', 'ifseStatus', 'ifseMessage', 'ifseBadge',
+          'executiveReview', 'riskScore', 'riskScoreSource', 'threatLevel',
+          'executiveReviewRequired', 'enterprise', 'documentUrl',
+          'documentVerified', 'note', 'createdAt', 'updatedAt'
+        ]);
 
-      allow get, list: if request.auth != null
-        && (resource.data.userId == request.auth.uid
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || resource.data.userId == request.auth.uid
             || resource.data.submittedBy == request.auth.uid);
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
         && (resource.data.userId == request.auth.uid
             || resource.data.submittedBy == request.auth.uid)
         && request.resource.data.userId == resource.data.userId
         && request.resource.data.submittedBy == resource.data.submittedBy
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'verificationType', 'organizationName', 'contactName', 'contactEmail',
-          'country', 'state', 'city', 'notes', 'uploadedDocuments',
-          'documentsSubmitted', 'documentSubmissionStatus', 'status',
-          'updatedAt', 'paymentStatus', 'paymentId'
-        ]);
+          'country', 'state', 'city', 'notes', 'accessibilityNeeds', 'uploadedDocuments',
+          'documentsSubmitted', 'documentSubmissionStatus', 'status', 'updatedAt'
+        ])
+        && request.resource.data.status in ['pending', 'under_review']
+        && request.resource.data.get('paymentStatus', 'pending') == resource.data.get('paymentStatus', 'pending')
+        && request.resource.data.get('paymentId', null) == resource.data.get('paymentId', null)
+        && request.resource.data.paymentAmount == resource.data.paymentAmount
+        && (resource.data.get('paymentStatus', 'pending') != 'paid'
+            || request.resource.data.verificationType == resource.data.verificationType);
 
       allow delete: if false;
     }
 
     match /verificationTimeline/{entryId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.verificationId is string
         && ownsVerification(request.resource.data.verificationId)
-        && request.resource.data.createdBy == request.auth.uid;
-      allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.title in [
+          'Application Submitted', 'Verification Documents Submitted'
+        ]
+        && request.resource.data.status == 'Completed'
+        && request.resource.data.description is string
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'verificationId', 'title', 'status', 'description',
+          'createdBy', 'createdAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /verificationDocuments/{documentId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.verificationId is string
         && request.resource.data.submittedBy == request.auth.uid
-        && ownsVerification(request.resource.data.verificationId);
-      allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && ownsVerification(request.resource.data.verificationId)
+        && request.resource.data.verificationType is string
+        && request.resource.data.documentCategory is string
+        && request.resource.data.uploadedDocuments is map
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'verificationId', 'verificationType', 'documentCategory',
+          'uploadedDocuments', 'submittedBy', 'createdAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
+    match /creatorVerificationAuditLogs/{logId} {
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
+      allow create, update, delete: if false;
+    }
+
     match /verificationAuditLogs/{logId} {
-      allow create: if request.auth != null
-        && request.resource.data.verificationId is string
-        && (request.resource.data.performedBy == request.auth.uid
+      allow create: if isActiveAccount()
+        && (
+          ('performedBy' in request.resource.data
+            && request.resource.data.performedBy == request.auth.uid)
+          || ('actor' in request.resource.data
+            && request.resource.data.actor == request.auth.uid)
+        )
+        && (!('performedBy' in request.resource.data)
+            || request.resource.data.performedBy == request.auth.uid)
+        && (!('actor' in request.resource.data)
             || request.resource.data.actor == request.auth.uid)
-        && ownsVerification(request.resource.data.verificationId);
-      allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
+        && request.resource.data.verificationId is string
+        && (
+          (
+            request.resource.data.action in [
+              'Verification application submitted', 'Verification Documents Submitted'
+            ]
+            && ownsVerification(request.resource.data.verificationId)
+          )
+          || (
+            request.resource.data.action == 'Government Partnership Submitted'
+            && ownsPartnership(request.resource.data.verificationId)
+          )
+        )
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.keys().hasOnly([
+          'verificationId', 'action', 'performedBy', 'actor',
+          'category', 'verificationType', 'createdAt'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsVerification(resource.data.verificationId)
+            || ownsPartnership(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /ifseSecurityEvents/{eventId} {
-      allow create: if request.auth != null
-        && request.resource.data.verificationId is string
-        && ownsVerification(request.resource.data.verificationId);
-      allow get, list: if request.auth != null
-        && ownsVerification(resource.data.verificationId);
-      allow update, delete: if false;
+      allow create: if isActiveAccount()
+        && (
+          (
+            request.resource.data.verificationId is string
+            && request.resource.data.eventType in ['Application Received', 'documents_submitted']
+            && ownsVerification(request.resource.data.verificationId)
+          )
+          || (
+            request.resource.data.userId == request.auth.uid
+            && request.resource.data.partnershipId is string
+            && request.resource.data.source == 'member_submission'
+            && request.resource.data.eventType in [
+              'government_partnership_created', 'corporate_partnership_created'
+            ]
+            && ownsPartnership(request.resource.data.partnershipId)
+          )
+          || (
+            request.resource.data.userId == request.auth.uid
+            && request.resource.data.source == 'member_submission'
+            && request.resource.data.eventType in [
+              'duplicate_organization', 'duplicate_contact_email', 'duplicate_company'
+            ]
+          )
+        )
+        && request.resource.data.createdAt is timestamp
+        // Member-submitted events must remain pending until an administrator reviews them.
+        && (!('reviewed' in request.resource.data) || request.resource.data.reviewed == false)
+        && (!('resolved' in request.resource.data) || request.resource.data.resolved == false)
+        && (!('assessmentStatus' in request.resource.data) || request.resource.data.assessmentStatus == 'pending_server_review')
+        && (!('automaticAssessment' in request.resource.data) || request.resource.data.automaticAssessment == true)
+        && (!('requiresManualReview' in request.resource.data) || request.resource.data.requiresManualReview == true)
+        && (!('severity' in request.resource.data) || request.resource.data.severity in ['medium', 'high'])
+        && request.resource.data.keys().hasOnly([
+          'verificationId', 'eventType', 'assessmentStatus', 'resolved',
+          'verificationType', 'documentCategory', 'reviewed',
+          'partnershipId', 'corporateId', 'enterpriseId', 'userId', 'source', 'createdAt',
+          'partnershipType', 'contactEmail', 'companyName',
+          'organizationName', 'severity', 'automaticAssessment',
+          'requiresManualReview'
+        ]);
+      allow get, list: if isActiveAccount()
+        && (
+          isVerifiedAdmin()
+          || resource.data.get('userId', null) == request.auth.uid
+          || (
+            resource.data.get('verificationId', null) is string
+            && ownsVerification(resource.data.verificationId)
+          )
+          || (
+            resource.data.get('partnershipId', null) is string
+            && ownsPartnership(resource.data.partnershipId)
+          )
+          || (
+            resource.data.get('paymentId', null) is string
+            && ownsPayment(resource.data.paymentId)
+          )
+        );
+      allow update: if isActiveAccount()
+        && isVerifiedAdmin()
+        && (
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'reviewed', 'reviewedAt', 'reviewedBy'
+            ])
+            && request.resource.data.reviewed == true
+            && request.resource.data.reviewedBy == request.auth.uid
+            && request.resource.data.reviewedAt is timestamp
+          )
+          || (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              'resolved', 'resolvedAt', 'resolvedBy'
+            ])
+            && request.resource.data.resolved == true
+            && request.resource.data.resolvedBy == request.auth.uid
+            && request.resource.data.resolvedAt is timestamp
+          )
+        );
+      allow delete: if false;
+    }
+
+    // Checkout intents and webhook reconciliation records are backend-only.
+    // A browser must never create, read, or modify pending gateway transactions.
+    match /flutterwavePendingPayments/{pendingId} {
+      allow read, write: if false;
     }
 
     // Payment records are visible only to the member who paid.
     match /verificationPayments/{paymentId} {
-      allow create: if request.auth != null
-        && request.resource.data.userId == request.auth.uid
-        && request.resource.data.verificationId is string
-        && ownsVerification(request.resource.data.verificationId)
-        && request.resource.data.amount is number
-        && request.resource.data.amount > 0
-        && request.resource.data.currency == 'USD'
-        && request.resource.data.paymentStatus == 'paid'
-        && request.resource.data.status == 'completed';
-      allow get, list: if request.auth != null
-        && resource.data.userId == request.auth.uid;
+      // Only the trusted IFSE backend may create payment confirmations.
+      // Browser clients cannot self-assert a successful gateway payment.
+      allow create: if false;
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
     match /ifsePaymentEvents/{eventId} {
-      allow create: if request.auth != null
-        && request.resource.data.paymentId is string
-        && ownsPayment(request.resource.data.paymentId);
-      allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+      // IFSE creates payment-security events after gateway verification.
+      allow create: if false;
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
     match /paymentAuditLogs/{logId} {
-      allow create: if request.auth != null
-        && request.resource.data.paymentId is string
-        && request.resource.data.actor == request.auth.uid
-        && ownsPayment(request.resource.data.paymentId);
-      allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+      // Audit records are server-generated and immutable to browser clients.
+      allow create: if false;
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
     match /paymentTimeline/{entryId} {
-      allow create: if request.auth != null
-        && request.resource.data.paymentId is string
-        && ownsPayment(request.resource.data.paymentId);
-      allow get, list: if request.auth != null
-        && ownsPayment(resource.data.paymentId);
+      // Payment timeline entries are written by the trusted backend.
+      allow create: if false;
+      allow get, list: if isActiveAccount()
+        && (isVerifiedAdmin()
+            || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
 
 
     match /communityAlertDevices/{guestUid} {
       function isOwnAnonymousGuest() {
-        return request.auth != null
+        return isActiveAccount()
           && request.auth.uid == guestUid
           && request.auth.token.firebase.sign_in_provider == 'anonymous';
       }
@@ -1136,10 +1614,10 @@ service cloud.firestore {
     // The backend uses Firebase Admin to read tokens for automatic SOS alerts.
     match /fcmTokens/{tokenId} {
       function ownsToken() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       allow get, list: if ownsToken();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.token is string
         && request.resource.data.token.size() > 20

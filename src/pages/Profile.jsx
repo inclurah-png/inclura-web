@@ -28,7 +28,6 @@ import {
   onSnapshot,
   query,
   where,
-  updateDoc,
   setDoc,
   serverTimestamp,
 } from "firebase/firestore";
@@ -37,7 +36,6 @@ function Profile() {
   const [profile, setProfile] = useState(null);
   const [postCount, setPostCount] = useState(0);
   const premiumNoticeHandled = useRef(null);
-  const premiumExpiryHandled = useRef(null);
   const memberDirectorySyncKey = useRef("");
 
   useEffect(() => {
@@ -116,22 +114,8 @@ function Profile() {
           }
         }
 
-        if (
-          expiryDate < new Date() &&
-          data.premium === true &&
-          premiumExpiryHandled.current !== expiryKey
-        ) {
-          premiumExpiryHandled.current = expiryKey;
-          try {
-            await updateDoc(userRef, {
-              premium: false,
-              premiumActive: false,
-              premiumTier: "",
-            });
-          } catch (error) {
-            console.warn("Premium expiry status update requires authorized processing:", error);
-          }
-        }
+        // Expired subscriptions are deactivated by the trusted IFSE sweeper.
+
       },
       (error) => {
         console.error("Live profile loading failed:", error);

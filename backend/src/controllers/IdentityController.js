@@ -94,9 +94,10 @@ export async function verifyRegistration(req, res) {
   try {
 
     const result =
-      await verifyPasskeyRegistrationService(
-        req.body
-      );
+      await verifyPasskeyRegistrationService({
+        ...req.body,
+        authenticatedUserId: req.firebaseUser?.uid,
+      });
 
     return res
       .status(200)
@@ -209,7 +210,7 @@ export async function verifyFace(req, res) {
       );
 
     return res
-      .status(200)
+      .status(result.available === false ? 503 : 200)
       .json(result);
 
   } catch (error) {
@@ -245,7 +246,7 @@ export async function verifyBiometric(req, res) {
       );
 
     return res
-      .status(200)
+      .status(result.available === false ? 503 : 200)
       .json(result);
 
   } catch (error) {
@@ -281,7 +282,7 @@ export async function verifyIdentity(req, res) {
       );
 
     return res
-      .status(200)
+      .status(result.available === false ? 503 : 200)
       .json(result);
 
   } catch (error) {

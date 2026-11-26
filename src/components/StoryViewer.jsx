@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   getVerificationBadge,
@@ -6,46 +7,65 @@ import {
   getVerificationMetadata,
 } from "../config/verificationTypes";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
 function StoryViewer({
 story,
 onClose,
 }) {
+const { t } = useTranslation();
+const dialogRef = useRef(null);
+const closeButtonRef = useRef(null);
+
 useEffect(() => {
-function handleEsc(e) {
-if (e.key === "Escape") {
-onClose();
-}
-}
+  if (!story) return undefined;
 
-window.addEventListener(
-  "keydown",
-  handleEsc
-);
+  const previousFocus = document.activeElement;
+  closeButtonRef.current?.focus();
 
-return () =>
-  window.removeEventListener(
-    "keydown",
-    handleEsc
-  );
+  function handleDialogKeys(event) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      onClose();
+      return;
+    }
 
-}, [onClose]);
+    if (event.key !== "Tab") return;
+
+    const focusable = dialogRef.current?.querySelectorAll(
+      'button, a[href], input, select, textarea, video[controls], [tabindex]:not([tabindex="-1"])'
+    );
+    const items = Array.from(focusable || []).filter(
+      (element) => !element.hasAttribute("disabled")
+    );
+    if (!items.length) {
+      event.preventDefault();
+      return;
+    }
+
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
+  window.addEventListener("keydown", handleDialogKeys);
+  return () => {
+    window.removeEventListener("keydown", handleDialogKeys);
+    if (previousFocus && typeof previousFocus.focus === "function") {
+      previousFocus.focus();
+    }
+  };
+}, [story, onClose]);
 
 if (!story) return null;
 
-const migratedType =
-  migrateVerificationId(
-    story.badgeType
-  );
-
 const badge =
   story.verified
-    ? getVerificationBadge(
-        migratedType
-      )
+    ? getVerificationBadge(story.badgeType)
     : null;
 
 const premiumBadge =
@@ -57,9 +77,7 @@ const premiumBadge =
 
 const verificationMeta =
   story.verified
-    ? getVerificationMetadata(
-        migratedType
-      )
+    ? getVerificationMetadata(story.badgeType)
     : null;
 
 const isHighContrast =
@@ -88,6 +106,10 @@ padding: "20px",
 }}
 >
 <div
+ref={dialogRef}
+role="dialog"
+aria-modal="true"
+aria-label={t("stories")}
 onClick={(e) =>
 e.stopPropagation()
 }
@@ -156,7 +178,7 @@ marginBottom:
             fontSize: "12px",
           }}
         >
-          🛡️ Trust Level {verificationMeta.trustLevel}
+          🛡️ {t("statsTrustLevel")} {verificationMeta.trustLevel}
         </span>
       )}
     </div>
@@ -175,17 +197,20 @@ marginBottom:
 </div>
 
 <button
+  ref={closeButtonRef}
+  type="button"
   onClick={onClose}
   style={{
     background: "#38bdf8",
     border: "none",
     color: "white",
     padding: "10px 16px",
+    minHeight: "44px",
     borderRadius: "12px",
     cursor: "pointer",
   }}
 >
-  Close
+  {t("close")}
 </button>
   
   </div>
@@ -221,8 +246,7 @@ marginBottom:
         }}
       >
         <h2>
-          🎤 Voice
-          Story
+          🎤 {t("voiceStory")}
         </h2>
 
         <p>
@@ -237,50 +261,37 @@ marginBottom:
               "#94a3b8",
           }}
         >
-          Voice
-          playback
-          will be
-          enabled
-          when
-          audio
-          uploads are
-          activated.
+          {t("voiceStoryUnavailable")}
         </p>
       </div>
     )}
 
-    {story.storyType ===
-      "image" &&
-      story.storyUrl && (
-        <img
-          src={
-            story.storyUrl
-          }
-          alt="Story"
-          style={{
-            width:
-              "100%",
-            borderRadius:
-              "16px",
-          }}
-        />
-      )}
-
-    {story.storyType ===
-      "video" && (
-      <div
+    {story.storyType === "image" && story.storyUrl && (
+      <img
+        src={story.storyUrl}
+        alt={t("storyImageAlt")}
         style={{
-          textAlign:
-            "center",
+          width: "100%",
+          maxHeight: "70vh",
+          objectFit: "contain",
+          borderRadius: "16px",
         }}
-      >
-        🎥 Video
-        Story
-        <br />
-        Storage
-        upgrade
-        required
-      </div>
+      />
+    )}
+
+    {story.storyType === "video" && story.storyUrl && (
+      <video
+        src={story.storyUrl}
+        controls
+        playsInline
+        aria-label={t("videoStory")}
+        style={{
+          width: "100%",
+          maxHeight: "70vh",
+          borderRadius: "16px",
+          background: "#000",
+        }}
+      />
     )}
 
     <div
@@ -302,35 +313,16 @@ marginBottom:
       </div>
 
       {story.accessibility
-        ?.screenReader && (
-        <div>
-          🔊 Screen
-          Reader
-          Enabled
-        </div>
-      )}
-
-      {story.accessibility
-        ?.textOnly && (
-        <div>
-          📄 Text
-          Only
-        </div>
-      )}
-
-      {story.accessibility
         ?.highContrast && (
         <div>
-          🎨 High
-          Contrast
+          🎨 {t("highContrast")}
         </div>
       )}
 
       {story.accessibility
         ?.largeText && (
         <div>
-          🔠 Large
-          Text
+          🔠 {t("largeText")}
         </div>
       )}
     </div>

@@ -103,8 +103,14 @@ const [acceptedPrivacy, setAcceptedPrivacy] =
 const [acceptedSecurity, setAcceptedSecurity] =
   useState(false);
 
-const [timeline, setTimeline] =
-  useState([]);
+const [timeline] = useState([
+  { title: "Application Started", status: "Completed" },
+  { title: "Government Identity Review", status: "Pending" },
+  { title: "IFSE Security Review", status: "Pending" },
+  { title: "Accessibility Compliance", status: "Pending" },
+  { title: "Compliance Review", status: "Pending" },
+  { title: "Executive Approval", status: "Pending" },
+]);
 
 const [reviewProgress, setReviewProgress] = useState({
   application: true,
@@ -115,36 +121,7 @@ const [reviewProgress, setReviewProgress] = useState({
   executiveApproval: false,
 });
 
-  useEffect(() => {
-
-  setTimeline([
-    {
-      title: "Application Started",
-      status: "Completed",
-    },
-    {
-      title: "Government Identity Review",
-      status: "Pending",
-    },
-    {
-      title: "IFSE Security Review",
-      status: "Pending",
-    },
-    {
-      title: "Accessibility Compliance",
-      status: "Pending",
-    },
-    {
-      title: "Compliance Review",
-      status: "Pending",
-    },
-    {
-      title: "Executive Approval",
-     status: "Pending",
-    },
-  ]);
-
-}, []);
+  
 
   const governmentBenefits = [
 
@@ -182,78 +159,6 @@ const [reviewProgress, setReviewProgress] = useState({
   "Manual Executive Review",
 
 ];
-  const getReviewPercentage = () => {
-
-  const values = Object.values(reviewProgress);
-
-  const completed = values.filter(Boolean).length;
-
-  return Math.round(
-    (completed / values.length) * 100
-  );
-
-};
-  const calculateRiskScore = () => {
-
-  let score = 0;
-
-  const approvedGovernmentDomains = [
-  ".gov",
-  ".gov.ng",
-  ".gov.uk",
-  ".gov.za",
-  ".gov.au",
-  ".gov.in",
-];
-
-const validGovernmentEmail =
-  approvedGovernmentDomains.some(domain =>
-    officialEmail.toLowerCase().endsWith(domain)
-  );
-
-if (!validGovernmentEmail) {
-  score += 25;
-}
-
-  if (!ministry.trim()) {
-    score += 10;
-  }
-
-  if (!department.trim()) {
-    score += 10;
-  }
-
-  if (!address.trim()) {
-    score += 10;
-  }
-
-  if (estimatedCitizens) {
-
-    const total = Number(estimatedCitizens);
-
-    if (total > 10000000) {
-
-      score += 25;
-
-    } else if (total > 1000000) {
-
-      score += 15;
-
-    }
-
-  }
-
-  return Math.min(score, 100);
-
-};
-  const riskScore = calculateRiskScore();
-
-const threatLevel =
-  riskScore >= 75
-    ? "High"
-    : riskScore >= 40
-    ? "Medium"
-    : "Low";
   const handleSubmit = async (e) => {
 
   e.preventDefault();
@@ -315,13 +220,19 @@ try {
 
   const existing = query(
     collection(db, "governmentPartnerships"),
-    where("agencyName", "==", agencyName),
-    where("country", "==", country)
+    where("userId", "==", currentUser.uid)
   );
 
   const snapshot = await getDocs(existing);
+  const normalizedAgency = agencyName.trim().toLowerCase();
+  const normalizedCountry = country.trim().toLowerCase();
+  const duplicateAgency = snapshot.docs.some((item) => {
+    const data = item.data();
+    return String(data.agencyName || "").trim().toLowerCase() === normalizedAgency
+      && String(data.country || "").trim().toLowerCase() === normalizedCountry;
+  });
 
-  if (!snapshot.empty) {
+  if (duplicateAgency) {
 
     setError(
       "A government partnership request for this agency already exists."
@@ -373,18 +284,15 @@ try {
 
       status: REQUEST_STATUS.SUBMITTED,
 
+      approvalStatus: "Not Approved",
+
+      contractStatus: "Inactive",
+
       reviewProgress,
 
       timeline,
 
       userId: currentUser.uid,
-
-      riskScore,
-
-      threatLevel,
-
-      executiveReviewRequired:
-        riskScore >= 70,
 
       createdAt: serverTimestamp(),
 
@@ -409,16 +317,11 @@ try {
       userId:
         currentUser.uid,
 
-      riskScore,
+      source: "member_submission",
 
-      threatLevel,
-
+      assessmentStatus: "pending_server_review",
       reviewed: false,
-
       resolved: false,
-
-      executiveReview:
-        riskScore >= 70,
 
       createdAt:
         serverTimestamp(),
@@ -453,7 +356,7 @@ try {
     "Government partnership request submitted successfully."
   );
 
-  navigate("/verification-center");
+  navigate(`/partnership-status/government/${docRef.id}`);
 
 } catch (err) {
 
@@ -777,7 +680,8 @@ try {
 
 <section className="government-security">
 
-  <h2>IFSE Security Assessment</h2>
+  <h2>Requested Review Areas (Pending)</h2>
+  <p>These are review categories only. No security, identity, accessibility or compliance check is complete until an authorized reviewer records its outcome.</p>
 
   <ul>
 
@@ -795,31 +699,13 @@ try {
 
   <h2>Review Progress</h2>
 
-  <p>
+  
 
-    Completion: {getReviewPercentage()}%
-
-  </p>
+            <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
 
 </section>
 
-<section className="government-risk">
 
-  <h2>Government Risk Assessment</h2>
-
-  <p>
-
-    Risk Score: {riskScore}%
-
-  </p>
-
-  <p>
-
-    Threat Level: {threatLevel}
-
-  </p>
-
-</section>
 
 <section className="government-agreements">
 

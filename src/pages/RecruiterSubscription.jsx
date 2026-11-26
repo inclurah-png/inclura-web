@@ -1,17 +1,10 @@
 import { useState } from "react";
+
+const makeTxRef = (uid) => "INCLURA-RECRUITER-" + (uid || "USER") + "-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 10)));
 import DashboardLayout from "../components/DashboardLayout";
 
-import {
-  auth,
-  db,
-} from "../firebase";
-
-import {
-  doc,
-  updateDoc,
-  serverTimestamp,
-  Timestamp,
-} from "firebase/firestore";
+import { auth } from "../firebase";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
 import {
   useFlutterwave,
@@ -24,8 +17,10 @@ function RecruiterSubscription() {
 
   const [selectedPlan, setSelectedPlan] =
     useState("starter");
+  const [txRef, setTxRef] = useState(() => makeTxRef(auth.currentUser?.uid));
 
   const user = auth.currentUser;
+  const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
 
   const plans = {
     starter: {
@@ -57,11 +52,9 @@ function RecruiterSubscription() {
     plans[selectedPlan];
 
   const config = {
-    public_key:
-      "FLWPUBK_TEST-1ee584892828ffa6942ef2e45a970768-X",
+    public_key: publicKey,
 
-    tx_ref:
-      Date.now().toString(),
+    tx_ref: txRef,
 
     amount:
       plan.amount,
@@ -77,7 +70,7 @@ function RecruiterSubscription() {
         "user@inclura.com",
 
       phone_number:
-        "08000000000",
+        user?.phoneNumber || "",
 
       name:
         user?.displayName ||
@@ -98,90 +91,54 @@ function RecruiterSubscription() {
   const handleFlutterPayment =
     useFlutterwave(config);
 
-  async function activateSubscription(
-    response
-  ) {
-    const expiry =
-      new Date();
+  async function subscribe() {
+    if (!user) {
+      alert("Please sign in before subscribing.");
+      return;
+    }
+    if (!publicKey) {
+      alert("Payment is temporarily unavailable. Please contact support.");
+      return;
+    }
 
-    expiry.setDate(
-      expiry.getDate() + 30
-    );
-
-    await updateDoc(
-      doc(
-        db,
-        "users",
-        user.uid
-      ),
-      {
-        recruiter: {
-          plan:
-            selectedPlan,
-
-          status:
-            "active",
-
-          activatedAt:
-            serverTimestamp(),
-
-          expiresAt:
-            Timestamp.fromDate(
-              expiry
-            ),
-
-          paymentReference:
-            response.tx_ref,
-
-          transactionId:
-            response.transaction_id,
-
-          activeJobs: 0,
-        },
-      }
-    );
-  }
-
-  function subscribe() {
     setLoading(true);
-
+    try {
+      const initialized = await initializeFlutterwavePayment({
+        purpose: "recruiter",
+        plan: selectedPlan,
+        txRef,
+      });
+      if (Number(initialized.amount) !== Number(plan.amount) || initialized.currency !== "NGN" || initialized.txRef !== txRef) {
+        throw new Error("The server checkout details do not match this recruiter plan.");
+      }
+    } catch (error) {
+      setLoading(false);
+      alert(error.message || "Secure checkout could not be initialized.");
+      return;
+    }
     handleFlutterPayment({
-      callback: async (
-        response
-      ) => {
+      callback: async (response) => {
         try {
-          if (
-            response.status ===
-            "successful"
-          ) {
-            await activateSubscription(
-              response
-            );
-
-            alert(
-              "Recruiter Subscription Activated Successfully."
-            );
-          } else {
-            alert(
-              "Payment Failed."
-            );
+          if (response.status !== "successful" || !response.transaction_id) {
+            throw new Error("Flutterwave did not report a successful transaction.");
           }
+          await verifyFlutterwavePayment({
+            purpose: "recruiter",
+            plan: selectedPlan,
+            transactionId: String(response.transaction_id),
+            txRef: response.tx_ref || txRef,
+          });
+          alert("Recruiter subscription activated after server verification.");
         } catch (err) {
-          console.error(err);
-
-          alert(
-            "Unable to activate subscription."
-          );
+          console.error("Recruiter payment verification failed:", err);
+          alert(err.message || "Payment verification is pending. Please contact support.");
+        } finally {
+          setLoading(false);
+          setTxRef(makeTxRef(auth.currentUser?.uid));
+          closePaymentModal();
         }
-
-        setLoading(false);
-
-        closePaymentModal();
       },
-
-      onClose: () => {
-        setLoading(false);
-      },
+      onClose: () => { setLoading(false); setTxRef(makeTxRef(auth.currentUser?.uid)); },
     });
   }
 
@@ -465,7 +422,7 @@ function RecruiterSubscription() {
 
           <button
             onClick={subscribe}
-            disabled={loading}
+            disabled={loading || !publicKey}
             style={{
               marginTop: "20px",
               width: "100%",

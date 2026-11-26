@@ -12,14 +12,23 @@ import {
   getPremiumBadge,
 } from "../config/verificationTypes";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
 import CreateStory from "./CreateStory";
 import StoryViewer from "./StoryViewer";
+import { useTranslation } from "react-i18next";
+
+function getStoryExpiryMillis(value) {
+  if (value && typeof value.toMillis === "function") {
+    return value.toMillis();
+  }
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+  const numericValue = Number(value || 0);
+  return Number.isFinite(numericValue) ? numericValue : 0;
+}
 
 function StoriesSection() {
+  const { t } = useTranslation();
   const [stories, setStories] =
     useState([]);
 
@@ -47,9 +56,7 @@ function StoriesSection() {
                 ...doc.data(),
               }))
               .filter(
-                (story) =>
-                  story.expiresAt >
-                  now
+                (story) => getStoryExpiryMillis(story.expiresAt) > now
               )
               .slice(0, 12);
 
@@ -79,14 +86,7 @@ function StoriesSection() {
   function getBadge(story) {
   if (!story?.verified) return null;
 
-  const migratedType =
-    migrateVerificationId(
-      story.badgeType
-    );
-
-  return getVerificationBadge(
-    migratedType
-  );
+  return getVerificationBadge(story.badgeType);
 }
 
   function getPremium(story) {
@@ -112,7 +112,7 @@ function StoriesSection() {
         }}
       >
         <h3>
-          📸 Stories
+          📸 {t("stories")}
         </h3>
 
         <CreateStory />
@@ -131,8 +131,7 @@ function StoriesSection() {
           {stories.length ===
           0 ? (
             <div>
-              No active
-              stories
+              {t("noActiveStories")}
             </div>
           ) : (
             stories.map(
@@ -141,11 +140,20 @@ function StoriesSection() {
                   key={
                     story.id
                   }
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${story.userName || t("statsUser")} — ${t("stories")}`}
                   onClick={() =>
                     openStory(
                       story
                     )
                   }
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      openStory(story);
+                    }
+                  }}
                   style={{
                     minWidth:
                       "90px",
@@ -190,7 +198,7 @@ function StoriesSection() {
                         src={
                           story.storyUrl
                         }
-                        alt="story"
+                        alt={t("storyImageAlt")}
                         style={{
                           width:
                             "100%",

@@ -162,7 +162,7 @@ export async function authenticationOptionsService(data = {}) {
       );
 
       throw new Error(
-        "No Inclura account was found for this email."
+        "Passkey sign-in is unavailable for these account details. Use your password or contact support."
       );
     }
   }
@@ -201,7 +201,7 @@ export async function authenticationOptionsService(data = {}) {
 
   if (allowCredentials.length === 0) {
     throw new Error(
-      "No registered passkeys were found for this user."
+      "Passkey sign-in is unavailable for these account details. Use your password or contact support."
     );
   }
 
@@ -514,30 +514,73 @@ export async function verifyAuthenticationService(data) {
       updateData.counter = newCounter;
     }
 
-    await credentialDoc.ref.update(
-      updateData
-    );
+    // Update the credential counter and consume the challenge atomically.
+    // Concurrent replays will see the challenge as used and cannot authenticate.
+    await firestore().runTransaction(async (transaction) => {
+      const freshChallengeSnapshot = await transaction.get(challengeDoc.ref);
+      const freshCredentialSnapshot = await transaction.get(credentialDoc.ref);
 
-    // ---------------------------------------------------
-    // Mark challenge as used
-    // ---------------------------------------------------
+      if (!freshChallengeSnapshot.exists || !freshCredentialSnapshot.exists) {
+        throw new Error("Passkey challenge or credential no longer exists.");
+      }
 
-    await challengeDoc.ref.update({
-      verified: true,
-      used: true,
+      const freshChallenge = freshChallengeSnapshot.data();
+      if (
+        freshChallenge.used === true ||
+        freshChallenge.type !== "authentication" ||
+        String(freshChallenge.userId) !== String(userId) ||
+        !freshChallenge.expiresAt ||
+        Date.now() > Number(freshChallenge.expiresAt)
+      ) {
+        throw new Error("Passkey challenge is expired, invalid, or already used.");
+      }
 
-      verifiedAt:
-        admin.firestore.FieldValue.serverTimestamp(),
+      // A second, distinct challenge can be verified concurrently against
+      // the same previously-read credential counter. Re-check the counter
+      // inside the transaction so an older assertion cannot overwrite a
+      // newer authenticator counter after a concurrent sign-in.
+      const freshCredential = freshCredentialSnapshot.data();
+      const currentCounter = Number(freshCredential.counter || 0);
+      if (
+        typeof newCounter === "number" &&
+        currentCounter > 0 &&
+        newCounter <= currentCounter
+      ) {
+        throw new Error("Passkey authenticator counter did not advance. Please try signing in again.");
+      }
+
+      transaction.update(credentialDoc.ref, updateData);
+      transaction.update(challengeDoc.ref, {
+        verified: true,
+        used: true,
+        verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+      });
     });
 
     // ---------------------------------------------------
     // Authentication successful
     // ---------------------------------------------------
 
+    // Re-check the Firebase account state before issuing a session.
+    // A previously registered passkey must not restore access to a disabled
+    // account or bypass Inclura's verified-email requirement.
+    const firebaseUser = await admin.auth().getUser(userId);
+    if (firebaseUser.disabled) {
+      throw new Error("This Inclura account is disabled. Contact support if you believe this is a mistake.");
+    }
+    if (firebaseUser.emailVerified !== true) {
+      throw new Error("Verify your Inclura email address before signing in with a passkey.");
+    }
+
+    // Exchange the cryptographically verified passkey assertion for a
+    // Firebase custom token so the browser receives a real Firebase session.
+    const customToken = await admin.auth().createCustomToken(userId);
+
     return {
       success: true,
       authenticated: true,
       userId,
+      customToken,
 
       credentialId:
         credential.credentialId,
@@ -563,16 +606,14 @@ export async function verifyAuthenticationService(data) {
 // Face Verification
 // =======================================================
 
-export async function verifyFaceService(data) {
+export async function verifyFaceService() {
   return {
-    success: true,
+    success: false,
     verified: false,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
     engine: "FaceAuthenticityEngine",
-
-    message:
-      "Face verification engine will be connected next.",
-
-    request: data,
+    message: "Face verification is unavailable until a trusted verification provider is configured.",
   };
 }
 
@@ -580,17 +621,14 @@ export async function verifyFaceService(data) {
 // Biometric Verification
 // =======================================================
 
-export async function verifyBiometricService(data) {
+export async function verifyBiometricService() {
   return {
-    success: true,
+    success: false,
     verified: false,
-    engine:
-      "BiometricVerificationEngine",
-
-    message:
-      "Biometric verification engine will be connected next.",
-
-    request: data,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
+    engine: "BiometricVerificationEngine",
+    message: "Biometric verification is unavailable until a trusted verification provider is configured.",
   };
 }
 
@@ -598,16 +636,13 @@ export async function verifyBiometricService(data) {
 // Identity Verification
 // =======================================================
 
-export async function verifyIdentityService(data) {
+export async function verifyIdentityService() {
   return {
-    success: true,
+    success: false,
     verified: false,
-    engine:
-      "IdentityVerificationEngine",
-
-    message:
-      "Identity verification engine will be connected next.",
-
-    request: data,
+    available: false,
+    code: "VERIFICATION_PROVIDER_NOT_CONFIGURED",
+    engine: "IdentityVerificationEngine",
+    message: "Identity verification is unavailable until a trusted verification provider is configured.",
   };
-    }    
+}

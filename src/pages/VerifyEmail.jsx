@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { reload, sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase";
+import LanguageSelector from "../components/LanguageSelector";
 
 function VerifyEmail() {
   const navigate = useNavigate();
@@ -53,6 +54,10 @@ function VerifyEmail() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#020617", color: "white", display: "grid", placeItems: "center", padding: "24px", fontFamily: "Arial, sans-serif" }}>
+      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+        <LanguageSelector />
+      </div>
+
       <section style={{ width: "100%", maxWidth: "480px", background: "#0f172a", border: "1px solid #1e3a8a", borderRadius: "24px", padding: "28px", boxSizing: "border-box" }}>
         <div style={{ fontSize: "38px", marginBottom: "12px" }}>✉️</div>
         <h1 style={{ fontSize: "28px", margin: "0 0 12px" }}>Verify your email</h1>

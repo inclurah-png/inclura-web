@@ -18,7 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
       - name: Install frontend dependencies
         run: npm ci
@@ -27,6 +27,8 @@ jobs:
           VITE_SOS_NOTIFICATION_BACKEND_URL: https://inclura-ifse-backend.onrender.com
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
         run: npm run build
+      - name: Audit installed dependencies
+        run: npm audit --audit-level=moderate
 
   backend-syntax:
     runs-on: ubuntu-latest
@@ -36,7 +38,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
       - name: Install backend dependencies
         working-directory: backend
         run: npm install
@@ -45,6 +47,7 @@ jobs:
           node --check backend/src/config/notificationConfig.js
           node --check backend/src/services/notificationProviders.js
           node --check backend/src/middleware/firebaseAuth.js
+          node --check backend/src/controllers/emergencyController.js
           node --check backend/src/routes/sosNotificationRoutes.js
           node --check backend/src/routes/emergencyRoutes.js
           node --check backend/src/services/pushNotificationService.js
@@ -68,5 +71,5 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - name: Validate Firestore rules with emulator
-        run: npx --yes firebase-tools@latest emulators:exec --only firestore --project demo-inclura-rules "echo Firestore rules loaded successfully"
+      - name: Validate Firestore and Storage rules with emulators
+        run: npx --yes firebase-tools@latest emulators:exec --only firestore,storage --project demo-inclura-rules "echo Firestore and Storage rules loaded successfully"

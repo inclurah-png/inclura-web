@@ -118,6 +118,13 @@ export async function verifyPasskeyRegistrationService(
   const challenge =
     challengeDoc.data();
 
+  if (
+    !data.authenticatedUserId ||
+    String(challenge.userId) !== String(data.authenticatedUserId)
+  ) {
+    throw new Error("Passkey registration challenge does not belong to the signed-in account.");
+  }
+
   // =====================================================
   // Validate Challenge Type
   // =====================================================
@@ -326,65 +333,49 @@ export async function verifyPasskeyRegistrationService(
         credentialId
       );
 
-  await credentialRef.set({
+  const database = firestore();
+  const serverTimestamp = admin.firestore.FieldValue.serverTimestamp();
 
-    credentialId,
+  // Save the credential and consume its challenge atomically. A replayed
+  // or concurrently submitted challenge cannot register a second credential.
+  await database.runTransaction(async (transaction) => {
+    const freshChallengeSnapshot = await transaction.get(challengeDoc.ref);
+    if (!freshChallengeSnapshot.exists) {
+      throw new Error("Passkey registration challenge no longer exists.");
+    }
 
-    credentialPublicKey,
+    const freshChallenge = freshChallengeSnapshot.data();
+    if (
+      String(freshChallenge.userId) !== String(data.authenticatedUserId) ||
+      freshChallenge.type !== "registration" ||
+      freshChallenge.used === true ||
+      !freshChallenge.expiresAt ||
+      Date.now() > Number(freshChallenge.expiresAt)
+    ) {
+      throw new Error("Passkey registration challenge is invalid, expired, or already used.");
+    }
 
-    counter,
+    transaction.create(credentialRef, {
+      credentialId,
+      credentialPublicKey,
+      counter,
+      transports,
+      createdAt: serverTimestamp,
+      lastUsed: serverTimestamp,
+      verified: true,
+      deviceName: data.deviceName || "Unknown Device",
+      platform: data.platform || "Unknown",
+      authenticatorType: "Passkey",
+      registeredFrom: process.env.WEBAUTHN_ORIGIN,
+      registrationMethod: "PASSKEY",
+      securityEngine: "IFSE",
+    });
 
-    transports,
-
-    createdAt:
-      admin.firestore.FieldValue
-        .serverTimestamp(),
-
-    lastUsed:
-      admin.firestore.FieldValue
-        .serverTimestamp(),
-
-    verified:
-      true,
-
-    deviceName:
-      data.deviceName ||
-      "Unknown Device",
-
-    platform:
-      data.platform ||
-      "Unknown",
-
-    authenticatorType:
-      "Passkey",
-
-    registeredFrom:
-      process.env.WEBAUTHN_ORIGIN,
-
-    registrationMethod:
-      "PASSKEY",
-
-    securityEngine:
-      "IFSE",
-
-  });
-
-  // =====================================================
-  // Mark Challenge Used
-  // =====================================================
-
-  await challengeDoc.ref.update({
-
-    verified:
-      true,
-
-    used:
-      true,
-
-    verifiedAt:
-      admin.firestore.FieldValue
-        .serverTimestamp(),
-
+    transaction.update(challengeDoc.ref, {
+      verified: true,
+      used: true,
+      verifiedAt: serverTimestamp,
+    });
   });
 
   // =====================================================

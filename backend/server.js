@@ -13,10 +13,13 @@ import mediaRoutes from "./src/routes/mediaRoutes.js";
 import emergencyRoutes from "./src/routes/emergencyRoutes.js";
 import sosNotificationRoutes from "./src/routes/sosNotificationRoutes.js";
 import textbeeWebhookRoutes from "./src/routes/textbeeWebhookRoutes.js";
+import paymentRoutes from "./src/routes/paymentRoutes.js";
+import adminVerificationRoutes from "./src/routes/adminVerificationRoutes.js";
 
 import {
   startSOSNotificationSweeper,
 } from "./src/services/sosNotificationSweeper.js";
+import { startPremiumExpirySweeper } from "./src/services/premiumExpirySweeper.js";
 
 
 import {
@@ -46,6 +49,10 @@ initializeFirebaseAdmin();
 
 const app = express();
 
+// Render terminates TLS at one trusted reverse-proxy hop. This lets
+// req.ip identify the client for the IFSE passkey rate limiter.
+app.set("trust proxy", 1);
+
 // =======================================================
 // Configuration
 // =======================================================
@@ -61,7 +68,7 @@ const PORT =
 // origins and allow local Vite development.
 const ALLOWED_ORIGINS = (
   process.env.CORS_ORIGINS ||
-  "https://inclura-web.pages.dev,https://inclura-prod-90734.web.app,http://localhost:5173,http://localhost:4173"
+  "https://inclura-web.pages.dev,https://fix-auth-payment-security.inclura-web.pages.dev,https://inclura-prod-90734.web.app,http://localhost:5173,http://localhost:4173"
 )
   .split(",")
   .map((item) => item.trim())
@@ -221,7 +228,14 @@ app.post("/api/analytics/platform", async (req, res) => {
 
     // Use the server-issued Firebase Authentication custom claim.
     // This matches Inclura's existing Users Management authorization model.
-    const decoded = await auth().verifyIdToken(match[1]);
+    const decoded = await auth().verifyIdToken(match[1], true);
+    if (decoded.email_verified !== true) {
+      return res.status(403).json({ success: false, message: "A verified administrator account is required." });
+    }
+    const adminRecord = await auth().getUser(decoded.uid);
+    if (adminRecord.disabled) {
+      return res.status(403).json({ success: false, message: "This administrator account is disabled." });
+    }
     if (decoded.admin !== true) {
       return res.status(403).json({ success: false, message: "Administrator access required." });
     }
@@ -242,7 +256,19 @@ app.post("/api/analytics/platform", async (req, res) => {
 
     usersSnap.forEach((userDoc) => {
       const user = userDoc.data();
-      if (user.premiumPlan?.active === true) premiumUsers += 1;
+      const premiumExpiry = user.premiumExpiryDate?.toDate
+        ? user.premiumExpiryDate.toDate()
+        : (user.premiumExpiryDate ? new Date(user.premiumExpiryDate) : null);
+      const premiumFlag = user.premium === true
+        || user.premiumActive === true
+        || user.premiumPlan?.active === true;
+      if (
+        premiumFlag &&
+        (!premiumExpiry || (
+          Number.isFinite(premiumExpiry.getTime()) &&
+          premiumExpiry.getTime() > now
+        ))
+      ) premiumUsers += 1;
       if (user.creatorVerified === true) verifiedCreators += 1;
       if (user.creatorEconomy?.premiumQualified === true) qualifiedCreators += 1;
       const lastLogin = user.lastLogin?.toMillis
@@ -325,6 +351,10 @@ app.use(
   "/api/identity",
   passkeyRoutes
 );
+
+// Server-side Flutterwave verification and entitlement activation.
+app.use("/api/payments", paymentRoutes);
+app.use("/api/admin", adminVerificationRoutes);
 
 // =======================================================
 // Emergency SOS Notification Routes
@@ -439,6 +469,7 @@ app.listen(
     // Automatic SOS notification retry loop. Independent of
     // any administrator being online.
     startSOSNotificationSweeper();
+    startPremiumExpirySweeper();
 
   }
 );

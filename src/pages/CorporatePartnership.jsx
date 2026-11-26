@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   addDoc,
@@ -35,8 +35,9 @@ const CONTRACT_TYPES = [
 ];
 function CorporatePartnership() {
 
-  const navigate =
-    useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const prefill = location.state || {};
 
   const [currentUser, setCurrentUser] = useState(null);
 
@@ -62,7 +63,7 @@ useEffect(() => {
 
   const [companyName,
     setCompanyName] =
-    useState("");
+    useState(prefill.organizationName || "");
 
   const [registrationNumber,
     setRegistrationNumber] =
@@ -70,23 +71,23 @@ useEffect(() => {
 
   const [website,
     setWebsite] =
-    useState("");
+    useState(prefill.website || "");
 
   const [industry,
     setIndustry] =
-    useState("");
+    useState(prefill.category || "");
 
   const [contactName,
     setContactName] =
-    useState("");
+    useState(prefill.fullName || "");
 
   const [contactEmail,
     setContactEmail] =
-    useState("");
+    useState(prefill.email || "");
 
   const [contactPhone,
     setContactPhone] =
-    useState("");
+    useState(prefill.phone || "");
 
   const [position,
     setPosition] =
@@ -120,7 +121,7 @@ useEffect(() => {
 
   const [businessNeeds,
     setBusinessNeeds] =
-    useState("");
+    useState(prefill.verificationType ? `Inclura verification type: ${prefill.verificationType}` : "");
 
   const partnershipFee =
     useMemo(() => {
@@ -141,11 +142,15 @@ useEffect(() => {
     setAcceptedSecurity] =
     useState(false);
 
-  const [timeline,
-    setTimeline] =
-    useState([]);
+    const [timeline] = useState([
+    { title: "Application Submitted", status: "Completed" },
+    { title: "Corporate Security Review", status: "Pending" },
+    { title: "Accessibility Review", status: "Pending" },
+    { title: "Compliance Review", status: "Pending" },
+    { title: "Corporate Approval", status: "Pending" },
+  ]);
 
-  const [reviewProgress,
+const [reviewProgress,
     setReviewProgress] =
     useState({
       application: true,
@@ -154,53 +159,7 @@ useEffect(() => {
       accessibility: false,
       approval: false,
     });
-    useEffect(() => {
-
-    setTimeline([
-
-      {
-        title:
-          "Application Submitted",
-
-        status:
-          "Completed",
-      },
-
-      {
-        title:
-          "Corporate Security Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Accessibility Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Compliance Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Corporate Approval",
-
-        status:
-          "Pending",
-      },
-
-    ]);
-
-  }, []);
+    
     const securityLayers = [
 
     "IFSE Corporate Identity Verification",
@@ -236,93 +195,7 @@ useEffect(() => {
     "Dedicated Account Manager",
 
   ];
-    const getReviewPercentage =
-    () => {
-
-      const values =
-        Object.values(
-          reviewProgress
-        );
-
-      const completed =
-        values.filter(
-          Boolean
-        ).length;
-
-      return Math.round(
-        (
-          completed /
-          values.length
-        ) * 100
-      );
-
-    };
-    const calculateCorporateRisk =
-    () => {
-
-      let score = 0;
-
-      if (!website.trim())
-        score += 15;
-
-      if (
-        !registrationNumber.trim()
-      )
-        score += 20;
-
-      if (
-        estimatedEmployees
-      ) {
-
-        const employees =
-          Number(
-            estimatedEmployees
-          );
-
-        if (
-          employees > 50000
-        ) {
-
-          score += 20;
-
-        }
-
-        else if (
-          employees > 5000
-        ) {
-
-          score += 10;
-
-        }
-
-      }
-
-      return Math.min(
-        score,
-        100
-      );
-
-    };
-    const corporateRiskScore =
-    calculateCorporateRisk();
-
-  const threatLevel =
-    corporateRiskScore >= 75
-      ? "High"
-      : corporateRiskScore >= 40
-      ? "Medium"
-      : "Low";
-
-  const ifseSecurityScore =
-100 - corporateRiskScore;
-
-const trustScore =
-corporateRiskScore >= 70
-? "Low"
-: corporateRiskScore >= 40
-? "Medium"
-: "High";
-  
+    
     const handleSubmit =
     async (e) => {
 
@@ -359,26 +232,15 @@ corporateRiskScore >= 70
       setLoading(true);
 
       try {
-                const companyQuery =
-          query(
-            collection(
-              db,
-              "corporatePartnerships"
-            ),
-            where(
-              "companyName",
-              "==",
-              companyName
-            )
-          );
-
-        const companySnapshot =
-          await getDocs(
-            companyQuery
-          );
-
-        const companyExists =
-          !companySnapshot.empty;
+                const ownCorporateQuery = query(
+          collection(db, "corporatePartnerships"),
+          where("userId", "==", currentUser.uid)
+        );
+        const ownCorporateSnapshot = await getDocs(ownCorporateQuery);
+        const normalizedCompany = companyName.trim().toLowerCase();
+        const companyExists = ownCorporateSnapshot.docs.some((item) =>
+          String(item.data().companyName || "").trim().toLowerCase() === normalizedCompany
+        );
                 if (
           companyExists
         ) {
@@ -399,6 +261,8 @@ corporateRiskScore >= 70
 
               userId:
                 currentUser.uid,
+
+              source: "member_submission",
 
               severity:
                 "high",
@@ -426,26 +290,10 @@ corporateRiskScore >= 70
           return;
 
         }
-                const emailQuery =
-          query(
-            collection(
-              db,
-              "corporatePartnerships"
-            ),
-            where(
-              "contactEmail",
-              "==",
-              contactEmail
-            )
-          );
-
-        const emailSnapshot =
-          await getDocs(
-            emailQuery
-          );
-
-        const emailExists =
-          !emailSnapshot.empty;
+                const normalizedContactEmail = contactEmail.trim().toLowerCase();
+        const emailExists = ownCorporateSnapshot.docs.some((item) =>
+          String(item.data().contactEmail || "").trim().toLowerCase() === normalizedContactEmail
+        );
                 if (
           emailExists
         ) {
@@ -466,6 +314,8 @@ corporateRiskScore >= 70
 
               userId:
                 currentUser.uid,
+
+              source: "member_submission",
 
               severity:
                 "medium",
@@ -493,6 +343,12 @@ corporateRiskScore >= 70
           return;
 
         }
+        const corporateId =
+`COR-${Date.now()}-${Math.random()
+  .toString(36)
+  .substring(2, 8)
+  .toUpperCase()}`;
+
                 const docRef =
           await addDoc(
             collection(
@@ -559,10 +415,7 @@ serverTimestamp(),
 updatedAt:
   serverTimestamp(),
 
-riskScore:
-  corporateRiskScore,
 
-threatLevel,
               securityLayers,
 
 corporateBenefits,
@@ -572,11 +425,6 @@ corporateBenefits,
 
         const partnershipId =
           docRef.id;
-        const corporateId =
-`COR-${Date.now()}-${Math.random()
-  .toString(36)
-  .substring(2, 8)
-  .toUpperCase()}`;
                 const timelineStages = [
 
 {
@@ -658,28 +506,13 @@ serverTimestamp(),
     userId:
       currentUser.uid,
 
+    source: "member_submission",
+
     companyName,
 
-    severity:
-      "low",
+    assessmentStatus: "pending_server_review",
 
-    riskScore:
-      corporateRiskScore,
-
-    ifseSecurityScore,
-
-    trustScore,
-
-    threatLevel,
-
-    automaticAssessment:
-      true,
-
-    requiresManualReview:
-      corporateRiskScore >= 50,
-
-    reviewed:
-      false,
+    reviewed: false,
 
     createdAt:
       serverTimestamp(),
@@ -689,9 +522,7 @@ serverTimestamp(),
           "Corporate partnership request submitted successfully."
         );
 
-        navigate(
-          "/verification-center"
-        );
+        navigate(`/partnership-status/corporate/${partnershipId}`);
               }
 
       catch (err) {
@@ -1253,9 +1084,10 @@ serverTimestamp(),
 
             <h2>
 
-              IFSE Corporate Security Assessment
+              Requested Review Areas (Pending)
 
             </h2>
+            <p>Each listed area remains pending until an authorized reviewer records its outcome.</p>
 
             <ul>
 
@@ -1283,11 +1115,9 @@ serverTimestamp(),
 
             </h2>
 
-            <p>
+            
 
-              Completion: {getReviewPercentage()}%
-
-            </p>
+            <p>Only the application-submission stage is completed at this point. Remaining review stages stay pending until an authorized administrator records their outcomes.</p>
 
             <ul>
 
@@ -1330,39 +1160,7 @@ serverTimestamp(),
 
           </section>
 
-          <section className="corporate-risk">
-
-            <h2>
-
-              IFSE Risk Assessment
-
-            </h2>
-
-            <p>
-
-              <strong>
-
-                Corporate Risk Score:
-
-              </strong>{" "}
-
-              {corporateRiskScore}%
-
-            </p>
-
-            <p>
-
-              <strong>
-
-                Threat Level:
-
-              </strong>{" "}
-
-              {threatLevel}
-
-            </p>
-
-          </section>
+          
 
           <section className="corporate-agreements">
 
