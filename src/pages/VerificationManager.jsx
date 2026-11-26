@@ -889,7 +889,7 @@ marginBottom: "35px",
                 View contract (expires shortly)
               </a>
             )}
-            <button type="button" disabled={Boolean(partnershipActionBusy) || application.contractVerificationStatus === "approved"} onClick={() => submitPartnershipContractReview(application, "approved")}>
+            <button type="button" disabled={Boolean(partnershipActionBusy) || application.contractVerificationStatus === "approved" || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)} onClick={() => submitPartnershipContractReview(application, "approved")}>
               Verify contract
             </button>
             <button type="button" disabled={Boolean(partnershipActionBusy) || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)} onClick={() => submitPartnershipContractReview(application, "rejected")}>
@@ -900,7 +900,7 @@ marginBottom: "35px",
         {application.contractVerificationStatus === "approved" && (
           <button
             type="button"
-            disabled={Boolean(partnershipActionBusy)}
+            disabled={Boolean(partnershipActionBusy) || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)}
             onClick={() => finalizePartnershipActivation(application)}
           >
             Final approvals and activate partnership
