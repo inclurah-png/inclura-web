@@ -722,8 +722,8 @@ marginBottom: "35px",
           >
 
             <button
-              disabled={request.paymentStatus !== "paid" || request.documentsSubmitted !== true}
-              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : request.documentsSubmitted !== true ? "Required verification documents must be submitted before approval." : "Approve after administrator review."}
+              disabled={request.paymentStatus !== "paid" || request.documentsSubmitted !== true || Object.keys(request.uploadedDocuments || {}).length === 0}
+              title={request.paymentStatus !== "paid" ? "Server-confirmed payment is required before approval." : request.documentsSubmitted !== true || Object.keys(request.uploadedDocuments || {}).length === 0 ? "Required verification documents must be submitted before approval." : "Approve after administrator review."}
               onClick={(e) => {
                 e.stopPropagation();
                 handleApprove(request.id);
