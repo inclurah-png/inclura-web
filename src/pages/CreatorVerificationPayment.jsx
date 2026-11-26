@@ -1,4 +1,6 @@
 import { useState } from "react";
+
+const makeTxRef = (uid) => "INCLURA-CREATOR-" + (uid || "USER") + "-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 10)));
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { auth } from "../firebase";
 import { VERIFICATION_PLANS } from "../config";
@@ -6,12 +8,11 @@ import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
 function CreatorVerificationPayment() {
   const [loading, setLoading] = useState(false);
+  const [txRef, setTxRef] = useState(() => makeTxRef(auth.currentUser?.uid));
   const verificationFee = Number(
     VERIFICATION_PLANS.creator.verificationTypes.find((item) => item.id === "verified_creator")?.monthlyUSD || 0
   );
   const publicKey = import.meta.env.VITE_FLUTTERWAVE_PUBLIC_KEY;
-  // Generate a fresh reference for each render/payment attempt.
-  const txRef = `INCLURA-CREATOR-${auth.currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
   const handleFlutterPayment = useFlutterwave({
     public_key: publicKey,
@@ -58,10 +59,11 @@ function CreatorVerificationPayment() {
           alert(error.message || "Payment verification is pending. Please contact support.");
         } finally {
           setLoading(false);
+          setTxRef(makeTxRef(auth.currentUser?.uid));
           closePaymentModal();
         }
       },
-      onClose: () => setLoading(false),
+      onClose: () => { setLoading(false); setTxRef(makeTxRef(auth.currentUser?.uid)); },
     });
   }
 
