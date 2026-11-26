@@ -16,6 +16,22 @@ service cloud.firestore {
         && isActiveAccount();
     }
 
+    function hasNoServerManagedPartnershipFields() {
+      return !('contractDocument' in request.resource.data)
+        && !('contractVerificationStatus' in request.resource.data)
+        && !('contractReviewedBy' in request.resource.data)
+        && !('contractReviewedAt' in request.resource.data)
+        && !('paymentRequired' in request.resource.data)
+        && !('paymentStatus' in request.resource.data)
+        && !('paymentVerifiedAt' in request.resource.data)
+        && !('paymentVerifiedBy' in request.resource.data)
+        && !('finalApprovals' in request.resource.data)
+        && !('finalApprovedBy' in request.resource.data)
+        && !('finalApprovedAt' in request.resource.data)
+        && !('activatedBy' in request.resource.data)
+        && !('activatedAt' in request.resource.data);
+    }
+
     function isActiveAccount() {
       return request.auth != null
         && (
@@ -1005,6 +1021,7 @@ service cloud.firestore {
 
     match /enterprisePartnerships/{partnershipId} {
       allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.organizationName is string
         && request.resource.data.contactEmail is string
@@ -1039,6 +1056,7 @@ service cloud.firestore {
 
     match /corporatePartnerships/{partnershipId} {
       allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.companyName is string
         && request.resource.data.contactEmail is string
@@ -1071,6 +1089,7 @@ service cloud.firestore {
 
     match /governmentPartnerships/{partnershipId} {
       allow create: if isActiveAccount()
+        && hasNoServerManagedPartnershipFields()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.agencyName is string
         && request.resource.data.officialEmail is string
