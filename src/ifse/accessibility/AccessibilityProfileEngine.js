@@ -15,6 +15,14 @@ const DEFAULT_PROFILE = {
   dyslexia: false,
   autism: false,
   adhd: false,
+  screenReader: false,
+  braille: false,
+  voiceNavigation: false,
+  keyboardNavigation: false,
+  captions: false,
+  signLanguage: false,
+  largeText: false,
+  highContrast: false,
 };
 
 function normalizeAccessibilityNeeds(
@@ -146,6 +154,15 @@ function buildAccessibilityProfile(
       "adhd",
       "attention deficit",
     ]),
+
+    screenReader: hasNeed(needs, ["screen reader", "screenreader"]),
+    braille: hasNeed(needs, ["braille"]),
+    voiceNavigation: hasNeed(needs, ["voice navigation", "voice control", "voice access"]),
+    keyboardNavigation: hasNeed(needs, ["keyboard navigation", "keyboard only", "keyboard"]),
+    captions: hasNeed(needs, ["caption", "subtitles"]),
+    signLanguage: hasNeed(needs, ["sign language", "asl", "nsl"]),
+    largeText: hasNeed(needs, ["large text", "large print"]),
+    highContrast: hasNeed(needs, ["high contrast"]),
   };
 }
 
@@ -191,6 +208,21 @@ function findUnrecognizedNeeds(
     "autistic",
     "adhd",
     "attention deficit",
+    "screen reader",
+    "screenreader",
+    "braille",
+    "voice navigation",
+    "voice control",
+    "voice access",
+    "keyboard",
+    "caption",
+    "subtitle",
+    "sign language",
+    "asl",
+    "nsl",
+    "large text",
+    "large print",
+    "high contrast",
   ];
 
   return accessibilityNeeds.filter(
