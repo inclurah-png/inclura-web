@@ -333,18 +333,20 @@ useEffect(() => {
   async function loadPartnershipApplications() {
     try {
       const collections = [
-        ["enterprise", "enterprisePartnerships"],
-        ["corporate", "corporatePartnerships"],
-        ["government", "governmentPartnerships"],
+        ["enterprise", "enterprisePartnerships", "requestStatus"],
+        ["corporate", "corporatePartnerships", "requestStatus"],
+        ["government", "governmentPartnerships", "status"],
       ];
-      const snapshots = await Promise.all(collections.map(([, name]) => getDocs(collection(db, name))));
+      const snapshots = await Promise.all(collections.map(([, name, statusField]) =>
+        getDocs(query(collection(db, name), where(statusField, "in", ["submitted", "pending"])))
+      ));
       const records = snapshots.flatMap((snapshot, index) =>
         snapshot.docs.map((document) => ({
           id: document.id,
           type: collections[index][0],
           ...document.data(),
         }))
-      ).filter((item) => !["approved", "rejected"].includes(String(item.requestStatus || item.status || "").toLowerCase()));
+      );
       if (!cancelled) setPartnershipApplications(records);
     } catch (loadError) {
       console.error("Partnership applications could not be loaded:", loadError);
