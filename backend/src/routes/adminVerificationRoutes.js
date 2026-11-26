@@ -103,6 +103,97 @@ async function requireAdmin(req, res, next) {
 
 router.use(requireAdmin);
 
+router.patch("/users/:userId/status", async (req, res) => {
+  const userId = String(req.params.userId || "");
+  const action = String(req.body?.action || "");
+
+  if (!/^[A-Za-z0-9_-]{5,128}$/.test(userId)) {
+    return res.status(400).json({ success: false, message: "Invalid user account." });
+  }
+  if (userId === req.adminUid) {
+    return res.status(403).json({ success: false, message: "Administrators cannot change their own account status." });
+  }
+
+  const actions = {
+    suspend: { status: "suspended", timestampField: "suspendedAt", disabled: true },
+    ban: { status: "banned", timestampField: "bannedAt", disabled: true },
+    restore: { status: "active", timestampField: "restoredAt", disabled: false },
+  };
+  const selected = actions[action];
+  if (!selected) {
+    return res.status(400).json({ success: false, message: "Choose a valid account action." });
+  }
+
+  const database = firestore();
+  const userRef = database.collection("users").doc(userId);
+  const auditRef = database.collection("userModerationAuditLogs").doc();
+
+  let previousDisabled = false;
+  let authChanged = false;
+
+  try {
+    const [profileSnapshot, userRecord] = await Promise.all([
+      userRef.get(),
+      auth().getUser(userId),
+    ]);
+    if (!profileSnapshot.exists) {
+      return res.status(404).json({ success: false, message: "User profile not found." });
+    }
+
+    previousDisabled = userRecord.disabled === true;
+    await auth().updateUser(userId, { disabled: selected.disabled });
+    authChanged = true;
+    await auth().revokeRefreshTokens(userId);
+
+    const now = new Date();
+    await database.runTransaction(async (transaction) => {
+      const currentProfile = await transaction.get(userRef);
+      if (!currentProfile.exists) {
+        throw new Error("User profile no longer exists.");
+      }
+
+      const previousStatus = String(currentProfile.data()?.status || "active");
+      transaction.update(userRef, {
+        status: selected.status,
+        statusUpdatedAt: now,
+        statusUpdatedBy: req.adminUid,
+        [selected.timestampField]: now,
+      });
+      transaction.create(auditRef, {
+        userId,
+        action,
+        previousStatus,
+        newStatus: selected.status,
+        performedBy: req.adminUid,
+        createdAt: now,
+      });
+    });
+
+    return res.status(200).json({
+      success: true,
+      userId,
+      status: selected.status,
+      message: action === "restore"
+        ? "The account has been restored. The user must sign in again."
+        : "The account has been disabled and its active sessions revoked.",
+    });
+  } catch (error) {
+    console.error("User moderation action failed:", error?.message || error);
+    if (authChanged) {
+      try {
+        await auth().updateUser(userId, { disabled: previousDisabled });
+        await auth().revokeRefreshTokens(userId);
+      } catch (rollbackError) {
+        console.error("User moderation rollback failed:", rollbackError?.message || rollbackError);
+      }
+    }
+    return res.status(500).json({
+      success: false,
+      message: "The account status could not be updated safely. Please retry or contact support.",
+    });
+  }
+});
+
 router.get("/verification/analytics", async (req, res) => {
   try {
     const db = firestore();
