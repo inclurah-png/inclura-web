@@ -128,6 +128,8 @@ const [verificationRevenue, setVerificationRevenue] =
 
     creatorRevenue: 0,
 
+    groupRevenue: 0,
+
     organizationRevenue: 0,
 
     enterpriseRevenue: 0,
