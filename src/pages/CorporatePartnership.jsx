@@ -522,9 +522,7 @@ serverTimestamp(),
           "Corporate partnership request submitted successfully."
         );
 
-        navigate(
-          "/verification-center"
-        );
+        navigate(`/partnership-status/corporate/${partnershipId}`);
               }
 
       catch (err) {
