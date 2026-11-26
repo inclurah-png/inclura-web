@@ -1194,11 +1194,7 @@ function VerificationDocuments() {
   }}
 >
   <h2>{t("vdSecurityAssessment")}</h2>
-  <p role="status" aria-live="polite">
-    IFSE assessment is pending. The uploaded documents are awaiting secure
-    access, server-side checks and authorized administrator review. This page
-    does not calculate a verified risk score or approve an application.
-  </p>
+  <p role="status" aria-live="polite">{t("vdAssessmentPending")}</p>
 </section>
                     /*
            * ============================================
@@ -1224,8 +1220,7 @@ function VerificationDocuments() {
                 color: "#cbd5e1",
               }}
             >
-              The following are review areas, not completed security checks.
-              Each remains pending until an authorized reviewer records its result.
+              {t("vdReviewAreasPending")}
             </p>
 
             <div
@@ -1404,7 +1399,7 @@ function VerificationDocuments() {
 
               <p>
                 <strong>IFSE Review Status:</strong>{" "}
-                Pending server-side assessment and administrator review.
+                {t("vdReviewStatusPending")}
               </p>
 
               <hr
@@ -1495,24 +1490,15 @@ function VerificationDocuments() {
   }}
 >
   <h2>{t("vdIfseNotice")}</h2>
-  <p>
-    IFSE authorizes document uploads, stores them as private authenticated
-    Cloudinary assets, and records the submission for audit. Only the applicant
-    or an authorized administrator can request a short-lived access link.
-  </p>
-  <p>
-    This upload screen does not perform OCR, document authenticity checks,
-    malware scanning, AI fraud detection, duplicate detection or final identity
-    approval. Those checks remain pending until a trusted service and an
-    authorized reviewer complete them.
-  </p>
+  <p>{t("vdUploadStorageDetails")}</p>
+  <p>{t("vdChecksNotPerformed")}</p>
   <ul style={{ lineHeight: "2", marginTop: "16px" }}>
-    <li>○ Authenticated server-authorized upload</li>
-    <li>○ Allowed file types and 10 MB size limit</li>
-    <li>○ Private Cloudinary document storage</li>
-    <li>○ Short-lived signed document access for the applicant or administrator</li>
-    <li>○ Application, timeline and audit records</li>
-    <li>○ Manual identity and document review pending</li>
+    <li>{t("vdUploadControl1")}</li>
+    <li>{t("vdUploadControl2")}</li>
+    <li>{t("vdUploadControl3")}</li>
+    <li>{t("vdUploadControl4")}</li>
+    <li>{t("vdUploadControl5")}</li>
+    <li>{t("vdUploadControl6")}</li>
   </ul>
 </section>
                     /*
