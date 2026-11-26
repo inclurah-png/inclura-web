@@ -975,7 +975,7 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
   const paymentRequired = req.body?.paymentRequired;
   if (!config || !requiredApprovals || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId) ||
       notes.length < 5 || notes.length > 2000 || typeof paymentRequired !== "boolean" ||
-      requiredApprovals.some((key) => approvals[key] !== true)) {
+      requiredApprovals.some((key) => typeof approvals[key] !== "string" || approvals[key].trim().length < 3)) {
     return res.status(400).json({ success: false, message: "All required final approvals, a payment requirement decision and authorization notes are required." });
   }
   try {
@@ -1031,7 +1031,7 @@ router.post("/partnerships/:type/:partnershipId/activate", async (req, res) => {
         paymentRequirementReviewedBy: req.adminUid,
         paymentRequirementReviewedAt: now,
         finalApprovals: Object.fromEntries(requiredApprovals.map((key) => [key, {
-          approved: true, approvedBy: req.adminUid, approvedAt: now,
+          approved: true, reference: approvals[key].trim(), approvedBy: req.adminUid, approvedAt: now,
         }])),
         finalApprovalNotes: notes,
         finalApprovedBy: req.adminUid,
