@@ -68,7 +68,7 @@ const PORT =
 // origins and allow local Vite development.
 const ALLOWED_ORIGINS = (
   process.env.CORS_ORIGINS ||
-  "https://inclura-web.pages.dev,https://inclura-prod-90734.web.app,http://localhost:5173,http://localhost:4173"
+  "https://inclura-web.pages.dev,https://fix-auth-payment-security.inclura-web.pages.dev,https://inclura-prod-90734.web.app,http://localhost:5173,http://localhost:4173"
 )
   .split(",")
   .map((item) => item.trim())
