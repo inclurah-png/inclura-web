@@ -1041,11 +1041,19 @@ service cloud.firestore {
       allow create: if request.auth != null
         && request.resource.data.partnershipId is string
         && ownsPartnership(request.resource.data.partnershipId)
-        && request.resource.data.title in [
-          'Application Submitted', 'Security Review', 'Accessibility Review',
-          'Compliance Review', 'Executive Approval', 'Activation'
-        ]
-        && request.resource.data.status in ['Completed', 'Pending']
+        && (
+          (
+            request.resource.data.title == 'Application Submitted'
+            && request.resource.data.status == 'Completed'
+          )
+          || (
+            request.resource.data.title in [
+              'Security Review', 'Accessibility Review', 'Compliance Review',
+              'Executive Approval', 'Activation'
+            ]
+            && request.resource.data.status == 'Pending'
+          )
+        )
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
@@ -1058,11 +1066,19 @@ service cloud.firestore {
         && request.resource.data.partnershipId is string
         && ownsPartnership(request.resource.data.partnershipId)
         && request.resource.data.partnershipType == 'corporate'
-        && request.resource.data.title in [
-          'Application Submitted', 'Security Review', 'Accessibility Review',
-          'Compliance Review', 'Executive Approval', 'Activation'
-        ]
-        && request.resource.data.status in ['Completed', 'Pending']
+        && (
+          (
+            request.resource.data.title == 'Application Submitted'
+            && request.resource.data.status == 'Completed'
+          )
+          || (
+            request.resource.data.title in [
+              'Security Review', 'Accessibility Review', 'Compliance Review',
+              'Executive Approval', 'Activation'
+            ]
+            && request.resource.data.status == 'Pending'
+          )
+        )
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
         && (request.auth.token.admin == true
