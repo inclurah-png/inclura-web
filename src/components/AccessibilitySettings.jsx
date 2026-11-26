@@ -45,7 +45,6 @@ function SettingRow({ label, description, children, controlId }) {
             <label
               htmlFor={controlId}
               style={{
-                display: "block",
                 minHeight: "44px",
                 display: "flex",
                 flexDirection: "column",
