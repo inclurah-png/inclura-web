@@ -5,13 +5,23 @@ service cloud.firestore {
     // Email ownership must be confirmed before an account can publish or contact members.
     function isVerifiedMember() {
       return request.auth != null
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email_verified == true
+        && isActiveAccount();
     }
 
     function isVerifiedAdmin() {
       return request.auth != null
         && request.auth.token.admin == true
-        && request.auth.token.email_verified == true;
+        && request.auth.token.email_verified == true
+        && isActiveAccount();
+    }
+
+    function isActiveAccount() {
+      return request.auth != null
+        && (
+          !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('status', 'active') == 'active'
+        );
     }
 
     // Public share snapshots contain only creator-approved display fields.
@@ -393,17 +403,7 @@ service cloud.firestore {
                           && request.auth.uid in resource.data.get('followers', [])
                         )
                       )
-                    ) || (
-                      request.auth != null
-                      && isVerifiedAdmin()
-                      && request.resource.data.diff(resource.data).affectedKeys()
-                         .hasOnly([
-                           'status',
-                           'suspendedAt',
-                           'bannedAt',
-                           'restoredAt'
-                         ])
-                    );
+                     );
     }
 
     // Executive analytics are private. Only a signed-in account whose own
