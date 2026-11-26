@@ -11,6 +11,8 @@ import {
 
 import { useEffect, useMemo, useState } from "react";
 
+const makeVerificationTxRef = (uid) => "INCLURA-VERIFICATION-" + (uid || "USER") + "-" + (globalThis.crypto?.randomUUID?.() || (Date.now() + "-" + Math.random().toString(36).slice(2, 10)));
+
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { auth } from "../firebase";
@@ -29,6 +31,7 @@ const verificationId = routeState.verificationId || "";
 const [currentUser, setCurrentUser] = useState(null);
 
 const [loading, setLoading] = useState(false);
+const [flutterwaveTxRef, setFlutterwaveTxRef] = useState(() => makeVerificationTxRef(auth.currentUser?.uid));
 
 const [error, setError] = useState("");
 
@@ -114,8 +117,6 @@ return `IFSE-${Date.now()}`;
 
 }, []);
 
-// Keep the application reference separate from Flutterwave's unique payment-attempt reference.
-const flutterwaveTxRef = `INCLURA-VERIFICATION-${currentUser?.uid || "USER"}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 
 const calculatePaymentRisk = () => {
 
@@ -383,12 +384,14 @@ const handlePayment = async (e) => {
       }
 
       setLoading(false);
+      setFlutterwaveTxRef(makeVerificationTxRef(currentUser?.uid));
 
     },
 
     onClose: () => {
 
       setLoading(false);
+      setFlutterwaveTxRef(makeVerificationTxRef(currentUser?.uid));
 
     },
 
