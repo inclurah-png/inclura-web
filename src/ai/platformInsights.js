@@ -25,10 +25,21 @@ export async function updatePlatformInsights() {
 
       totalUsers++;
 
-      if (
-        user.premiumPlan &&
-        user.premiumPlan.active === true
-      ) {
+      const expiryValue = user.premiumExpiryDate;
+      const expiryDate = expiryValue && typeof expiryValue.toDate === "function"
+        ? expiryValue.toDate()
+        : expiryValue
+          ? new Date(expiryValue)
+          : null;
+      const hasPremiumEntitlement =
+        user.premium === true ||
+        user.premiumActive === true ||
+        user.premiumPlan?.active === true;
+      const premiumIsCurrent =
+        !expiryDate ||
+        (Number.isFinite(expiryDate.getTime()) && expiryDate.getTime() > Date.now());
+
+      if (hasPremiumEntitlement && premiumIsCurrent) {
         premiumUsers++;
       }
 
@@ -43,11 +54,16 @@ export async function updatePlatformInsights() {
         qualifiedCreators++;
       }
 
+      const lastLoginValue = user.lastLogin;
+      const lastLoginDate = lastLoginValue && typeof lastLoginValue.toDate === "function"
+        ? lastLoginValue.toDate()
+        : lastLoginValue
+          ? new Date(lastLoginValue)
+          : null;
       if (
-        user.lastLogin &&
-        Date.now() -
-          user.lastLogin.toMillis() <
-          1000 * 60 * 60 * 24 * 20
+        lastLoginDate &&
+        Number.isFinite(lastLoginDate.getTime()) &&
+        Date.now() - lastLoginDate.getTime() < 1000 * 60 * 60 * 24 * 20
       ) {
         activeUsers++;
       }
