@@ -51,7 +51,9 @@ async function verifyPrivateCloudinaryDocuments(userId, documents) {
       },
     });
     if (!response.ok) {
-      throw new Error("A submitted document could not be verified in private storage.");
+      const error = new Error("A submitted document could not be verified in private storage.");
+      error.statusCode = [401, 403, 429].includes(response.status) || response.status >= 500 ? 503 : 409;
+      throw error;
     }
 
     const asset = await response.json();
@@ -339,7 +341,8 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
     if (
       preflightApplication.documentsSubmitted !== true ||
       preflightApplication.documentSubmissionStatus !== "submitted" ||
-      preflightDocuments.length === 0
+      preflightDocuments.length === 0 ||
+      preflightDocuments.length > 20
     ) {
       return res.status(409).json({ success: false, message: "Required verification documents must be securely submitted before approval." });
     }
@@ -489,7 +492,7 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
     const status = error.statusCode ||
       (/administrators cannot|banned or suspended|must be active and email verified/i.test(error.message) ? 403 :
       /verification application not found|applicant account not found/i.test(error.message) ? 404 :
-      /payment|documents|already been closed|conflicting verification|application changed/i.test(error.message) ? 409 : 500);
+      /payment|document|already been closed|conflicting verification|application changed/i.test(error.message) ? 409 : 500);
     return res.status(status).json({ success: false, message: error.message || "Approval failed." });
   }
 });
