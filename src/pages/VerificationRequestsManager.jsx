@@ -117,11 +117,7 @@ color: "white",
 
 <p><strong>Status:</strong> {request.status}</p>
 
-<p><strong>IFSE Score:</strong> {request.ifseScore}</p>
-
-<p><strong>IFSE Status:</strong> {request.ifseStatus}</p>
-
-<p><strong>IFSE Badge:</strong> {request.ifseBadge}</p>
+<p><strong>IFSE Assessment:</strong> Awaiting trusted server-side checks and administrator review. Client-submitted scores or badges are not used for approval.</p>
 
 <p>
   <strong>Executive Review:</strong>{" "}
