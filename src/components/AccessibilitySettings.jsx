@@ -201,7 +201,7 @@ function AccessibilitySettings() {
           id="accessibility-voice-heading"
           style={{ fontSize: "16px", margin: "0 0 8px" }}
         >
-          Voice guidance
+          {t("voiceGuidance")}
         </h3>
 
         <SettingRow
@@ -249,7 +249,7 @@ function AccessibilitySettings() {
                 onClick={stopSpeaking}
                 style={buttonStyle}
               >
-                Stop speaking
+                {t("stopSpeaking")}
               </button>
             )}
           </div>
@@ -268,7 +268,7 @@ function AccessibilitySettings() {
           id="accessibility-profile-heading"
           style={{ fontSize: "16px", margin: "0 0 8px" }}
         >
-          Accessibility profile
+          {t("accessibilityProfile")}
         </h3>
 
         <p style={{ fontSize: "12px", color: "#cbd5e1" }}>
