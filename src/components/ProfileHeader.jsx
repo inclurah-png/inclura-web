@@ -290,21 +290,38 @@ function ProfileHeader({
             alignItems: "center",
           }}
         >
-          <img
-            src={
-              uploadedPhotoURL ||
-              "https://via.placeholder.com/120"
-            }
-            alt={`${profileName} profile`}
-            style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              objectFit: "cover",
-              border:
-                "4px solid #38bdf8",
-            }}
-          />
+          {uploadedPhotoURL ? (
+            <img
+              src={uploadedPhotoURL}
+              alt={`${profileName} profile`}
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                objectFit: "cover",
+                border: "4px solid #38bdf8",
+              }}
+            />
+          ) : (
+            <div
+              role="img"
+              aria-label={`${profileName} profile initials`}
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                display: "grid",
+                placeItems: "center",
+                background: "#134e4a",
+                color: "#facc15",
+                border: "4px solid #38bdf8",
+                fontSize: "44px",
+                fontWeight: 800,
+              }}
+            >
+              {(profileName || "Inclura").trim().charAt(0).toUpperCase()}
+            </div>
+          )}
 
           <button
             onClick={() =>
