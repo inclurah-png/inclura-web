@@ -406,6 +406,12 @@ service cloud.firestore {
                      );
     }
 
+    // Account moderation records are server-generated and immutable to clients.
+    match /userModerationAuditLogs/{logId} {
+      allow get, list: if isVerifiedAdmin();
+      allow create, update, delete: if false;
+    }
+
     // Executive analytics are private. Only a signed-in account whose own
     // profile explicitly carries role: "admin" may read the single report.
     // Client-side writes and collection listing are never permitted.
