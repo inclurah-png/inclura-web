@@ -24,3 +24,22 @@ export async function verifyFlutterwavePayment(payload) {
   }
   return result;
 }
+
+export async function initializeFlutterwavePayment(payload) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Please sign in again before starting checkout.");
+  const idToken = await user.getIdToken();
+  const response = await fetch(`${IFSE_API_URL}/api/payments/initialize`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok || result.success !== true || !result.txRef) {
+    throw new Error(result.message || "The payment checkout could not be initialized.");
+  }
+  return result;
+}
