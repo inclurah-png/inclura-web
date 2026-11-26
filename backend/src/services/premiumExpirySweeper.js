@@ -9,14 +9,17 @@ export async function runPremiumExpirySweep() {
     const db = firestore();
     const now = new Date();
     const snapshot = await db.collection("users")
-      .where("premium", "==", true)
       .where("premiumExpiryDate", "<=", now)
       .limit(400)
       .get();
 
-    if (snapshot.empty) return { skipped: false, expired: 0 };
+    const expiredUsers = snapshot.docs.filter((userDoc) => {
+      const data = userDoc.data();
+      return data.premium === true || data.premiumActive === true;
+    });
+    if (expiredUsers.length === 0) return { skipped: false, expired: 0 };
     const batch = db.batch();
-    snapshot.docs.forEach((userDoc) => {
+    expiredUsers.forEach((userDoc) => {
       batch.set(userDoc.ref, {
         premium: false,
         premiumActive: false,
@@ -25,7 +28,7 @@ export async function runPremiumExpirySweep() {
       }, { merge: true });
     });
     await batch.commit();
-    return { skipped: false, expired: snapshot.size };
+    return { skipped: false, expired: expiredUsers.length };
   } finally {
     expirySweepRunning = false;
   }
