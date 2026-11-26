@@ -129,6 +129,7 @@ export async function uploadVerificationDocumentToCloudinary(file) {
       body: JSON.stringify({
         category: "verificationDocument",
         mimeType: file.type,
+        fileSize: file.size,
       }),
     }
   );
@@ -192,7 +193,7 @@ export async function uploadPartnershipContract(type, partnershipId, file) {
   const signingResponse = await fetch(IFSE_API_BASE + "/api/media/sign-upload", {
     method: "POST",
     headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
-    body: JSON.stringify({ category: "partnershipContract", mimeType: file.type }),
+    body: JSON.stringify({ category: "partnershipContract", mimeType: file.type, fileSize: file.size }),
   });
   const signingData = await signingResponse.json().catch(() => ({}));
   if (!signingResponse.ok || !signingData.success) {
