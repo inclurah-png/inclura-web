@@ -4,7 +4,7 @@ const makeTxRef = (uid) => "INCLURA-CREATOR-" + (uid || "USER") + "-" + (globalT
 import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import { auth } from "../firebase";
 import { VERIFICATION_PLANS } from "../config";
-import { verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
+import { initializeFlutterwavePayment, verifyFlutterwavePayment } from "../services/verifyFlutterwavePayment";
 
 function CreatorVerificationPayment() {
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ function CreatorVerificationPayment() {
     },
   });
 
-  function payNow() {
+  async function payNow() {
     if (!auth.currentUser) {
       alert("Please sign in before making payment.");
       return;
@@ -42,6 +42,19 @@ function CreatorVerificationPayment() {
     }
 
     setLoading(true);
+    try {
+      const initialized = await initializeFlutterwavePayment({
+        purpose: "creator_verification",
+        txRef,
+      });
+      if (Number(initialized.amount) !== verificationFee || initialized.currency !== "USD" || initialized.txRef !== txRef) {
+        throw new Error("The server checkout details do not match creator verification pricing.");
+      }
+    } catch (error) {
+      setLoading(false);
+      alert(error.message || "Secure checkout could not be initialized.");
+      return;
+    }
     handleFlutterPayment({
       callback: async (response) => {
         try {
