@@ -116,26 +116,27 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         verifiedAt: now,
         lastVerificationUpdate: now,
       }, { merge: true });
-      if (!badgeSnap.exists) {
-        tx.create(badgeRef, {
-          verificationId: id,
-          userId,
-          badgeType: application.accountType || "",
-          verificationType: application.verificationType || "",
-          category: application.category || "",
-          issuedAt: now,
-          active: true,
-        });
-      }
-      if (!certificateSnap.exists) {
-        tx.create(certificateRef, {
-          verificationId: id,
-          userId,
-          certificateNumber,
-          issuedAt: now,
-          status: "active",
-        });
-      }
+      const badgeData = {
+        verificationId: id,
+        userId,
+        badgeType: application.accountType || "",
+        verificationType: application.verificationType || "",
+        category: application.category || "",
+        issuedAt: now,
+        active: true,
+      };
+      if (badgeSnap.exists) tx.set(badgeRef, badgeData, { merge: true });
+      else tx.create(badgeRef, badgeData);
+
+      const certificateData = {
+        verificationId: id,
+        userId,
+        certificateNumber: certificateSnap.data()?.certificateNumber || certificateNumber,
+        issuedAt: now,
+        status: "active",
+      };
+      if (certificateSnap.exists) tx.set(certificateRef, certificateData, { merge: true });
+      else tx.create(certificateRef, certificateData);
       tx.create(timelineRef, {
         verificationId: id,
         title: "Executive Approval",
