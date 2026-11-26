@@ -772,97 +772,38 @@ marginBottom: "35px",
 
 <>
 
-  <h3 style={{ marginBottom: "16px" }}>
-  Uploaded Verification Documents
-</h3>
+  <h3 style={{ marginBottom: "16px" }}>Uploaded Verification Documents</h3>
 
-{selectedRequest.documents &&
-selectedRequest.documents.length > 0 ? (
-
-  <div
-    style={{
-      display: "grid",
-      gap: "16px",
-      marginBottom: "24px",
-    }}
-  >
-
-    {selectedRequest.documents.map((file, index) => (
-
-      <div
-        key={index}
-        style={{
-          background: "#111827",
-          padding: "14px",
-          borderRadius: "10px",
-          border: "1px solid #334155",
-        }}
-      >
-
-        <p>
-          <strong>{file.name || `Document ${index + 1}`}</strong>
-        </p>
-
-        {file.url &&
-(file.url.toLowerCase().includes(".pdf") ? (
-
-  <iframe
-    src={file.url}
-    title={file.name}
-    style={{
-      width: "100%",
-      height: "420px",
-      border: "none",
-      marginTop: "10px",
-      borderRadius: "8px",
-      background: "#fff",
-    }}
-  />
-
-) : (
-
-  <img
-    src={file.url}
-    alt={file.name}
-    style={{
-      width: "100%",
-      maxHeight: "300px",
-      objectFit: "contain",
-      marginTop: "10px",
-      borderRadius: "8px",
-    }}
-  />
-
-))}
-
-        {file.url && (
-          <div style={{ marginTop: "12px" }}>
-            <a
-              href={file.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                color: "#38bdf8",
-                textDecoration: "none",
-              }}
-            >
-              Open Full Document
-            </a>
-          </div>
+{documentsLoading ? (
+  <p role="status" aria-live="polite">Authorizing secure document access…</p>
+) : documentsError ? (
+  <p role="alert" aria-live="assertive">{documentsError}</p>
+) : selectedDocuments.length > 0 ? (
+  <div style={{ display: "grid", gap: "16px", marginBottom: "24px" }}>
+    {selectedDocuments.map((file) => (
+      <div key={file.id} style={{ background: "#111827", padding: "14px", borderRadius: "10px", border: "1px solid #334155" }}>
+        <p><strong>{file.name}</strong></p>
+        {file.fileType === "application/pdf" ? (
+          <iframe src={file.url} title={file.name} style={{ width: "100%", height: "420px", border: "none", marginTop: "10px", borderRadius: "8px", background: "#fff" }} />
+        ) : (
+          <img src={file.url} alt={file.name} style={{ width: "100%", maxHeight: "300px", objectFit: "contain", marginTop: "10px", borderRadius: "8px" }} />
         )}
-
+        <div style={{ marginTop: "12px" }}>
+          <a href={file.url} target="_blank" rel="noopener noreferrer" style={{ color: "#38bdf8", textDecoration: "none" }}>
+            Open secure document
+          </a>
+        </div>
       </div>
-
     ))}
-
   </div>
-
 ) : (
-
-  <p>No uploaded documents found.</p>
-
+  <p>No uploaded verification documents were found for this application.</p>
 )}
-  
+
+<button type="button" onClick={() => setDocumentRefreshKey((value) => value + 1)} disabled={documentsLoading} style={smallButtonStyle}>
+  Refresh secure document links
+</button>
+
 <p>
 
 <strong>Name:</strong>
@@ -920,27 +861,7 @@ selectedRequest.officialEmail ||
 
 </p>
 
-<p>
-
-<strong>Risk Score:</strong>
-
-{" "}
-
-{selectedRequest.riskScore ??
-"Not Calculated"}
-
-</p>
-
-<p>
-
-<strong>Threat Level:</strong>
-
-{" "}
-
-{selectedRequest.threatLevel ??
-"Unknown"}
-
-</p>
+<p><strong>IFSE assessment:</strong> Awaiting trusted server-side assessment. No client-generated risk score is used for approval.</p>
 
 <p>
 
@@ -965,7 +886,7 @@ selectedRequest.officialEmail ||
     color: "#38bdf8",
   }}
 >
-🛡 IFSE Security Summary
+Application Review Summary
 </h3>
 
 <div
@@ -978,42 +899,29 @@ selectedRequest.officialEmail ||
 >
 
   <div style={miniCard}>
-    <h4>Verification Score</h4>
+    <h4>Form Completeness Estimate</h4>
     <h2>{ifse?.score}</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>Threat Level</h4>
-    <h2>{ifse?.threatLevel}</h2>
+    <h4>Server Risk Assessment</h4>
+    <h2>Pending</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>AI Recommendation</h4>
+    <h4>Next Step</h4>
     <h2>{ifse?.recommendation}</h2>
   </div>
 
   <div style={miniCard}>
-    <h4>Duplicate Identity</h4>
-    <h2>
-      {selectedRequest?.duplicateIdentity
-        ? "⚠ Detected"
-        : "✅ Clear"}
-    </h2>
-  </div>
-
-  <div style={miniCard}>
-    <h4>Blacklist Status</h4>
-    <h2>
-      {selectedRequest?.blacklisted
-        ? "🚫 Blacklisted"
-        : "✅ Clean"}
-    </h2>
+    <h4>Payment Status</h4>
+    <h2>{selectedRequest?.paymentStatus || "Unknown"}</h2>
   </div>
 
   <div style={miniCard}>
     <h4>Documents Uploaded</h4>
     <h2>
-      {selectedRequest?.documents?.length || 0}
+      {selectedDocuments.length}
     </h2>
   </div>
 
