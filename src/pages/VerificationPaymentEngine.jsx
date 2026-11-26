@@ -498,7 +498,7 @@ Complete your verification payment securely through the
       >
 
         <div>
-          <strong>Verification Fee</strong>
+          <strong>{t("vaFee")}</strong>
           <p>
             $
             {selectedVerification.monthlyUSD ??
