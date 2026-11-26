@@ -8,6 +8,12 @@ service cloud.firestore {
         && request.auth.token.email_verified == true;
     }
 
+    function isVerifiedAdmin() {
+      return request.auth != null
+        && request.auth.token.admin == true
+        && request.auth.token.email_verified == true;
+    }
+
     // Public share snapshots contain only creator-approved display fields.
     // Anonymous visitors may fetch one active document by ID; collection listing is forbidden.
     match /publicSharedPosts/{postId} {
@@ -279,7 +285,7 @@ service cloud.firestore {
       // This is required by the publication Follow button to load the member's following list.
       allow get: if request.auth != null && request.auth.uid == userId;
       // Only a server-authorized administrator may enumerate private member records.
-      allow list: if request.auth != null && request.auth.token.admin == true;
+      allow list: if request.auth != null && isVerifiedAdmin();
 
       // A member may create their own profile document and update only
       // profile/accessibility fields belonging to that member.
@@ -389,7 +395,7 @@ service cloud.firestore {
                       )
                     ) || (
                       request.auth != null
-                      && request.auth.token.admin == true
+                      && isVerifiedAdmin()
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly([
                            'status',
@@ -407,7 +413,7 @@ service cloud.firestore {
       // Match the server-issued Firebase Authentication admin claim used
       // by the existing Users Management page. Never trust a profile field.
       return request.auth != null
-        && request.auth.token.admin == true;
+        && isVerifiedAdmin();
     }
 
     match /executiveReports/{reportId} {
@@ -732,9 +738,9 @@ service cloud.firestore {
     // Advertising records are owned by the submitting advertiser and moderated by administrators.
     match /advertisements/{advertisementId} {
       allow get: if request.auth != null
-        && (resource.data.advertiserId == request.auth.uid || request.auth.token.admin == true);
+        && (resource.data.advertiserId == request.auth.uid || isVerifiedAdmin());
       allow list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || resource.data.advertiserId == request.auth.uid);
       allow create: if isVerifiedMember()
         && request.resource.data.advertiserId == request.auth.uid
@@ -765,7 +771,7 @@ service cloud.firestore {
             ])
           )
           || (
-            request.auth.token.admin == true
+            isVerifiedAdmin()
             && request.resource.data.advertiserId == resource.data.advertiserId
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               'status','reviewedBy','reviewedAt','updatedAt'
@@ -802,7 +808,7 @@ service cloud.firestore {
     // Only administrators or separately designated SOS notification-only monitors may inspect them.
     match /ifseAuditLogs/{logId} {
       allow get, list: if request.auth != null
-                      && (request.auth.token.admin == true
+                      && (isVerifiedAdmin()
                           || request.auth.token.sosNotificationOnly == true);
       allow create, update, delete: if false;
     }
@@ -988,7 +994,7 @@ service cloud.firestore {
     match /pricing/{pricingId} {
       allow get, list: if request.auth != null;
       allow create, update, delete: if request.auth != null
-        && request.auth.token.admin == true;
+        && isVerifiedAdmin();
     }
 
     match /enterprisePartnerships/{partnershipId} {
@@ -1021,7 +1027,7 @@ service cloud.firestore {
         && request.resource.data.contractStatus == 'Inactive'
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
@@ -1053,7 +1059,7 @@ service cloud.firestore {
         && request.resource.data.contractStatus == 'Inactive'
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
@@ -1085,7 +1091,7 @@ service cloud.firestore {
         && request.resource.data.timeline[5].status == 'Pending'
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
@@ -1108,7 +1114,7 @@ service cloud.firestore {
         )
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
       allow update, delete: if false;
     }
@@ -1133,7 +1139,7 @@ service cloud.firestore {
         )
         && request.resource.data.createdAt is timestamp;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
       allow update, delete: if false;
     }
@@ -1154,7 +1160,7 @@ service cloud.firestore {
         && request.resource.data.createdAt is timestamp;
 
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || resource.data.userId == request.auth.uid
             || resource.data.submittedBy == request.auth.uid);
 
@@ -1188,7 +1194,7 @@ service cloud.firestore {
         ]
         && request.resource.data.status == 'Completed';
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
@@ -1199,14 +1205,14 @@ service cloud.firestore {
         && request.resource.data.submittedBy == request.auth.uid
         && ownsVerification(request.resource.data.verificationId);
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /creatorVerificationAuditLogs/{logId} {
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true || resource.data.userId == request.auth.uid);
+        && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow create, update, delete: if false;
     }
 
@@ -1228,7 +1234,7 @@ service cloud.firestore {
           )
         );
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId)
             || ownsPartnership(resource.data.verificationId));
       allow update, delete: if false;
@@ -1261,7 +1267,7 @@ service cloud.firestore {
         );
       allow get, list: if request.auth != null
         && (
-          request.auth.token.admin == true
+          isVerifiedAdmin()
           || resource.data.get('userId', null) == request.auth.uid
           || (
             resource.data.get('verificationId', null) is string
@@ -1277,7 +1283,7 @@ service cloud.firestore {
           )
         );
       allow update: if request.auth != null
-        && request.auth.token.admin == true
+        && isVerifiedAdmin()
         && (
           (
             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
@@ -1305,7 +1311,7 @@ service cloud.firestore {
       // Browser clients cannot self-assert a successful gateway payment.
       allow create: if false;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
@@ -1314,7 +1320,7 @@ service cloud.firestore {
       // IFSE creates payment-security events after gateway verification.
       allow create: if false;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
@@ -1323,7 +1329,7 @@ service cloud.firestore {
       // Audit records are server-generated and immutable to browser clients.
       allow create: if false;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
@@ -1332,7 +1338,7 @@ service cloud.firestore {
       // Payment timeline entries are written by the trusted backend.
       allow create: if false;
       allow get, list: if request.auth != null
-        && (request.auth.token.admin == true
+        && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
     }
