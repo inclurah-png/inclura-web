@@ -158,16 +158,12 @@ async function handleContinue() {
     // Identity, document, fraud and accessibility checks have not yet been
     // completed by a trusted server or authorized reviewer. Do not issue a
     // client-generated approval, score or badge.
-    const ifseTrustScore = null;
     const ifseResult = {
       status: "PENDING_SERVER_REVIEW",
       message: "Awaiting server-side verification and authorized administrator review.",
       badge: false,
       executiveReview: true,
     };
-    const riskScore = null;
-    const threatLevel = "UNASSESSED";
-
     // ==========================================
     // CREATE VERIFICATION REQUEST
     // ==========================================
