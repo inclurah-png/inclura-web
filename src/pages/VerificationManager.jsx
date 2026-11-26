@@ -892,7 +892,7 @@ marginBottom: "35px",
             <button type="button" disabled={Boolean(partnershipActionBusy) || application.contractVerificationStatus === "approved"} onClick={() => submitPartnershipContractReview(application, "approved")}>
               Verify contract
             </button>
-            <button type="button" disabled={Boolean(partnershipActionBusy)} onClick={() => submitPartnershipContractReview(application, "rejected")}>
+            <button type="button" disabled={Boolean(partnershipActionBusy) || stageConfig.some(([requiredStage]) => application.reviewProgress?.[requiredStage] !== true)} onClick={() => submitPartnershipContractReview(application, "rejected")}>
               Reject contract
             </button>
           </div>
