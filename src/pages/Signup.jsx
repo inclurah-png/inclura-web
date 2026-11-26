@@ -156,11 +156,7 @@ async function handleSignup() {
 setError(null);
 const cleanName = fullName.trim().replace(/\s+/g, " ");
 const cleanEmail = email.trim().toLowerCase();
-if (cleanName.length < 2 || cleanName.length >
-      <div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
-        <LanguageSelector />
-      </div>
- 80) {
+if (cleanName.length < 2 || cleanName.length > 80) {
   setError({ message: "Enter your real display name (2–80 characters)." });
   return;
 }
@@ -410,6 +406,10 @@ fontFamily:
 "Arial, sans-serif",
 }}
 >
+
+<div style={{ position: "fixed", top: "12px", right: "12px", zIndex: 10000 }}>
+  <LanguageSelector />
+</div>
 
 <div
 style={{
