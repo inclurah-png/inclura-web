@@ -72,7 +72,6 @@ export async function notifySOS(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS notification pipeline failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }
@@ -150,7 +149,6 @@ export async function sendSOSNotification(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS notification pipeline failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }
@@ -185,7 +183,6 @@ export async function testSOSNotification(req, res) {
     return res.status(500).json({
       success: false,
       message: "SOS test notification failed.",
-      details: String(error?.message || error).slice(0, 300),
     });
   }
 }
