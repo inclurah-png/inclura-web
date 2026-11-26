@@ -162,11 +162,15 @@ useEffect(() => {
     setAcceptedSecurity] =
     useState(false);
 
-  const [timeline,
-    setTimeline] =
-    useState([]);
+    const [timeline, setTimeline] = useState([
+    { title: "Application Started", status: "Completed" },
+    { title: "Enterprise Security Review", status: "Pending" },
+    { title: "Accessibility Review", status: "Pending" },
+    { title: "Compliance Review", status: "Pending" },
+    { title: "Enterprise Approval", status: "Pending" },
+  ]);
 
-  const [reviewProgress,
+const [reviewProgress,
     setReviewProgress] =
     useState({
       application: true,
@@ -176,53 +180,7 @@ useEffect(() => {
       integration: false,
       approval: false,
     });
-    useEffect(() => {
-
-    setTimeline([
-
-      {
-        title:
-          "Application Started",
-
-        status:
-          "Completed",
-      },
-
-      {
-        title:
-          "Enterprise Security Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Accessibility Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Compliance Review",
-
-        status:
-          "Pending",
-      },
-
-      {
-        title:
-          "Enterprise Approval",
-
-        status:
-          "Pending",
-      },
-
-    ]);
-      
-  }, []);
+    
   const securityLayers = [
 
     "IFSE Enterprise Identity Verification",
