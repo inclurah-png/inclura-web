@@ -531,7 +531,7 @@ const finalizePartnershipActivation = async (application) => {
     if (!reference || reference.trim().length < 3) return;
     approvals[key] = reference.trim();
   }
-  const paymentDecision = window.prompt("Does the negotiated agreement require payment before activation? Type YES or NO.");
+  const paymentDecision = window.prompt("Does the negotiated agreement require payment before activation? Type YES or NO. IMPORTANT: if YES, activation will remain blocked until a partnership-specific server-verified payment record exists; do not mark NO unless the signed agreement confirms no payment is due.");
   if (!paymentDecision || !["YES", "NO"].includes(paymentDecision.trim().toUpperCase())) return;
   const paymentRequired = paymentDecision.trim().toUpperCase() === "YES";
   const notes = window.prompt("Enter the final authorization and activation notes:");
