@@ -161,6 +161,16 @@ export async function testSOSNotification(req, res) {
     ? req.body.channel
     : "both";
 
+  // Ordinary members may test push delivery only to their own signed-in device.
+  // SMS/email test recipients are shared operational contacts and are restricted
+  // to administrators to prevent members from triggering unwanted test messages.
+  if (channel !== "push" && req.user?.token?.admin !== true) {
+    return res.status(403).json({
+      success: false,
+      message: "Only an administrator may send SMS or email test notifications.",
+    });
+  }
+
   try {
     if (dryRun) {
       return res.status(200).json({
