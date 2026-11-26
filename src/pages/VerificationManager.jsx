@@ -1132,6 +1132,14 @@ Revenue By Verification Category
   </div>
 
   <div style={miniCard}>
+    <h4>Group</h4>
+    <h2>
+      $
+      {verificationRevenue.groupRevenue.toLocaleString()}
+    </h2>
+  </div>
+
+  <div style={miniCard}>
     <h4>Organization</h4>
     <h2>
       $
