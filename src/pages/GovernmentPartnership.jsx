@@ -386,11 +386,11 @@ try {
       userId: currentUser.uid,
 
       riskScore,
-
+      riskScoreSource: "member_self_assessment",
       threatLevel,
-
-      executiveReviewRequired:
-        riskScore >= 70,
+      threatLevelSource: "member_self_assessment",
+      executiveReviewRequired: riskScore >= 70,
+      executiveReviewSource: "member_self_assessment",
 
       createdAt: serverTimestamp(),
 
@@ -417,16 +417,9 @@ try {
 
       source: "member_submission",
 
-      riskScore,
-
-      threatLevel,
-
+      assessmentStatus: "pending_server_review",
       reviewed: false,
-
       resolved: false,
-
-      executiveReview:
-        riskScore >= 70,
 
       createdAt:
         serverTimestamp(),
@@ -785,7 +778,8 @@ try {
 
 <section className="government-security">
 
-  <h2>IFSE Security Assessment</h2>
+  <h2>Requested Review Areas (Pending)</h2>
+  <p>These are review categories only. No security, identity, accessibility or compliance check is complete until an authorized reviewer records its outcome.</p>
 
   <ul>
 
@@ -813,7 +807,8 @@ try {
 
 <section className="government-risk">
 
-  <h2>Government Risk Assessment</h2>
+  <h2>Preliminary Applicant Self-Assessment</h2>
+  <p>This estimate is calculated from the application form only. It is not a server-verified IFSE finding and does not determine approval.</p>
 
   <p>
 
