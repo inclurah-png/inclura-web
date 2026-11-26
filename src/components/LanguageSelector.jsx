@@ -15,7 +15,6 @@ function LanguageSelector({ onLanguageChange }) {
 
   async function changeLanguage(code) {
     setLanguage(code);
-    localStorage.setItem("inclura-language", code);
 
     if (typeof onLanguageChange === "function") {
       await onLanguageChange(code);
