@@ -84,14 +84,6 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         throw new Error("A conflicting verification certificate record already exists.");
       }
 
-      const trustScore = Math.max(0, Math.min(100,
-        Number(application.ifseScore ?? application.ifseTrustScore ?? 0) || 0
-      ));
-      const riskScore = Math.max(0, Math.min(100,
-        Number(application.riskScore ?? (100 - trustScore)) || 0
-      ));
-      const threatLevel = riskScore >= 80 ? "CRITICAL" :
-        riskScore >= 60 ? "HIGH" : riskScore >= 35 ? "MEDIUM" : "LOW";
       const now = new Date();
       const certificateNumber = "INC-" + id.slice(-12).toUpperCase();
 
@@ -99,7 +91,8 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         status: "approved",
         verificationActive: true,
         ifseDecision: "Administrator Approved",
-        ifseFinalScore: trustScore,
+        ifseFinalScore: null,
+        ifseScoreSource: "not_server_verified",
         approvedAt: now,
         approvedBy: req.adminUid,
         updatedAt: now,
@@ -113,10 +106,6 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
         badgeType: application.accountType || "",
         verificationBadgeId: id,
         verificationCertificateId: id,
-        ifseStatus: application.ifseStatus || "",
-        ifseScore: trustScore,
-        ifseBadge: application.ifseBadge || "",
-        executiveReview: application.executiveReview === true,
         verifiedAt: now,
         lastVerificationUpdate: now,
       }, { merge: true });
@@ -157,8 +146,9 @@ router.post("/verification/:verificationId/approve", async (req, res) => {
       tx.create(securityRef, {
         verificationId: id,
         eventType: "Verification Approved",
-        threatLevel,
-        riskScore,
+        threatLevel: "MANUAL_REVIEW",
+        riskScore: null,
+        scoreSource: "not_server_verified",
         resolved: true,
         createdAt: now,
       });
