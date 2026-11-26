@@ -263,11 +263,11 @@ async function submitMediaStory(file, mediaType) {
       userName: profile?.fullName || user.displayName || "Inclura User",
       profilePhoto: profile?.profilePhoto || profile?.photoURL || user.photoURL || "",
       verified: profile?.verified || false,
-      badgeType: migrateVerificationId(profile?.badgeType),
+      badgeType: profile?.badgeType || "",
       verificationMetadata: profile?.verified
-        ? getVerificationMetadata(migrateVerificationId(profile?.badgeType))
+        ? getVerificationMetadata(profile?.badgeType || "")
         : null,
-      role: profile?.role || "individual",
+      role: profile?.role || "user",
       category: profile?.category || "Member",
       accessibilityNeeds: profile?.accessibilityNeeds || [],
       premium: profile?.premium || false,
