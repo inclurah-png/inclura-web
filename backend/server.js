@@ -47,6 +47,10 @@ initializeFirebaseAdmin();
 
 const app = express();
 
+// Render terminates TLS at one trusted reverse-proxy hop. This lets
+// req.ip identify the client for the IFSE passkey rate limiter.
+app.set("trust proxy", 1);
+
 // =======================================================
 // Configuration
 // =======================================================
