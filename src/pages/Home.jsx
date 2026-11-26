@@ -137,7 +137,7 @@ function Home() {
                 fontWeight: "700",
               }}
             >
-              Try biometrics demo
+              Try camera preview and passkeys
             </button>
           </Link>
 
