@@ -177,7 +177,7 @@ const [verificationRevenue, setVerificationRevenue] =
   requests
     .filter(
       item =>
-        item.status === "submitted"
+        ["pending", "submitted"].includes(item.status)
     )
     .sort((a, b) => {
 
@@ -201,7 +201,7 @@ setRecentRequests(
 
         pending: requests.filter(
           item =>
-            item.status === "submitted"
+            ["pending", "submitted"].includes(item.status)
         ).length,
 
         underReview: requests.filter(
@@ -231,31 +231,17 @@ setRecentRequests(
 
       });
 
-      const creatorSnapshot =
-  await getDocs(
-    query(
-      collection(db, "verificationRequests"),
-      where("category", "==", "creator"),
-      where("status", "==", "submitted")
-    )
-  );
-
-setCreatorPending(
-  creatorSnapshot.size
-);
-
-const organizationSnapshot =
-  await getDocs(
-    query(
-      collection(db, "verificationRequests"),
-      where("category", "==", "organization"),
-      where("status", "==", "submitted")
-    )
-  );
-
-setOrganizationPending(
-  organizationSnapshot.size
-);
+      const openRequestStatuses = ["pending", "submitted"];
+      setCreatorPending(
+        requests.filter((item) =>
+          item.category === "creator" && openRequestStatuses.includes(item.status)
+        ).length
+      );
+      setOrganizationPending(
+        requests.filter((item) =>
+          item.category === "organization" && openRequestStatuses.includes(item.status)
+        ).length
+      );
 
 const enterpriseSnapshot =
   await getDocs(
