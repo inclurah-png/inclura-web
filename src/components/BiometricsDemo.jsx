@@ -392,26 +392,8 @@ export default function BiometricsDemo() {
   // PASSKEY AUTHENTICATION
   // ============================================================
 
-  /*
-   * IMPORTANT:
-   *
-   * We are deliberately NOT attempting startAuthentication()
-   * here yet.
-   *
-   * WebAuthn authentication must receive a fresh challenge
-   * from IFSE. The previous code tried to use an undefined
-   * "challenge" variable and an undefined local credential.
-   *
-   * We will connect this button to:
-   *
-   *   /api/identity/authenticate/options
-   *
-   * and:
-   *
-   *   /api/identity/authenticate/verify
-   *
-   * once those IFSE routes are ready.
-   */
+  // This protected-page action tests passkey re-authentication. The public
+  // sign-in flow for signed-out members is provided on the Inclura login page.
 
   const handleAuthenticatePasskey = async () => {
     try {
@@ -491,7 +473,7 @@ export default function BiometricsDemo() {
           marginBottom: "8px",
         }}
       >
-        MediaPipe + Passkey Demo
+        Camera Preview & Passkey Management
       </h1>
 
       <p
@@ -500,11 +482,9 @@ export default function BiometricsDemo() {
           marginBottom: "24px",
         }}
       >
-        This route demonstrates browser-based face
-        landmarking and WebAuthn passkey creation.
-        For production deployments, WebAuthn responses
-        must be verified by the IFSE backend and
-        registration data must be stored securely.
+        Passkey registration and authentication are verified by the IFSE backend.
+        The camera preview only detects facial landmarks locally; it does not
+        identify or verify a person, and the camera stream is not uploaded.
       </p>
 
       <div
@@ -533,7 +513,7 @@ export default function BiometricsDemo() {
               marginTop: 0,
             }}
           >
-            Face Landmarker
+Local Face-Landmark Preview (Not Identity Verification)
           </h2>
 
           <p
@@ -677,7 +657,7 @@ export default function BiometricsDemo() {
                   : 0.8,
               }}
             >
-              Sign in with Passkey
+Test Passkey Re-authentication
             </button>
           </div>
         </section>
