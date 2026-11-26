@@ -314,38 +314,9 @@ setGovernmentPending(
         ...doc.data(),
       }));
 
-      const requestsWithRisk = await Promise.all(
+      setVerificationRequests(requests);
 
-  requests.map(async (request) => {
 
-    const riskResult =
-      await calculateIFSERisk(request);
-
-    return {
-
-      ...request,
-
-      riskScore:
-        riskResult.riskScore,
-
-      threatLevel:
-        riskResult.threatLevel,
-
-      executiveReview:
-        riskResult.executiveReview,
-
-      riskReasons:
-        riskResult.reasons,
-
-    };
-
-  })
-
-);
-
-setVerificationRequests(
-  requestsWithRisk
-);
 
     } catch (err) {
 
@@ -672,40 +643,21 @@ const handleReject = async (requestId) => {
   await submitAdminDecision(requestId, "reject", reason.trim());
 };
 
-const calculateIFSERisk = (request) => {
-      
-  let score = 100;
-
-  if (!request.email && !request.officialEmail) score -= 10;
-  if (!request.country) score -= 5;
-  if (!request.documents || request.documents.length === 0) score -= 30;
-  if (request.duplicateIdentity) score -= 40;
-  if (request.blacklisted) score -= 60;
-
-  if (score < 0) score = 0;
-
-  let threatLevel = "LOW";
-
-  if (score < 80) threatLevel = "MEDIUM";
-  if (score < 50) threatLevel = "HIGH";
-  if (score < 25) threatLevel = "CRITICAL";
-
-  let recommendation = "Approve";
-
-  if (score < 80) recommendation = "Manual Review";
-  if (score < 50) recommendation = "Reject";
-
+const calculateApplicationCompleteness = (request) => {
+  const hasContact = Boolean(request.email || request.officialEmail);
+  const hasLocation = Boolean(request.country);
+  const documentCount = Object.keys(request.uploadedDocuments || {}).length;
+  const score = Math.round(
+    ((Number(hasContact) + Number(hasLocation) + Number(documentCount > 0)) / 3) * 100
+  );
   return {
     score,
-    threatLevel,
-    recommendation,
+    reviewSignal: "SERVER REVIEW PENDING",
+    recommendation: "Manual administrator review required; this is not an approval decision.",
   };
-};
+}
 
-const ifse =
-  selectedRequest
-    ? calculateIFSERisk(selectedRequest)
-    : null;
+const ifse = selectedRequest ? calculateApplicationCompleteness(selectedRequest) : null;
 
 return (
 <DashboardLayout>
@@ -1033,11 +985,6 @@ marginBottom: "35px",
   >
     Verification Review Panel
   </h2>
-const ifse =
-selectedRequest
-? calculateIFSERisk(selectedRequest)
-: null;
-  
 {selectedRequest ? (
 
 <>
