@@ -4,13 +4,13 @@ service cloud.firestore {
   match /databases/{database}/documents {
     // Email ownership must be confirmed before an account can publish or contact members.
     function isVerifiedMember() {
-      return request.auth != null
+      return isActiveAccount()
         && request.auth.token.email_verified == true
         && isActiveAccount();
     }
 
     function isVerifiedAdmin() {
-      return request.auth != null
+      return isActiveAccount()
         && request.auth.token.admin == true
         && request.auth.token.email_verified == true
         && isActiveAccount();
@@ -31,10 +31,10 @@ service cloud.firestore {
       // Anonymous visitors may fetch only active snapshots; collection listing stays forbidden.
       allow get: if resource == null
                  || resource.data.active == true
-                 || (request.auth != null && resource.data.ownerId == request.auth.uid);
+                 || (isActiveAccount() && resource.data.ownerId == request.auth.uid);
       allow list: if false;
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.ownerId == request.auth.uid
                     && request.resource.data.sourcePostId == postId
                     && get(/databases/$(database)/documents/posts/$(postId)).data.userId == request.auth.uid
@@ -72,7 +72,7 @@ service cloud.firestore {
       // The owner may activate/revoke the snapshot and replace its original
       // media URL with the secure watermarked Cloudinary copy after processing.
       // All other approved display fields remain immutable.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.ownerId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['active', 'imageUrl', 'videoUrl'])
@@ -103,10 +103,10 @@ service cloud.firestore {
     // Full source posts are never exposed to anonymous visitors.
     // Public links use the separate, minimal publicSharedPosts collection below.
     match /posts/{postId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       // Only the post owner may enable or disable external sharing, and no other post field may change here.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.userId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['externalShareEnabled'])
@@ -151,7 +151,7 @@ service cloud.firestore {
 
     // Comments are stored under each post.
     match /posts/{postId}/comments/{commentId} {
-      allow read: if request.auth != null;
+      allow read: if isActiveAccount();
       allow create: if isVerifiedMember()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.text is string
@@ -164,10 +164,10 @@ service cloud.firestore {
     match /chats/{chatId} {
       // A participant may check a deterministic chat ID before creating it.
       // Existing conversations remain readable only by their two participants.
-      allow get: if request.auth != null
+      allow get: if isActiveAccount()
                  && (resource == null
                      || request.auth.uid in resource.data.participants);
-      allow list: if request.auth != null
+      allow list: if isActiveAccount()
                   && request.auth.uid in resource.data.participants;
 
       allow create: if isVerifiedMember()
@@ -176,7 +176,7 @@ service cloud.firestore {
                     && request.auth.uid in request.resource.data.participants
                     && request.resource.data.createdBy == request.auth.uid;
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && request.auth.uid in resource.data.participants
                     && request.resource.data.participants == resource.data.participants
                     && request.resource.data.diff(resource.data).affectedKeys()
@@ -194,7 +194,7 @@ service cloud.firestore {
 
       match /messages/{messageId} {
         function isChatParticipant() {
-          return request.auth != null
+          return isActiveAccount()
                  && request.auth.uid in
                     get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
         }
@@ -293,13 +293,13 @@ service cloud.firestore {
     match /users/{userId} {
       // A signed-in member may read their own private profile document.
       // This is required by the publication Follow button to load the member's following list.
-      allow get: if request.auth != null && request.auth.uid == userId;
+      allow get: if isActiveAccount() && request.auth.uid == userId;
       // Only a server-authorized administrator may enumerate private member records.
-      allow list: if request.auth != null && isVerifiedAdmin();
+      allow list: if isActiveAccount() && isVerifiedAdmin();
 
       // A member may create their own profile document and update only
       // profile/accessibility fields belonging to that member.
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.auth.uid == userId
                     && request.resource.data.uid == userId
                     && request.resource.data.role == 'user'
@@ -346,7 +346,7 @@ service cloud.firestore {
                         || request.resource.data.acceptedCommunityStandardsAt is timestamp);
 
       allow update: if (
-                      request.auth != null
+                      isActiveAccount()
                       && request.auth.uid == userId
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly([
@@ -388,7 +388,7 @@ service cloud.firestore {
                       && (!('accessibilityNeeds' in request.resource.data)
                           || request.resource.data.accessibilityNeeds is list)
                     ) || (
-                      request.auth != null
+                      isActiveAccount()
                       && request.auth.uid != userId
                       && request.resource.data.diff(resource.data).affectedKeys()
                          .hasOnly(['followers'])
@@ -418,7 +418,7 @@ service cloud.firestore {
     function isIncluraAdmin() {
       // Match the server-issued Firebase Authentication admin claim used
       // by the existing Users Management page. Never trust a profile field.
-      return request.auth != null
+      return isActiveAccount()
         && isVerifiedAdmin();
     }
 
@@ -431,7 +431,7 @@ service cloud.firestore {
     // This allows members to create a request and read only their own requests.
     // Provider discovery, applications, assignment and status changes remain disabled.
     match /careRequests/{requestId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.requesterId == request.auth.uid
                     && request.resource.data.serviceType in [
                       'caregiver', 'home_assistance', 'transportation', 'support'
@@ -478,7 +478,7 @@ service cloud.firestore {
                       'updatedAt'
                     ]);
 
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.requesterId == request.auth.uid;
 
       allow update, delete: if false;
@@ -488,7 +488,7 @@ service cloud.firestore {
     // must never be stored in client-readable Firestore documents; authorized backend
     // services own credential storage and publishing updates.
     match /socialConnections/{connectionId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.userId == request.auth.uid;
       allow create, update, delete: if false;
     }
@@ -500,7 +500,7 @@ service cloud.firestore {
     // or alter watermark/XP outcomes. Those fields are reserved for an
     // authorized backend workflow.
     match /crossPostRequests/{requestId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.creatorId == request.auth.uid
                     && request.resource.data.sourcePostId is string
                     && request.resource.data.sourcePostId.size() > 0
@@ -546,17 +546,17 @@ service cloud.firestore {
                       'creatorGrowth', 'createdAt'
                     ]);
 
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && resource.data.creatorId == request.auth.uid;
 
       allow update, delete: if false;
     }
 
     match /memberDirectory/{memberId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       function isOwnerMember() {
-        return request.auth != null && request.auth.uid == memberId;
+        return isActiveAccount() && request.auth.uid == memberId;
       }
 
       function hasSafeMemberFields() {
@@ -584,10 +584,10 @@ service cloud.firestore {
     // Public mentor directory contains only deliberately selected profile fields.
     // Private contact details and non-public accessibility preferences stay in users/{uid}.
     match /mentorDirectory/{mentorId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
       function isOwnerMentor() {
-        return request.auth != null
+        return isActiveAccount()
           && request.auth.uid == mentorId
           && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.accountType == "Mentor";
       }
@@ -616,9 +616,9 @@ service cloud.firestore {
     // Opportunities are public to signed-in members. Posting requires an
     // active recruiter subscription recorded on the member's private profile.
     match /opportunities/{opportunityId} {
-      allow get, list: if request.auth != null;
+      allow get, list: if isActiveAccount();
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.recruiterId == request.auth.uid
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.status == 'active'
                     && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.recruiter.plan in ['starter', 'business', 'enterprise']
@@ -664,7 +664,7 @@ service cloud.firestore {
       // The application and counter update must be committed together.
       // getAfter() confirms that the matching application was created in
       // the same atomic batch, and exists() prevents reusing an old one.
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && request.auth.uid != resource.data.recruiterId
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['applications', 'lastApplicationId'])
@@ -681,11 +681,11 @@ service cloud.firestore {
     // Applications are private to the applicant and the recruiter who posted
     // the opportunity. Applicants create their own pending applications.
     match /applications/{applicationId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                        && (resource.data.applicantId == request.auth.uid
                            || resource.data.recruiterId == request.auth.uid);
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.applicantId == request.auth.uid
                     && request.resource.data.opportunityId is string
                     && get(/databases/$(database)/documents/opportunities/$(request.resource.data.opportunityId)).data.status == 'active'
@@ -704,7 +704,7 @@ service cloud.firestore {
                       'status', 'createdAt'
                     ]);
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.recruiterId == request.auth.uid
                     && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
                     && request.resource.data.status in [
@@ -717,8 +717,8 @@ service cloud.firestore {
     // Stories are visible to signed-in members; members may create only
     // stories attributed to their own authenticated account.
     match /stories/{storyId} {
-      allow get, list: if request.auth != null;
-      allow create: if request.auth != null
+      allow get, list: if isActiveAccount();
+      allow create: if isActiveAccount()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.userName is string
                     && request.resource.data.userName.size() <= 100
@@ -743,9 +743,9 @@ service cloud.firestore {
 
     // Advertising records are owned by the submitting advertiser and moderated by administrators.
     match /advertisements/{advertisementId} {
-      allow get: if request.auth != null
+      allow get: if isActiveAccount()
         && (resource.data.advertiserId == request.auth.uid || isVerifiedAdmin());
-      allow list: if request.auth != null
+      allow list: if isActiveAccount()
         && (isVerifiedAdmin()
             || resource.data.advertiserId == request.auth.uid);
       allow create: if isVerifiedMember()
@@ -767,7 +767,7 @@ service cloud.firestore {
           'advertiserId','advertiserEmail','title','description','type','budget',
           'targeting','status','impressions','clicks','createdAt','updatedAt'
         ]);
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
         && (
           (
             resource.data.advertiserId == request.auth.uid
@@ -788,16 +788,16 @@ service cloud.firestore {
     }
 
     match /notifications/{notificationId} {
-      allow read: if request.auth != null
+      allow read: if isActiveAccount()
                   && resource.data.receiverId == request.auth.uid;
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
                     && resource.data.receiverId == request.auth.uid
                     && request.resource.data.receiverId == resource.data.receiverId
                     && request.resource.data.diff(resource.data).affectedKeys()
                        .hasOnly(['read']);
 
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.resource.data.receiverId is string
                     && (
                       request.resource.data.senderId == request.auth.uid
@@ -813,7 +813,7 @@ service cloud.firestore {
     // IFSE SOS audit records are written only by the trusted backend.
     // Only administrators or separately designated SOS notification-only monitors may inspect them.
     match /ifseAuditLogs/{logId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
                       && (isVerifiedAdmin()
                           || request.auth.token.sosNotificationOnly == true);
       allow create, update, delete: if false;
@@ -824,10 +824,10 @@ service cloud.firestore {
     // change dispatch decisions, responder assignments, or case outcomes.
     match /emergencySOS/{emergencyId} {
       function ownsRequest() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       allow get, list: if ownsRequest();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && request.auth.token.firebase.sign_in_provider != 'anonymous'
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.systemPlaceholder == false
@@ -882,7 +882,7 @@ service cloud.firestore {
     // Each member can read and maintain only their own readiness record.
     match /sosReadiness/{userId} {
       function isOwner() {
-        return request.auth != null && request.auth.uid == userId;
+        return isActiveAccount() && request.auth.uid == userId;
       }
       function validReadiness() {
         return request.resource.data.userId == userId
@@ -915,7 +915,7 @@ service cloud.firestore {
     // Trusted contacts are private to the member who created them.
     match /trustedContacts/{contactId} {
       function ownsContact() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       function validContact(data) {
         return data.userId == request.auth.uid
@@ -933,7 +933,7 @@ service cloud.firestore {
           && data.status == 'Active';
       }
       allow get, list: if ownsContact();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
                     && validContact(request.resource.data)
                     && request.resource.data.createdAt is timestamp
                     && request.resource.data.updatedAt is timestamp
@@ -963,7 +963,7 @@ service cloud.firestore {
 
     // Verification applications and supporting records are private to the applicant.
     function ownsVerification(verificationId) {
-      return request.auth != null
+      return isActiveAccount()
         && exists(/databases/$(database)/documents/verificationRequests/$(verificationId))
         && (
           get(/databases/$(database)/documents/verificationRequests/$(verificationId)).data.userId == request.auth.uid
@@ -972,7 +972,7 @@ service cloud.firestore {
     }
 
     function ownsPartnership(partnershipId) {
-      return request.auth != null && (
+      return isActiveAccount() && (
         (
           exists(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId))
           && get(/databases/$(database)/documents/enterprisePartnerships/$(partnershipId)).data.userId == request.auth.uid
@@ -989,7 +989,7 @@ service cloud.firestore {
     }
 
     function ownsPayment(paymentId) {
-      return request.auth != null
+      return isActiveAccount()
         && exists(/databases/$(database)/documents/verificationPayments/$(paymentId))
         && get(/databases/$(database)/documents/verificationPayments/$(paymentId)).data.userId == request.auth.uid;
     }
@@ -998,13 +998,13 @@ service cloud.firestore {
     // Published plan prices are readable by signed-in members. Only accounts
     // carrying the server-issued administrator claim may manage pricing.
     match /pricing/{pricingId} {
-      allow get, list: if request.auth != null;
-      allow create, update, delete: if request.auth != null
+      allow get, list: if isActiveAccount();
+      allow create, update, delete: if isActiveAccount()
         && isVerifiedAdmin();
     }
 
     match /enterprisePartnerships/{partnershipId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.organizationName is string
         && request.resource.data.contactEmail is string
@@ -1032,13 +1032,13 @@ service cloud.firestore {
         && request.resource.data.approvalStatus == 'Not Approved'
         && request.resource.data.contractStatus == 'Inactive'
         && request.resource.data.createdAt is timestamp;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
     match /corporatePartnerships/{partnershipId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.companyName is string
         && request.resource.data.contactEmail is string
@@ -1064,13 +1064,13 @@ service cloud.firestore {
         && request.resource.data.approvalStatus == 'Not Approved'
         && request.resource.data.contractStatus == 'Inactive'
         && request.resource.data.createdAt is timestamp;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
     match /governmentPartnerships/{partnershipId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.agencyName is string
         && request.resource.data.officialEmail is string
@@ -1096,13 +1096,13 @@ service cloud.firestore {
         && request.resource.data.timeline[5].title == 'Executive Approval'
         && request.resource.data.timeline[5].status == 'Pending'
         && request.resource.data.createdAt is timestamp;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
     }
 
     match /enterpriseTimeline/{entryId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.partnershipId is string
         && ownsPartnership(request.resource.data.partnershipId)
         && (
@@ -1119,14 +1119,14 @@ service cloud.firestore {
           )
         )
         && request.resource.data.createdAt is timestamp;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
       allow update, delete: if false;
     }
 
     match /corporateTimeline/{entryId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.partnershipId is string
         && ownsPartnership(request.resource.data.partnershipId)
         && request.resource.data.partnershipType == 'corporate'
@@ -1144,14 +1144,14 @@ service cloud.firestore {
           )
         )
         && request.resource.data.createdAt is timestamp;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPartnership(resource.data.partnershipId));
       allow update, delete: if false;
     }
 
     match /verificationRequests/{verificationId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.submittedBy == request.auth.uid
         && request.resource.data.category is string
@@ -1165,12 +1165,12 @@ service cloud.firestore {
         && request.resource.data.status == 'pending'
         && request.resource.data.createdAt is timestamp;
 
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || resource.data.userId == request.auth.uid
             || resource.data.submittedBy == request.auth.uid);
 
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
         && (resource.data.userId == request.auth.uid
             || resource.data.submittedBy == request.auth.uid)
         && request.resource.data.userId == resource.data.userId
@@ -1191,7 +1191,7 @@ service cloud.firestore {
     }
 
     match /verificationTimeline/{entryId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.verificationId is string
         && ownsVerification(request.resource.data.verificationId)
         && request.resource.data.createdBy == request.auth.uid
@@ -1199,31 +1199,31 @@ service cloud.firestore {
           'Application Submitted', 'Verification Documents Submitted'
         ]
         && request.resource.data.status == 'Completed';
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /verificationDocuments/{documentId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.verificationId is string
         && request.resource.data.submittedBy == request.auth.uid
         && ownsVerification(request.resource.data.verificationId);
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId));
       allow update, delete: if false;
     }
 
     match /creatorVerificationAuditLogs/{logId} {
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin() || resource.data.userId == request.auth.uid);
       allow create, update, delete: if false;
     }
 
     match /verificationAuditLogs/{logId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && (request.resource.data.performedBy == request.auth.uid
             || request.resource.data.actor == request.auth.uid)
         && request.resource.data.verificationId is string
@@ -1239,7 +1239,7 @@ service cloud.firestore {
             && ownsPartnership(request.resource.data.verificationId)
           )
         );
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsVerification(resource.data.verificationId)
             || ownsPartnership(resource.data.verificationId));
@@ -1247,7 +1247,7 @@ service cloud.firestore {
     }
 
     match /ifseSecurityEvents/{eventId} {
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && (
           (
             request.resource.data.verificationId is string
@@ -1271,7 +1271,7 @@ service cloud.firestore {
             ]
           )
         );
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (
           isVerifiedAdmin()
           || resource.data.get('userId', null) == request.auth.uid
@@ -1288,7 +1288,7 @@ service cloud.firestore {
             && ownsPayment(resource.data.paymentId)
           )
         );
-      allow update: if request.auth != null
+      allow update: if isActiveAccount()
         && isVerifiedAdmin()
         && (
           (
@@ -1316,7 +1316,7 @@ service cloud.firestore {
       // Only the trusted IFSE backend may create payment confirmations.
       // Browser clients cannot self-assert a successful gateway payment.
       allow create: if false;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || resource.data.userId == request.auth.uid);
       allow update, delete: if false;
@@ -1325,7 +1325,7 @@ service cloud.firestore {
     match /ifsePaymentEvents/{eventId} {
       // IFSE creates payment-security events after gateway verification.
       allow create: if false;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
@@ -1334,7 +1334,7 @@ service cloud.firestore {
     match /paymentAuditLogs/{logId} {
       // Audit records are server-generated and immutable to browser clients.
       allow create: if false;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
@@ -1343,7 +1343,7 @@ service cloud.firestore {
     match /paymentTimeline/{entryId} {
       // Payment timeline entries are written by the trusted backend.
       allow create: if false;
-      allow get, list: if request.auth != null
+      allow get, list: if isActiveAccount()
         && (isVerifiedAdmin()
             || ownsPayment(resource.data.paymentId));
       allow update, delete: if false;
@@ -1352,7 +1352,7 @@ service cloud.firestore {
 
     match /communityAlertDevices/{guestUid} {
       function isOwnAnonymousGuest() {
-        return request.auth != null
+        return isActiveAccount()
           && request.auth.uid == guestUid
           && request.auth.token.firebase.sign_in_provider == 'anonymous';
       }
@@ -1400,10 +1400,10 @@ service cloud.firestore {
     // The backend uses Firebase Admin to read tokens for automatic SOS alerts.
     match /fcmTokens/{tokenId} {
       function ownsToken() {
-        return request.auth != null && resource.data.userId == request.auth.uid;
+        return isActiveAccount() && resource.data.userId == request.auth.uid;
       }
       allow get, list: if ownsToken();
-      allow create: if request.auth != null
+      allow create: if isActiveAccount()
         && request.resource.data.userId == request.auth.uid
         && request.resource.data.token is string
         && request.resource.data.token.size() > 20
