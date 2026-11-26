@@ -352,7 +352,7 @@ try {
     "Government partnership request submitted successfully."
   );
 
-  navigate("/verification-center");
+  navigate(`/partnership-status/government/${docRef.id}`);
 
 } catch (err) {
 
