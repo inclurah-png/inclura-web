@@ -1456,6 +1456,13 @@ service cloud.firestore {
           )
         )
         && request.resource.data.createdAt is timestamp
+        // Member-submitted events must remain pending until an administrator reviews them.
+        && (!('reviewed' in request.resource.data) || request.resource.data.reviewed == false)
+        && (!('resolved' in request.resource.data) || request.resource.data.resolved == false)
+        && (!('assessmentStatus' in request.resource.data) || request.resource.data.assessmentStatus == 'pending_server_review')
+        && (!('automaticAssessment' in request.resource.data) || request.resource.data.automaticAssessment == true)
+        && (!('requiresManualReview' in request.resource.data) || request.resource.data.requiresManualReview == true)
+        && (!('severity' in request.resource.data) || request.resource.data.severity in ['medium', 'high'])
         && request.resource.data.keys().hasOnly([
           'verificationId', 'eventType', 'assessmentStatus', 'resolved',
           'verificationType', 'documentCategory', 'reviewed',
