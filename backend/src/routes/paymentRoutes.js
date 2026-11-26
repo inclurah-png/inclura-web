@@ -59,6 +59,12 @@ router.post("/verify", limitPaymentVerification, async (req, res) => {
     if (!["premium", "recruiter", "creator_verification", "verification"].includes(purpose)) {
       return unauthorized(res, 400, "Unsupported payment purpose.");
     }
+    if (
+      purpose === "verification" &&
+      !["Credit Card", "Debit Card", "Bank Transfer", "USSD"].includes(String(paymentMethod || ""))
+    ) {
+      return unauthorized(res, 400, "Select a supported verification payment method.");
+    }
 
     const database = firestore();
     let expectedAmount;
