@@ -9,6 +9,9 @@ function AccessibilityToolbar({ close }) {
       id="inclura-accessibility-toolbar"
       role="region"
       aria-label={t("accessibilityHub", { defaultValue: "Accessibility settings" })}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") close();
+      }}
       style={{
         position: "fixed",
         right: "20px",
