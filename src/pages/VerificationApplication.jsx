@@ -1,4 +1,3 @@
-import { processVerification } from "../utils/processVerification";
 import { useState, useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -156,45 +155,18 @@ async function handleContinue() {
   }
 
   try {
-    const ifseResult = processVerification({
-      identityVerified:
-        !!fullName.trim() &&
-        !!email.trim() &&
-        !!phone.trim(),
-
-      // Selecting a document does NOT mean
-      // the document has already been authenticated.
-      documentVerified: false,
-
-      duplicateChecked: true,
-
-      fraudChecked: true,
-
-      businessValidated:
-        category === "creator"
-          ? true
-          : !!organizationName.trim(),
-
-      governmentValidated:
-        category === "government",
-
-      accessibilityValidated: true,
-
-      paymentVerified:
-        paymentAmount === 0,
-    });
-
-    // The processor score represents completed verification checks
-    // (a higher score is better), not risk. Keep both measures separate.
-    const ifseTrustScore = Math.max(
-      0,
-      Math.min(100, Number(ifseResult.score) || 0)
-    );
-    const riskScore = 100 - ifseTrustScore;
-    const threatLevel =
-      riskScore >= 80 ? "CRITICAL" :
-      riskScore >= 60 ? "HIGH" :
-      riskScore >= 35 ? "MEDIUM" : "LOW";
+    // Identity, document, fraud and accessibility checks have not yet been
+    // completed by a trusted server or authorized reviewer. Do not issue a
+    // client-generated approval, score or badge.
+    const ifseTrustScore = null;
+    const ifseResult = {
+      status: "PENDING_SERVER_REVIEW",
+      message: "Awaiting server-side verification and authorized administrator review.",
+      badge: false,
+      executiveReview: true,
+    };
+    const riskScore = null;
+    const threatLevel = "UNASSESSED";
 
     // ==========================================
     // CREATE VERIFICATION REQUEST
@@ -259,32 +231,22 @@ async function handleContinue() {
         // IFSE SCREENING RESULT
         // ========================================
 
-        ifseScore:
-          ifseTrustScore,
-
-        ifseStatus:
-          ifseResult.status || "PENDING",
-
-        ifseMessage:
-          ifseResult.message || "",
-
-        ifseBadge:
-          ifseResult.badge || "",
-
-        executiveReview:
-          !!ifseResult.executiveReview,
+        ifseScore: null,
+        ifseScoreSource: "not_server_verified",
+        ifseStatus: ifseResult.status,
+        ifseMessage: ifseResult.message,
+        ifseBadge: false,
+        executiveReview: true,
 
         // ========================================
         // NORMALIZED IFSE FIELDS
         // Used by VerificationCenter
         // ========================================
 
-        riskScore,
-
-        threatLevel,
-
-        executiveReviewRequired:
-          !!ifseResult.executiveReview,
+        riskScore: null,
+        riskScoreSource: "not_server_verified",
+        threatLevel: "UNASSESSED",
+        executiveReviewRequired: true,
 
         // ========================================
         // ENTERPRISE
@@ -389,9 +351,7 @@ async function handleContinue() {
         eventType:
           "Application Received",
 
-        threatLevel,
-
-        riskScore,
+        assessmentStatus: "pending_server_review",
 
         // The security lifecycle is not finished
         // simply because the application was received.
