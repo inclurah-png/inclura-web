@@ -7,10 +7,6 @@ import {
   getVerificationMetadata,
 } from "../config/verificationTypes";
 
-import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
 function StoryViewer({
 story,
 onClose,
@@ -67,16 +63,9 @@ useEffect(() => {
 
 if (!story) return null;
 
-const migratedType =
-  migrateVerificationId(
-    story.badgeType
-  );
-
 const badge =
   story.verified
-    ? getVerificationBadge(
-        migratedType
-      )
+    ? getVerificationBadge(story.badgeType)
     : null;
 
 const premiumBadge =
@@ -88,9 +77,7 @@ const premiumBadge =
 
 const verificationMeta =
   story.verified
-    ? getVerificationMetadata(
-        migratedType
-      )
+    ? getVerificationMetadata(story.badgeType)
     : null;
 
 const isHighContrast =
