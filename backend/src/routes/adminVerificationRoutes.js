@@ -655,4 +655,150 @@ router.post("/verification/:verificationId/reject", async (req, res) => {
   }
 });
 
+
+const PARTNERSHIP_REVIEW_CONFIG = {
+  enterprise: {
+    collection: "enterprisePartnerships",
+    stages: {
+      security: "Enterprise Security Review",
+      accessibility: "Accessibility Review",
+      compliance: "Compliance Review",
+      integration: "Integration Review",
+    },
+  },
+  corporate: {
+    collection: "corporatePartnerships",
+    stages: {
+      security: "Corporate Security Review",
+      accessibility: "Accessibility Review",
+      compliance: "Compliance Review",
+    },
+  },
+  government: {
+    collection: "governmentPartnerships",
+    stages: {
+      identityReview: "Government Identity Review",
+      securityReview: "IFSE Security Review",
+      accessibilityReview: "Accessibility Compliance",
+      complianceReview: "Compliance Review",
+    },
+  },
+};
+
+router.post("/partnerships/:type/:partnershipId/review", async (req, res) => {
+  const type = String(req.params.type || "").toLowerCase();
+  const partnershipId = String(req.params.partnershipId || "");
+  const stage = String(req.body?.stage || "");
+  const decision = String(req.body?.decision || "");
+  const notes = String(req.body?.notes || "").trim();
+
+  const config = PARTNERSHIP_REVIEW_CONFIG[type];
+  if (!config || !/^[A-Za-z0-9_-]{10,150}$/.test(partnershipId)) {
+    return res.status(400).json({ success: false, message: "Invalid partnership request." });
+  }
+  if (!Object.prototype.hasOwnProperty.call(config.stages, stage)) {
+    return res.status(400).json({ success: false, message: "Choose a valid review stage. Final approval is handled separately." });
+  }
+  if (!["approved", "rejected"].includes(decision) || notes.length > 2000) {
+    return res.status(400).json({ success: false, message: "Provide a valid review decision and notes of no more than 2,000 characters." });
+  }
+  if (decision === "rejected" && notes.length < 5) {
+    return res.status(400).json({ success: false, message: "A rejection explanation of at least five characters is required." });
+  }
+
+  const db = firestore();
+  const requestRef = db.collection(config.collection).doc(partnershipId);
+  const auditRef = db.collection("partnershipReviewAuditLogs").doc();
+  try {
+    const result = await db.runTransaction(async (tx) => {
+      const snap = await tx.get(requestRef);
+      if (!snap.exists) {
+        const error = new Error("Partnership application not found.");
+        error.statusCode = 404;
+        throw error;
+      }
+      const application = snap.data() || {};
+      const applicantId = String(application.userId || "");
+      if (!applicantId) {
+        const error = new Error("The partnership application has no valid applicant account.");
+        error.statusCode = 409;
+        throw error;
+      }
+      if (applicantId === req.adminUid) {
+        const error = new Error("Administrators cannot review their own partnership applications.");
+        error.statusCode = 403;
+        throw error;
+      }
+      if (["approved", "rejected"].includes(String(application.requestStatus || application.status || "").toLowerCase())) {
+        const error = new Error("This partnership application has already been closed.");
+        error.statusCode = 409;
+        throw error;
+      }
+
+      const now = new Date();
+      const reviewProgress = { ...(application.reviewProgress || {}) };
+      const timeline = Array.isArray(application.timeline) ? [...application.timeline] : [];
+      const title = config.stages[stage];
+      reviewProgress[stage] = decision === "approved";
+
+      const existingIndex = timeline.findIndex((entry) => entry?.title === title);
+      const updatedEntry = {
+        ...(existingIndex >= 0 ? timeline[existingIndex] : {}),
+        title,
+        status: decision === "approved" ? "Completed" : "Rejected",
+        description: notes || "Review completed by an authorized administrator.",
+        reviewedBy: req.adminUid,
+        reviewedAt: now,
+      };
+      if (existingIndex >= 0) timeline[existingIndex] = updatedEntry;
+      else timeline.push(updatedEntry);
+
+      const update = {
+        reviewProgress,
+        timeline,
+        updatedAt: now,
+        lastReviewedBy: req.adminUid,
+        lastReviewedAt: now,
+      };
+      if (decision === "rejected") {
+        update.requestStatus = "rejected";
+        update.status = "rejected";
+        update.approvalStatus = "Rejected";
+        update.contractStatus = "Inactive";
+        update.rejectionReason = notes;
+        update.rejectedBy = req.adminUid;
+        update.rejectedAt = now;
+      }
+
+      tx.update(requestRef, update);
+      tx.create(auditRef, {
+        partnershipType: type,
+        partnershipId,
+        applicantId,
+        stage,
+        decision,
+        notes,
+        performedBy: req.adminUid,
+        createdAt: now,
+      });
+      return { reviewProgress, requestStatus: update.requestStatus || application.requestStatus || application.status || "submitted" };
+    });
+
+    return res.status(200).json({
+      success: true,
+      partnershipId,
+      reviewProgress: result.reviewProgress,
+      requestStatus: result.requestStatus,
+      message: decision === "approved"
+        ? "Review stage recorded. This does not approve or activate the partnership."
+        : "Partnership application rejected and recorded.",
+    });
+  } catch (error) {
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message: error.message || "Partnership review could not be saved.",
+    });
+  }
+});
+
 export default router;
