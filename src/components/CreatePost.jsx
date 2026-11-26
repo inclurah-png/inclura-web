@@ -21,10 +21,6 @@ import {
 } from "../config/verificationTypes";
 
 import {
-  migrateVerificationId,
-} from "../config/verificationMigration";
-
-import {
   detectLanguage,
 } from "../translation/languageDetector";
 
@@ -273,9 +269,7 @@ function CreatePost() {
       // 4. Prepare the existing verification fields.
       operation = "post preparation";
 
-      const badgeType = migrateVerificationId(
-        profile?.badgeType
-      );
+      const badgeType = profile?.badgeType || "";
 
       const verificationMetadata = profile?.verified
         ? getVerificationMetadata(badgeType)
