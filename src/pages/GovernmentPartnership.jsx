@@ -410,6 +410,8 @@ try {
       userId:
         currentUser.uid,
 
+      source: "member_submission",
+
       riskScore,
 
       threatLevel,
