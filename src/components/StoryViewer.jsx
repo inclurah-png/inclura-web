@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   getVerificationBadge,
@@ -14,6 +15,7 @@ function StoryViewer({
 story,
 onClose,
 }) {
+const { t } = useTranslation();
 useEffect(() => {
 function handleEsc(e) {
 if (e.key === "Escape") {
@@ -156,7 +158,7 @@ marginBottom:
             fontSize: "12px",
           }}
         >
-          🛡️ Trust Level {verificationMeta.trustLevel}
+          🛡️ {t("statsTrustLevel")} {verificationMeta.trustLevel}
         </span>
       )}
     </div>
@@ -185,7 +187,7 @@ marginBottom:
     cursor: "pointer",
   }}
 >
-  Close
+  {t("close")}
 </button>
   
   </div>
@@ -221,8 +223,7 @@ marginBottom:
         }}
       >
         <h2>
-          🎤 Voice
-          Story
+          🎤 {t("voiceStory")}
         </h2>
 
         <p>
@@ -237,14 +238,7 @@ marginBottom:
               "#94a3b8",
           }}
         >
-          Voice
-          playback
-          will be
-          enabled
-          when
-          audio
-          uploads are
-          activated.
+          {t("voiceStoryUnavailable")}
         </p>
       </div>
     )}
@@ -302,35 +296,16 @@ marginBottom:
       </div>
 
       {story.accessibility
-        ?.screenReader && (
-        <div>
-          🔊 Screen
-          Reader
-          Enabled
-        </div>
-      )}
-
-      {story.accessibility
-        ?.textOnly && (
-        <div>
-          📄 Text
-          Only
-        </div>
-      )}
-
-      {story.accessibility
         ?.highContrast && (
         <div>
-          🎨 High
-          Contrast
+          🎨 {t("highContrast")}
         </div>
       )}
 
       {story.accessibility
         ?.largeText && (
         <div>
-          🔠 Large
-          Text
+          🔠 {t("largeText")}
         </div>
       )}
     </div>
