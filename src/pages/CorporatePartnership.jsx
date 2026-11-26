@@ -195,73 +195,7 @@ const [reviewProgress,
     "Dedicated Account Manager",
 
   ];
-    const getReviewPercentage =
-    () => {
-
-      const values =
-        Object.values(
-          reviewProgress
-        );
-
-      const completed =
-        values.filter(
-          Boolean
-        ).length;
-
-      return Math.round(
-        (
-          completed /
-          values.length
-        ) * 100
-      );
-
-    };
-    const calculateCorporateRisk =
-    () => {
-
-      let score = 0;
-
-      if (!website.trim())
-        score += 15;
-
-      if (
-        !registrationNumber.trim()
-      )
-        score += 20;
-
-      if (
-        estimatedEmployees
-      ) {
-
-        const employees =
-          Number(
-            estimatedEmployees
-          );
-
-        if (
-          employees > 50000
-        ) {
-
-          score += 20;
-
-        }
-
-        else if (
-          employees > 5000
-        ) {
-
-          score += 10;
-
-        }
-
-      }
-
-      return Math.min(
-        score,
-        100
-      );
-
-    };
+    
     const handleSubmit =
     async (e) => {
 
@@ -481,10 +415,7 @@ serverTimestamp(),
 updatedAt:
   serverTimestamp(),
 
-riskScore: corporateRiskScore,
-              riskScoreSource: "member_self_assessment",
-              threatLevel,
-              threatLevelSource: "member_self_assessment",
+
               securityLayers,
 
 corporateBenefits,
