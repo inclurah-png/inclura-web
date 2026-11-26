@@ -289,7 +289,6 @@ try {
       timeline,
 
       userId: currentUser.uid,
-      executiveReviewSource: "member_self_assessment",
 
       createdAt: serverTimestamp(),
 
