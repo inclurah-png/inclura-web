@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import LanguageSelector from "../components/LanguageSelector";
 
 import {
@@ -13,6 +14,7 @@ import {
 } from "../services/authErrorMessages";
 
 function ForgotPassword() {
+  const { t } = useTranslation();
   const [email, setEmail] =
     useState("");
 
@@ -26,7 +28,7 @@ function ForgotPassword() {
       setNotice({
         kind: "error",
         message:
-          "Enter the email address for your account.",
+          t("enterEmailForAccount"),
       });
       return;
     }
@@ -42,7 +44,7 @@ function ForgotPassword() {
       setNotice({
         kind: "success",
         message:
-          "Password reset email sent. Check your inbox and spam folder, then follow the link to set a new password.",
+          t("passwordResetEmailSent"),
       });
     } catch (resetError) {
       console.error(
@@ -84,7 +86,7 @@ function ForgotPassword() {
         }}
       >
         <h2>
-          Reset Password
+          {t("resetPassword")}
         </h2>
 
         {notice && (
@@ -116,7 +118,7 @@ function ForgotPassword() {
 
         <input
           type="email"
-          placeholder="Enter Email"
+          placeholder={t("email")}
           value={email}
           onChange={(e) =>
             setEmail(
@@ -143,7 +145,7 @@ function ForgotPassword() {
             color: "white",
           }}
         >
-          Send Reset Link
+          {t("sendResetLink")}
         </button>
       </div>
     </div>
