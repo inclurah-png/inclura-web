@@ -186,6 +186,7 @@ const resources = {
     creatorImportantBoundaryText: "Inclura does not collect, hold, store, transfer or pay out money for creators. Independent agreements with third parties are outside Inclura.",
     creatorEarnings: "Creator Earnings",
     creatorMonetization: "Creator Opportunities",
+    socialConnections: "Social Connections",
     creatorAnalytics: "Creator Analytics",
 
     advertiserDashboard: "Advertiser Dashboard",
@@ -811,6 +812,7 @@ returnHome: "Return Home",
     creatorImportantBoundaryText: "Inclura kò gba, kò dì mú, kò tọ́jú, kò gbé kiri, kò sì san owó fún àwọn olùṣẹ̀dá. Àdéhùn pẹ̀lú ẹlòmíràn kì í ṣe iṣẹ́ Inclura.",
     creatorEarnings: "Owó Olùdá Àkóónú",
     creatorMonetization: "Àǹfààní fún àwọn olùṣẹ̀dá",
+    socialConnections: "Àwọn Ìsopọ̀ Àwùjọ",
     creatorAnalytics: "Ìtúpalẹ̀ Olùdá Àkóónú",
 
     advertiserDashboard: "Dasibodu Olùpolówó",
@@ -1436,6 +1438,7 @@ returnHome: "Padà sí Ilé",
     creatorImportantBoundaryText: "Inclura anaghị anakọta, ejide, echekwa, bufee ma ọ bụ kwụọ ndị okike ego. Nkwekọrịta na ndị ọzọ abụghị ọrụ Inclura.",
     creatorEarnings: "Ego Onye Okike",
     creatorMonetization: "Ohere maka ndị okike",
+    socialConnections: "Njikọ mmekọrịta",
     creatorAnalytics: "Nyocha Onye Okike",
 
     advertiserDashboard: "Dashboard Onye Mgbasa Ozi",
@@ -2038,6 +2041,7 @@ returnHome: "Laghachi n'ụlọ",
     creatorImportantBoundaryText: "Inclura ba ta karɓa, riƙewa, adanawa, turawa ko biyan kuɗin masu ƙirƙira. Yarjejeniyoyi da wasu ba ƙarƙashin Inclura suke ba.",
     creatorEarnings: "Kuɗin Mai Ƙirƙira",
     creatorMonetization: "Damarar masu ƙirƙira",
+    socialConnections: "Haɗin zamantakewa",
     creatorAnalytics: "Nazarin Mai Ƙirƙira",
 
     advertiserDashboard: "Dashboard na Mai Tallace-tallace",
@@ -2661,6 +2665,7 @@ returnHome: "Komawa Gida",
 
     creatorMonetization: "Opportunités pour les créateurs",
 
+    socialConnections: "Connexions sociales",
     creatorAnalytics:
       "Analyses du créateur",
 
@@ -3315,6 +3320,7 @@ returnHome: "Retour à l’accueil",
 
     creatorMonetization: "فرص المبدعين",
 
+    socialConnections: "الاتصالات الاجتماعية",
     creatorAnalytics:
       "تحليلات المنشئ",
 
@@ -3969,6 +3975,7 @@ returnHome: "العودة إلى الرئيسية",
 
     creatorMonetization: "Oportunidades para creadores",
 
+    socialConnections: "Conexiones sociales",
     creatorAnalytics:
       "Analíticas del creador",
 
@@ -4611,6 +4618,7 @@ returnHome: "Volver al inicio",
 
     creatorMonetization: "创作者机会",
 
+    socialConnections: "社交连接",
     creatorAnalytics: "创作者分析",
 
     advertiserDashboard: "广告主仪表板",
@@ -5246,6 +5254,7 @@ returnHome: "返回首页",
 
     creatorMonetization: "Oportunidades para criadores",
 
+    socialConnections: "Conexões sociais",
     creatorAnalytics:
       "Análises do criador",
 
@@ -5900,6 +5909,7 @@ returnHome: "Voltar ao início",
 
     creatorMonetization: "Fursa kwa wabunifu",
 
+    socialConnections: "Miunganisho ya kijamii",
     creatorAnalytics:
       "Takwimu za Mtayarishi",
 
