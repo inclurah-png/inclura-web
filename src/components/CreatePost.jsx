@@ -402,13 +402,13 @@ function CreatePost() {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      alert("Please choose a supported image file.");
+      alert(t("postUnsupportedImage"));
       event.target.value = "";
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-      alert("Please choose an image that is 5 MB or smaller.");
+      alert(t("postImageTooLarge"));
       event.target.value = "";
       return;
     }
@@ -433,13 +433,13 @@ function CreatePost() {
     ];
 
     if (!supportedVideoTypes.includes(file.type)) {
-      alert("Please choose an MP4, WebM, or MOV video.");
+      alert(t("postUnsupportedVideo"));
       event.target.value = "";
       return;
     }
 
     if (file.size > MAX_VIDEO_SIZE) {
-      alert("Please choose a video that is 50 MB or smaller.");
+      alert(t("postVideoTooLarge"));
       event.target.value = "";
       return;
     }
@@ -530,12 +530,12 @@ function CreatePost() {
             border: "none",
           }}
         >
-          <option>General</option>
-          <option>Accessibility</option>
-          <option>Care-Gig</option>
-          <option>Opportunity</option>
-          <option>Mentorship</option>
-          <option>Marketplace</option>
+          <option value="General">{t("postCategoryGeneral")}</option>
+          <option value="Accessibility">{t("postCategoryAccessibility")}</option>
+          <option value="Care-Gig">{t("postCategoryCareGig")}</option>
+          <option value="Opportunity">{t("postCategoryOpportunity")}</option>
+          <option value="Mentorship">{t("postCategoryMentorship")}</option>
+          <option value="Marketplace">{t("postCategoryMarketplace")}</option>
         </select>
 
         <button
