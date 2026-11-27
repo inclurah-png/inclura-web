@@ -9,6 +9,7 @@ import { db, auth } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import Logo from "./Logo";
+import Icon from "./Icon";
 
 function DashboardSidebar() {
   const navigate = useNavigate();
@@ -97,7 +98,7 @@ const isAdmin = role === "admin";
           cursor: loggingOut ? "wait" : "pointer",
         }}
       >
-        🚪 {loggingOut ? t("loading") : t("logout")}
+        <><Icon name="logout" /> {loggingOut ? t("loading") : t("logout")}</>
       </button>
 
       <button
@@ -107,7 +108,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/profile")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🏠 {t("dashboard")}
+        <><Icon name="home" /> {t("dashboard")}</>
       </button>
 
       <button
@@ -117,7 +118,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/notifications")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🔔 {t("notifications")}
+        <><Icon name="bell" /> {t("notifications")}</>
       </button>
 
       <button
@@ -127,7 +128,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/messages")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        💬 {t("messages")}
+        <><Icon name="message" /> {t("messages")}</>
       </button>
 
       <button
@@ -137,7 +138,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/wallet")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🔗 {t("accountActivity")}
+        <><Icon name="link" /> {t("accountActivity")}</>
       </button>
 
       <button
@@ -147,7 +148,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/social-connections")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🔗 Social Connections
+        <><Icon name="link" /> Social Connections</>
       </button>
 
       <button
@@ -157,7 +158,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/digital-services")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        📱 {t("digitalServicesTitle")}
+        <><Icon name="phone" /> {t("digitalServicesTitle")}</>
       </button>
 
       <button
@@ -167,7 +168,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/saved-posts")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🔖 {t("savedPosts")}
+        <><Icon name="bookmark" /> {t("savedPosts")}</>
       </button>
 
       <button
@@ -177,7 +178,7 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/search")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        🔍 {t("search")}
+        <><Icon name="search" /> {t("search")}</>
       </button>
 
       <button
@@ -187,39 +188,39 @@ const isAdmin = role === "admin";
         onClick={() => navigate("/edit-profile")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        ⚙ {t("editProfile")}
+        <><Icon name="settings" /> {t("editProfile")}</>
       </button>
 
       <button type="button" aria-label={t("verificationCenter")} title={t("verificationCenter")} onClick={() => navigate("/verification-center")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🔐 {t("verificationCenter")}
+        <><Icon name="lock" /> {t("verificationCenter")}</>
       </button>
 
       <button type="button" aria-label={t("accessibilityHub")} title={t("accessibilityHub")} onClick={() => navigate("/accessibility")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        ♿ {t("accessibilityHub")}
+        <><Icon name="accessibility" /> {t("accessibilityHub")}</>
       </button>
 
       <button type="button" aria-label={t("opportunitiesHub")} title={t("opportunitiesHub")} onClick={() => navigate("/opportunities")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        💼 {t("opportunitiesHub")}
+        <><Icon name="briefcase" /> {t("opportunitiesHub")}</>
       </button>
 
       <button type="button" aria-label={t("careGigs")} title={t("careGigs")} onClick={() => navigate("/care-gigs")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🤝 {t("careGigs")}
+        <><Icon name="handshake" /> {t("careGigs")}</>
       </button>
 
       <button type="button" aria-label={t("mentorHub")} title={t("mentorHub")} onClick={() => navigate("/mentor-hub")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🎓 {t("mentorHub")}
+        <><Icon name="graduation" /> {t("mentorHub")}</>
       </button>
 
       <button type="button" aria-label={t("marketplace")} title={t("marketplace")} onClick={() => navigate("/marketplace")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🛒 {t("marketplace")}
+        <><Icon name="cart" /> {t("marketplace")}</>
       </button>
 
       <button type="button" aria-label={t("reels")} title={t("reels")} onClick={() => navigate("/reels-system")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🎥 {t("reels")}
+        <><Icon name="video" /> {t("reels")}</>
       </button>
 
       <button type="button" aria-label={t("creatorMonetization")} title={t("creatorMonetization")} onClick={() => navigate("/creator-monetization")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        ✨ {t("creatorMonetization")}
+        <><Icon name="sparkle" /> {t("creatorMonetization")}</>
       </button>
 
 
@@ -227,11 +228,11 @@ const isAdmin = role === "admin";
 {isAdvertiser && (
   <>
     <button type="button" aria-label={t("advertiserDashboard")} title={t("advertiserDashboard")} onClick={() => navigate("/advertiser-dashboard")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📢 {t("advertiserDashboard")}
+        <><Icon name="megaphone" /> {t("advertiserDashboard")}</>
       </button>
 
     <button type="button" aria-label={t("adManager")} title={t("adManager")} onClick={() => navigate("/ad-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📢 {t("adManager")}
+        <><Icon name="megaphone" /> {t("adManager")}</>
       </button>
   </>
 )}
@@ -239,19 +240,19 @@ const isAdmin = role === "admin";
 {isEnterprise && (
   <>
     <button type="button" aria-label={t("enterprise")} title={t("enterprise")} onClick={() => navigate("/enterprise")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🏢 {t("enterprise")}
+        <><Icon name="building" /> {t("enterprise")}</>
       </button>
 
     <button type="button" aria-label={t("enterpriseAds")} title={t("enterpriseAds")} onClick={() => navigate("/enterprise-ads")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🏢 {t("enterpriseAds")}
+        <><Icon name="building" /> {t("enterpriseAds")}</>
       </button>
 
     <button type="button" aria-label={t("enterpriseCampaigns")} title={t("enterpriseCampaigns")} onClick={() => navigate("/enterprise-campaigns")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🏢 {t("enterpriseCampaigns")}
+        <><Icon name="building" /> {t("enterpriseCampaigns")}</>
       </button>
 
     <button type="button" aria-label={t("enterpriseAnalytics")} title={t("enterpriseAnalytics")} onClick={() => navigate("/enterprise-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🏢 {t("enterpriseAnalytics")}
+        <><Icon name="chart" /> {t("enterpriseAnalytics")}</>
       </button>
   </>
 )}
@@ -259,45 +260,45 @@ const isAdmin = role === "admin";
 {isAdmin && (
   <>
     <button type="button" aria-label={t("creatorAnalytics")} title={t("creatorAnalytics")} onClick={() => navigate("/creator-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📈 {t("creatorAnalytics")}
+        <><Icon name="chart" /> {t("creatorAnalytics")}</>
       </button>
 
     <button type="button" aria-label={t("platformAnalytics")} title={t("platformAnalytics")} onClick={() => navigate("/platform-analytics")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📊 {t("platformAnalytics")}
+        <><Icon name="chart" /> {t("platformAnalytics")}</>
       </button>
 
     <button type="button" aria-label={t("pricingManager")} title={t("pricingManager")} onClick={() => navigate("/pricing-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        💲 {t("pricingManager")}
+        <><Icon name="dollar" /> {t("pricingManager")}</>
       </button>
 
     <button type="button" aria-label={t("usersManagement")} title={t("usersManagement")} onClick={() => navigate("/users-management")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        👥 {t("usersManagement")}
+        <><Icon name="users" /> {t("usersManagement")}</>
       </button>
 
     <button type="button" aria-label={t("reportsViolations")} title={t("reportsViolations")} onClick={() => navigate("/reports-violations")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🚨 {t("reportsViolations")}
+        <><Icon name="alert" /> {t("reportsViolations")}</>
       </button>
 
     <button type="button" aria-label={t("verificationRequests")} title={t("verificationRequests")} onClick={() => navigate("/verification-requests")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📋 {t("verificationRequests")}
+        <><Icon name="clipboard" /> {t("verificationRequests")}</>
       </button>
 
     <button type="button" aria-label={t("verificationManager")} title={t("verificationManager")} onClick={() => navigate("/verification-manager")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        ✅ {t("verificationManager")}
+        <><Icon name="check" /> {t("verificationManager")}</>
       </button>
 
     <button type="button" aria-label={t("adApprovalQueue")} title={t("adApprovalQueue")} onClick={() => navigate("/ad-approval")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        📋 {t("adApprovalQueue")}
+        <><Icon name="clipboard" /> {t("adApprovalQueue")}</>
       </button>
 
     <button type="button" aria-label={t("adminPanel")} title={t("adminPanel")} onClick={() => navigate("/admin")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        👨‍💼 {t("adminPanel")}
+        <><Icon name="admin" /> {t("adminPanel")}</>
       </button>
   </>
 )}
 
       <button type="button" aria-label={t("sos")} title={t("sos")} onClick={() => navigate("/sos")} style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}>
-        🚨 {t("sos")}
+        <><Icon name="sos" /> {t("sos")}</>
       </button>
 
     </div>
