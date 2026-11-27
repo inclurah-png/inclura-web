@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import LanguageSelector from "../components/LanguageSelector";
 
 import {
@@ -126,6 +127,7 @@ function serializeAssertion(credential) {
 // =======================================================
 
 function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
@@ -492,7 +494,7 @@ function Login() {
             marginBottom: "10px",
           }}
         >
-          Welcome Back 👋
+          {t("welcomeBack")} 👋
         </h1>
 
         <p
@@ -501,7 +503,7 @@ function Login() {
             marginBottom: "24px",
           }}
         >
-          Sign in to continue to Inclura
+          {t("slogan")}
         </p>
 
         {/* Login error */}
@@ -540,7 +542,7 @@ function Login() {
                     fontWeight: "700",
                   }}
                 >
-                  Reset your password
+                  {t("resetPassword", "Reset your password")}
                 </Link>
               )}
 
@@ -558,7 +560,7 @@ function Login() {
                     fontSize: "14px",
                   }}
                 >
-                  Try again
+                  {t("tryAgain", "Try again")}
                 </button>
               )}
             </div>
@@ -582,7 +584,7 @@ function Login() {
             cursor: "pointer",
           }}
         >
-          {loading ? "Connecting to Google..." : "Continue with Google"}
+          {loading ? t("connectingToGoogle", "Connecting to Google...") : t("continueWithGoogle")}
         </button>
 
         {/* Passkey */}
@@ -603,8 +605,8 @@ function Login() {
           }}
         >
           {passkeyLoading
-            ? "Checking Passkey..."
-            : "Sign in with Passkey 🔐"}
+            ? t("checkingPasskey", "Checking Passkey...")
+            : t("signInWithPasskey", "Sign in with Passkey 🔐")}
         </button>
 
         {/* Divider */}
@@ -616,14 +618,14 @@ function Login() {
             color: "#64748b",
           }}
         >
-          OR
+          {t("or", "OR")}
         </div>
 
         {/* Email */}
 
         <input
           type="email"
-          placeholder="Email"
+          placeholder={t("email")}
           value={email}
           onChange={(e) =>
             setEmail(e.target.value)
@@ -635,7 +637,7 @@ function Login() {
 
         <input
           type="password"
-          placeholder="Password"
+          placeholder={t("password")}
           value={password}
           onChange={(e) =>
             setPassword(e.target.value)
@@ -666,8 +668,8 @@ function Login() {
           }}
         >
           {loading
-            ? "Signing In..."
-            : "Sign In"}
+            ? t("signingIn", "Signing In...")
+            : t("login")}
         </button>
 
         {/* Forgot Password */}
@@ -684,7 +686,7 @@ function Login() {
               color: "#38bdf8",
             }}
           >
-            Forgot Password?
+            {t("forgotPassword", "Forgot Password?")}
           </Link>
         </p>
 
@@ -705,7 +707,7 @@ function Login() {
               color: "#38bdf8",
             }}
           >
-            Sign Up
+            {t("signup")}
           </Link>
         </p>
 
