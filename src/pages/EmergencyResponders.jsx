@@ -77,8 +77,8 @@ function EmergencyResponders() {
                 id: document.id,
                 displayName:
                   data.displayName || data.fullName || t("emergencyResponders"),
-                responder{t("responderAgency")}: data.responderAgency || t("unknown"),
-                responder{t("responderRole")}: data.responderRole || t("emergencyResponders"),
+                responderAgency: data.responderAgency || t("unknown"),
+                responderRole: data.responderRole || t("emergencyResponders"),
                 availability: data.availability || t("unknown"),
                 onDuty: data.onDuty === true,
                 verified: data.verified === true,
