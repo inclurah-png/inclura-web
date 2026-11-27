@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -15,6 +16,7 @@ function formatTimestamp(value) {
 }
 
 function SOSHistory() {
+  const { t } = useTranslation();
   const [history, setHistory] = useState([]);
 
   useEffect(() => {
@@ -46,17 +48,17 @@ function SOSHistory() {
         marginBottom: "20px",
       }}
     >
-      <h3 id="sos-history-title">📜 SOS History</h3>
-      <p aria-live="polite">Total Emergencies: {history.length}</p>
+      <h3 id="sos-history-title">{t("sosHistoryTitle", { defaultValue: "SOS History" })}</h3>
+      <p aria-live="polite">{t("sosTotalEmergencies", { defaultValue: "Total Emergencies" })}: {history.length}</p>
 
       {history.length === 0 ? (
-        <p>No emergency history available.</p>
+        <p>{t("sos{t("sosNo", { defaultValue: "No" })}History", { defaultValue: "{t("sosNo", { defaultValue: "No" })} emergency history available." })}</p>
       ) : (
         history.map((item) => {
           const gps =
             item.latitude || item.gpsLatitude
               ? `${item.latitude || item.gpsLatitude}, ${item.longitude || item.gpsLongitude || ""}`
-              : "Location coordinates unavailable";
+              : "{t("sosCoordinatesUnavailable", { defaultValue: "Location coordinates unavailable" })}";
 
           const automaticDispatch =
             item.automaticDispatch === true || item.ifseDispatch === true;
@@ -72,70 +74,70 @@ function SOSHistory() {
               }}
             >
               <h4 style={{ marginTop: 0 }}>
-                {item.emergencyType || "Emergency"}
+                {item.emergencyType || "{t("sosEmergency", { defaultValue: "Emergency" })}"}
               </h4>
 
-              <p><strong>Priority:</strong> {item.priority || "Unknown"}</p>
-              <p><strong>Status:</strong> {item.status || "Unknown"}</p>
+              <p><strong>{t("sosPriority", { defaultValue: "Priority" })}:</strong> {item.priority || "Unknown"}</p>
+              <p><strong>{t("sosStatus", { defaultValue: "Status" })}:</strong> {item.status || "Unknown"}</p>
               <p>
-                <strong>Response:</strong>{" "}
-                {item.responseStatus || "Awaiting Response"}
+                <strong>{t("sosResponse", { defaultValue: "Response" })}:</strong>{" "}
+                {item.responseStatus || "{t("sos{t("sosPending", { defaultValue: "Pending" })}", { defaultValue: "Awaiting Response" })}"}
               </p>
               <p>
-                <strong>IFSE Dispatch:</strong>{" "}
-                {automaticDispatch ? "Automatic" : "Not recorded"}
+                <strong>{t("sosIfseDispatch", { defaultValue: "IFSE Dispatch" })}:</strong>{" "}
+                {automaticDispatch ? "{t("sosAutomatic", { defaultValue: "Automatic" })}" : "{t("sos{t("sosNo", { defaultValue: "No" })}tRecorded", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t recorded" })}"}
               </p>
-              <p><strong>Location:</strong> {item.location || "Not provided"}</p>
-              <p><strong>GPS:</strong> {gps}</p>
+              <p><strong>{t("sosLocation", { defaultValue: "Location" })}:</strong> {item.location || "{t("sos{t("sosNo", { defaultValue: "No" })}tProvided", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t provided" })}"}</p>
+              <p><strong>{t("sosGps", { defaultValue: "GPS" })}:</strong> {gps}</p>
               <p>
-                <strong>Incident Number:</strong>{" "}
-                {item.incidentNumber || "Not assigned"}
-              </p>
-              <p>
-                <strong>IFSE Classification:</strong>{" "}
-                {item.ifseClassification || "Pending"}
+                <strong>{t("sosIncidentNumber", { defaultValue: "Incident Number" })}:</strong>{" "}
+                {item.incidentNumber || "{t("sos{t("sosNo", { defaultValue: "No" })}tAssigned", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t assigned" })}"}
               </p>
               <p>
-                <strong>Monitoring:</strong>{" "}
-                {item.ifseMonitoring === true ? "Active" : "Not recorded"}
+                <strong>{t("sosClassification", { defaultValue: "IFSE Classification" })}:</strong>{" "}
+                {item.ifseClassification || "{t("sosPending", { defaultValue: "Pending" })}"}
               </p>
               <p>
-                <strong>Assigned Agency:</strong>{" "}
-                {item.assignedAgency || "Not assigned"}
+                <strong>{t("sosMonitoring", { defaultValue: "Monitoring" })}:</strong>{" "}
+                {item.ifseMonitoring === true ? "{t("sosActive", { defaultValue: "Active" })}" : "{t("sos{t("sosNo", { defaultValue: "No" })}tRecorded", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t recorded" })}"}
               </p>
               <p>
-                <strong>Assigned Responder:</strong>{" "}
-                {item.assignedResponder || "Not assigned"}
+                <strong>{t("sosAssignedAgency", { defaultValue: "Assigned Agency" })}:</strong>{" "}
+                {item.assignedAgency || "{t("sos{t("sosNo", { defaultValue: "No" })}tAssigned", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t assigned" })}"}
               </p>
               <p>
-                <strong>Assignment Status:</strong>{" "}
-                {item.assignmentStatus || "Pending"}
+                <strong>{t("sosAssignedResponder", { defaultValue: "Assigned Responder" })}:</strong>{" "}
+                {item.assignedResponder || "{t("sos{t("sosNo", { defaultValue: "No" })}tAssigned", { defaultValue: "{t("sosNo", { defaultValue: "No" })}t assigned" })}"}
               </p>
               <p>
-                <strong>Incident Status:</strong>{" "}
-                {item.incidentStatus || "Active"}
+                <strong>Assignment {t("sosStatus", { defaultValue: "Status" })}:</strong>{" "}
+                {item.assignmentStatus || "{t("sosPending", { defaultValue: "Pending" })}"}
               </p>
               <p>
-                <strong>Resolved:</strong>{" "}
-                {item.resolved === true ? "Yes" : "No"}
+                <strong>Incident {t("sosStatus", { defaultValue: "Status" })}:</strong>{" "}
+                {item.incidentStatus || "{t("sosActive", { defaultValue: "Active" })}"}
               </p>
               <p>
-                <strong>Resolution:</strong>{" "}
-                {item.resolutionNotes || "No resolution recorded"}
+                <strong>{t("sosResolved", { defaultValue: "Resolved" })}:</strong>{" "}
+                {item.resolved === true ? "{t("sosYes", { defaultValue: "Yes" })}" : "{t("sosNo", { defaultValue: "No" })}"}
               </p>
               <p>
-                <strong>Resolved By:</strong>{" "}
-                {item.resolvedBy || "Not yet resolved"}
+                <strong>{t("sosResolution", { defaultValue: "Resolution" })}:</strong>{" "}
+                {item.resolution{t("sosNo", { defaultValue: "No" })}tes || "{t("sosNo", { defaultValue: "No" })} resolution recorded"}
               </p>
               <p>
-                <strong>Created At:</strong> {formatTimestamp(item.createdAt)}
+                <strong>{t("sosResolvedBy", { defaultValue: "Resolved By" })}:</strong>{" "}
+                {item.resolvedBy || "{t("sosNo", { defaultValue: "No" })}t yet resolved"}
               </p>
               <p>
-                <strong>Last Updated:</strong>{" "}
+                <strong>{t("sosCreatedAt", { defaultValue: "Created At" })}:</strong> {formatTimestamp(item.createdAt)}
+              </p>
+              <p>
+                <strong>{t("sosLastUpdated", { defaultValue: "Last Updated" })}:</strong>{" "}
                 {formatTimestamp(item.lastUpdated || item.updatedAt)}
               </p>
               <p>
-                <strong>Closed At:</strong> {formatTimestamp(item.closedAt)}
+                <strong>{t("sosClosedAt", { defaultValue: "Closed At" })}:</strong> {formatTimestamp(item.closedAt)}
               </p>
             </article>
           );
