@@ -472,7 +472,7 @@ marginBottom: "14px",
 fontSize: "20px",
 }}
 >
-Choose Identity
+{t("identityCategoryTitle")}
 </h2>
 
 <div
@@ -495,7 +495,7 @@ category === "Disability"
 : "#0f172a",
 }}
 >
-♿ Disability
+♿ {t("disabilityCategory")}
 </button>
 
 <button
@@ -510,7 +510,7 @@ category === "Ally"
 : "#0f172a",
 }}
 >
-🤝 Ally
+🤝 {t("allyCategory")}
 </button>
 
 <button
@@ -525,7 +525,7 @@ category === "Caregiver"
 : "#0f172a",
 }}
 >
-❤️ Caregiver
+❤️ {t("caregiverCategory")}
 </button>
   
 <button
@@ -540,7 +540,7 @@ category === "Volunteer"
 : "#0f172a",
 }}
 >
-🙋 Volunteer
+🙋 {t("volunteerCategory")}
 </button>
   
 <button
@@ -555,7 +555,7 @@ category === "Creator"
 : "#0f172a",
 }}
 >
-🎨 Creator
+🎨 {t("creatorCategory")}
 </button>
 
 <button
@@ -570,7 +570,7 @@ category === "Organization"
 : "#0f172a",
 }}
 >
-🏢 Organization
+🏢 {t("organizationCategory")}
 </button>
 
 <button
@@ -585,7 +585,7 @@ category === "Employer"
 : "#0f172a",
 }}
 >
-🏢 Employer
+🏢 {t("employerCategory")}
 </button>
 
 <button
@@ -600,7 +600,7 @@ category === "Job Seeker"
 : "#0f172a",
 }}
 >
-💼 Job Seeker
+💼 {t("jobSeekerCategory")}
 </button>
 
 <button
@@ -615,7 +615,7 @@ category === "Advocate"
 : "#0f172a",
 }}
 >
-📢 Advocate
+📢 {t("advocateCategory")}
 </button>
 
 </div>
@@ -635,7 +635,7 @@ fontSize: "20px",
 }}
 >
 {t("accessibilityNeeds")}
-(optional)
+{t("optionalLabel")}
 </h2>
 
 <div
@@ -726,7 +726,7 @@ style={inputStyle}
 
 <input
 type="password"
-placeholder={t("password")}
+placeholder={t("passwordRequirement")}
 autoComplete="new-password"
 value={password}
 onChange={(e) =>
@@ -739,7 +739,7 @@ style={inputStyle}
 
 <label style={{ display: "flex", gap: "10px", alignItems: "flex-start", color: "#cbd5e1", fontSize: "14px", lineHeight: "1.5", margin: "4px 0 18px" }}>
   <input type="checkbox" checked={acceptedStandards} onChange={(event) => setAcceptedStandards(event.target.checked)} style={{ marginTop: "3px" }} />
-  <span>I agree to respect other members, use my account honestly, and never engage in scams, impersonation, threats, harassment, blackmail, exploitation or abusive conduct. I understand that serious violations may lead to account restrictions or removal.</span>
+  <span>{t("communityStandardsAgreement")}</span>
 </label>
 
 {error && (
