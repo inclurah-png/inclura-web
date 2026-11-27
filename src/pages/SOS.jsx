@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -37,6 +38,7 @@ const SOS_NOTIFICATION_BACKEND_URL = (import.meta.env.VITE_SOS_NOTIFICATION_BACK
 
 
 function SOS() {
+  const { t } = useTranslation();
 
   const [sosForm, setSosForm] = useState({
 
@@ -954,26 +956,23 @@ return (
 
 <div style={page}>
 
-  <h1>🚨 SOS Emergency</h1>
+  <h1>🚨 {t("sosTitle")}</h1>
 
   <p style={introText}>
-    Use this emergency service to request authorized assistance
-    through the Inclura Fortress Security Engine (IFSE).
+    {t("sosIntro")}
   </p>
 
   <SOSPushRegistration />
 
   <div style={card}>
-    <h3>🛡 SOS Emergency Readiness — Prepare Before Danger</h3>
+    <h3>🛡 {t("sosReadinessTitle")}</h3>
     <p style={helpText}>
-      Allow location access now, during normal use. Inclura will not ask you to grant
-      permission for the first time while you are trying to send an SOS. This check
-      verifies permission and a GPS fix; it does not provide continuous background tracking.
+      {t("sosReadinessHelp")}
     </p>
     <p role="status" aria-live="polite" style={gpsText}>{locationReadiness}</p>
     <button type="button" onClick={prepareEmergencyLocation}
       style={locationButton} disabled={isPreparingLocation || isSubmittingSOS}>
-      {isPreparingLocation ? "Checking GPS…" : "Enable & Verify Emergency Location"}
+      {isPreparingLocation ? t("sosCheckingGps") : t("sosEnableLocation")}
     </button>
     <p style={securityNotice}>
       If GPS is unavailable or permission is denied, you can still submit an SOS using
@@ -1092,14 +1091,14 @@ return (
   ============================================================ */}
 
   <h2 style={sectionTitle}>
-    Emergency Actions
+    {t("sosEmergencyActions")}
   </h2>
 
 
   <div style={card}>
 
     <h3>
-      🚨 Emergency SOS
+      🚨 {t("sosTitle")}
     </h3>
 
 
@@ -1115,7 +1114,7 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Emergency Type
+      {t("sosEmergencyType")}
     </label>
 
 
@@ -1132,37 +1131,21 @@ return (
       disabled={isSubmittingSOS}
     >
 
-      <option value="Medical">
-        Medical
-      </option>
+      <option value="Medical">{t("sosMedical")}</option>
 
-      <option value="Fire">
-        Fire
-      </option>
+      <option value="Fire">{t("sosFire")}</option>
 
-      <option value="Police">
-        Police
-      </option>
+      <option value="Police">{t("sosPolice")}</option>
 
-      <option value="Kidnapping">
-        Kidnapping
-      </option>
+      <option value="Kidnapping">{t("sosKidnapping")}</option>
 
-      <option value="Accident">
-        Accident
-      </option>
+      <option value="Accident">{t("sosAccident")}</option>
 
-      <option value="Disaster">
-        Disaster
-      </option>
+      <option value="Disaster">{t("sosDisaster")}</option>
 
-      <option value="Security Threat">
-        Security Threat
-      </option>
+      <option value="Security Threat">{t("sosSecurityThreat")}</option>
 
-      <option value="Missing Person">
-        Missing Person
-      </option>
+      <option value="Missing Person">{t("sosMissingPerson")}</option>
 
     </select>
 
@@ -1172,7 +1155,7 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Priority
+      {t("sosPriority")}
     </label>
 
 
@@ -1213,13 +1196,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Emergency Description
+      {t("sosDescription")}
     </label>
 
 
     <textarea
       rows={5}
-      placeholder="Describe what is happening..."
+      placeholder={t("sosDescription")}
       value={sosForm.description}
       onChange={(e) =>
         setSosForm({
@@ -1238,13 +1221,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Location
+      {t("sosLocation")}
     </label>
 
 
     <input
       type="text"
-      placeholder="Enter your current location"
+      placeholder={t("sosLocation")}
       value={sosForm.location}
       onChange={(e) =>
         setSosForm({
@@ -1267,7 +1250,7 @@ return (
       <div>
 
         <strong>
-          📍 GPS Emergency Location
+          📍 {t("sosGpsLocation")}
         </strong>
 
         <p style={gpsText}>
@@ -1303,7 +1286,7 @@ return (
         disabled={isSubmittingSOS}
       >
 
-        📍 Capture Current GPS
+        📍 {t("sosCaptureGps")}
 
       </button>
 
@@ -1320,13 +1303,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Additional Responder Notes
+      {t("sosResponderNotes")}
     </label>
 
 
     <textarea
       rows={3}
-      placeholder="Any additional information responders should know..."
+      placeholder={t("sosResponderNotesPlaceholder")}
       value={sosForm.responderNotes}
       onChange={(e) =>
         setSosForm({
@@ -1360,8 +1343,8 @@ return (
     >
 
       {isSubmittingSOS
-        ? "🛡 IFSE Processing Emergency..."
-        : "🚨 Send Emergency SOS"}
+        ? `🛡 ${t("sosProcessing")}`
+        : `🚨 ${t("sosSendButton")}`}
 
     </button>
 
@@ -1381,7 +1364,7 @@ return (
   <div style={card}>
 
     <h3>
-      📍 Share Live Location
+      📍 {t("sosShareLocation")}
     </h3>
 
     <ShareLiveLocation />
@@ -1396,7 +1379,7 @@ return (
   <div style={card}>
 
     <h3>
-      👨‍👩‍👧 Trusted Contacts
+      👨‍👩‍👧 {t("trustedContactsTitle")}
     </h3>
 
     <TrustedContacts />
@@ -1411,7 +1394,7 @@ return (
   <div style={card}>
 
     <h3>
-      🤝 Community Assistance
+      🤝 {t("communityAssistance")}
     </h3>
 
     <CommunityAssistance />
@@ -1426,7 +1409,7 @@ return (
   <div style={card}>
 
     <h3>
-      🚑 Emergency Responders
+      🚑 {t("emergencyResponders")}
     </h3>
 
     <EmergencyResponders />
@@ -1441,7 +1424,7 @@ return (
   <div style={card}>
 
     <h3>
-      🛡 IFSE Emergency Monitoring
+      🛡 {t("ifseEmergencyMonitoring")}
     </h3>
 
     <IFSEEmergencyMonitoring />
@@ -1456,7 +1439,7 @@ return (
   <div style={card}>
 
     <h3>
-      📊 Emergency Analytics
+      📊 {t("emergencyAnalytics")}
     </h3>
 
     <EmergencyAnalytics />
@@ -1471,7 +1454,7 @@ return (
   <div style={card}>
 
     <h3>
-      📜 SOS History
+      📜 {t("sosHistory")}
     </h3>
 
     <SOSHistory />

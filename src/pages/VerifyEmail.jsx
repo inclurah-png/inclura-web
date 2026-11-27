@@ -1,13 +1,15 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { reload, sendEmailVerification, signOut } from "firebase/auth";
 import { auth } from "../firebase";
 import LanguageSelector from "../components/LanguageSelector";
 
 function VerifyEmail() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [email, setEmail] = useState(auth.currentUser?.email || "");
-  const [message, setMessage] = useState("Check your inbox and verify your email address before entering Inclura.");
+  const [message, setMessage] = useState(t("verificationPending"));
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -23,10 +25,10 @@ function VerifyEmail() {
       if (auth.currentUser.emailVerified) {
         navigate("/onboarding", { replace: true });
       } else {
-        setMessage("Your email is not verified yet. Open the verification link in your inbox, then check again.");
+        setMessage(t("verificationNotYet"));
       }
     } catch (error) {
-      setMessage(error.message || "We could not check verification yet. Please try again.");
+      setMessage(error.message || t("verificationCheckError"));
     } finally {
       setBusy(false);
     }
@@ -37,11 +39,11 @@ function VerifyEmail() {
     setBusy(true);
     try {
       await sendEmailVerification(auth.currentUser);
-      setMessage("A new verification email has been sent. Check your inbox and spam folder.");
+      setMessage(t("verificationEmailResent"));
     } catch (error) {
       setMessage(error.code === "auth/too-many-requests"
-        ? "For security, please wait before requesting another email."
-        : (error.message || "We could not send the email. Please try again later."));
+        ? t("verificationWait")
+        : (error.message || t("verificationSendError")));
     } finally {
       setBusy(false);
     }
@@ -60,13 +62,13 @@ function VerifyEmail() {
 
       <section style={{ width: "100%", maxWidth: "480px", background: "#0f172a", border: "1px solid #1e3a8a", borderRadius: "24px", padding: "28px", boxSizing: "border-box" }}>
         <div style={{ fontSize: "38px", marginBottom: "12px" }}>✉️</div>
-        <h1 style={{ fontSize: "28px", margin: "0 0 12px" }}>Verify your email</h1>
-        <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>We sent a verification link to <strong>{email}</strong>. This helps protect members from impersonation and throwaway email accounts.</p>
+        <h1 style={{ fontSize: "28px", margin: "0 0 12px" }}>{t("verifyEmail")}</h1>
+        <p style={{ color: "#cbd5e1", lineHeight: 1.6 }}>{t("verifyEmailIntro")} <strong>{email}</strong>. {t("verificationProtection")}</p>
         <p role="status" aria-live="polite" style={{ background: "#172554", color: "#dbeafe", padding: "12px", borderRadius: "12px", lineHeight: 1.5 }}>{message}</p>
-        <button onClick={checkVerification} disabled={busy} style={actionStyle}>{busy ? "Checking…" : "I have verified my email"}</button>
-        <button onClick={resend} disabled={busy} style={secondaryStyle}>Resend verification email</button>
-        <button onClick={useAnotherAccount} disabled={busy} style={{ ...secondaryStyle, border: "none" }}>Use another account</button>
-        <p style={{ color: "#94a3b8", fontSize: "13px", lineHeight: 1.5 }}>If you do not see the message, check your spam or junk folder. You can also <Link to="/login" style={{ color: "#5eead4" }}>return to sign in</Link>.</p>
+        <button onClick={checkVerification} disabled={busy} style={actionStyle}>{busy ? t("checking") : t("verifiedEmail")}</button>
+        <button onClick={resend} disabled={busy} style={secondaryStyle}>{t("resendVerification")}</button>
+        <button onClick={useAnotherAccount} disabled={busy} style={{ ...secondaryStyle, border: "none" }}>{t("useAnotherAccount")}</button>
+        <p style={{ color: "#94a3b8", fontSize: "13px", lineHeight: 1.5 }}>{t("verificationSpamHint")} <Link to="/login" style={{ color: "#5eead4" }}>{t("returnToSignIn")}</Link>.</p>
       </section>
     </main>
   );

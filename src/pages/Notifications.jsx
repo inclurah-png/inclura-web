@@ -60,13 +60,9 @@ function Notifications() {
         (snapshotError) => {
           console.error("Notifications listener error:", snapshotError);
 
-          const code = snapshotError?.code || "unknown";
-          const message =
-            snapshotError?.message || "Unknown Firebase error.";
-
-          setError(
-            `${t("notificationsError")}: ${code}. ${message}`
-          );
+          // Keep provider-specific diagnostics in the console; show a localized,
+          // actionable message to members instead of raw English Firebase details.
+          setError(t("notificationsError"));
         }
       );
     });

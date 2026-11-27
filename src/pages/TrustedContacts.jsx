@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   addDoc, collection, deleteDoc, doc, onSnapshot, query,
   serverTimestamp, updateDoc, where,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
 
-// SOS trusted contacts are owner-managed; no external delivery is implied by saving a contact.
+// SOS trusted contacts are owner-managed; saving a contact does not itself send an alert.
 const emptyForm = { fullName: "", relationship: "", phoneNumber: "", email: "" };
 
 function TrustedContacts() {
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -26,10 +28,10 @@ function TrustedContacts() {
       },
       (err) => {
         console.error("Trusted contacts listener failed:", err);
-        setError("Unable to load trusted contacts. Please refresh and try again.");
+        setError(t("trustedContactLoadError"));
       }
     );
-  }, []);
+  }, [t]);
 
   function updateField(event) {
     setForm((current) => ({ ...current, [event.target.name]: event.target.value }));
@@ -55,16 +57,16 @@ function TrustedContacts() {
   async function saveContact(event) {
     event.preventDefault();
     const user = auth.currentUser;
-    if (!user) return setError("Please sign in before managing trusted contacts.");
+    if (!user) return setError(t("trustedContactSignIn"));
 
     const fullName = form.fullName.trim();
     const phoneNumber = form.phoneNumber.trim();
     const email = form.email.trim();
     if (!fullName || (!phoneNumber && !email)) {
-      return setError("Enter the contact's name and at least a phone number or email address.");
+      return setError(t("trustedContactRequired"));
     }
     if (fullName.length > 100 || phoneNumber.length > 40 || email.length > 160) {
-      return setError("One or more fields are too long. Please shorten them.");
+      return setError(t("trustedContactTooLong"));
     }
 
     setSaving(true);
@@ -82,7 +84,7 @@ function TrustedContacts() {
       if (editingId) {
         await updateDoc(doc(db, "trustedContacts", editingId), safeData);
       } else {
-        if (contacts.length >= 5) throw new Error("You can add up to five trusted contacts.");
+        if (contacts.length >= 5) throw new Error("trusted-contact-limit");
         await addDoc(collection(db, "trustedContacts"), {
           ...safeData, userId: user.uid, ownerId: user.uid, createdAt: serverTimestamp(),
         });
@@ -91,21 +93,23 @@ function TrustedContacts() {
     } catch (err) {
       console.error("Trusted contact save failed:", err);
       setError(err.code === "permission-denied"
-        ? "Access was denied while saving this contact. Please refresh and try again."
-        : err.message || "The contact could not be saved.");
+        ? t("trustedContactSaveDenied")
+        : err.message === "trusted-contact-limit"
+          ? t("trustedContactMax")
+          : t("trustedContactSaveError"));
     } finally {
       setSaving(false);
     }
   }
 
   async function removeContact(contactId) {
-    if (!window.confirm("Remove this trusted contact from your SOS list?")) return;
+    if (!window.confirm(t("trustedContactRemoveConfirm"))) return;
     try {
       await deleteDoc(doc(db, "trustedContacts", contactId));
       if (editingId === contactId) resetForm();
     } catch (err) {
       console.error("Trusted contact removal failed:", err);
-      setError("The contact could not be removed. Please try again.");
+      setError(t("trustedContactRemoveError"));
     }
   }
 
@@ -115,31 +119,31 @@ function TrustedContacts() {
 
   return (
     <section style={panel}>
-      <h3>👨‍👩‍👧 Trusted Contacts</h3>
-      <p>Contacts you choose may be included in an SOS notification workflow. Adding a contact does not itself send a notification or confirm delivery.</p>
-      <p>Total contacts: {contacts.length} / 5</p>
+      <h3>👥 {t("trustedContactsTitle")}</h3>
+      <p>{t("trustedContactsDescription")}</p>
+      <p>{t("trustedContactsTotal", { count: contacts.length })}</p>
       <form onSubmit={saveContact}>
-        <label htmlFor="trusted-full-name">Full name</label>
-        <input id="trusted-full-name" name="fullName" value={form.fullName} onChange={updateField} maxLength={100} required style={field} placeholder="Contact's full name" />
-        <label htmlFor="trusted-relationship">Relationship</label>
-        <input id="trusted-relationship" name="relationship" value={form.relationship} onChange={updateField} maxLength={60} style={field} placeholder="e.g. Spouse, sibling, friend" />
-        <label htmlFor="trusted-phone">Phone number</label>
-        <input id="trusted-phone" name="phoneNumber" type="tel" value={form.phoneNumber} onChange={updateField} maxLength={40} style={field} placeholder="Include country code where possible" />
-        <label htmlFor="trusted-email">Email address</label>
-        <input id="trusted-email" name="email" type="email" value={form.email} onChange={updateField} maxLength={160} style={field} placeholder="name@example.com" />
-        <button type="submit" disabled={saving || (!editingId && contacts.length >= 5)} style={{ ...action, background: "#15803d", color: "#fff" }}>{saving ? "Saving..." : editingId ? "Save changes" : "Add trusted contact"}</button>
-        {editingId && <button type="button" onClick={resetForm} style={{ ...action, background: "#475569", color: "#fff" }}>Cancel</button>}
-        {!editingId && contacts.length >= 5 && <p>You can add up to five trusted contacts.</p>}
+        <label htmlFor="trusted-full-name">{t("trustedContactName")}</label>
+        <input id="trusted-full-name" name="fullName" value={form.fullName} onChange={updateField} maxLength={100} required style={field} placeholder={t("trustedContactNamePlaceholder")} />
+        <label htmlFor="trusted-relationship">{t("trustedContactRelationship")}</label>
+        <input id="trusted-relationship" name="relationship" value={form.relationship} onChange={updateField} maxLength={60} style={field} placeholder={t("trustedContactRelationshipPlaceholder")} />
+        <label htmlFor="trusted-phone">{t("trustedContactPhone")}</label>
+        <input id="trusted-phone" name="phoneNumber" type="tel" value={form.phoneNumber} onChange={updateField} maxLength={40} style={field} placeholder={t("trustedContactPhonePlaceholder")} />
+        <label htmlFor="trusted-email">{t("trustedContactEmail")}</label>
+        <input id="trusted-email" name="email" type="email" value={form.email} onChange={updateField} maxLength={160} style={field} placeholder={t("trustedContactEmailPlaceholder")} />
+        <button type="submit" disabled={saving || (!editingId && contacts.length >= 5)} style={{ ...action, background: "#15803d", color: "#fff" }}>{saving ? t("trustedContactSaving") : editingId ? t("trustedContactSaveChanges") : t("trustedContactAdd")}</button>
+        {editingId && <button type="button" onClick={resetForm} style={{ ...action, background: "#475569", color: "#fff" }}>{t("cancel")}</button>}
+        {!editingId && contacts.length >= 5 && <p>{t("trustedContactMax")}</p>}
       </form>
       {error && <p role="alert" style={{ color: "#fecaca" }}>{error}</p>}
-      {contacts.length === 0 ? <p>No trusted contacts added yet.</p> : contacts.map((contact) => (
+      {contacts.length === 0 ? <p>{t("trustedContactNone")}</p> : contacts.map((contact) => (
         <article key={contact.id} style={{ background: "#111827", padding: "14px", borderRadius: "12px", marginTop: "12px", border: "1px solid #334155" }}>
           <strong>{contact.fullName}</strong>
-          <p>Relationship: {contact.relationship || "Not specified"}</p>
-          <p>Phone: {contact.phoneNumber || "Not provided"}</p>
-          <p>Email: {contact.email || "Not provided"}</p>
-          <button type="button" onClick={() => beginEdit(contact)} style={{ ...action, background: "#1d4ed8", color: "#fff" }}>Edit</button>
-          <button type="button" onClick={() => removeContact(contact.id)} style={{ ...action, background: "#991b1b", color: "#fff" }}>Remove</button>
+          <p>{t("trustedContactRelationship")}: {contact.relationship || t("trustedContactNotSpecified")}</p>
+          <p>{t("trustedContactPhoneLabel")}: {contact.phoneNumber || t("trustedContactNotProvided")}</p>
+          <p>{t("trustedContactEmailLabel")}: {contact.email || t("trustedContactNotProvided")}</p>
+          <button type="button" onClick={() => beginEdit(contact)} style={{ ...action, background: "#1d4ed8", color: "#fff" }}>{t("trustedContactEdit")}</button>
+          <button type="button" onClick={() => removeContact(contact.id)} style={{ ...action, background: "#991b1b", color: "#fff" }}>{t("trustedContactRemove")}</button>
         </article>
       ))}
     </section>

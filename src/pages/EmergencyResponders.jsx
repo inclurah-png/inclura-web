@@ -8,8 +8,10 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { useTranslation } from "react-i18next";
 
 function EmergencyResponders() {
+  const { t } = useTranslation();
   const [responders, setResponders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [authorised, setAuthorised] = useState(false);
@@ -29,7 +31,7 @@ function EmergencyResponders() {
         const currentUser = auth.currentUser;
 
         if (!currentUser) {
-          throw new Error("Please sign in with an administrator account.");
+          throw new Error(t("responderSignInAdmin"));
         }
 
         // Refresh the token so the current administrator claim is checked.
@@ -48,7 +50,7 @@ function EmergencyResponders() {
 
         if (tokenResult.claims.admin !== true) {
           setAuthorised(false);
-          setError("Responder management is restricted to authorized administrators.");
+          setError(t("responderAdminOnly"));
           setAccessChecked(true);
           setLoading(false);
           return;
@@ -74,10 +76,10 @@ function EmergencyResponders() {
               return {
                 id: document.id,
                 displayName:
-                  data.displayName || data.fullName || "Responder",
-                responderAgency: data.responderAgency || "Unknown",
-                responderRole: data.responderRole || "Responder",
-                availability: data.availability || "Unknown",
+                  data.displayName || data.fullName || t("emergencyResponders"),
+                responderAgency: data.responderAgency || t("unknown"),
+                responderRole: data.responderRole || t("emergencyResponders"),
+                availability: data.availability || t("unknown"),
                 onDuty: data.onDuty === true,
                 verified: data.verified === true,
                 ifseVerified: data.ifseVerified === true,
@@ -104,8 +106,8 @@ function EmergencyResponders() {
 
             setError(
               snapshotError.code === "permission-denied"
-                ? "Access denied by Firestore Security Rules. Confirm that administrator access is configured securely."
-                : "Unable to load emergency responders. Please try again later."
+                ? t("responderAccessDenied")
+                : t("responderLoadError")
             );
 
             setResponders([]);
@@ -125,7 +127,7 @@ function EmergencyResponders() {
         setResponders([]);
         setError(
           initialiseError.message ||
-            "Unable to verify administrator access."
+            t("responderVerifyError")
         );
         setLoading(false);
       }
@@ -179,24 +181,23 @@ function EmergencyResponders() {
         marginBottom: "20px",
       }}
     >
-      <h3>🚑 IFSE Emergency Responders</h3>
+      <h3>🚑 {t("ifseEmergencyResponders")}</h3>
 
       <p>
-        Responder records: <strong>{responders.length}</strong>
+        {t("responderRecords")}: <strong>{responders.length}</strong>
       </p>
 
       <p>
-        Currently eligible and available:{" "}
+        {t("responderEligibleAvailable")}:{" "}
         <strong>{availableCount}</strong>
       </p>
 
       <p style={{ color: "#cbd5e1", fontSize: "13px" }}>
-        Eligibility shown here is an administrative overview, not
-        confirmation that a responder has accepted an emergency assignment.
+        {t("responderEligibilityNote")}
       </p>
 
       {loading && (
-        <p role="status">Loading and verifying responder records...</p>
+        <p role="status">{t("responderLoading")}</p>
       )}
 
       {!loading && error && (
@@ -219,7 +220,7 @@ function EmergencyResponders() {
         accessChecked &&
         authorised &&
         responders.length === 0 && (
-          <p>No registered emergency responders were found.</p>
+          <p>{t("responderNone")}</p>
         )}
 
       {!loading &&
@@ -241,30 +242,30 @@ function EmergencyResponders() {
               </p>
 
               <p>
-                Reported availability: {responder.availability}
+                {t("responderAvailability")}: {responder.availability}
               </p>
 
               <p>
-                Duty status: {responder.onDuty ? "On duty" : "Not on duty"}
+                Duty status: {responder.onDuty ? t(responder.onDuty ? "responderOnDuty" : "responderOffDuty")}
               </p>
 
               <p>
-                Identity verification:{" "}
-                {responder.verified ? "Verified" : "Not verified"}
+                {t("responderIdentityVerification")}:{" "}
+                {responder.verified ? t(responder.verified ? "verified" : "notVerified")}
               </p>
 
               <p>
-                IFSE verification:{" "}
+                {t("responderIfseVerification")}:{" "}
                 {responder.ifseVerified ? "Verified" : "Not verified"}
               </p>
 
               <p>
-                Account status:{" "}
-                {responder.suspended ? "Suspended" : "Not suspended"}
+                {t("responderAccountStatus")}:{" "}
+                {responder.suspended ? t(responder.suspended ? "suspended" : "notSuspended")}
               </p>
 
               <p>
-                Missions completed: {responder.completedMissions}
+                {t("responderMissionsCompleted")}: {responder.completedMissions}
               </p>
 
               <p
@@ -274,8 +275,8 @@ function EmergencyResponders() {
                 }}
               >
                 {eligible
-                  ? "Eligible and available"
-                  : "Not currently eligible for dispatch"}
+                  ? t("responderEligibleAvailable")
+                  : t("responderNotEligible")}
               </p>
             </article>
           );

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
 createUserWithEmailAndPassword,
@@ -27,8 +28,20 @@ import LanguageSelector from "../components/LanguageSelector";
 const googleProvider =
 new GoogleAuthProvider();
 
+function getSelectedLanguage() {
+  try {
+    const selected = window.localStorage.getItem("inclura-language");
+    return typeof selected === "string" && selected.trim()
+      ? selected.trim()
+      : "en";
+  } catch {
+    return "en";
+  }
+}
+
 function Signup() {
 
+const { t } = useTranslation();
 const navigate = useNavigate();
 
 const [fullName, setFullName] =
@@ -69,6 +82,8 @@ useEffect(() => {
             uid: user.uid,
             fullName: user.displayName || "",
             email: user.email || "",
+            language: getSelectedLanguage(),
+            preferredLanguage: getSelectedLanguage(),
             acceptedCommunityStandards: true,
             acceptedCommunityStandardsAt: serverTimestamp(),
             createdAt: serverTimestamp(),
@@ -203,6 +218,9 @@ await setDoc(
 
     email: cleanEmail,
 
+    language: getSelectedLanguage(),
+    preferredLanguage: getSelectedLanguage(),
+
     category,
 
     acceptedCommunityStandards: true,
@@ -317,6 +335,9 @@ await setDoc(
     email:
       user.email || "",
 
+    language: getSelectedLanguage(),
+    preferredLanguage: getSelectedLanguage(),
+
     acceptedCommunityStandards: true,
     acceptedCommunityStandardsAt: serverTimestamp(),
 
@@ -425,7 +446,7 @@ fontWeight: "800",
 marginBottom: "12px",
 }}
 >
-Join Inclura 👋
+{t("welcome")} 👋
 </h1>
 
 <p
@@ -436,8 +457,7 @@ lineHeight: "1.6",
 fontSize: "17px",
 }}
 >
-The inclusive social platform
-for everyone.
+{t("slogan")}
 </p>
 
 <div
@@ -452,7 +472,7 @@ marginBottom: "14px",
 fontSize: "20px",
 }}
 >
-Choose Identity
+{t("identityCategoryTitle")}
 </h2>
 
 <div
@@ -475,7 +495,7 @@ category === "Disability"
 : "#0f172a",
 }}
 >
-♿ Disability
+♿ {t("disabilityCategory")}
 </button>
 
 <button
@@ -490,7 +510,7 @@ category === "Ally"
 : "#0f172a",
 }}
 >
-🤝 Ally
+🤝 {t("allyCategory")}
 </button>
 
 <button
@@ -505,7 +525,7 @@ category === "Caregiver"
 : "#0f172a",
 }}
 >
-❤️ Caregiver
+❤️ {t("caregiverCategory")}
 </button>
   
 <button
@@ -520,7 +540,7 @@ category === "Volunteer"
 : "#0f172a",
 }}
 >
-🙋 Volunteer
+🙋 {t("volunteerCategory")}
 </button>
   
 <button
@@ -535,7 +555,7 @@ category === "Creator"
 : "#0f172a",
 }}
 >
-🎨 Creator
+🎨 {t("creatorCategory")}
 </button>
 
 <button
@@ -550,7 +570,7 @@ category === "Organization"
 : "#0f172a",
 }}
 >
-🏢 Organization
+🏢 {t("organizationCategory")}
 </button>
 
 <button
@@ -565,7 +585,7 @@ category === "Employer"
 : "#0f172a",
 }}
 >
-🏢 Employer
+🏢 {t("employerCategory")}
 </button>
 
 <button
@@ -580,7 +600,7 @@ category === "Job Seeker"
 : "#0f172a",
 }}
 >
-💼 Job Seeker
+💼 {t("jobSeekerCategory")}
 </button>
 
 <button
@@ -595,7 +615,7 @@ category === "Advocate"
 : "#0f172a",
 }}
 >
-📢 Advocate
+📢 {t("advocateCategory")}
 </button>
 
 </div>
@@ -614,8 +634,8 @@ marginBottom: "14px",
 fontSize: "20px",
 }}
 >
-Your Accessibility Needs
-(optional)
+{t("accessibilityNeeds")}
+{t("optionalLabel")}
 </h2>
 
 <div
@@ -679,7 +699,7 @@ padding: "28px",
 
 <input
 type="text"
-placeholder="Full Name"
+placeholder={t("fullName")}
 maxLength={80}
 autoComplete="name"
 value={fullName}
@@ -693,7 +713,7 @@ style={inputStyle}
 
 <input
 type="email"
-placeholder="Email"
+placeholder={t("email")}
 autoComplete="email"
 value={email}
 onChange={(e) =>
@@ -706,7 +726,7 @@ style={inputStyle}
 
 <input
 type="password"
-placeholder="Password (12+ characters)"
+placeholder={t("passwordRequirement")}
 autoComplete="new-password"
 value={password}
 onChange={(e) =>
@@ -719,7 +739,7 @@ style={inputStyle}
 
 <label style={{ display: "flex", gap: "10px", alignItems: "flex-start", color: "#cbd5e1", fontSize: "14px", lineHeight: "1.5", margin: "4px 0 18px" }}>
   <input type="checkbox" checked={acceptedStandards} onChange={(event) => setAcceptedStandards(event.target.checked)} style={{ marginTop: "3px" }} />
-  <span>I agree to respect other members, use my account honestly, and never engage in scams, impersonation, threats, harassment, blackmail, exploitation or abusive conduct. I understand that serious violations may lead to account restrictions or removal.</span>
+  <span>{t("communityStandardsAgreement")}</span>
 </label>
 
 {error && (
@@ -745,7 +765,7 @@ onClick={handleSignup}
 disabled={submitting}
 style={{ ...buttonStyle, opacity: submitting ? 0.65 : 1 }}
 >
-{submitting ? "Creating secure account…" : "Create Account"}
+{submitting ? t("creatingSecureAccount", "Creating secure account…") : t("createAccount")}
 </button>
 
 <div
@@ -755,7 +775,7 @@ margin: "24px 0",
 color: "#64748b",
 }}
 >
-or continue with
+{t("orContinueWith", "or continue with")}
 </div>
 
 <button
@@ -765,7 +785,7 @@ style={{ ...googleButton, opacity: !acceptedStandards ? 0.55 : 1 }}
 
 >
 
-🔵 Continue with Google </button>
+🔵 {t("continueWithGoogle")} </button>
 
 </div>
 

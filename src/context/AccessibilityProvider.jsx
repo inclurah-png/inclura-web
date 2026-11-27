@@ -559,9 +559,9 @@ export function AccessibilityProvider({ children }) {
     const overrides = localOverrides;
 
     /*
-     * The browser/local language selection is the freshest value.
-     * Do not let an older Firestore userProfile snapshot overwrite
-     * a language the user has just selected.
+     * A signed-in account's saved language is authoritative after login.
+     * The local override takes priority while a newly selected value is
+     * being saved, so an older profile snapshot cannot revert that choice.
      */
     let storedBrowserLanguage = "";
 
@@ -574,18 +574,22 @@ export function AccessibilityProvider({ children }) {
       storedBrowserLanguage = "";
     }
 
+    // A signed-in account's saved preference is authoritative.
+    // Browser storage is only a fallback for accounts without a saved choice;
+    // this prevents one person’s language from leaking into another account
+    // on a shared device.
     const savedLanguage =
       overrides.language ??
       overrides.preferredLanguage ??
-      (typeof storedBrowserLanguage === "string" &&
-      storedBrowserLanguage.trim()
-        ? storedBrowserLanguage.trim()
-        : typeof userProfile.language === "string" &&
-          userProfile.language.trim()
+      (typeof userProfile.language === "string" &&
+      userProfile.language.trim()
         ? userProfile.language
         : typeof userProfile.preferredLanguage === "string" &&
           userProfile.preferredLanguage.trim()
         ? userProfile.preferredLanguage
+        : typeof storedBrowserLanguage === "string" &&
+          storedBrowserLanguage.trim()
+        ? storedBrowserLanguage.trim()
         : "en");
 
     const normalizedSavedLanguage = normalizePreferredLanguage(savedLanguage);
