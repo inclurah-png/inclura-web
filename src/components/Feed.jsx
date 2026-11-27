@@ -424,7 +424,7 @@ function Feed() {
         error
       );
       setFeedError(
-        "Unable to load posts right now. Please refresh and try again."
+        t("feedLoadError")
       );
     } finally {
       setLoading(false);
@@ -436,7 +436,7 @@ function Feed() {
       const user = auth.currentUser;
 
       if (!user) {
-        alert("Please sign in to save a post.");
+        alert(t("feedSignInToSave"));
         return;
       }
 
@@ -452,13 +452,13 @@ function Feed() {
           savedPosts: arrayRemove(post.id),
         });
 
-        alert("Post removed");
+        alert(t("feedPostRemoved"));
       } else {
         await updateDoc(userRef, {
           savedPosts: arrayUnion(post.id),
         });
 
-        alert("Post saved");
+        alert(t("feedPostSaved"));
       }
     } catch (error) {
       console.error(
@@ -466,7 +466,7 @@ function Feed() {
         error
       );
 
-      alert("Unable to save post.");
+      alert(t("feedSaveError"));
     }
   }
 
@@ -474,7 +474,7 @@ function Feed() {
     const user = auth.currentUser;
 
     if (!user) {
-      alert("Please sign in to react to a post.");
+      alert(t("feedSignInToReact"));
       return;
     }
 
@@ -838,21 +838,21 @@ function Feed() {
 
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url).then(
-        () => alert("Post link copied!"),
+        () => alert(t("feedPostLinkCopied")),
         (error) => {
           console.error(
             "Inclura Share Error:",
             error
           );
 
-          alert("Unable to copy post link.");
+          alert(t("feedCopyLinkError"));
         }
       );
 
       return;
     }
 
-    alert("Sharing is not available in this browser.");
+    alert(t("feedShareUnavailable"));
   }
 
   function getBadge(post) {
