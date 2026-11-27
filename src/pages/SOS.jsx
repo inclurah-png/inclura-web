@@ -73,7 +73,6 @@ function SOS() {
     medical: 0,
     fire: 0,
     police: 0,
-    responders: 0,
   });
 
   const [locationReadiness, setLocationReadiness] = useState("Checking readiness…");
