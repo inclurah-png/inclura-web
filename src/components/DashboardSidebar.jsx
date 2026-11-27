@@ -143,12 +143,12 @@ const isAdmin = role === "admin";
 
       <button
         type="button"
-        aria-label="Social Connections"
-        title="Social Connections"
+        aria-label={t("socialConnections", { defaultValue: "Social Connections" })}
+        title={t("socialConnections", { defaultValue: "Social Connections" })}
         onClick={() => navigate("/social-connections")}
         style={{ ...itemStyle, width: "100%", border: "none", textAlign: "left", font: "inherit" }}
       >
-        <><Icon name="link" /> Social Connections</>
+        <><Icon name="link" /> {t("socialConnections", { defaultValue: "Social Connections" })}</>
       </button>
 
       <button

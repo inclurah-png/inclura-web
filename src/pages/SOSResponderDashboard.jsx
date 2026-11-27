@@ -7,8 +7,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase";
 import DashboardLayout from "../components/DashboardLayout";
+import { useTranslation } from "react-i18next";
 
 function SOSResponderDashboard() {
+  const { t } = useTranslation();
   const [activeEmergencies, setActiveEmergencies] = useState([]);
   const [assignedEmergencies, setAssignedEmergencies] = useState([]);
 
@@ -47,26 +49,24 @@ function SOSResponderDashboard() {
   return (
     <DashboardLayout>
       <div style={{ color: "white" }}>
-        <h1>🚑 SOS Responder Dashboard</h1>
+        <h1>{t("sosResponderDashboard", { defaultValue: "SOS Responder Dashboard" })}</h1>
         <p style={notice}>
-          Read-only emergency monitoring. SOS dispatch is automatic; responder
-          assignment and case-control actions are restricted to authorized IFSE
-          server workflows.
+          {t("sosReadOnlyNotice", { defaultValue: "Read-only emergency monitoring. SOS dispatch is automatic; responder assignment and case-control actions are restricted to authorized IFSE server workflows." })}
         </p>
 
         <section style={card}>
-          <h2>🔴 Active Emergencies</h2>
-          <p>Total: {activeEmergencies.length}</p>
+          <h2>{t("sosActiveEmergencies", { defaultValue: "Active Emergencies" })}</h2>
+          <p>{t("sosTotal", { defaultValue: "Total" })}: {activeEmergencies.length}</p>
 
           {activeEmergencies.length === 0 ? (
-            <p>No active emergencies.</p>
+            <p>{t("sosNoActiveEmergencies", { defaultValue: "No active emergencies." })}</p>
           ) : (
             activeEmergencies.map((item) => (
               <article key={item.id} style={itemCard}>
-                <strong>{item.emergencyType || "Emergency"}</strong>
-                <p>Priority: {item.priority || "Unknown"}</p>
-                <p>Location: {item.location || "Unknown"}</p>
-                <p>Status: {item.status || "Unknown"}</p>
+                <strong>{item.emergencyType || t("sosEmergency", { defaultValue: "Emergency" })}</strong>
+                <p>{t("sosPriority", { defaultValue: "Priority" })}: {item.priority || t("sosUnknown", { defaultValue: "Unknown" })}</p>
+                <p>{t("sosLocation", { defaultValue: "Location" })}: {item.location || t("sosUnknown", { defaultValue: "Unknown" })}</p>
+                <p>{t("sosStatus", { defaultValue: "Status" })}: {item.status || t("sosUnknown", { defaultValue: "Unknown" })}</p>
                 <p>Emergency ID: {item.id}</p>
               </article>
             ))
@@ -74,20 +74,20 @@ function SOSResponderDashboard() {
         </section>
 
         <section style={card}>
-          <h2>🚑 Assigned Emergencies</h2>
-          <p>Total: {assignedEmergencies.length}</p>
+          <h2>{t("sosAssignedEmergencies", { defaultValue: "Assigned Emergencies" })}</h2>
+          <p>{t("sosTotal", { defaultValue: "Total" })}: {assignedEmergencies.length}</p>
 
           {assignedEmergencies.length === 0 ? (
-            <p>No assigned emergencies.</p>
+            <p>{t("sosNoAssignedEmergencies", { defaultValue: "No assigned emergencies." })}</p>
           ) : (
             assignedEmergencies.map((item) => (
               <article key={item.id} style={itemCard}>
-                <strong>{item.emergencyType || "Emergency"}</strong>
-                <p>Priority: {item.priority || "Unknown"}</p>
-                <p>Assigned To: {item.assignedResponder || "Not disclosed"}</p>
-                <p>Agency: {item.assignedAgency || "Not disclosed"}</p>
-                <p>Location: {item.location || "Unknown"}</p>
-                <p>Status: {item.status || "Unknown"}</p>
+                <strong>{item.emergencyType || t("sosEmergency", { defaultValue: "Emergency" })}</strong>
+                <p>{t("sosPriority", { defaultValue: "Priority" })}: {item.priority || t("sosUnknown", { defaultValue: "Unknown" })}</p>
+                <p>{t("sosAssignedTo", { defaultValue: "Assigned To" })}: {item.assignedResponder || t("sosNotDisclosed", { defaultValue: "Not disclosed" })}</p>
+                <p>{t("sosAgency", { defaultValue: "Agency" })}: {item.assignedAgency || t("sosNotDisclosed", { defaultValue: "Not disclosed" })}</p>
+                <p>{t("sosLocation", { defaultValue: "Location" })}: {item.location || t("sosUnknown", { defaultValue: "Unknown" })}</p>
+                <p>{t("sosStatus", { defaultValue: "Status" })}: {item.status || t("sosUnknown", { defaultValue: "Unknown" })}</p>
               </article>
             ))
           )}

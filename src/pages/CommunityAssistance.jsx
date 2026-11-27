@@ -6,8 +6,10 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { useTranslation } from "react-i18next";
 
 function CommunityAssistance() {
+  const { t } = useTranslation();
   const [requests, setRequests] = useState([]);
 
   useEffect(() => {
@@ -37,12 +39,12 @@ function CommunityAssistance() {
         marginBottom: "20px",
       }}
     >
-      <h3>🤝 Community Assistance</h3>
+      <h3>{t("communityAssistanceTitle", { defaultValue: "Community Assistance" })}</h3>
 
-      <p>Active Community Alerts: {requests.length}</p>
+      <p>{t("communityActiveAlerts", { defaultValue: "Active Community Alerts" })}: {requests.length}</p>
 
       {requests.length === 0 ? (
-        <p>No community assistance requests.</p>
+        <p>{t("communityNoRequests", { defaultValue: "No community assistance requests." })}</p>
       ) : (
         requests.map((item) => (
           <div
@@ -58,25 +60,25 @@ function CommunityAssistance() {
 
             <br />
 
-            Description:
+            {t("communityDescription", { defaultValue: "Description" })}:
             {" "}
             {item.description}
 
             <br />
 
-            Location:
+            {t("sosLocation", { defaultValue: "Location" })}:
             {" "}
             {item.location}
 
             <br />
 
-            Priority:
+            {t("communityPriority", { defaultValue: "Priority" })}:
             {" "}
             {item.priority}
 
             <br />
 
-            Status:
+            {t("sosStatus", { defaultValue: "Status" })}:
             {" "}
             {item.status}
           </div>

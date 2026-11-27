@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
 } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   collection,
@@ -37,6 +38,7 @@ const SOS_NOTIFICATION_BACKEND_URL = (import.meta.env.VITE_SOS_NOTIFICATION_BACK
 
 
 function SOS() {
+  const { t } = useTranslation();
 
   const [sosForm, setSosForm] = useState({
 
@@ -164,7 +166,7 @@ function SOS() {
       } finally {
         setIsPreparingLocation(false);
       }
-    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+    }, { enableHigh{t("sosAccuracy", { defaultValue: "Accuracy" })}: true, timeout: 12000, maximumAge: 0 });
   }
 
   const [isSubmittingSOS, setIsSubmittingSOS] =
@@ -500,7 +502,7 @@ function SOS() {
       },
 
       {
-        enableHighAccuracy:
+        enableHigh{t("sosAccuracy", { defaultValue: "Accuracy" })}:
           true,
 
         timeout:
@@ -566,7 +568,7 @@ function SOS() {
             navigator.geolocation.getCurrentPosition(
               (position) => resolve({ ok: true, position }),
               () => resolve({ ok: false }),
-              { enableHighAccuracy: true, timeout: 2500, maximumAge: 60000 }
+              { enableHigh{t("sosAccuracy", { defaultValue: "Accuracy" })}: true, timeout: 2500, maximumAge: 60000 }
             );
           });
           if (freshFix.ok) {
@@ -627,8 +629,8 @@ function SOS() {
             accuracy: emergencyLocation.accuracy,
             locationSource: emergencyLocation.locationSource,
             locationCapturedAt: emergencyLocation.locationCapturedAt,
-            gpsLatitude: Number(emergencyLocation.latitude) || 0,
-            gpsLongitude: Number(emergencyLocation.longitude) || 0,
+            gps{t("sosLatitude", { defaultValue: "Latitude" })}: Number(emergencyLocation.latitude) || 0,
+            gps{t("sosLongitude", { defaultValue: "Longitude" })}: Number(emergencyLocation.longitude) || 0,
             responderNotes:
               sosForm.responderNotes ||
               "",
@@ -752,8 +754,8 @@ function SOS() {
         accuracy: emergencyLocation.accuracy,
         locationSource: emergencyLocation.locationSource,
         locationCapturedAt: emergencyLocation.locationCapturedAt,
-        gpsLatitude: Number(emergencyLocation.latitude) || 0,
-        gpsLongitude: Number(emergencyLocation.longitude) || 0,
+        gps{t("sosLatitude", { defaultValue: "Latitude" })}: Number(emergencyLocation.latitude) || 0,
+        gps{t("sosLongitude", { defaultValue: "Longitude" })}: Number(emergencyLocation.longitude) || 0,
         responderNotes:
           sosForm.responderNotes ||
           "",
@@ -954,31 +956,26 @@ return (
 
 <div style={page}>
 
-  <h1>🚨 SOS Emergency</h1>
+  <h1>{t("sosPageTitle", { defaultValue: "SOS Emergency" })}</h1>
 
   <p style={introText}>
-    Use this emergency service to request authorized assistance
-    through the Inclura Fortress Security Engine (IFSE).
+    {t("sosIntro", { defaultValue: "Use this emergency service to request authorized assistance through the Inclura Fortress Security Engine (IFSE)." })}
   </p>
 
   <SOSPushRegistration />
 
   <div style={card}>
-    <h3>🛡 SOS Emergency Readiness — Prepare Before Danger</h3>
+    <h3>{t("sosReadinessTitle", { defaultValue: "SOS Emergency Readiness — Prepare Before Danger" })}</h3>
     <p style={helpText}>
-      Allow location access now, during normal use. Inclura will not ask you to grant
-      permission for the first time while you are trying to send an SOS. This check
-      verifies permission and a GPS fix; it does not provide continuous background tracking.
+      {t("sosReadinessHelp", { defaultValue: "Allow location access now, during normal use. Inclura will not ask you to grant permission for the first time while you are trying to send an SOS. This check verifies permission and a GPS fix; it does not provide continuous background tracking." })}
     </p>
     <p role="status" aria-live="polite" style={gpsText}>{locationReadiness}</p>
     <button type="button" onClick={prepareEmergencyLocation}
       style={locationButton} disabled={isPreparingLocation || isSubmittingSOS}>
-      {isPreparingLocation ? "Checking GPS…" : "Enable & Verify Emergency Location"}
+      {isPreparingLocation ? t("sosCheckingGps", { defaultValue: "Checking GPS…" }) : t("sosEnableLocation", { defaultValue: "Enable & Verify Emergency Location" })}
     </button>
     <p style={securityNotice}>
-      If GPS is unavailable or permission is denied, you can still submit an SOS using
-      the written location. A web app cannot guarantee GPS tracking while closed or
-      restricted by Android background settings.
+      {t("sosGpsFallback", { defaultValue: "If GPS is unavailable or permission is denied, you can still submit an SOS using the written location. A web app cannot guarantee GPS tracking while closed or restricted by Android background settings." })}
     </p>
   </div>
 
@@ -990,51 +987,51 @@ return (
   <div style={dashboardGrid}>
 
     <div style={summaryCard}>
-      <h3>🚨 Open SOS Cases</h3>
+      <h3>{t("sosOpenCases", { defaultValue: "Open SOS Cases" })}</h3>
       <h2>{sosStats.open}</h2>
-      <p>Awaiting Response</p>
+      <p>{t("sosAwaitingResponse", { defaultValue: "Awaiting Response" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>⚠ High Priority</h3>
+      <h3>{t("sosHighPriority", { defaultValue: "High Priority" })}</h3>
       <h2>{sosStats.highPriority}</h2>
-      <p>High Priority Emergencies</p>
+      <p>{t("sosHighPriorityCases", { defaultValue: "High Priority Emergencies" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>🚑 Medical Emergencies</h3>
+      <h3>{t("sosMedicalEmergencies", { defaultValue: "Medical Emergencies" })}</h3>
       <h2>{sosStats.medical}</h2>
-      <p>Medical Cases</p>
+      <p>{t("sosMedicalCases", { defaultValue: "Medical Cases" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>🚒 Fire Emergencies</h3>
+      <h3>{t("sosFireEmergencies", { defaultValue: "Fire Emergencies" })}</h3>
       <h2>{sosStats.fire}</h2>
-      <p>Fire Incidents</p>
+      <p>{t("sosFireIncidents", { defaultValue: "Fire Incidents" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>🚓 Police Emergencies</h3>
+      <h3>{t("sosPoliceEmergencies", { defaultValue: "Police Emergencies" })}</h3>
       <h2>{sosStats.police}</h2>
-      <p>Police Cases</p>
+      <p>{t("sosPoliceCases", { defaultValue: "Police Cases" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>👨‍🚒 Active Responders</h3>
+      <h3>{t("sosEmergencyResponders", { defaultValue: "Emergency Responders" })}</h3>
       <h2>{sosStats.responders}</h2>
-      <p>Registered Responders</p>
+      <p>{t("sosEmergencyResponders", { defaultValue: "Registered Responders" })}</p>
     </div>
 
 
     <div style={summaryCard}>
-      <h3>✅ Resolved Cases</h3>
+      <h3>{t("sosResolvedCases", { defaultValue: "Resolved Cases" })}</h3>
       <h2>{sosStats.resolved}</h2>
-      <p>Successfully Closed</p>
+      <p>{t("sosSuccessfullyClosed", { defaultValue: "Successfully Closed" })}</p>
     </div>
 
   </div>
@@ -1045,11 +1042,9 @@ return (
   ============================================================ */}
 
   <div style={card}>
-    <h3>🧪 Test SOS Push Notification</h3>
+    <h3>{t("sosTestPushTitle", { defaultValue: "Test SOS Push Notification" })}</h3>
     <p style={helpText}>
-      Sends a clearly labelled test push notification only to this signed-in device
-      after push notifications have been enabled. No SMS, email, real emergency,
-      responder contact, or real emergency recipient list is used.
+      {t("sosTestPushHelp", { defaultValue: "Sends a clearly labelled test push notification only to this signed-in device after push notifications have been enabled. No SMS, email, real emergency, responder contact, or real emergency recipient list is used." })}
     </p>
     <button
       type="button"
@@ -1061,7 +1056,7 @@ return (
         opacity: isTestingNotifications ? 0.75 : 1
       }}
     >
-      {isTestingNotifications ? "Sending test push…" : "Send Test Push Notification"}
+      {isTestingNotifications ? t("sosSendingTestPush", { defaultValue: "Sending test push…" }) : t("sosSendTestPush", { defaultValue: "Send Test Push Notification" })}
     </button>
     {notificationTestResult ? (
       <pre
@@ -1083,7 +1078,7 @@ return (
       </pre>
     ) : null}
     <p style={securityNotice}>
-      Firebase acceptance does not guarantee that the notification appeared on the device.
+      {t("sosFirebaseAcceptance", { defaultValue: "Firebase acceptance does not guarantee that the notification appeared on the device." })}
     </p>
   </div>
 
@@ -1092,7 +1087,7 @@ return (
   ============================================================ */}
 
   <h2 style={sectionTitle}>
-    Emergency Actions
+    {t("sosEmergencyActions", { defaultValue: "Emergency Actions" })}
   </h2>
 
 
@@ -1104,9 +1099,7 @@ return (
 
 
     <p style={helpText}>
-      Provide the emergency details below. IFSE will resolve the
-      authoritative response rule and route the emergency through
-      the registered response agency system.
+      {t("sosEmergencyDetails", { defaultValue: "Provide the emergency details below. IFSE will resolve the authoritative response rule and route the emergency through the registered response agency system." })}
     </p>
 
 
@@ -1115,7 +1108,7 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Emergency Type
+      {t("sosEmergencyType", { defaultValue: "Emergency Type" })}
     </label>
 
 
@@ -1213,13 +1206,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Emergency Description
+      {t("sosEmergencyDescription", { defaultValue: "Emergency Description" })}
     </label>
 
 
     <textarea
       rows={5}
-      placeholder="Describe what is happening..."
+      placeholder={t("sosDescribe", { defaultValue: "Describe what is happening..." })}
       value={sosForm.description}
       onChange={(e) =>
         setSosForm({
@@ -1244,7 +1237,7 @@ return (
 
     <input
       type="text"
-      placeholder="Enter your current location"
+      placeholder={t("sosEnterLocation", { defaultValue: "Enter your current location" })}
       value={sosForm.location}
       onChange={(e) =>
         setSosForm({
@@ -1267,27 +1260,27 @@ return (
       <div>
 
         <strong>
-          📍 GPS Emergency Location
+          {t("sosGpsLocation", { defaultValue: "GPS Emergency Location" })}
         </strong>
 
         <p style={gpsText}>
 
-          Latitude:{" "}
+          {t("sosLatitude", { defaultValue: "Latitude" })}:{" "}
           {sosForm.latitude ||
-            "Not captured"}
+            t("sosNotCaptured", { defaultValue: "Not captured" })}
 
           <br />
 
-          Longitude:{" "}
+          {t("sosLongitude", { defaultValue: "Longitude" })}:{" "}
           {sosForm.longitude ||
-            "Not captured"}
+            t("sosNotCaptured", { defaultValue: "Not captured" })}
 
           <br />
 
-          Accuracy:{" "}
+          {t("sosAccuracy", { defaultValue: "Accuracy" })}:{" "}
           {sosForm.accuracy
             ? `${sosForm.accuracy} meters`
-            : "Not available"}
+            : t("sosNotAvailable", { defaultValue: "Not available" })}
 
         </p>
 
@@ -1303,7 +1296,7 @@ return (
         disabled={isSubmittingSOS}
       >
 
-        📍 Capture Current GPS
+        {t("sosCaptureGps", { defaultValue: "Capture Current GPS" })}
 
       </button>
 
@@ -1311,7 +1304,7 @@ return (
 
 
     <p style={helpText}>
-      SOS alerts are sent to your saved active Trusted Contacts below. Manage that list in the Trusted Contacts section; do not enter a separate recipient here.
+      {t("sosTrustedNotice", { defaultValue: "SOS alerts are sent to your saved active Trusted Contacts below. Manage that list in the Trusted Contacts section; do not enter a separate recipient here." })}
     </p>
 
 
@@ -1320,13 +1313,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Additional Responder Notes
+      {t("sosResponderNotes", { defaultValue: "Additional Responder Notes" })}
     </label>
 
 
     <textarea
       rows={3}
-      placeholder="Any additional information responders should know..."
+      placeholder={t("sosResponderNotesPlaceholder", { defaultValue: "Any additional information responders should know..." })}
       value={sosForm.responderNotes}
       onChange={(e) =>
         setSosForm({
@@ -1360,15 +1353,14 @@ return (
     >
 
       {isSubmittingSOS
-        ? "🛡 IFSE Processing Emergency..."
-        : "🚨 Send Emergency SOS"}
+        ? t("sosProcessing", { defaultValue: "IFSE Processing Emergency..." })
+        : t("sosSendButton", { defaultValue: "Send Emergency SOS" })}
 
     </button>
 
 
     <p style={securityNotice}>
-      🛡 Your SOS is processed through the IFSE emergency
-      dispatch workflow. Do not submit false emergency reports.
+      {t("sosProcessingNotice", { defaultValue: "Your SOS is processed through the IFSE emergency dispatch workflow. Do not submit false emergency reports." })}
     </p>
 
   </div>
@@ -1381,7 +1373,7 @@ return (
   <div style={card}>
 
     <h3>
-      📍 Share Live Location
+      {t("shareLocationTitle", { defaultValue: "Share Live Location" })}
     </h3>
 
     <ShareLiveLocation />
@@ -1396,7 +1388,7 @@ return (
   <div style={card}>
 
     <h3>
-      👨‍👩‍👧 Trusted Contacts
+      {t("trustedContactsTitle", { defaultValue: "Trusted Contacts" })}
     </h3>
 
     <TrustedContacts />
@@ -1411,7 +1403,7 @@ return (
   <div style={card}>
 
     <h3>
-      🤝 Community Assistance
+      {t("communityAssistanceTitle", { defaultValue: "Community Assistance" })}
     </h3>
 
     <CommunityAssistance />
@@ -1426,7 +1418,7 @@ return (
   <div style={card}>
 
     <h3>
-      🚑 Emergency Responders
+      {t("sosEmergencyResponders", { defaultValue: "Emergency Responders" })}
     </h3>
 
     <EmergencyResponders />
@@ -1441,7 +1433,7 @@ return (
   <div style={card}>
 
     <h3>
-      🛡 IFSE Emergency Monitoring
+      {t("sosIfseMonitoring", { defaultValue: "IFSE Emergency Monitoring" })}
     </h3>
 
     <IFSEEmergencyMonitoring />

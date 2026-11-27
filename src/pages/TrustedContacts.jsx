@@ -4,11 +4,13 @@ import {
   serverTimestamp, updateDoc, where,
 } from "firebase/firestore";
 import { auth, db } from "../firebase";
+import { useTranslation } from "react-i18next";
 
 // SOS trusted contacts are owner-managed; no external delivery is implied by saving a contact.
 const emptyForm = { fullName: "", relationship: "", phoneNumber: "", email: "" };
 
 function TrustedContacts() {
+  const { t } = useTranslation();
   const [contacts, setContacts] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState("");
@@ -115,31 +117,31 @@ function TrustedContacts() {
 
   return (
     <section style={panel}>
-      <h3>👨‍👩‍👧 Trusted Contacts</h3>
-      <p>Contacts you choose may be included in an SOS notification workflow. Adding a contact does not itself send a notification or confirm delivery.</p>
-      <p>Total contacts: {contacts.length} / 5</p>
+      <h3>{t("trustedContactsTitle", { defaultValue: "Trusted Contacts" })}</h3>
+      <p>{t("trustedContactsNotice", { defaultValue: "Contacts you choose may be included in an SOS notification workflow. Adding a contact does not itself send a notification or confirm delivery." })}</p>
+      <p>{t("trustedContactsTotal", { defaultValue: "Total contacts" })}: {contacts.length} / 5</p>
       <form onSubmit={saveContact}>
-        <label htmlFor="trusted-full-name">Full name</label>
-        <input id="trusted-full-name" name="fullName" value={form.fullName} onChange={updateField} maxLength={100} required style={field} placeholder="Contact's full name" />
-        <label htmlFor="trusted-relationship">Relationship</label>
-        <input id="trusted-relationship" name="relationship" value={form.relationship} onChange={updateField} maxLength={60} style={field} placeholder="e.g. Spouse, sibling, friend" />
-        <label htmlFor="trusted-phone">Phone number</label>
-        <input id="trusted-phone" name="phoneNumber" type="tel" value={form.phoneNumber} onChange={updateField} maxLength={40} style={field} placeholder="Include country code where possible" />
-        <label htmlFor="trusted-email">Email address</label>
+        <label htmlFor="trusted-full-name">{t("trustedFullName", { defaultValue: "Full name" })}</label>
+        <input id="trusted-full-name" name="fullName" value={form.fullName} onChange={updateField} maxLength={100} required style={field} placeholder={t("trustedNamePlaceholder", { defaultValue: "Contact's full name" })} />
+        <label htmlFor="trusted-relationship">{t("trustedRelationship", { defaultValue: "Relationship" })}</label>
+        <input id="trusted-relationship" name="relationship" value={form.relationship} onChange={updateField} maxLength={60} style={field} placeholder={t("trustedRelationshipPlaceholder", { defaultValue: "e.g. family member, friend or colleague" })} />
+        <label htmlFor="trusted-phone">{t("trustedPhone", { defaultValue: "Phone number" })}</label>
+        <input id="trusted-phone" name="phoneNumber" type="tel" value={form.phoneNumber} onChange={updateField} maxLength={40} style={field} placeholder={t("trustedPhonePlaceholder", { defaultValue: "Include country code where possible" })} />
+        <label htmlFor="trusted-email">{t("trustedEmail", { defaultValue: "Email address" })}</label>
         <input id="trusted-email" name="email" type="email" value={form.email} onChange={updateField} maxLength={160} style={field} placeholder="name@example.com" />
-        <button type="submit" disabled={saving || (!editingId && contacts.length >= 5)} style={{ ...action, background: "#15803d", color: "#fff" }}>{saving ? "Saving..." : editingId ? "Save changes" : "Add trusted contact"}</button>
-        {editingId && <button type="button" onClick={resetForm} style={{ ...action, background: "#475569", color: "#fff" }}>Cancel</button>}
-        {!editingId && contacts.length >= 5 && <p>You can add up to five trusted contacts.</p>}
+        <button type="submit" disabled={saving || (!editingId && contacts.length >= 5)} style={{ ...action, background: "#15803d", color: "#fff" }}>{saving ? t("trustedSaving", { defaultValue: "Saving..." }) : editingId ? t("trustedSaveChanges", { defaultValue: "Save changes" }) : t("trustedAdd", { defaultValue: "Add trusted contact" })}</button>
+        {editingId && <button type="button" onClick={resetForm} style={{ ...action, background: "#475569", color: "#fff" }}>{t("trustedCancel", { defaultValue: "Cancel" })}</button>}
+        {!editingId && contacts.length >= 5 && <p>{t("trustedMax", { defaultValue: "You can add up to five trusted contacts." })}</p>}
       </form>
       {error && <p role="alert" style={{ color: "#fecaca" }}>{error}</p>}
-      {contacts.length === 0 ? <p>No trusted contacts added yet.</p> : contacts.map((contact) => (
+      {contacts.length === 0 ? <p>{t("trustedEmpty", { defaultValue: "No trusted contacts added yet." })}</p> : contacts.map((contact) => (
         <article key={contact.id} style={{ background: "#111827", padding: "14px", borderRadius: "12px", marginTop: "12px", border: "1px solid #334155" }}>
           <strong>{contact.fullName}</strong>
-          <p>Relationship: {contact.relationship || "Not specified"}</p>
-          <p>Phone: {contact.phoneNumber || "Not provided"}</p>
-          <p>Email: {contact.email || "Not provided"}</p>
-          <button type="button" onClick={() => beginEdit(contact)} style={{ ...action, background: "#1d4ed8", color: "#fff" }}>Edit</button>
-          <button type="button" onClick={() => removeContact(contact.id)} style={{ ...action, background: "#991b1b", color: "#fff" }}>Remove</button>
+          <p>{t("trustedRelationship", { defaultValue: "Relationship" })}: {contact.relationship || t("trustedNotSpecified", { defaultValue: "Not specified" })}</p>
+          <p>{t("trustedPhone", { defaultValue: "Phone" })}: {contact.phoneNumber || t("sosNotProvided", { defaultValue: "Not provided" })}</p>
+          <p>{t("trustedEmail", { defaultValue: "Email" })}: {contact.email || t("sosNotProvided", { defaultValue: "Not provided" })}</p>
+          <button type="button" onClick={() => beginEdit(contact)} style={{ ...action, background: "#1d4ed8", color: "#fff" }}>{t("trustedEdit", { defaultValue: "Edit" })}</button>
+          <button type="button" onClick={() => removeContact(contact.id)} style={{ ...action, background: "#991b1b", color: "#fff" }}>{t("trustedRemove", { defaultValue: "Remove" })}</button>
         </article>
       ))}
     </section>
