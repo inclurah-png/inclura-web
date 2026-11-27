@@ -699,8 +699,6 @@ function Login() {
             color: "#94a3b8",
           }}
         >
-          Don't have an account?{" "}
-
           <Link
             to="/signup"
             style={{
