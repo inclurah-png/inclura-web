@@ -559,9 +559,9 @@ export function AccessibilityProvider({ children }) {
     const overrides = localOverrides;
 
     /*
-     * The browser/local language selection is the freshest value.
-     * Do not let an older Firestore userProfile snapshot overwrite
-     * a language the user has just selected.
+     * A signed-in account's saved language is authoritative after login.
+     * The local override takes priority while a newly selected value is
+     * being saved, so an older profile snapshot cannot revert that choice.
      */
     let storedBrowserLanguage = "";
 
