@@ -1,265 +1,120 @@
 import { useEffect, useState } from "react";
-
 import {
   collection,
   query,
   where,
   getDocs,
-  updateDoc,
-  doc,
-  serverTimestamp,
 } from "firebase/firestore";
-
 import { db } from "../firebase";
-
 import DashboardLayout from "../components/DashboardLayout";
-import { dispatchEmergency } from "../services/ifseDispatchEngine";
 
 function SOSResponderDashboard() {
-  
-const [activeEmergencies, setActiveEmergencies] = useState([]);
-
-const [assignedEmergencies, setAssignedEmergencies] = useState([]);
+  const [activeEmergencies, setActiveEmergencies] = useState([]);
+  const [assignedEmergencies, setAssignedEmergencies] = useState([]);
 
   useEffect(() => {
-  
-  async function loadEmergencies() {
+    async function loadEmergencies() {
+      try {
+        const activeQuery = query(
+          collection(db, "emergencySOS"),
+          where("status", "==", "open"),
+          where("systemPlaceholder", "==", false)
+        );
+        const assignedQuery = query(
+          collection(db, "emergencySOS"),
+          where("status", "==", "assigned")
+        );
 
-    try {
+        const [activeSnapshot, assignedSnapshot] = await Promise.all([
+          getDocs(activeQuery),
+          getDocs(assignedQuery),
+        ]);
 
-      const q = query(
-  collection(db, "emergencySOS"),
-  where("status", "==", "open"),
-  where("systemPlaceholder", "==", false)
-);
-
-      const snapshot = await getDocs(q);
-
-      const emergencies = snapshot.docs.map((doc) => ({
-
-        id: doc.id,
-
-        ...doc.data(),
-
-      }));
-
-      setActiveEmergencies(emergencies);
-      
-  const assignedQuery = query(
-  collection(db, "emergencySOS"),
-  where("status", "==", "assigned")
-);
-
-const assignedSnapshot = await getDocs(assignedQuery);
-
-const assigned = assignedSnapshot.docs.map((doc) => ({
-  id: doc.id,
-  ...doc.data(),
-}));
-
-setAssignedEmergencies(assigned);
-  
-    } catch (err) {
-
-      console.error("SOS Dashboard:", err);
-
+        setActiveEmergencies(
+          activeSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }))
+        );
+        setAssignedEmergencies(
+          assignedSnapshot.docs.map((item) => ({ id: item.id, ...item.data() }))
+        );
+      } catch (error) {
+        console.error("SOS responder dashboard:", error);
+      }
     }
 
-  }
+    loadEmergencies();
+  }, []);
 
-  loadEmergencies();
-
-}, []);
-
-  async function assignResponder(emergency) {
-  try {
-
-    await dispatchEmergency({
-
-      id: emergency.id,
-
-      userId: emergency.userId,
-
-      userName: emergency.userName,
-
-      userEmail: emergency.userEmail,
-
-      emergencyType: emergency.emergencyType,
-
-      priority: emergency.priority,
-
-      description: emergency.description,
-
-      location: emergency.location,
-
-      gpsLatitude: emergency.latitude || 0,
-
-      gpsLongitude: emergency.longitude || 0,
-
-    });
-
-    alert("IFSE responder dispatched successfully.");
-
-    window.location.reload();
-
-  } catch (err) {
-
-    console.error(err);
-
-    alert("Unable to dispatch responder.");
-
-  }
-}
-  
   return (
-
     <DashboardLayout>
-
       <div style={{ color: "white" }}>
-
         <h1>🚑 SOS Responder Dashboard</h1>
+        <p style={notice}>
+          Read-only emergency monitoring. SOS dispatch is automatic; responder
+          assignment and case-control actions are restricted to authorized IFSE
+          server workflows.
+        </p>
 
-        <div style={card}>
+        <section style={card}>
+          <h2>🔴 Active Emergencies</h2>
+          <p>Total: {activeEmergencies.length}</p>
 
-  <h2>🔴 Active Emergencies</h2>
+          {activeEmergencies.length === 0 ? (
+            <p>No active emergencies.</p>
+          ) : (
+            activeEmergencies.map((item) => (
+              <article key={item.id} style={itemCard}>
+                <strong>{item.emergencyType || "Emergency"}</strong>
+                <p>Priority: {item.priority || "Unknown"}</p>
+                <p>Location: {item.location || "Unknown"}</p>
+                <p>Status: {item.status || "Unknown"}</p>
+                <p>Emergency ID: {item.id}</p>
+              </article>
+            ))
+          )}
+        </section>
 
-  <p>Total: {activeEmergencies.length}</p>
+        <section style={card}>
+          <h2>🚑 Assigned Emergencies</h2>
+          <p>Total: {assignedEmergencies.length}</p>
 
-  {activeEmergencies.length === 0 ? (
-
-    <p>No active emergencies.</p>
-
-  ) : (
-
-    activeEmergencies.map((item) => (
-
-      <div
-        key={item.id}
-        style={{
-          marginTop: "15px",
-          padding: "15px",
-          background: "#111827",
-          borderRadius: "10px",
-        }}
-      >
-
-        <strong>{item.emergencyType}</strong>
-
-        <br />
-
-        Priority: {item.priority}
-
-        <br />
-
-        Location: {item.location || "Unknown"}
-
-        <br />
-
-        Status: {item.status}
-
-  <p>Emergency ID: {item.id}</p>
-<p>User ID: {item.userId}</p>
-<p>Type: {item.emergencyType}</p>
-        <button
-  onClick={() => assignResponder(item)}
-  style={{
-    marginTop: "15px",
-    padding: "10px 16px",
-    border: "none",
-    borderRadius: "10px",
-    background: "#2563eb",
-    color: "#fff",
-    cursor: "pointer",
-    fontWeight: "600",
-  }}
->
-  🚑 Assign Responder
-</button>
-
+          {assignedEmergencies.length === 0 ? (
+            <p>No assigned emergencies.</p>
+          ) : (
+            assignedEmergencies.map((item) => (
+              <article key={item.id} style={itemCard}>
+                <strong>{item.emergencyType || "Emergency"}</strong>
+                <p>Priority: {item.priority || "Unknown"}</p>
+                <p>Assigned To: {item.assignedResponder || "Not disclosed"}</p>
+                <p>Agency: {item.assignedAgency || "Not disclosed"}</p>
+                <p>Location: {item.location || "Unknown"}</p>
+                <p>Status: {item.status || "Unknown"}</p>
+              </article>
+            ))
+          )}
+        </section>
       </div>
-
-    ))
-
-  )}
-
-</div>
-
-        <div style={card}>
-
-  <h2>🚑 Assigned Emergencies</h2>
-
-  <p>Total: {assignedEmergencies.length}</p>
-
-  {assignedEmergencies.length === 0 ? (
-
-    <p>No assigned emergencies.</p>
-
-  ) : (
-
-    assignedEmergencies.map((item) => (
-
-      <div
-        key={item.id}
-        style={{
-          marginTop: "15px",
-          padding: "15px",
-          background: "#111827",
-          borderRadius: "10px",
-        }}
-      >
-
-        <strong>{item.emergencyType}</strong>
-
-        <br />
-
-        Priority: {item.priority}
-
-        <br />
-
-        Assigned To: {item.assignedResponder || "Unassigned"}
-
-        <br />
-
-        Location: {item.location || "Unknown"}
-
-        <br />
-
-        Status: {item.status}
-
-      </div>
-
-    ))
-
-  )}
-
-</div>
-
-        <div style={card}>
-          ✅ Resolved Emergencies
-        </div>
-
-        <div style={card}>
-          👮 Available Responders
-        </div>
-
-      </div>
-
     </DashboardLayout>
-
   );
-
 }
 
 const card = {
-
   background: "#0f172a",
-
   padding: "24px",
-
   borderRadius: "18px",
-
   marginBottom: "20px",
+};
 
+const itemCard = {
+  marginTop: "15px",
+  padding: "15px",
+  background: "#111827",
+  borderRadius: "10px",
+};
+
+const notice = {
+  color: "#cbd5e1",
+  lineHeight: "1.6",
+  marginBottom: "20px",
 };
 
 export default SOSResponderDashboard;
