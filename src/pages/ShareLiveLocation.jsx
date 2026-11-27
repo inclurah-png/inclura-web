@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { auth, db } from "../firebase";
+import { useTranslation } from "react-i18next";
 import {
   doc,
   updateDoc,
@@ -7,11 +8,12 @@ import {
 } from "firebase/firestore";
 
 function ShareLiveLocation() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   async function shareLocation() {
     if (!navigator.geolocation) {
-      alert("Geolocation is not supported.");
+      alert(t("shareLocationUnsupported", { defaultValue: "Geolocation is not supported." }));
       return;
     }
 
@@ -30,7 +32,7 @@ function ShareLiveLocation() {
             }
           );
 
-          alert("Live location updated successfully.");
+          alert(t("shareLocationSuccess", { defaultValue: "Live location updated successfully." }));
         } catch (err) {
           console.error(err);
           alert(err.message);
@@ -40,7 +42,7 @@ function ShareLiveLocation() {
       },
       (err) => {
         console.error(err);
-        alert("Unable to retrieve location.");
+        alert(t("shareLocationFailed", { defaultValue: "Unable to retrieve location." }));
         setLoading(false);
       }
     );
@@ -55,10 +57,10 @@ function ShareLiveLocation() {
         marginBottom: "20px",
       }}
     >
-      <h3>📍 Share Live Location</h3>
+      <h3>{t("shareLocationTitle", { defaultValue: "Share Live Location" })}</h3>
 
       <p>
-        Update your current GPS location for emergency responders.
+        {t("shareLocationIntro", { defaultValue: "Update your current GPS location for emergency responders." })}
       </p>
 
       <button
@@ -74,7 +76,7 @@ function ShareLiveLocation() {
           fontWeight: "700",
         }}
       >
-        {loading ? "Updating..." : "Share Current Location"}
+        {loading ? t("shareLocationUpdating", { defaultValue: "Updating..." }) : t("shareLocationButton", { defaultValue: "Share Current Location" })}
       </button>
     </div>
   );
