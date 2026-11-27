@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
 createUserWithEmailAndPassword,
@@ -40,6 +41,7 @@ function getSelectedLanguage() {
 
 function Signup() {
 
+const { t } = useTranslation();
 const navigate = useNavigate();
 
 const [fullName, setFullName] =
@@ -444,7 +446,7 @@ fontWeight: "800",
 marginBottom: "12px",
 }}
 >
-Join Inclura 👋
+{t("welcome")} 👋
 </h1>
 
 <p
@@ -455,8 +457,7 @@ lineHeight: "1.6",
 fontSize: "17px",
 }}
 >
-The inclusive social platform
-for everyone.
+{t("slogan")}
 </p>
 
 <div
@@ -633,7 +634,7 @@ marginBottom: "14px",
 fontSize: "20px",
 }}
 >
-Your Accessibility Needs
+{t("accessibilityNeeds")}
 (optional)
 </h2>
 
@@ -698,7 +699,7 @@ padding: "28px",
 
 <input
 type="text"
-placeholder="Full Name"
+placeholder={t("fullName")}
 maxLength={80}
 autoComplete="name"
 value={fullName}
@@ -712,7 +713,7 @@ style={inputStyle}
 
 <input
 type="email"
-placeholder="Email"
+placeholder={t("email")}
 autoComplete="email"
 value={email}
 onChange={(e) =>
@@ -725,7 +726,7 @@ style={inputStyle}
 
 <input
 type="password"
-placeholder="Password (12+ characters)"
+placeholder={t("password")}
 autoComplete="new-password"
 value={password}
 onChange={(e) =>
@@ -764,7 +765,7 @@ onClick={handleSignup}
 disabled={submitting}
 style={{ ...buttonStyle, opacity: submitting ? 0.65 : 1 }}
 >
-{submitting ? "Creating secure account…" : "Create Account"}
+{submitting ? t("creatingSecureAccount", "Creating secure account…") : t("createAccount")}
 </button>
 
 <div
@@ -774,7 +775,7 @@ margin: "24px 0",
 color: "#64748b",
 }}
 >
-or continue with
+{t("orContinueWith", "or continue with")}
 </div>
 
 <button
@@ -784,7 +785,7 @@ style={{ ...googleButton, opacity: !acceptedStandards ? 0.55 : 1 }}
 
 >
 
-🔵 Continue with Google </button>
+🔵 {t("continueWithGoogle")} </button>
 
 </div>
 
