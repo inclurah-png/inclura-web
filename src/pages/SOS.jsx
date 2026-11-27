@@ -1098,7 +1098,7 @@ return (
   <div style={card}>
 
     <h3>
-      🚨 Emergency SOS
+      🚨 {t("sosTitle")}
     </h3>
 
 
@@ -1131,37 +1131,21 @@ return (
       disabled={isSubmittingSOS}
     >
 
-      <option value="Medical">
-        Medical
-      </option>
+      <option value="Medical">{t("sosMedical")}</option>
 
-      <option value="Fire">
-        Fire
-      </option>
+      <option value="Fire">{t("sosFire")}</option>
 
-      <option value="Police">
-        Police
-      </option>
+      <option value="Police">{t("sosPolice")}</option>
 
-      <option value="Kidnapping">
-        Kidnapping
-      </option>
+      <option value="Kidnapping">{t("sosKidnapping")}</option>
 
-      <option value="Accident">
-        Accident
-      </option>
+      <option value="Accident">{t("sosAccident")}</option>
 
-      <option value="Disaster">
-        Disaster
-      </option>
+      <option value="Disaster">{t("sosDisaster")}</option>
 
-      <option value="Security Threat">
-        Security Threat
-      </option>
+      <option value="Security Threat">{t("sosSecurityThreat")}</option>
 
-      <option value="Missing Person">
-        Missing Person
-      </option>
+      <option value="Missing Person">{t("sosMissingPerson")}</option>
 
     </select>
 
@@ -1319,13 +1303,13 @@ return (
     ========================================================== */}
 
     <label style={label}>
-      Additional Responder Notes
+      {t("sosResponderNotes")}
     </label>
 
 
     <textarea
       rows={3}
-      placeholder="Any additional information responders should know..."
+      placeholder={t("sosResponderNotesPlaceholder")}
       value={sosForm.responderNotes}
       onChange={(e) =>
         setSosForm({
@@ -1359,8 +1343,8 @@ return (
     >
 
       {isSubmittingSOS
-        ? "🛡 IFSE Processing Emergency..."
-        : "🚨 Send Emergency SOS"}
+        ? `🛡 ${t("sosProcessing")}`
+        : `🚨 ${t("sosSendButton")}`}
 
     </button>
 
@@ -1380,7 +1364,7 @@ return (
   <div style={card}>
 
     <h3>
-      📍 Share Live Location
+      📍 {t("sosShareLocation")}
     </h3>
 
     <ShareLiveLocation />
@@ -1395,7 +1379,7 @@ return (
   <div style={card}>
 
     <h3>
-      👨‍👩‍👧 Trusted Contacts
+      👨‍👩‍👧 {t("trustedContactsTitle")}
     </h3>
 
     <TrustedContacts />
@@ -1410,7 +1394,7 @@ return (
   <div style={card}>
 
     <h3>
-      🤝 Community Assistance
+      🤝 {t("communityAssistance")}
     </h3>
 
     <CommunityAssistance />
@@ -1425,7 +1409,7 @@ return (
   <div style={card}>
 
     <h3>
-      🚑 Emergency Responders
+      🚑 {t("emergencyResponders")}
     </h3>
 
     <EmergencyResponders />
@@ -1440,7 +1424,7 @@ return (
   <div style={card}>
 
     <h3>
-      🛡 IFSE Emergency Monitoring
+      🛡 {t("ifseEmergencyMonitoring")}
     </h3>
 
     <IFSEEmergencyMonitoring />
@@ -1455,7 +1439,7 @@ return (
   <div style={card}>
 
     <h3>
-      📊 Emergency Analytics
+      📊 {t("emergencyAnalytics")}
     </h3>
 
     <EmergencyAnalytics />
@@ -1470,7 +1454,7 @@ return (
   <div style={card}>
 
     <h3>
-      📜 SOS History
+      📜 {t("sosHistory")}
     </h3>
 
     <SOSHistory />
