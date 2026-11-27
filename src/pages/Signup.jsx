@@ -27,6 +27,17 @@ import LanguageSelector from "../components/LanguageSelector";
 const googleProvider =
 new GoogleAuthProvider();
 
+function getSelectedLanguage() {
+  try {
+    const selected = window.localStorage.getItem("inclura-language");
+    return typeof selected === "string" && selected.trim()
+      ? selected.trim()
+      : "en";
+  } catch {
+    return "en";
+  }
+}
+
 function Signup() {
 
 const navigate = useNavigate();
@@ -69,6 +80,8 @@ useEffect(() => {
             uid: user.uid,
             fullName: user.displayName || "",
             email: user.email || "",
+            language: getSelectedLanguage(),
+            preferredLanguage: getSelectedLanguage(),
             acceptedCommunityStandards: true,
             acceptedCommunityStandardsAt: serverTimestamp(),
             createdAt: serverTimestamp(),
@@ -203,6 +216,9 @@ await setDoc(
 
     email: cleanEmail,
 
+    language: getSelectedLanguage(),
+    preferredLanguage: getSelectedLanguage(),
+
     category,
 
     acceptedCommunityStandards: true,
@@ -316,6 +332,9 @@ await setDoc(
 
     email:
       user.email || "",
+
+    language: getSelectedLanguage(),
+    preferredLanguage: getSelectedLanguage(),
 
     acceptedCommunityStandards: true,
     acceptedCommunityStandardsAt: serverTimestamp(),
